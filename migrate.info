@@ -1,0 +1,7 @@
+; $Id$
+name = "Migrate"
+description = "Import content from external sources"
+package = "Development"
+core = 6.x
+dependencies[] = views
+dependencies[] = tw

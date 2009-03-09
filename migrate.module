@@ -1,0 +1,264 @@
+<?php 
+// $Id$
+
+define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
+define('MIGRATE_ACCESS_ADVANCED', 'advanced migration tools');
+
+/**
+ * @file
+ * This module provides tools at "administer >> content >> migrate"
+ * for analyzing data from various sources and importing them into Drupal tables.
+ * 
+ * @TODO:
+ * PostGres support (MySQL is assumed in several places)
+ * Robustness - check to make sure all prerequisites are done (e.g., table view should
+ *  not be available until Analyze is done)
+ * The analysis tool allows setting a multi-column PK for the import file, but everything
+ *  else assumes a single column. Dealing with this is deferred until/unless we have a 
+ *  situation requiring a multi-column PK.
+ */
+
+/**
+ * Implementation of hook_migrate_init() - initialize support for the builtin sources
+ * and destinations.
+ * 
+ * @return
+ *    An array of descriptors for the source and destination types we support,
+ */
+function migrate_migrate_init() {
+  $path = drupal_get_path('module', 'migrate') . '/migrate_destinations.inc';
+  include_once($path);
+  return array(
+    'destination' => array(
+      'comment' => t('Comment'),
+      'node' => t('Node'),
+      'user' => t('User'),
+    ),
+  );
+}
+
+/**
+ * Call a migrate hook
+ */
+function migrate_invoke_all($kind, $hook, $type = NULL) {
+  // First time in initialize the modules implementing hooks, and get
+  // info on what sources and destinations they support
+  static $supported = array();
+  if (empty($supported)) {
+    $supported = module_invoke_all('migrate_init');
+  }
+  $args = func_get_args();
+  $hookfunc = "migrate_$kind"."_$hook";
+  if (isset($type)) {
+    $hookfunc .= "_$type";
+    unset($args[2]);
+  }
+  unset($args[1]);
+  unset($args[0]);
+  $return = array();
+  $modulelist = module_implements($hookfunc);
+  foreach ($modulelist as $module) {
+    $function = $module .'_'. $hookfunc;
+    $result = call_user_func_array($function, $args);
+    if (isset($result) && is_array($result)) {
+      $return = array_merge_recursive($return, $result);
+    }
+    else if (isset($result)) {
+      $return[] = $result;
+    }
+  }
+  return $return;
+}
+
+/*
+ * Implementation of hook_init()
+ */
+function migrate_init() {
+    // Add main CSS functionality.
+  drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
+}
+
+/**
+ * Implementation of hook_cron()
+ *
+ */
+function migrate_cron() {
+  $path = drupal_get_path('module', 'migrate') . '/migrate_pages.inc';
+  include_once($path);
+  // Elevate privileges so node deletion/creation works in cron
+  global $user;
+  $saveuser = $user;
+  $user = user_load(array('uid' => 1));
+  migrate_content_process(variable_get('cron_semaphore', 0));
+  $user = $saveuser;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function migrate_perm() {
+  return array(MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED);  
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function migrate_help($page, $arg) {
+  switch ($page) {
+    case 'admin/help#migrate':
+      $output = '<p>'. t('The migrate module aids in the importing of data into your site from
+        comma separated values format (CSV) or tab separated values format (TSV) files.') .'</p>';
+      $output .= '<p>'. t('Migrate accepts a CSV or TSV file as input. CSV or TSV files can be generated 
+        using spreadsheet programs. Your CSV or TSV file must contain field names in its first row. These 
+        field names can be anything. Modules, such as contact_manager, will add additional import types.') .'</p>';
+      $output .= t('<p>You can</p>
+<ul>
+<li>read about the PHP function that reads CSV files: 
+  <a href="%external-http-us3-php-net-fgetcvs" title="fgetcsv programmer function page">fgetcsv</a>.</li>
+<li>import files at <a href="%admin-node-migrate">administer &gt;&gt; content &gt;&gt; migrate</a>.</li>
+<li>administer node permissions at <a href="%admin-access-permission">administer &gt;&gt; access &gt;&gt; 
+  permissions &gt;&gt; node import</a>.</li>
+</ul>', array('%external-http-us3-php-net-fgetcvs' => 'http://us3.php.net/fgetcsv', 
+              '%admin-node-migrate' => url('admin/node/migrate'), 
+              '%admin-access-permission' => url('admin/access/permission')));
+      return $output;
+  }
+}
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function migrate_menu() {
+  $items = array();
+
+  $items['admin/content/migrate'] = array(
+    'title' => 'Migrate',
+    'description' => 'Manage data migration from external sources',
+    'page callback' => 'migrate_front',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/destinations'] = array(
+    'title' => 'Destinations',
+    'description' => 'Manage content sets: mappings of source data to Drupal content',
+    'weight' => 2,
+    'page callback' => 'migrate_destinations',
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/process'] = array(
+    'title' => 'Process',
+    'description' => 'Perform and monitor the creation of Drupal content from source data',
+    'weight' => 3,
+    'page callback' => 'migrate_dashboard',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/tools'] = array(
+    'title' => 'Tools',
+    'description' => 'Additional tools for managing a migration',
+    'weight' => 4,
+    'page callback' => 'migrate_tools',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/destinations/%'] = array(
+    'title' => 'Destination mappings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('migrate_destination_mappings', 4),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+    'type' => MENU_CALLBACK,
+    'file' => 'migrate_pages.inc',
+  );
+  $items['migrate/xlat/%'] = array(
+    'page callback' => 'migrate_xlat',
+    'access arguments' => array('access content'),
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/*
+ * Translate URIs from an old site to the new one
+ * Requires adding RewriteRules to .htaccess. For example, if the URLs
+ * for news articles had the form 
+ * http://example.com/issues/news/[OldID].html, use this rule:
+ * 
+ * RewriteRule ^issues/news/([0-9]+).html$ /migrate/xlat/node/$1 [L]
+ */
+function migrate_xlat($contenttype=NULL, $oldid=NULL) {
+  $uri = '';
+  if ($contenttype && $oldid) {
+    $newid = _migrate_xlat_get_new_id($contenttype, $oldid);
+    if ($newid) {
+      $uri = migrate_invoke_all('destination', 'xlat', $contenttype, $newid);
+      drupal_goto($uri[0], NULL, NULL, 301);
+    }
+  }
+}
+
+/*
+ * Helper function to translate an ID from a source file to the corresponding
+ * Drupal-side ID (nid, uid, etc.)
+ * 
+ * TODO: Update to new world (content sets as the basis of migration)
+ */
+function _migrate_xlat_get_new_id($contenttype, $oldid) {
+  $result = db_query("SELECT DISTINCT mf.importtable, mc.colname
+                      FROM {migrate_content_sets} mcs
+                      INNER JOIN {migrate_files} mf ON mcs.mfid=mf.mfid
+                      INNER JOIN {migrate_columns} mc ON mf.mfid=mc.mfid AND chosenpk=1
+                      WHERE mcs.contenttype='%s'",
+                     $contenttype);
+  while ($row = db_fetch_object($result)) {
+    $table = $row->importtable.'_'.$contenttype.'map';
+    $pkcol = $row->colname;
+    $id = db_result(db_query("SELECT ${contenttype}id
+                              FROM {$table} WHERE $pkcol=%d", $oldid));
+    if ($id) {
+      return $id;
+    }
+  }
+  return NULL;
+}
+
+/**
+ * Implementation of hook_theme().
+ *
+ * Registers all theme functions used in this module.
+ */
+function migrate_theme() {
+  return array(
+    'migrate_mapping_table' => array('arguments' => array('form')),
+    '_migrate_dashboard_form' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_dashboard',
+    ),
+    '_migrate_tools_form' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_tools',
+    ),
+    'migrate_destination_mappings' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_destination_mappings',
+    ),
+  );
+}
+
+function _migrate_print_timers() {
+  global $timers;
+  $times = array();
+  foreach ($timers as $name=>$timerec) {
+    $times[$name] = $timerec['time']/1000;
+  }
+  arsort($times);
+  foreach ($times as $name=>$total) {
+    drupal_set_message("$name: ".round($total,2));
+  }
+}
+
+function migrate_views_api() {
+  return array('api' => '2.0');
+}

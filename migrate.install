@@ -1,0 +1,117 @@
+<?php
+/* $Id$ */
+
+/**
+* Implementation of hook_schema().
+*/
+function migrate_schema() {
+  $schema['migrate_content_sets'] = array(
+    'description' => t('Sets of content mappings'),
+    'fields' => array(
+      'mcsid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'mfid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'contenttype' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'node',
+      ),
+      'criteria' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'TRUE',
+      ),
+      'desttype' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'clearing' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+      ),
+      'importing' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+      ),
+      'lastimported' => array(
+        'type' => 'datetime',
+        'not null' => FALSE,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('mcsid'),
+    'indexes' => array(
+      'mfid' => array('mfid'),
+    ),
+  );
+  $schema['migrate_content_mappings'] = array(
+    'description' => t('Content field mappings'),
+    'fields' => array(
+      'mcmid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'mcsid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'colname' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'destfield' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('mcmid'),
+    'unique keys' => array(
+      'colkey' => array('mcsid', 'colname'),
+    ),
+  );
+  
+  return $schema;
+}
+
+/**
+* Implementation of hook_install().
+*/
+function migrate_install() {
+  // Create tables
+  drupal_install_schema('migrate');
+}
+
+/**
+* Implementation of hook_uninstall().
+*/
+function migrate_uninstall() {
+  // Remove tables
+  drupal_uninstall_schema('migrate');
+}

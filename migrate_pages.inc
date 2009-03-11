@@ -567,6 +567,7 @@ function migrate_destination_mappings_submit($form, &$form_state) {
           FROM {migrate_content_sets}
           WHERE mcsid=%d";
   $row = db_fetch_object(db_query($sql, $mcsid));
+
   if ($row->sourcekey <> $sourcekey) {
     // Update content set key
     $sql = "UPDATE {migrate_content_sets}
@@ -576,21 +577,14 @@ function migrate_destination_mappings_submit($form, &$form_state) {
     
     // Create a map table from this view to the results
     $maptablename = $row->view_name.'_'.$row->contenttype.'map';
-    // TODO: We need a way to determine the true type of the sourcekey - for
-    // now, assume a srcfile key is varchar and all else is int...
-    if ($sourcekey == 'srcfile') {
-      $sourcefield = array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      );
-    } else {
-      $sourcefield = array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      );
-    }
+
+    // Get the proper field definition for the sourcekey
+    $view = views_get_view($row->view_name);
+    $tablename = $view->display['default']->display_options['fields'][$sourcekey]['table'];
+    $inspect = schema_invoke('inspect');
+    $sourceschema = $inspect[$tablename];
+    $sourcefield = $sourceschema['fields'][$sourcekey];
+
     if (!db_table_exists($maptablename)) {
       $schema = array(
         'description' => t('Mappings from source key to destination key'),
@@ -614,6 +608,10 @@ function migrate_destination_mappings_submit($form, &$form_state) {
         ),
       );
       db_create_table($ret, $maptablename, $schema);
+      // Expose map table to views
+      tw_add_tables(array($maptablename));
+    } else {
+      // TODO: Handle change in PK - rebuild map table
     }
   }
   drupal_set_message('Changes saved');

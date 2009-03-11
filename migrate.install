@@ -13,10 +13,15 @@ function migrate_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'mfid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
+      'view_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
+      ),
+      'sourcekey' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
       ),
       'contenttype' => array(
         'type' => 'varchar',
@@ -24,15 +29,9 @@ function migrate_schema() {
         'not null' => TRUE,
         'default' => 'node',
       ),
-      'criteria' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => 'TRUE',
-      ),
       'desttype' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
       ),
       'description' => array(
@@ -52,6 +51,12 @@ function migrate_schema() {
         'not null' => TRUE,
         'default' => (int)FALSE,
       ),
+      'scanning' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+      ),
       'lastimported' => array(
         'type' => 'datetime',
         'not null' => FALSE,
@@ -64,7 +69,7 @@ function migrate_schema() {
     ),
     'primary key' => array('mcsid'),
     'indexes' => array(
-      'mfid' => array('mfid'),
+      'view_name' => array('view_name'),
     ),
   );
   $schema['migrate_content_mappings'] = array(
@@ -80,7 +85,7 @@ function migrate_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'colname' => array(
+      'srcfield' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -90,13 +95,18 @@ function migrate_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
+      'default_value' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('mcmid'),
     'unique keys' => array(
-      'colkey' => array('mcsid', 'colname'),
+      'colkey' => array('mcsid', 'destfield'),
     ),
   );
-  
+    
   return $schema;
 }
 

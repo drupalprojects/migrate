@@ -70,6 +70,22 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
   return $return;
 }
 
+function migrate_save_content_set(&$content_set) {
+  if ($content_set->mcsid) {
+    drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
+  } else {
+    drupal_write_record('migrate_content_sets', $content_set);
+  }
+}
+
+function migrate_save_content_mapping(&$mapping) {
+  if ($content_set->mcmid) {
+    drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
+  } else {
+    drupal_write_record('migrate_content_mappings', $mapping);
+  }
+}
+
 /*
  * Implementation of hook_init()
  */

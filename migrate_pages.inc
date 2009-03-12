@@ -362,7 +362,7 @@ function _migrate_destination_form($form_state) {
       $options[$name] .= " ($view->description)";
     }
   }
-
+  asort($options);
   $form['addset']['sourceview'] = array(
     '#type' => 'select',
     '#title' => t('Source view from which to import content'),
@@ -400,16 +400,13 @@ function _migrate_destination_form($form_state) {
 }
 
 function _migrate_destination_form_submit($form, &$form_state) {
-  $view_name = $form_state['values']['sourceview'];
-  $desttype = $form_state['values']['desttype'];
-  $description = $form_state['values']['description'];
-  $contenttype = $form_state['values']['contenttype'];
-  $weight = $form_state['values']['weight'];
-  
-  db_query("INSERT INTO {migrate_content_sets}
-            (view_name, desttype, description, contenttype, weight)
-            VALUES('%s', '%s', '%s', '%s', %d)",
-           $view_name, $desttype, $description, $contenttype, $weight);
+  $content_set['view_name'] = $form_state['values']['sourceview'];
+  $content_set['desttype'] = $form_state['values']['desttype'];
+  $content_set['description'] = $form_state['values']['description'];
+  $content_set['contenttype'] = $form_state['values']['contenttype'];
+  $content_set['weight'] = $form_state['values']['weight'];
+
+  migrate_save_content_set($content_set);
 }
 
 /**
@@ -545,35 +542,27 @@ function migrate_destination_mappings_submit($form, &$form_state) {
   $mcsid = $form_state['values']['mcsid'];
   $sourcekey = $form_state['values']['sourcekey'];
   foreach($form_state['values']['cols'] as $key => $destfield) {
-    $srcfield = $form_state['values']['srcfield'][$destfield];
-    $mcmid = db_result(db_query(
+    $mapping = new stdClass;
+    $mapping->mcsid = $mcsid;
+    $mapping->srcfield = $form_state['values']['srcfield'][$destfield];
+    $mapping->destfield = $destfield;
+    $mapping->default_value = $form_state['values']['default_value'][$destfield];
+    $mapping->mcmid = db_result(db_query(
       "SELECT mcmid
        FROM {migrate_content_mappings}
        WHERE mcsid=%d AND destfield='%s'",
       $mcsid, $destfield));
-    if (!$mcmid) {
-      db_query("INSERT INTO {migrate_content_mappings}
-              (mcsid, srcfield, destfield, default_value)
-              VALUES(%d, '%s', '%s', '%s')",
-             $mcsid, $srcfield, $destfield, $form_state['values']['default_value'][$destfield]);
-    } else {
-      db_query("UPDATE {migrate_content_mappings}
-                SET srcfield='%s', default_value='%s'
-                WHERE mcsid=%d and destfield='%s'",
-               $srcfield, $form_state['values']['default_value'][$destfield], $mcsid, $destfield);
-    }
+    migrate_save_content_mapping($mapping);
   }
-  $sql = "SELECT view_name, sourcekey, contenttype
+  $sql = "SELECT *
           FROM {migrate_content_sets}
           WHERE mcsid=%d";
   $row = db_fetch_object(db_query($sql, $mcsid));
 
   if ($row->sourcekey <> $sourcekey) {
     // Update content set key
-    $sql = "UPDATE {migrate_content_sets}
-            SET sourcekey='%s'
-            WHERE mcsid=%d";
-    db_query($sql, $sourcekey, $mcsid);
+    $row->sourcekey = $sourcekey;
+    migrate_save_content_set($row);
     
     // Create a map table from this view to the results
     $maptablename = _migrate_map_table_name($row->view_name, $row->contenttype);
@@ -759,10 +748,8 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       drupal_set_message($message);
       watchdog('migrate', $message);
       // Mark that we're done
-      db_query("UPDATE {migrate_content_sets}
-                SET clearing=0
-                WHERE mcsid=%d",
-               $mcsid);
+      $tblinfo->clearing = 0;
+      migrate_save_content_set($tblinfo);
       // Remove old messages before beginning new import process
       db_query("DELETE FROM $msgtablename WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
     }

@@ -66,6 +66,12 @@ function migrate_schema() {
         'unsigned' => FALSE,
         'not null' => TRUE,
       ),
+      'rowcount' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('mcsid'),
     'indexes' => array(
@@ -122,6 +128,22 @@ function migrate_install() {
 * Implementation of hook_uninstall().
 */
 function migrate_uninstall() {
-  // Remove tables
+  // Remove dynamically-created mapping and message tables
+  $sql = "SELECT view_name, contenttype FROM {migrate_content_sets}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $maptablename = _migrate_map_table_name($row->view_name, $row->contenttype);
+    tw_remove_tables($maptablename);
+    if (db_table_exists($maptablename)) {
+      $sql = "DROP TABLE $maptablename";
+      db_query($sql);
+    }
+    $msgtablename = _migrate_message_table_name($row->view_name, $row->contenttype);
+    tw_remove_tables($msgtablename);
+    if (db_table_exists($msgtablename)) {
+      $sql = "DROP TABLE $msgtablename";
+      db_query($sql);
+    }
+  }
   drupal_uninstall_schema('migrate');
 }

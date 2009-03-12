@@ -81,7 +81,7 @@ function _migrate_dashboard_form($form_state) {
       $importing[$row->mcsid] = '';
       $scanning[$row->mcsid] = '';
       $status = t('N/A');
-      $maptable = $row->view_name.'_'.$row->contenttype.'map';
+      $maptable = _migrate_map_table_name($row->view_name, $row->contenttype);
       $sourcekey = $row->sourcekey;
       if ($row->clearing) {
         $clearingenable[] = $row->mcsid;
@@ -576,7 +576,7 @@ function migrate_destination_mappings_submit($form, &$form_state) {
     db_query($sql, $sourcekey, $mcsid);
     
     // Create a map table from this view to the results
-    $maptablename = $row->view_name.'_'.$row->contenttype.'map';
+    $maptablename = _migrate_map_table_name($row->view_name, $row->contenttype);
 
     // Get the proper field definition for the sourcekey
     $view = views_get_view($row->view_name);
@@ -610,6 +610,7 @@ function migrate_destination_mappings_submit($form, &$form_state) {
       db_create_table($ret, $maptablename, $schema);
       // Expose map table to views
       tw_add_tables(array($maptablename));
+      tw_add_fk($maptablename, $row->contenttype.'id');
     } else {
       // TODO: Handle change in PK - rebuild map table
     }
@@ -625,7 +626,7 @@ function _migrate_ensure_msgtable($content_set) {
   } else {
     $row = $content_set;
   }
-  $msgtablename = $row->view_name.'_'.$row->contenttype.'_msgs';
+  $msgtablename = _migrate_message_table_name($row->view_name, $row->contenttype);
   if (!db_table_exists($msgtablename)) {
     // TODO: We need a way to determine the true type of the sourcekey - for
     // now, assume a srcfile key is varchar and all else is int...
@@ -669,6 +670,9 @@ function _migrate_ensure_msgtable($content_set) {
       ),
     );
     db_create_table($ret, $msgtablename, $schema);
+    // Expose messages table to views
+    tw_add_tables(array($msgtablename));
+    tw_add_fk($msgtablename, 'sourceid');
   }
   return $msgtablename;
 }
@@ -705,7 +709,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
     $description = $tblinfo->description;
     $contenttype = $tblinfo->contenttype;
     $contentid = $contenttype.'id';
-    $maptable = $view_name.'_'.$contenttype.'map';
+    $maptable = _migrate_map_table_name($view_name, $contenttype);
     $sourcekey = $tblinfo->sourcekey;
     $processstart = microtime(TRUE);
     $msgtablename = _migrate_ensure_msgtable($tblinfo);
@@ -779,7 +783,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
     $description = $tblinfo->description;
     $contenttype = $tblinfo->contenttype;
     $contentid = $contenttype.'id';
-    $maptable = $view_name.'_'.$contenttype.'map';
+    $maptable = _migrate_map_table_name($view_name, $contenttype);
     $sourcekey = $tblinfo->sourcekey;
     $processstart = microtime(TRUE);
     $collist = db_query("SELECT srcfield, destfield, default_value

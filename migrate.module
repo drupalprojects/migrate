@@ -259,6 +259,14 @@ function _migrate_print_timers() {
   }
 }
 
+function _migrate_message_table_name($view_name, $contenttype) {
+  return $view_name . '_' . $contenttype . '_msgs';
+}
+
+function _migrate_map_table_name($view_name, $contenttype) {
+  return $view_name . '_' . $contenttype . '_map';
+}
+
 function migrate_views_api() {
   return array('api' => '2.0');
 }

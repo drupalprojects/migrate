@@ -563,46 +563,6 @@ function migrate_destination_mappings_submit($form, &$form_state) {
     // Update content set key
     $row->sourcekey = $sourcekey;
     migrate_save_content_set($row);
-    
-    // Create a map table from this view to the results
-    $maptablename = _migrate_map_table_name($row->view_name, $row->contenttype);
-
-    // Get the proper field definition for the sourcekey
-    $view = views_get_view($row->view_name);
-    $tablename = $view->display['default']->display_options['fields'][$sourcekey]['table'];
-    $inspect = schema_invoke('inspect');
-    $sourceschema = $inspect[$tablename];
-    $sourcefield = $sourceschema['fields'][$sourcekey];
-
-    if (!db_table_exists($maptablename)) {
-      $schema = array(
-        'description' => t('Mappings from source key to destination key'),
-        'fields' => array(
-          $sourcekey => $sourcefield,
-          // @TODO: Assumes destination key is unsigned int
-          $row->contenttype.'id' => array(
-            'type' => 'int',
-            'unsigned' => TRUE,
-            'not null' => TRUE,
-          ),
-          'mcsid' => array(
-            'type' => 'int',
-            'unsigned' => TRUE,
-            'not null' => TRUE,
-          ),
-        ),
-        'primary key' => array($sourcekey),
-        'indexes' => array(
-          'idkey' => array($row->contenttype.'id'),
-        ),
-      );
-      db_create_table($ret, $maptablename, $schema);
-      // Expose map table to views
-      tw_add_tables(array($maptablename));
-      tw_add_fk($maptablename, $row->contenttype.'id');
-    } else {
-      // TODO: Handle change in PK - rebuild map table
-    }
   }
   drupal_set_message('Changes saved');
 }
@@ -1026,3 +986,4 @@ function _migrate_tools_form_submit($form, &$form_state) {
     }
   }
 }
+

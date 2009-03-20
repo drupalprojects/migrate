@@ -4,6 +4,11 @@
 define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
 define('MIGRATE_ACCESS_ADVANCED', 'advanced migration tools');
 
+define('MIGRATE_MESSAGE_ERROR', 1);
+define('MIGRATE_MESSAGE_WARNING', 2);
+define('MIGRATE_MESSAGE_NOTICE', 3);
+define('MIGRATE_MESSAGE_INFORMATIONAL', 4);
+
 /**
  * @file
  * This module provides tools at "administer >> content >> migrate"
@@ -76,10 +81,52 @@ function migrate_save_content_set(&$content_set) {
   } else {
     drupal_write_record('migrate_content_sets', $content_set);
   }
+    
+  // Create a map table from this view to the results
+  $maptablename = _migrate_map_table_name($content_set->view_name, $content_set->contenttype);
+
+  // Get the proper field definition for the sourcekey
+  $view = views_get_view($content_set->view_name);
+
+  // TODO: For now, PK must be in base_table
+  $tablename = $view->base_table;
+  $inspect = schema_invoke('inspect');
+  $sourceschema = $inspect[$tablename];
+  $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
+  if (!db_table_exists($maptablename)) {
+    $schema = array(
+      'description' => t('Mappings from source key to destination key'),
+      'fields' => array(
+        $content_set->sourcekey => $sourcefield,
+        // @TODO: Assumes destination key is unsigned int
+        $content_set->contenttype.'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'mcsid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array($content_set->sourcekey),
+       'indexes' => array(
+         'idkey' => array($content_set->contenttype.'id'),
+        ),
+      );
+    db_create_table($ret, $maptablename, $schema);
+    // Expose map table to views
+    tw_add_tables(array($maptablename));
+    tw_add_fk($maptablename, $content_set->contenttype.'id');
+  } else {
+    // TODO: Handle change in PK - rebuild map table
+  }
+
 }
 
 function migrate_save_content_mapping(&$mapping) {
-  if ($content_set->mcmid) {
+  if ($mapping->mcmid) {
     drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
   } else {
     drupal_write_record('migrate_content_mappings', $mapping);

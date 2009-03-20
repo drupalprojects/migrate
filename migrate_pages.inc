@@ -93,9 +93,9 @@ function _migrate_dashboard_form($form_state) {
         $scanningenable[] = $row->mcsid;
       }
       $imported = db_result(db_query("SELECT COUNT(*)
-                                        FROM $maptable 
-                                        WHERE mcsid=%d", 
-                                       $row->mcsid));
+                                      FROM {" . $maptable . "} 
+                                      WHERE mcsid=%d", 
+                                     $row->mcsid));
       $view = views_get_view($row->view_name);
       // Force execution of count query, with minimal unnecessary results returned
       // @TODO: Find way to execute ONLY count query
@@ -112,7 +112,7 @@ function _migrate_dashboard_form($form_state) {
         /* Restore when views integration is fully implemented
         $unimported = l($unimported, 'admin/content/migrate/audit/'.$row->view_name.'_unimported');*/
         $numerrors = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                         FROM $msgtablename
+                                         FROM {" . $msgtablename . "}
                                          WHERE level=%d",
                                         MIGRATE_MESSAGE_ERROR));
         if ($numerrors > 0) {
@@ -122,14 +122,14 @@ function _migrate_dashboard_form($form_state) {
             array('html' => TRUE, 'attributes' => array('class' => 'error_link'))).')';*/
         }
         $numwarnings = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                           FROM $msgtablename
+                                           FROM {" . $msgtablename . "}
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_WARNING));
         if ($numwarnings > 0) {
           $messages .= format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings').'<br />';
         }
         $numnotices = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                           FROM $msgtablename
+                                           FROM {" . $msgtablename . "}
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_NOTICE));
         if ($numnotices > 0) {
@@ -141,7 +141,7 @@ function _migrate_dashboard_form($form_state) {
       }
       if ($imported > 0) {
         $numinformational = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                           FROM $msgtablename
+                                           FROM {" . $msgtablename . "}
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_INFORMATIONAL));
         if ($numinformational > 0) {
@@ -665,9 +665,9 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
     
     $deleted = 0;
     if ($idlist) {
-      $sql = "SELECT $contentid FROM $maptable WHERE mcsid=%d AND $sourcekey IN ($idlist)";
+      $sql = "SELECT $contentid FROM {" . $maptable . "} WHERE mcsid=%d AND $sourcekey IN ($idlist)";
     } else {
-      $sql = "SELECT $contentid FROM $maptable WHERE mcsid=%d";
+      $sql = "SELECT $contentid FROM {" . $maptable . "} WHERE mcsid=%d";
     }
 
     if ($limit) {
@@ -685,8 +685,8 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       }
       // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
       migrate_invoke_all('destination', 'delete', $contenttype, $row->$contentid);
-      db_query("DELETE FROM $maptable WHERE $contentid=%d", $row->$contentid);
-      db_query("DELETE FROM $msgtablename WHERE sourceid=%d AND level=%d",
+      db_query("DELETE FROM {" . $maptable . "} WHERE $contentid=%d", $row->$contentid);
+      db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid=%d AND level=%d",
         $row->$contentid, MIGRATE_MESSAGE_INFORMATIONAL);
       $deleted++;
     }
@@ -711,7 +711,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       $tblinfo->clearing = 0;
       migrate_save_content_set($tblinfo);
       // Remove old messages before beginning new import process
-      db_query("DELETE FROM $msgtablename WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
+      db_query("DELETE FROM {" . $msgtablename . "} WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
     }
   }
 
@@ -826,7 +826,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
           if ($error['level'] != MIGRATE_MESSAGE_INFORMATIONAL) {
             $success = FALSE;
           }
-          db_query("INSERT INTO $msgtablename
+          db_query("INSERT INTO {" . $msgtablename . "}
                     (sourceid, level, message)
                     VALUES('%s', %d, '%s')",
                     $error['sourceid'], $error['level'], $error['message']);
@@ -978,7 +978,7 @@ function _migrate_tools_form_submit($form, &$form_state) {
   foreach ($form_state['values']['clearing'] as $type => $value) {
     if ($value) {
       drupal_set_message("Deleting all $type nodes");
-      $sql = "SELECT nid FROM node WHERE type='%s'";
+      $sql = "SELECT nid FROM {node} WHERE type='%s'";
       $result = db_query($sql, $type);
       while ($row = db_fetch_object($result)) {
         node_delete($row->nid);

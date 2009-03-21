@@ -76,12 +76,15 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
 }
 
 function migrate_save_content_set(&$content_set) {
+  if (is_array($content_set)) {
+    $content_set = (object) $content_set;
+  }
   if ($content_set->mcsid) {
     drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
   } else {
     drupal_write_record('migrate_content_sets', $content_set);
   }
-    
+
   // Create a map table from this view to the results
   $maptablename = _migrate_map_table_name($content_set->view_name, $content_set->contenttype);
 
@@ -92,37 +95,40 @@ function migrate_save_content_set(&$content_set) {
   $tablename = $view->base_table;
   $inspect = schema_invoke('inspect');
   $sourceschema = $inspect[$tablename];
-  $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
-  if (!db_table_exists($maptablename)) {
-    $schema = array(
-      'description' => t('Mappings from source key to destination key'),
-      'fields' => array(
-        $content_set->sourcekey => $sourcefield,
-        // @TODO: Assumes destination key is unsigned int
-        $content_set->contenttype.'id' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
+  // If the PK of the content set is defined, make sure we have a mapping table
+  if ($content_set->sourcekey) {
+    $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
+    if (!db_table_exists($maptablename)) {
+      $schema = array(
+        'description' => t('Mappings from source key to destination key'),
+        'fields' => array(
+          $content_set->sourcekey => $sourcefield,
+          // @TODO: Assumes destination key is unsigned int
+          $content_set->contenttype.'id' => array(
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ),
+          'mcsid' => array(
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ),
         ),
-        'mcsid' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-        ),
-      ),
-      'primary key' => array($content_set->sourcekey),
-       'indexes' => array(
-         'idkey' => array($content_set->contenttype.'id'),
-        ),
-      );
-    db_create_table($ret, $maptablename, $schema);
-    // Expose map table to views
-    tw_add_tables(array($maptablename));
-    tw_add_fk($maptablename, $content_set->contenttype.'id');
-  } else {
-    // TODO: Handle change in PK - rebuild map table
+        'primary key' => array($content_set->sourcekey),
+         'indexes' => array(
+           'idkey' => array($content_set->contenttype.'id'),
+          ),
+        );
+      db_create_table($ret, $maptablename, $schema);
+      // Expose map table to views
+      tw_add_tables(array($maptablename));
+      tw_add_fk($maptablename, $content_set->contenttype.'id');
+    } else {
+      // TODO: Handle change in PK - rebuild map table
+    }
   }
-
+  return $content_set->mcsid;
 }
 
 function migrate_save_content_mapping(&$mapping) {
@@ -131,6 +137,13 @@ function migrate_save_content_mapping(&$mapping) {
   } else {
     drupal_write_record('migrate_content_mappings', $mapping);
   }
+}
+
+function migrate_delete_content_set($mcsid) {
+  $sql = "DELETE FROM {migrate_content_mappings} WHERE mcsid=%d";
+  db_query($sql, $mcsid);
+  $sql = "DELETE FROM {migrate_content_sets} WHERE mcsid=%d";
+  db_query($sql, $mcsid);
 }
 
 /*
@@ -203,7 +216,7 @@ function migrate_menu() {
     'file' => 'migrate_pages.inc',
   );
   $items['admin/content/migrate/destinations'] = array(
-    'title' => 'Destinations',
+    'title' => 'Content sets',
     'description' => 'Manage content sets: mappings of source data to Drupal content',
     'weight' => 2,
     'page callback' => 'migrate_destinations',
@@ -227,7 +240,7 @@ function migrate_menu() {
     'file' => 'migrate_pages.inc',
   );
   $items['admin/content/migrate/destinations/%'] = array(
-    'title' => 'Destination mappings',
+    'title' => 'Content set',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('migrate_destination_mappings', 4),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),

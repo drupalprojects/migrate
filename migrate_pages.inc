@@ -324,14 +324,14 @@ function _migrate_destination_form($form_state) {
         $row->desttype,
         $row->description,
         $row->weight,
-        l(t('Define field mappings'), 'admin/content/migrate/destinations/'. $row->mcsid, array('html' => TRUE)),
+        l(t('Edit'), 'admin/content/migrate/destinations/'. $row->mcsid, array('html' => TRUE)),
       ),
       'class' => "migrate-content-sets-tr",
     );
   }
 
   if (!isset($rows)) {
-    $rows[] = array(array('data' => t('No content mapping sets have been defined'), 'colspan' => count($header)));
+    $rows[] = array(array('data' => t('No content sets have been defined'), 'colspan' => count($header)));
   }
 
   $form['setlist'] = array(
@@ -339,13 +339,13 @@ function _migrate_destination_form($form_state) {
   );
   $form['addset'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Add a mapping set'),
+    '#title' => t('Add a content set'),
     '#collapsible' => TRUE,
   );
 
   $form['addset']['description'] = array(
     '#type' => 'textfield',
-    '#title' => t('Description of the mapping set'),
+    '#title' => t('Description of the content set'),
   );
   
   $views = views_get_all_views();
@@ -406,7 +406,9 @@ function _migrate_destination_form_submit($form, &$form_state) {
   $content_set['contenttype'] = $form_state['values']['contenttype'];
   $content_set['weight'] = $form_state['values']['weight'];
 
-  migrate_save_content_set($content_set);
+  $mcsid = migrate_save_content_set($content_set);
+  // Go straight to the mapping form
+  $form_state['redirect'] = "admin/content/migrate/destinations/$mcsid";
 }
 
 /**
@@ -421,6 +423,8 @@ function migrate_destination_mappings($form_state, $mcsid) {
   $sourcekey = $row->sourcekey;
   $description = $row->description;
   $contenttype = $row->contenttype;
+  $desttype = $row->desttype;
+  $weight = $row->weight;
   $destfields = migrate_invoke_all('destination', 'fields', $contenttype, $desttype);
   
   $form['mcsid'] = array(
@@ -428,16 +432,45 @@ function migrate_destination_mappings($form_state, $mcsid) {
     '#value' => $mcsid,
   );
   $form['description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Description of the content set'),
+    '#default_value' => $description,
+  );
+  $form['show_view_name'] = array(
     '#prefix' => '<div>',
-    '#value' => $description,
+    '#value' => t('Source view: ').l($view_name, 'admin/build/views/edit/'.$view_name),
     '#suffix' => '</div>',
   );
-  $form['view_edit'] = array(
-    '#title' => t('Source view'),
+  $form['view_name'] = array(
+    '#type' => 'value',
+    '#value' => $view_name,
+  );
+  $form['show_contenttype'] = array(
     '#prefix' => '<div>',
-    '#value' => l(t('Edit').' '.$view_name, 'admin/build/views/edit/'.$view_name),
+    '#value' => t('Kind of destination: ').$contenttype,
     '#suffix' => '</div>',
   );
+  $form['contenttype'] = array(
+    '#type' => 'value',
+    '#value' => $contenttype,
+  );
+  
+  $desttypes = migrate_invoke_all('destination', 'types');
+  $destselect = $desttypes[$contenttype];
+  $form['desttype'] = array(
+    '#type' => 'select',
+    '#title' => t('Destination content type'),
+    '#options' => $destselect,
+    '#default_value' => $desttype,
+  );
+
+  $form['weight'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Weight'),
+    '#description' => t('The order in which content sets will be processed and displayed.'),
+    '#default_value' => $weight,
+  );
+  
   $form['header'] = array(
     '#type' => 'value',
     '#value' => array(
@@ -504,14 +537,21 @@ function migrate_destination_mappings($form_state, $mcsid) {
     '#type' => 'submit',
     '#value' => t('Submit changes'),
   );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+  );
   $form['#tree'] =TRUE;
   return $form;
 }
 
 function theme_migrate_destination_mappings($form) {
   $output = drupal_render($form['description']);
-  $output .= drupal_render($form['view_edit']);
+  $output .= drupal_render($form['show_view_name']);
+  $output .= drupal_render($form['show_contenttype']);
+  $output .= drupal_render($form['desttype']);
   $output .= drupal_render($form['sourcekey']);
+  $output .= drupal_render($form['weight']);
 
   if (isset($form['destfield']) && is_array($form['destfield'])) {
     foreach(element_children($form['destfield']) as $destfield) {
@@ -540,31 +580,28 @@ function theme_migrate_destination_mappings($form) {
  */
 function migrate_destination_mappings_submit($form, &$form_state) {
   $mcsid = $form_state['values']['mcsid'];
-  $sourcekey = $form_state['values']['sourcekey'];
-  foreach($form_state['values']['cols'] as $key => $destfield) {
-    $mapping = new stdClass;
-    $mapping->mcsid = $mcsid;
-    $mapping->srcfield = $form_state['values']['srcfield'][$destfield];
-    $mapping->destfield = $destfield;
-    $mapping->default_value = $form_state['values']['default_value'][$destfield];
-    $mapping->mcmid = db_result(db_query(
-      "SELECT mcmid
-       FROM {migrate_content_mappings}
-       WHERE mcsid=%d AND destfield='%s'",
-      $mcsid, $destfield));
-    migrate_save_content_mapping($mapping);
+  if ($form_state['clicked_button']['#parents'][0] == 'delete') {
+    migrate_delete_content_set($mcsid);
+    drupal_set_message(t('Content set deleted'));
+    $form_state['redirect'] = 'admin/content/migrate/destinations';
+  } else {
+    $sourcekey = $form_state['values']['sourcekey'];
+    foreach($form_state['values']['cols'] as $key => $destfield) {
+      $mapping = new stdClass;
+      $mapping->mcsid = $mcsid;
+      $mapping->srcfield = $form_state['values']['srcfield'][$destfield];
+      $mapping->destfield = $destfield;
+      $mapping->default_value = $form_state['values']['default_value'][$destfield];
+      $mapping->mcmid = db_result(db_query(
+        "SELECT mcmid
+         FROM {migrate_content_mappings}
+         WHERE mcsid=%d AND destfield='%s'",
+        $mcsid, $destfield));
+      migrate_save_content_mapping($mapping);
+    }
+    migrate_save_content_set($form_state['values']);
+    drupal_set_message('Changes saved');
   }
-  $sql = "SELECT *
-          FROM {migrate_content_sets}
-          WHERE mcsid=%d";
-  $row = db_fetch_object(db_query($sql, $mcsid));
-
-  if ($row->sourcekey <> $sourcekey) {
-    // Update content set key
-    $row->sourcekey = $sourcekey;
-    migrate_save_content_set($row);
-  }
-  drupal_set_message('Changes saved');
 }
 
 // Create a message table from this view to hold processing messages

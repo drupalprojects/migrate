@@ -282,7 +282,7 @@ function migrate_migrate_destination_delete_comment($cid) {
      INNER JOIN {users} u ON u.uid = c.uid 
      WHERE c.cid = %d', 
     $cid));
-  comment_confirm_delete_submit($form, &$form_state);
+  comment_confirm_delete_submit($form, $form_state);
 }
 
 function migrate_migrate_destination_import_comment($tblinfo, $row) {

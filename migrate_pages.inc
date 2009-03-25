@@ -813,6 +813,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       $view->query->add_where($view->options['group'], $view->base_table.".$sourcekey IN ($idlist)", 
         $view->base_table);
     }
+
     // We can't seem to get $view->build() to rebuild build_info, so go straight into the query object
     $query = $view->query->query();
     
@@ -826,6 +827,21 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
         $args[$id] = str_replace(array_keys($replacements), $replacements, $arg);
       }
     }
+
+    // Now, make the current db name explicit if content set is
+    // pulling tables from another DB
+    $viewdb = $view->base_database;
+    if ($viewdb <> 'default') {
+      global $db_url;
+      $url = parse_url(is_array($db_url) ? $db_url['default'] : $db_url);
+      $currdb = substr($url['path'], 1);
+      $query = str_replace('{' . $maptable . '}', 
+        '{' . $currdb . '.' . $maptable . '}', $query);
+      $query = str_replace('{' . $msgtablename . '}', 
+        '{' . $currdb . '.' . $msgtablename . '}', $query);
+      db_set_active($viewdb);
+    }
+    
     //drupal_set_message($query);
     timer_start('execute view query');
     if ($limit) {
@@ -834,6 +850,10 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       $importlist = db_query($query, $args);
     }
     timer_stop('execute view query');
+    
+    if ($viewdb != 'default') {
+      db_set_active('default');
+    }
     
     $imported = 0;
     timer_start('db_fetch_object');
@@ -1023,4 +1043,3 @@ function _migrate_tools_form_submit($form, &$form_state) {
     }
   }
 }
-

@@ -77,6 +77,7 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
 
 function migrate_save_content_set(&$content_set) {
   if (is_array($content_set)) {
+    $was_array = TRUE;
     $content_set = (object) $content_set;
   }
   if ($content_set->mcsid) {
@@ -90,10 +91,15 @@ function migrate_save_content_set(&$content_set) {
 
   // Get the proper field definition for the sourcekey
   $view = views_get_view($content_set->view_name);
+  // Must do this to load the database
+  $view->init_query();
 
   // TODO: For now, PK must be in base_table
+  $tabledb = $view->base_database;
   $tablename = $view->base_table;
+  db_set_active($tabledb);
   $inspect = schema_invoke('inspect');
+  db_set_active('default');
   $sourceschema = $inspect[$tablename];
   // If the PK of the content set is defined, make sure we have a mapping table
   if ($content_set->sourcekey) {
@@ -128,6 +134,11 @@ function migrate_save_content_set(&$content_set) {
       // TODO: Handle change in PK - rebuild map table
     }
   }
+  
+  if ($was_array) {
+    $content_set = (array)$content_set;
+  }
+  
   return $content_set->mcsid;
 }
 

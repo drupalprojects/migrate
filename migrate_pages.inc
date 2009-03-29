@@ -46,7 +46,8 @@ function _migrate_dashboard_form($form_state) {
     '#prefix' => '<div>',
     '#value' => t('View and manage import processes here. Processes that are in progress are checked -
       they can be cancelled by unchecking, or new processes begun by checking, then clicking Submit.
-      A red <strong>Unimported</strong> value indicates import errors - click it to see details.'),
+      Any checked process will run in the background (via cron) automatically - you may also run
+      them interactively.'),
     '#suffix' => '</div>',
   );
   
@@ -193,35 +194,44 @@ function _migrate_dashboard_form($form_state) {
     '#default_value' => $scanningenable,
   );
   if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-    $form['donow'] = array(
+    $form['interactive'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Interactive mode'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#description' => t('While large migration tasks are best run in the background (via cron),
+        you may choose here to begin tasks interactively; either because they are relatively small,
+        or to test subsets of the migration.'),
+    );
+    $form['interactive']['donow'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Begin any selected processes now'),
-      '#description' => t('If left unchecked, selected processes will be executed with the next cron run.
-        If checked, the work will begin on form submission, then continue with subsequent cron runs. Clearing
-        a content set deletes all items that were created via that content set; importing will create new
-        items for any input rows which have not previously been imported into Drupal items.
-        Scanning does the same as importing, except that it does not automatically turn itself
-        off when finished with all new input.'),
+      '#default_value' => 1,
+      '#title' => t('Enable'),
+      '#description' => t('If enabled, processing of selected processes begins immediately
+        upon clicking Submit, with any unfinished processing continued in the background. 
+        If disabled, processing will be done entirely in the background beginning with the next cron.'),
+    );
+    $form['interactive']['limit'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Sample size'),
+      '#size' => 4,
+      '#description' => t('Number of records to process in the current interactive run. Leave
+        blank to process all records that can be completed within the PHP max_execution_time.'),
+    );
+    $form['interactive']['idlist'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Source IDs'),
+      '#size' => 30,
+      '#description' => t('Enter a comma-separated list of IDs from the incoming content set, to
+        process only those records in the current interactive run.'),
     );
     $form['clearsemaphore'] = array(
       '#type' => 'checkbox',
       '#title' => t('Unstick migration process'),
       '#description' => t('An error during processing can leave the migration semaphore enabled,
-        preventing further processing. Check this box to clear the semaphore when this happens.'),
-    );
-    $form['limit'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Sample size'),
-      '#size' => 4,
-      '#description' => t('To run a migration task over a limited number of records,
-        enter that number here.'),
-    );
-    $form['idlist'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Source IDs'),
-      '#size' => 30,
-      '#description' => t('To run a migration task over a specific set of source IDs,
-        enter a comma-separated list of IDs here.'),
+        preventing further processing. When this happens, you will see the message "There is an
+        import process already in progress" when you are sure there is no process currently running
+        (even in cron). Check this box to clear the semaphore when this happens.'),
     );
     $form['submit'] = array(
       '#type' => 'submit',

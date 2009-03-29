@@ -856,9 +856,9 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       $url = parse_url(is_array($db_url) ? $db_url['default'] : $db_url);
       $currdb = substr($url['path'], 1);
       $query = str_replace('{' . $maptable . '}', 
-        '{' . $currdb . '.' . $maptable . '}', $query);
+        $currdb . '.' . '{' . $maptable . '}', $query);
       $query = str_replace('{' . $msgtablename . '}', 
-        '{' . $currdb . '.' . $msgtablename . '}', $query);
+        $currdb . '.' . '{' . $msgtablename . '}', $query);
       db_set_active($viewdb);
     }
     

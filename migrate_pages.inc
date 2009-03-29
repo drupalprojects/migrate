@@ -77,6 +77,12 @@ function _migrate_dashboard_form($form_state) {
   while ($row = db_fetch_object($result)) {
     $status = '';
     if ($row->mcsid) {
+      $view = views_get_view($row->view_name);
+      if (!$view) {
+        drupal_set_message(t('View !view does not exist - either (re)create this view, or
+          remove the content set using it.', array('!view' => $row->view_name)));
+        continue;
+      }
       $clearing[$row->mcsid] = '';
       $importing[$row->mcsid] = '';
       $scanning[$row->mcsid] = '';
@@ -96,7 +102,6 @@ function _migrate_dashboard_form($form_state) {
                                       FROM {" . $maptable . "} 
                                       WHERE mcsid=%d", 
                                      $row->mcsid));
-      $view = views_get_view($row->view_name);
       // Force execution of count query, with minimal unnecessary results returned
       // @TODO: Find way to execute ONLY count query
       $view->pager['items_per_page'] = 1;
@@ -481,67 +486,72 @@ function migrate_destination_mappings($form_state, $mcsid) {
   );
   
   $view = views_get_view($view_name);
-  // Need to fill in the query, to find out the aliases that will be returned by the 
-  // query
-  $view->build();
-  $fields = $view->get_items('field');
-  $srcoptions = array();
-  foreach ($view->query->fields as $fieldalias => $field) {
-    $fieldname = $field['field'];
-    $fieldlabel = $fields[$fieldname]['label'];
-    if ($fieldlabel) {
-      $srcoptions[$fieldalias] = $fieldlabel;
-    } else {
-      $srcoptions[$fieldalias] = $fieldname;
+  if (!$view) {
+    drupal_set_message(t('View !view does not exist - either (re)create a view with
+      this name, or delete this content set.', array('!view' => $view_name)));
+  } else {
+    // Need to fill in the query, to find out the aliases that will be returned by the 
+    // query
+    $view->build();
+    $fields = $view->get_items('field');
+    $srcoptions = array();
+    foreach ($view->query->fields as $fieldalias => $field) {
+      $fieldname = $field['field'];
+      $fieldlabel = $fields[$fieldname]['label'];
+      if ($fieldlabel) {
+        $srcoptions[$fieldalias] = $fieldlabel;
+      } else {
+        $srcoptions[$fieldalias] = $fieldname;
+      }
     }
-  }
-
-  $form['sourcekey'] = array(
-    '#type' => 'select',
-    '#options' => $srcoptions,
-    '#default_value' => $sourcekey,
-    '#title' => t('Primary key of source view'),
-  );
   
-  $mappings = array();
-  $defaults = array();
-  
-  $srcoptions = array_merge(array('' => t('<none>')), $srcoptions);
-  foreach ($destfields as $destfield => $destname) {
-    $sql = "SELECT *
-            FROM {migrate_content_mappings}
-            WHERE mcsid=%d AND destfield='%s'";
-    $result = db_query($sql, $mcsid, $destfield);
-    $row = db_fetch_object($result);
-    $cols[] = $destfield;
-    $form['srcfield'][$destfield] = array(
+    $form['sourcekey'] = array(
       '#type' => 'select',
       '#options' => $srcoptions,
-      '#default_value' => $row->srcfield,
+      '#default_value' => $sourcekey,
+      '#title' => t('Primary key of source view'),
     );
-    $form['default_value'][$destfield] = array(
-      '#type' => 'textfield',
-      '#default_value' => $row->default_value,
-      '#size' => 25,
-      '#maxlength' => 255,
+    
+    $mappings = array();
+    $defaults = array();
+    
+    $srcoptions = array_merge(array('' => t('<none>')), $srcoptions);
+    foreach ($destfields as $destfield => $destname) {
+      $sql = "SELECT *
+              FROM {migrate_content_mappings}
+              WHERE mcsid=%d AND destfield='%s'";
+      $result = db_query($sql, $mcsid, $destfield);
+      $row = db_fetch_object($result);
+      $cols[] = $destfield;
+      $form['srcfield'][$destfield] = array(
+        '#type' => 'select',
+        '#options' => $srcoptions,
+        '#default_value' => $row->srcfield,
+      );
+      $form['default_value'][$destfield] = array(
+        '#type' => 'textfield',
+        '#default_value' => $row->default_value,
+        '#size' => 25,
+        '#maxlength' => 255,
+      );
+      $form['destfield'][$destfield] = array('#value' => $destname);
+    }
+    
+    $form['cols'] = array(
+      '#type' => 'value',
+      '#value' => $cols,
     );
-    $form['destfield'][$destfield] = array('#value' => $destname);
+    
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Submit changes'),
+    );
   }
-  
-  $form['cols'] = array(
-    '#type' => 'value',
-    '#value' => $cols,
-  );
-  
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Submit changes'),
-  );
   $form['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
   );
-  $form['#tree'] =TRUE;
+  $form['#tree'] = TRUE;
   return $form;
 }
 

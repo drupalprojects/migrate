@@ -43,6 +43,7 @@ function migrate_migrate_destination_delete_user($uid) {
 
 function migrate_migrate_destination_import_user($tblinfo, $row) {
   $use_profile = module_exists('content_profile');
+  $use_emailreg = module_exists('email_registration');
 
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
@@ -99,10 +100,10 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
     // If email_registration is being used, it will generate a unique username
     // from the email address in its user hook - we need to put a name in here
     // so it passes previous validation
-    if (module_exists('email_registration')) {
+    if ($use_emailreg) {
+      // Save any explicitly-provided username, to restore later
+      $username = $newuser['name'];
       $newuser['name'] = 'dlksflkaj';
-      $username = $newuser['username'];
-      unset($newuser['username']);
     }
     
     timer_start('user_save');
@@ -127,10 +128,9 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
                 VALUES(%d, %d, %d)",
                $row->$sourcekey, $account->uid, $tblinfo->mcsid);
       // email_registration module overrides username, set the one we want here
-      if (module_exists('email_registration') && $username) {
+      if ($use_emailreg && $username) {
         db_query("UPDATE {users} SET name = '%s' WHERE uid = '%s'", $username, $account->uid);
         $account->name = $username;
-        unset($newuser['username']);
       }
       if ($use_profile) {
         // @TODO: From content_profile_registration_user_register_submit - generalize

@@ -698,7 +698,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
   }
 
   // Subtract more than enough time to clean up
-  $timelimit = $starttime + $maxexectime - 10;
+  $timelimit = $starttime + $maxexectime - 20;
 
   // First, perform any clearing actions in reverse order
   $result = db_query("SELECT *
@@ -727,11 +727,13 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       $sql = "SELECT $contentid FROM {" . $maptable . "} WHERE mcsid=%d";
     }
 
+    timer_start('delete query');
     if ($limit) {
       $deletelist = db_query_range($sql, $mcsid, 0, $limit);
     } else {
       $deletelist = db_query($sql, $mcsid);
     }
+    timer_stop('delete query');
     while ($row = db_fetch_object($deletelist)) {
       // Recheck clearing flag - permits dynamic interruption of cron jobs
       $sql = "SELECT clearing FROM {migrate_content_sets} WHERE mcsid=%d";
@@ -742,9 +744,11 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       }
       // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
       migrate_invoke_all('destination', 'delete', $contenttype, $row->$contentid);
+      timer_start('clear map/msg');
       db_query("DELETE FROM {" . $maptable . "} WHERE $contentid=%d", $row->$contentid);
       db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid=%d AND level=%d",
         $row->$contentid, MIGRATE_MESSAGE_INFORMATIONAL);
+      timer_stop('clear map/msg');
       $deleted++;
     }
     $time = (microtime(TRUE)-$processstart);
@@ -884,6 +888,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       $checkrow = db_fetch_object(db_query($sql, $mcsid));
       $importing = $checkrow->importing;
       $scanning = $checkrow->scanning;
+
       if ((time() >= $timelimit) || !($importing || $scanning)) {
         $timedout = TRUE;
         break;

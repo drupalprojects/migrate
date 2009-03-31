@@ -108,6 +108,18 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
     timer_start('user_save');
     $account = user_save((object)$newuser, $newuser);
     timer_stop('user_save');
+
+    // Call completion hooks, for any processing which needs to be done after user_save
+    timer_start('user completion hooks');
+    foreach (module_list() as $module_name) {
+      $function = $module_name .'_migrate_destination_complete_user';
+      if (function_exists($function)) {
+        timer_start($function);
+        $errors = array_merge($errors, (array)$function($account, $tblinfo, $row));
+        timer_stop($function);
+      }
+    }
+    timer_stop('user completion hooks');
     
     if ($account) {
       db_query("INSERT INTO {" . $tblinfo->maptable . "}

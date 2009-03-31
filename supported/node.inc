@@ -60,7 +60,7 @@ function migrate_migrate_destination_import_node($tblinfo, $row) {
     node_save($node);
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
-    timer_start('completion hooks');
+    timer_start('node completion hooks');
     foreach (module_list() as $module_name) {
       $function = $module_name .'_migrate_destination_complete_node';
       if (function_exists($function)) {
@@ -69,7 +69,7 @@ function migrate_migrate_destination_import_node($tblinfo, $row) {
         timer_stop($function);
       }
     }
-    timer_stop('completion hooks');
+    timer_stop('node completion hooks');
     
     $sourcekey = $tblinfo->sourcekey;
     //@TODO: Factor out into caller

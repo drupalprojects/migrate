@@ -103,14 +103,13 @@ function _migrate_dashboard_form($form_state) {
                                       FROM {" . $maptable . "} 
                                       WHERE mcsid=%d", 
                                      $row->mcsid));
-      // Force execution of count query, with minimal unnecessary results returned
-      // @TODO: Find way to execute ONLY count query
-      $view->pager['items_per_page'] = 1;
-      $view->get_total_rows = TRUE;
-      $view->execute(); 
-      $row->importrows = $view->total_rows;
+
+      // If not caching counts, override the saved count with a fresh count
+      if (!variable_get('migrate_cache_counts', 0)) {
+        $row->rowcount = _migrate_get_view_count($view);
+      }
                                        
-      $unimported = $row->importrows - $imported;
+      $unimported = $row->rowcount - $imported;
 
       $msgtablename = _migrate_ensure_msgtable($row);
       if ($unimported > 0) {
@@ -170,7 +169,7 @@ function _migrate_dashboard_form($form_state) {
     $form['data'][$rownum]['view_name'] = array('#value' => 
       l($row->view_name, 'admin/build/views/edit/'. $row->view_name, 
         array('html' => TRUE)));
-    $form['data'][$rownum]['importrows'] = array('#value' => check_plain($row->importrows));
+    $form['data'][$rownum]['importrows'] = array('#value' => check_plain($row->rowcount));
     $form['data'][$rownum]['imported'] = array('#value' => $imported);
     $form['data'][$rownum]['unimported'] = array('#value' => $unimported);
     $form['data'][$rownum]['lastimported'] = array('#value' => $row->lastimported);
@@ -965,15 +964,6 @@ function migrate_tools() {
 }
 
 function _migrate_tools_form($form_state) {
-  $form['display_timers'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display timers when processing'),
-    '#description' => t('To diagnose performance bottlenecks, turn this toggle
-      on - at the completion of a processing round, cumulative times of
-      tasks will be displayed.'),
-    '#default_value' => variable_get('migrate_display_timers', 0),
-   );
-  
   $form['description'] = array(
     '#prefix' => '<div>',
     '#value' => t('Besides content that is migrated into a new site, nodes will be manually
@@ -1012,17 +1002,14 @@ function _migrate_tools_form($form_state) {
     '#options' => $clearing,
     '#default_value' => array(),
   );
-  if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t("Submit"),
-    );
-  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t("Submit"),
+  );
   return $form;
 }
 
 function theme_migrate_tools($form) {
-  $output = drupal_render($form['display_timers']);
   $output .= drupal_render($form['description']);
   if (isset($form['data']) && is_array($form['data'])) {
     foreach (element_children($form['data']) as $rownum) {
@@ -1056,7 +1043,6 @@ function theme_migrate_tools($form) {
  */
 function _migrate_tools_form_submit($form, &$form_state) {
   $started = time();
-  variable_set('migrate_display_timers', $form_state['values']['display_timers']);
   foreach ($form_state['values']['clearing'] as $type => $value) {
     if ($value) {
       drupal_set_message("Deleting all $type nodes");
@@ -1067,4 +1053,90 @@ function _migrate_tools_form_submit($form, &$form_state) {
       }
     }
   }
+}
+
+function migrate_settings() {
+  return drupal_get_form('_migrate_settings_form');
+}
+
+function _migrate_settings_form($form_state) {
+  $form['display_timers'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display timers when processing'),
+    '#description' => t('To diagnose performance bottlenecks, turn this toggle
+      on - at the completion of a processing round, cumulative times of
+      tasks will be displayed.'),
+    '#default_value' => variable_get('migrate_display_timers', 0),
+   );
+   
+  $form['cache_counts'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache content set counts'),
+    '#description' => t('With large and/or complex content sets, getting the <strong>Rows
+      in Set</strong> value on the Process page can be time-consuming. Enable caching to
+      store the last known count in the database.'),
+    '#default_value' => variable_get('migrate_cache_counts', 0),
+  );
+
+  if (variable_get('migrate_cache_counts', 0)) {
+    $form['refresh_counts'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Refresh cached content set counts'),
+      '#description' => t('Update the cached content set counts to reflect their current values.'),
+      '#default_value' => 0,
+    );
+  }
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t("Submit"),
+  );
+  return $form;
+}
+
+function theme_migrate_settings($form) {
+  $output = drupal_render($form['display_timers']);
+  $output .= drupal_render($form['cache_counts']);
+  $output .= drupal_render($form['refresh_counts']);
+  $output .= drupal_render($form);
+
+  return $output;
+}
+
+/*
+ * Implementation of hook_submit()
+ */
+function _migrate_settings_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  variable_set('migrate_display_timers', $values['display_timers']);
+  $original_cache = variable_get('migrate_cache_counts', 0);
+  variable_set('migrate_cache_counts', $values['cache_counts']);
+  if ($values['refresh_counts'] || ($values['cache_counts'] && !$original_cache)) {
+    $sql = "SELECT mcsid,view_name FROM {migrate_content_sets}";
+    $result = db_query($sql);
+    while ($row = db_fetch_object($result)) {
+      $rowcount = _migrate_get_view_count($row->view_name);
+      $sql = "UPDATE {migrate_content_sets}
+              SET rowcount=%d WHERE mcsid=%d";
+      db_query($sql, $rowcount, $row->mcsid);
+    }
+    if ($values['refresh_counts']) {
+      drupal_set_message(t('Content set counts refreshed'));
+    } else {
+      drupal_set_message(t('Content set counts saved'));
+    }
+  }
+  drupal_set_message(t('Settings saved'));
+}
+
+function _migrate_get_view_count($view) {
+  if (is_string($view)) {
+    $view = views_get_view($view);
+  }
+  // Force execution of count query, with minimal unnecessary results returned
+  // @TODO: Find way to execute ONLY count query
+  $view->pager['items_per_page'] = 1;
+  $view->get_total_rows = TRUE;
+  $view->execute(); 
+  return $view->total_rows;
 }

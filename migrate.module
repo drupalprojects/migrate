@@ -244,10 +244,18 @@ function migrate_menu() {
   );
   $items['admin/content/migrate/tools'] = array(
     'title' => 'Tools',
-    'description' => 'Additional tools for managing a migration',
+    'description' => 'Additional tools for managing migration',
     'weight' => 4,
     'page callback' => 'migrate_tools',
-    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Migrate module settings',
+    'weight' => 5,
+    'page callback' => 'migrate_settings',
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_pages.inc',
   );
   $items['admin/content/migrate/destinations/%'] = array(
@@ -326,6 +334,10 @@ function migrate_theme() {
     '_migrate_tools_form' => array(
       'arguments' => array('form' => NULL),
       'function' => 'theme_migrate_tools',
+    ),
+    '_migrate_settings_form' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_settings',
     ),
     'migrate_destination_mappings' => array(
       'arguments' => array('form' => NULL),

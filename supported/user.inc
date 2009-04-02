@@ -43,7 +43,6 @@ function migrate_migrate_destination_delete_user($uid) {
 
 function migrate_migrate_destination_import_user($tblinfo, $row) {
   $use_profile = module_exists('content_profile');
-  $use_emailreg = module_exists('email_registration');
 
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
@@ -97,15 +96,13 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
   }
   
   if ($success) {
-    // If email_registration is being used, it will generate a unique username
-    // from the email address in its user hook - we need to put a name in here
-    // so it passes previous validation
-    if ($use_emailreg) {
-      // Save any explicitly-provided username, to restore later
-      $username = $newuser['name'];
-      $newuser['name'] = 'dlksflkaj';
+    // Generate a random username if none was provided (presumably we
+    // are migrating from a system using email addresses as account names)
+    if (!$newuser['name']) {
+      // There is a tiny risk that the generated name will not be unique
+      $newuser['name'] = user_password();
     }
-    
+
     timer_start('user_save');
     $account = user_save((object)$newuser, $newuser);
     timer_stop('user_save');
@@ -127,11 +124,7 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
                 ($sourcekey, userid, mcsid)
                 VALUES(%d, %d, %d)",
                $row->$sourcekey, $account->uid, $tblinfo->mcsid);
-      // email_registration module overrides username, set the one we want here
-      if ($use_emailreg && $username) {
-        db_query("UPDATE {users} SET name = '%s' WHERE uid = '%s'", $username, $account->uid);
-        $account->name = $username;
-      }
+
       if ($use_profile) {
         // @TODO: From content_profile_registration_user_register_submit - generalize
         $node->uid = $account->uid;
@@ -157,4 +150,25 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
 
 function migrate_migrate_destination_xlat_user($uid) {
   return "user/$uid";
+}
+
+/**
+ * Implementation of hook_email_registration_name()
+ * 
+ * If email_registration is in use, it overwrites any explicit username
+ * with one generated from the email address. If you install the patch at 
+ * http://drupal.org/node/247717, this hook will short-circuit that and
+ * force the username set in the migration process (possibly randomly
+ * generated above).
+ * 
+ * @param $edit
+ *  The values we passed to user_save().
+ * @param $account
+ *  The user account as created by user_save().
+ * @return 
+ *  The username we've already set - returning this prevents
+ *  email_registration from overwriting it.
+ */
+function migrate_email_registration_name($edit, $account) {
+  return $edit['name'];
 }

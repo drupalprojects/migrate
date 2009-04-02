@@ -30,7 +30,7 @@ function migrate_migrate_destination_fields_user($type) {
         $profile_fields[$key] = t('Profile: ').$value;
       }
     }
-    $fields = array_merge($userfields, $profile_fields);
+    $fields = array_merge($fields, $profile_fields);
   }
   return $fields;
 }

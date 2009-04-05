@@ -161,14 +161,12 @@ function migrate_delete_content_set($mcsid) {
 /**
  * Convenience function for generating a message array
  *
- * @param mixed $sourceid - Unique ID of the source row triggering the condition
  * @param text $message - Text describing the error condition
  * @param enum $type - One of the MIGRATE_MESSAGE constants, identifying the level of error
  * @return Structured array suitable for return from a destination hook
  */
-function migrate_message($sourceid, $message, $type = MIGRATE_MESSAGE_ERROR) {
+function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
   $error = array(
-    'sourceid' => $sourceid,
     'level' => $type,
     'message' => $message,
   );

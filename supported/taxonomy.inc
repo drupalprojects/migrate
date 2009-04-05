@@ -62,7 +62,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
 
       // Error if the vocabulary was required, but there are no terms.
       if ($vocab->required && empty($taxonomy['tags'][$vid])) {
-        $errors[] = array($row->$pkcol => t('You need to assign at least one term of the vocabulary %name.', 
+        $errors[] = migrate_message(t('You need to assign at least one term of the vocabulary %name.', 
           array('%name' => theme('placeholder', $vocab->name))));
       }
     }
@@ -94,7 +94,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               $taxonomy[$vid][] = $tid;
             }
             else if ($tid < 0 && $options['handler'] == 'no-import') {
-              $errors[] = array($row->$pkcol => t('The term %term does not exist in the %name vocabulary.', 
+              $errors[] = migrate_message(t('The term %term does not exist in the %name vocabulary.', 
                 array('%term' => theme('placeholder', $value), '%name' => theme('placeholder', $vocab->name))));
             }
           }
@@ -112,7 +112,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
 
       // Error if the vocabulary was required, but there are no terms.
       if ($vocab->required && count($taxonomy[$vid]) == 0) {
-        $errors[] = array($row->$pkcol => t('You need to assign at least one term of the %name vocabulary.', 
+        $errors[] = migrate_message(t('You need to assign at least one term of the %name vocabulary.', 
           array('%name' => theme('placeholder', $vocab->name))));
       }
 

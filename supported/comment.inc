@@ -71,10 +71,7 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
     $comment['nid'] = _migrate_xlat_get_new_id('node', $comment['nid']);
   }
   if (!$comment['nid']) {
-    $errors[] = array(
-      'sourceid' => $row->$sourcekey,
-      'message' => t('No node fond'),
-    );
+    $errors[] = migrate_message(t('No node found'));
   }
   if ($comment['uid']) {
     $comment['uid'] = _migrate_xlat_get_new_id('user', $comment['uid']);
@@ -84,14 +81,14 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
     }
   }
   if (!$comment['name']) {
-    $errors[] = migrate_message($row->$sourcekey, t('No user id or name found'));
+    $errors[] = migrate_message(t('No user id or name found'));
   }
   
   // Do our best to interpret timestamps
   if ($comment['timestamp']) {
     $comment['timestamp'] = _migrate_valid_date($comment['timestamp']);
     if ($comment['timestamp'] <= 0) {
-      $errors[] = migrate_message($row->$sourcekey, t('Provided timestamp is invalid'));
+      $errors[] = migrate_message(t('Provided timestamp is invalid'));
     }
   }
   
@@ -112,7 +109,7 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
                 VALUES(%d, %d, %d)",
                $row->$sourcekey, $cid, $tblinfo->mcsid);
     } else {
-      $errors[] = migrate_message($row->$sourcekey, t('Comment not saved'));
+      $errors[] = migrate_message(t('Comment not saved'));
     }
   }
   return $errors;

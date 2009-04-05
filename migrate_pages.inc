@@ -909,7 +909,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
           db_query("INSERT INTO {" . $msgtablename . "}
                     (sourceid, level, message)
                     VALUES('%s', %d, '%s')",
-                    $error['sourceid'], $error['level'], $error['message']);
+                    $row->$sourcekey, $error['level'], $error['message']);
         }
         if ($success) {
           $imported++;

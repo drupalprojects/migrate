@@ -170,7 +170,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->date = $date;
     }
     else {
-      $errors[] = array($row->$pkcol => t('The date %date is not a valid date.', 
+      migrate_message(t('The date %date is not a valid date.', 
         array('%date' => $node->date)));
       unset($node->date);
     }
@@ -186,7 +186,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->date = $date;
     }
     else {
-      $errors[] = array($row->$pkcol => t('The date %date is not a valid date.', 
+      migrate_message(t('The date %date is not a valid date.', 
         array('%date' => $author['date'])));
     }
   }
@@ -210,7 +210,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->updated = $date;
     }
     else {
-      $errors[] = array($row->$pkcol => t('The date %date is not a valid date.', 
+      $errors[] = migrate_message(t('The date %date is not a valid date.', 
         array('%date' => theme('placeholder', $node->updated))));
       unset($node->updated);
     }
@@ -241,7 +241,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   // 5. Title.
   if ($type_info->has_title && (!isset($node->title) || empty($node->title))) {
     $node->title = t('{Empty title}');
-//    $errors[] = array($row->$pkcol => t('You need to provide a non-empty title.'));
+//    $errors[] = migrate_messaget('You need to provide a non-empty title.'));
   }
 
   // Strip tags from the title

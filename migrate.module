@@ -137,9 +137,10 @@ function migrate_save_content_set(&$content_set) {
   
   if ($was_array) {
     $content_set = (array)$content_set;
+    return $content_set['mcsid'];
+  } else {
+    return $content_set->mcsid;
   }
-  
-  return $content_set->mcsid;
 }
 
 function migrate_save_content_mapping(&$mapping) {

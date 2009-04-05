@@ -506,9 +506,8 @@ function migrate_destination_mappings($form_state, $mcsid) {
     $srcoptions = array();
     foreach ($view->query->fields as $fieldalias => $field) {
       $fieldname = $field['field'];
-      $fieldlabel = $fields[$fieldname]['label'];
-      if ($fieldlabel) {
-        $srcoptions[$fieldalias] = $fieldlabel;
+      if (isset($fields[$fieldname]['label']) && $fields[$fieldname]['label']) {
+        $srcoptions[$fieldalias] = $fields[$fieldname]['label'];
       } else {
         $srcoptions[$fieldalias] = $fieldname;
       }

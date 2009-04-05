@@ -25,7 +25,6 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $vocabs = taxonomy_get_vocabularies($node->type);
   }
   if (!$vocabs || count($vocabs) < 1) return;
-  $pkcol = $tblinfo->pkcol;
   
   $multiple_separator = variable_get('migrate_multiple_separator', '|');
 
@@ -37,12 +36,13 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $taxonomy = is_array($node->taxonomy) ? $node->taxonomy : array();
   }
 
-  $options = $node->migrate_taxonomy;
-  unset($node->migrate_taxonomy);
-
   foreach ((array)$vocabs as $vocab) {
     $field = 'migrate_taxonomy_'. $vocab->vid;
-    $value = trim($node->$field);
+    if (isset($field) && isset($node->$field)) {
+      $value = trim($node->$field);
+    } else {
+      $value = '';
+    }
     unset($node->$field);
 
     $vid = $vocab->vid;
@@ -55,9 +55,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       //    will do that for us. So in this case, to specify multiple terms, you
       //    need to set it to "term 1, term 2, term 3" (separator = ',').
       $taxonomy['tags'] = isset($taxonomy['tags']) ? $taxonomy['tags'] : array();
-      $global_value = trim($options['taxonomy']['tags'][$vid]);
-      $taxonomy['tags'][$vid] = $global_value;
-      $taxonomy['tags'][$vid] .= (!empty($global_value) && !empty($value)) ? ',' : '';
+      $taxonomy['tags'][$vid] = (!empty($global_value) && !empty($value)) ? ',' : '';
       $taxonomy['tags'][$vid] .= str_replace($multiple_separator, ',', $value);
 
       // Error if the vocabulary was required, but there are no terms.
@@ -73,7 +71,6 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       //    $node->taxonomy = array($vid1 => array($tid1, $tid2, ...), $vid2 => array(...), ...)
       //    We'll use the second form.
       $taxonomy[$vid] = isset($taxonomy[$vid]) ? $taxonomy[$vid] : array();
-      $global_value = $options['taxonomy'][$vid];
       if (isset($value) && !empty($value)) {
         // If the vocabulary allows multiple terms, explode the $value.
         if ($vocab->multiple) {
@@ -100,15 +97,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
           }
         }
       }
-      // For !$multiple vocabularies: if $value is not set, use $global_value
-      else if (!$vocab->multiple && isset($global_value)) {
-        $taxonomy[$vid] = is_array($global_value) ? $global_value : array($global_value);
-      }
 
-      // For $multiple vocabularies: add the $global_value if set.
-      if ($vocab->multiple && isset($global_value)) {
-        $taxonomy[$vid] = array_merge($taxonomy[$vid], (array)$global_value);
-      }
 
       // Error if the vocabulary was required, but there are no terms.
       if ($vocab->required && count($taxonomy[$vid]) == 0) {
@@ -202,97 +191,3 @@ function _migrate_taxonomy_get_term($vocab, $text, $handler) {
   $missing_terms[$vid][$text] = $tid;
   return $tid;
 }
-
-/**
- * Implementation of hook_migrate_global().
- */
-function taxonomy_migrate_global($type, $globals) {
-  $form = array();
-  $vocabs = taxonomy_get_vocabularies($type);
-  if ($vocabs && count($vocabs) > 0) {
-    $taxonomy = $globals['migrate_taxonomy']['taxonomy'];
-    $taxonomy = isset($taxonomy) ? $taxonomy : array();
-    $handler = $globals['migrate_taxonomy']['handler'];
-    $handler = isset($handler) ? $handler : 'no-import';
-
-    $form['migrate_taxonomy'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Taxonomy options'),
-      '#description' => t('Select the terms of each vocabulary that will be assigned to each node.'),
-      '#tree' => TRUE,
-    );
-
-    if (module_exists('category')) {
-      $node = (object)array(
-        'type' => $type,
-        'category' => _migrate_taxonomy_form2node($taxonomy),
-      );
-      $subform = array(
-        'type' => array(
-          '#value' => $type,
-        ),
-        '#node' => $node,
-      );
-      category_form_alter($subform, $form_state, $type .'_node_form');
-      $form['migrate_taxonomy']['taxonomy'] = $subform['category'];
-    }
-    else {
-      $node = (object)array(
-        'type' => $type,
-        'taxonomy' => _migrate_taxonomy_form2node($taxonomy),
-      );
-      $subform = array(
-        'type' => array(
-          '#value' => $type,
-        ),
-        '#node' => $node,
-      );
-      taxonomy_form_alter($subform, $form_state, $type .'_node_form');
-      $form['migrate_taxonomy']['taxonomy'] = $subform['taxonomy'];
-    }
-
-    $options = array(
-      'add' => t('Add non-existing terms to the vocabulary'),
-      'ignore' => t('Ignore non-existing terms'),
-      'warn' => t('Warn me about non-existing terms before the import'),
-      'no-import' => t('Do not import the node if there are non-existing terms'),
-    );
-    $form['migrate_taxonomy']['handler'] = array(
-      '#type' => 'select',
-      '#title' => t('How to handle non-existing terms?'),
-      '#options' => $options,
-      '#default_value' => $handler,
-      '#description' => t('Select how to handle non-existing terms in the vocabularies. If unsure, select %no-import.', array('%no-import' => theme('placeholder', t('Do not import the node if there are non-existing terms')))),
-    );
-  }
-  return $form;
-}
-
-/**
- * Convert the taxonomy array from the form form to the node form.
- *
- * Form form:
- *   $node->taxonomy[$vid] = array($tid, $tid, ...); // multiple select
- *   $node->taxonomy[$vid] = $tid;                   // single select
- *   $node->taxonomy['tags'][$vid] = $text;          // free tagging
- *
- * Node form:
- *   $node->taxonomy[$tid] = $term_object;           // all selects
- *   $node->taxonomy['tags'][$vid] = $text;          // is handled ok
- */
-function _migrate_taxonomy_form2node($taxonomy) {
-  $tids = array();
-  foreach ($taxonomy as $key => $value) {
-    if ($key != 'tags') {
-      $value = is_array($value) ? $value : array($value);
-      foreach ($value as $tid) {
-        $tids[$tid] = taxonomy_get_term($tid);
-      }
-    }
-    else {
-      $tids[$key] = $value;
-    }
-  }
-  return $tids;
-}
-

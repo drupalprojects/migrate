@@ -136,7 +136,6 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   global $user;
 
   $type_info = node_get_types('type', $node->type);
-  $pkcol = $tblinfo->pkcol;
 
   $errors = array();
 
@@ -256,8 +255,16 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   // 7. Body/teaser
   if ($type_info->has_body) {
     // If incoming data has a teaser and no body, copy the teaser into the body
-    $node->teaser = trim($node->teaser);
-    $node->body = trim($node->body);
+    if (isset($node->teaser)) {
+      $node->teaser = trim($node->teaser);
+    } else {
+      $node->teaser = '';
+    }
+    if (isset($node->body)) {
+      $node->body = trim($node->body);
+    } else {
+      $node->body = '';
+    }
     if ($node->teaser && !$node->body) {
       $node->body = $node->teaser;
     } elseif ($node->body && !$node->teaser) {

@@ -98,7 +98,7 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
   if ($success) {
     // Generate a random username if none was provided (presumably we
     // are migrating from a system using email addresses as account names)
-    if (!$newuser['name']) {
+    if (!isset($newuser['name']) || !$newuser['name']) {
       // There is a tiny risk that the generated name will not be unique
       $newuser['name'] = user_password();
     }

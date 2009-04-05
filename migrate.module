@@ -79,7 +79,10 @@ function migrate_save_content_set(&$content_set) {
   if (is_array($content_set)) {
     $was_array = TRUE;
     $content_set = (object) $content_set;
+  } else {
+    $was_array = FALSE;
   }
+  
   if ($content_set->mcsid) {
     drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
   } else {
@@ -365,11 +368,13 @@ function migrate_theme() {
 function _migrate_print_timers() {
   global $timers;
   $times = array();
-  foreach ($timers as $name=>$timerec) {
-    $times[$name] = $timerec['time']/1000;
+  foreach ($timers as $name => $timerec) {
+    if (isset($timerec['time'])) {
+      $times[$name] = $timerec['time']/1000;
+    }
   }
   arsort($times);
-  foreach ($times as $name=>$total) {
+  foreach ($times as $name => $total) {
     drupal_set_message("$name: ".round($total,2));
   }
 }

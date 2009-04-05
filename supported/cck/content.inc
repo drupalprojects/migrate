@@ -57,8 +57,8 @@ function content_migrate_destination_fields_node($type) {
  */
 function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   static $types, $fieldinfo = array();
+  $errors = array();
   if (!isset($types)) {
-    $errors = array();
     $types = (array) content_types();
   }
   if (isset($types[$node->type])) {
@@ -126,16 +126,6 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               if (intval($value) > 0) {
                 $value = intval($value);
               }
-              // Let some other hook try to make sense of it
-/*              else {
-                $referenced_nodes = array();
-                $sql = "SELECT nid, title FROM {node} WHERE title SOUNDS LIKE '%s'";
-                $result = db_query($sql, $value);
-                $record_found = db_fetch_object($result);
-                if ($record_found) {
-                  $value = $record_found->nid;
-                }
-              }*/
               break;
 
             case 'userreference':
@@ -161,11 +151,13 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               break;
           }
           // Set the correct node field values.
-          if (!is_array($node->$field['field_name'])) {
-            $node->$field_name = array($delta => array($column => $value));
-          }
-          else {
-            $node->$field_name += array($delta => array($column => $value));
+          if (isset($field['field_name']) && isset($node->$field['field_name'])) {
+            if (!is_array($node->$field['field_name'])) {
+              $node->$field_name = array($delta => array($column => $value));
+            }
+            else {
+              $node->$field_name += array($delta => array($column => $value));
+            }
           }
         }
       }

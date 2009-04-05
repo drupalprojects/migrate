@@ -84,20 +84,14 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
     }
   }
   if (!$comment['name']) {
-    $errors[] = array(
-      'sourceid' => $row->$sourcekey,
-      'message' => t('No user id or name found'),
-    );
+    $errors[] = migrate_message($row->$sourcekey, t('No user id or name found'));
   }
   
   // Do our best to interpret timestamps
   if ($comment['timestamp']) {
     $comment['timestamp'] = _migrate_valid_date($comment['timestamp']);
     if ($comment['timestamp'] <= 0) {
-      $errors[] = array(
-        'sourceid' => $row->$sourcekey,
-        'message' => t('Provided timestamp is invalid'),
-      );
+      $errors[] = migrate_message($row->$sourcekey, t('Provided timestamp is invalid'));
     }
   }
   
@@ -118,11 +112,7 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
                 VALUES(%d, %d, %d)",
                $row->$sourcekey, $cid, $tblinfo->mcsid);
     } else {
-      $errors[] = array($row->$sourcekey => t('Comment not saved'));
-      $errors[] = array(
-        'sourceid' => $row->$sourcekey,
-        'message' => t('Comment not saved'),
-      );
+      $errors[] = migrate_message($row->$sourcekey, t('Comment not saved'));
     }
   }
   return $errors;

@@ -83,14 +83,14 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
         // Now handle each term.
         foreach ($terms as $text) {
           if (!empty($text)) {
-            $tid = _migrate_taxonomy_get_term($vocab, $text, $options['handler']);
+            $tid = _migrate_taxonomy_get_term($vocab, $text, 'warn');
             if ($tid >= 0) {
               // A $tid == 0 means that the term was not found, but will be created.
               // Because we check whether terms are assigned later on for required
               // vocabularies, we need to add it to the array.
               $taxonomy[$vid][] = $tid;
             }
-            else if ($tid < 0 && $options['handler'] == 'no-import') {
+            else if ($tid < 0) {
               $errors[] = migrate_message(t('The term %term does not exist in the %name vocabulary.', 
                 array('%term' => theme('placeholder', $value), '%name' => theme('placeholder', $vocab->name))));
             }

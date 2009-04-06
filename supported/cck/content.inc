@@ -151,13 +151,11 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               break;
           }
           // Set the correct node field values.
-          if (isset($field['field_name']) && isset($node->$field['field_name'])) {
-            if (!is_array($node->$field['field_name'])) {
-              $node->$field_name = array($delta => array($column => $value));
-            }
-            else {
-              $node->$field_name += array($delta => array($column => $value));
-            }
+          if (isset($field_name) && isset($node->$field_name) && is_array($node->$field_name)) {
+            $node->$field_name += array($delta => array($column => $value));
+          }
+          else {
+            $node->$field_name = array($delta => array($column => $value));
           }
         }
       }

@@ -94,21 +94,24 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               // Get properly formatted date for value column.
               // Assume timezone and offset values are correct as input.
               if ($column == 'value') {
-                include_once(drupal_get_path('module', 'date') .'/date.inc');
                 if ($field['type'] == 'date') {
-                  // Is the imported date a unix timestamp? If so convert it to ISO date.
-                  if (is_numeric($value) && date_is_valid($value, DATE_UNIX)) {
-                    $value = date_unix2iso($value);
-                  }
+                  // A value like "1957" could be either a Unix timestamp
+                  // or an ISO year-only date... Favor the ISO interpreation
+                  
                   // If the imported date is a (partial) ISO date, convert it
                   // to date's ISO date.
-                  else if (($date_array = date_iso2array($value)) != 'ERROR') {
-                    $value = date_array2iso($date_array);
+                  // TODO: Need to pass granularity for partial dates to work
+                  if (date_is_valid($value, DATE_ISO)) {
+                    $value = date_convert($value, DATE_ISO, DATE_ISO);
+                  }
+                  // Is the imported date a unix timestamp? If so convert it to ISO date.
+                  else if (is_numeric($value) && date_is_valid($value, DATE_UNIX)) {
+                    $value = date_convert($value, DATE_UNIX, DATE_ISO);
                   }
                   // Otherwise, use strtotime and unix2iso to convert 
                   // partial ISO or text date into full ISO.
                   else {
-                    $value = date_unix2iso(strtotime($value));
+                    $value = date_convert(strtotime($value), DATE_UNIX, DATE_ISO);
                   }
                 }
                 else {

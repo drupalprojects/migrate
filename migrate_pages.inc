@@ -686,6 +686,8 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
     drupal_set_message('There is an import process already in progress');
     return 0;
   }
+  
+  register_shutdown_function('migrate_clear_semaphore');
   variable_set('migrate_semaphore', TRUE);
 
   // A zero max_execution_time means no limit - but let's set a reasonable
@@ -957,6 +959,11 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
   if (variable_get('migrate_display_timers', 0)) {
     _migrate_print_timers();
   }
+}
+
+function migrate_clear_semaphore() {
+  print('Unexpected exit: clearing migrate semaphore');
+  variable_del('migrate_semaphore');
 }
 
 function migrate_tools() {

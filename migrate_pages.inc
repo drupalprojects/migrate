@@ -216,6 +216,7 @@ function _migrate_dashboard_form($form_state) {
       '#size' => 4,
       '#description' => t('Number of records to process in the current interactive run. Leave
         blank to process all records that can be completed within the PHP max_execution_time.'),
+      '#default_value' => variable_get('migrate_limit', ''),
     );
     $form['interactive']['idlist'] = array(
       '#type' => 'textfield',
@@ -300,6 +301,7 @@ function _migrate_dashboard_form_submit($form, &$form_state) {
     variable_del('migrate_semaphore');
   }
   if ($form_state['values']['donow']) {
+    variable_set('migrate_limit', $form_state['values']['limit']);
     $imported = migrate_content_process($started, $form_state['values']['limit'],
       trim($form_state['values']['idlist']));
   }

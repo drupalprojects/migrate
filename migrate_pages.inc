@@ -823,14 +823,14 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
     // Add a left join to the map table, and only include rows not in the map
     $join = new views_join;
     $join->construct($maptable, $view->base_table, $sourcekey, $sourcekey);
-    $view->query->add_relationship(NULL, $join, $view->base_table);
+    $view->query->add_relationship($maptable, $join, $view->base_table);
     $view->query->add_where(0, "$maptable.$sourcekey IS NULL", $view->base_table);
     
     // Ditto for the errors table
     $join = new views_join;
     $msgtablename = _migrate_ensure_msgtable($tblinfo);
     $join->construct($msgtablename, $view->base_table, $sourcekey, 'sourceid');
-    $view->query->add_relationship(NULL, $join, $view->base_table);
+    $view->query->add_relationship($msgtablename, $join, $view->base_table);
     $view->query->add_where(0, 
       "$msgtablename.sourceid IS NULL", 
       $view->base_table);

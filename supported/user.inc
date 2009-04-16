@@ -103,6 +103,10 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
       $newuser['name'] = user_password();
     }
 
+    // This field appears to be obsolete, but little cost to setting it...
+    if (!isset($newuser['init'])) {
+      $newuser['init'] = $newuser['mail'];
+    }
     timer_start('user_save');
     $account = user_save((object)$newuser, $newuser);
     timer_stop('user_save');

@@ -220,17 +220,16 @@ function migrate_help($page, $arg) {
       $output .= t('<p>You can</p>
 <ul>
 <li>read about the PHP function that reads CSV files: 
-  <a href="%external-http-us3-php-net-fgetcvs" title="fgetcsv programmer function page">fgetcsv</a>.</li>
-<li>import files at <a href="%admin-node-migrate">administer &gt;&gt; content &gt;&gt; migrate</a>.</li>
-<li>administer node permissions at <a href="%admin-access-permission">administer &gt;&gt; access &gt;&gt; 
+  <a href="@external-http-us3-php-net-fgetcvs" title="fgetcsv programmer function page">fgetcsv</a>.</li>
+<li>import files at <a href="@admin-node-migrate">administer &gt;&gt; content &gt;&gt; migrate</a>.</li>
+<li>administer node permissions at <a href="@admin-access-permission">administer &gt;&gt; access &gt;&gt; 
   permissions &gt;&gt; node import</a>.</li>
-</ul>', array('%external-http-us3-php-net-fgetcvs' => 'http://us3.php.net/fgetcsv', 
-              '%admin-node-migrate' => url('admin/node/migrate'), 
-              '%admin-access-permission' => url('admin/access/permission')));
+</ul>', array('@external-http-us3-php-net-fgetcvs' => 'http://us3.php.net/fgetcsv', 
+              '@admin-node-migrate' => url('admin/content/tw'), 
+              '@admin-access-permission' => url('admin/user/permissions')));
       return $output;
   }
 }
-
 
 /**
  * Implementation of hook_menu().

@@ -20,17 +20,19 @@ function migrate_migrate_destination_fields_user($type) {
   
   // if content_profile is present, get any CCK fields attached to it
   if (module_exists('content_profile')) {
-    // @TODO: Note hard-coded profile node type...
-    $profile_fields = migrate_invoke_all('destination', 'fields', 'node', 'profile');
-    
-    foreach ($profile_fields as $key => $value) {
-      if (!preg_match('/^field_/', $key)) {
-        unset($profile_fields[$key]);
-      } else {
-        $profile_fields[$key] = t('Profile: ').$value;
+    $cp_types = content_profile_get_types();
+    foreach ($cp_types as $type => $info) {
+      $profile_fields = migrate_invoke_all('destination', 'fields', 'node', $type);
+
+      foreach ($profile_fields as $key => $value) {
+        if (!preg_match('/^field_/', $key)) {
+          unset($profile_fields[$key]);
+        } else {
+          $profile_fields[$key] = $info->name . ' ' . $value;
+        }
       }
+      $fields = array_merge($fields, $profile_fields);
     }
-    $fields = array_merge($fields, $profile_fields);
   }
   return $fields;
 }
@@ -52,9 +54,14 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
   $newuser['roles'][$tblinfo->desttype] = $tblinfo->desttype;
   
   if ($use_profile) {
-    // ...and, if applicable content_profile node object
-    $node = new StdClass;
-    $node->type = 'profile';
+    // ...and, if applicable content_profile node objects
+    $cp_types = content_profile_get_types();
+    $cp_fields = array();
+    foreach ($cp_types as $type => $info) {
+      $cp_fields[$type] = content_migrate_destination_fields_node($type);
+      $node[$type] = new StdClass;
+      $node[$type]->type = $type;
+    }
   }
 
   foreach ($tblinfo->fields as $destfield => $values) {
@@ -64,7 +71,12 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
       $newvalue = $values['default_value'];
     }
     if ($use_profile && preg_match('/^field_/', $destfield)) {
-      $node->$destfield = $newvalue;
+      // Find the content profile type containing this field
+      foreach ($cp_fields as $type => $info) {
+        if (isset($info[$destfield])) {
+          $node[$type]->$destfield = $newvalue;
+        }
+      }
     } else {
       // Make sense of timestamp fields
       if ($destfield == 'created' || $destfield == 'access' ||
@@ -130,22 +142,23 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
                $row->$sourcekey, $account->uid, $tblinfo->mcsid);
 
       if ($use_profile) {
-        // @TODO: From content_profile_registration_user_register_submit - generalize
-        $node->uid = $account->uid;
-        $node->title = $account->name;
-        $node->name = $account->name;
-        // Create the node.
-        // Prepare the node for import. We could have written the following loop
-        // as: module_invoke_all('node_import_prepare', $node, $preview > 0);
-        // but unfortunately module_invoke_all passes all argumens by value.
-        foreach (module_list() as $module_name) {
-          $function = $module_name .'_migrate_destination_prepare_node';
-          if (function_exists($function)) {
-            $errors = array_merge((array)$errors, (array)$function($node, $tblinfo, $row));
+        foreach ($cp_types as $type => $name) {
+          $node[$type]->uid = $account->uid;
+          $node[$type]->title = $account->name;
+          $node[$type]->name = $account->name;
+          // Create the node.
+          // Prepare the node for import. We could have written the following loop
+          // as: module_invoke_all('node_import_prepare', $node, $preview > 0);
+          // but unfortunately module_invoke_all passes all argumens by value.
+          foreach (module_list() as $module_name) {
+            $function = $module_name .'_migrate_destination_prepare_node';
+            if (function_exists($function)) {
+              $errors = array_merge((array)$errors, (array)$function($node[$type], $tblinfo, $row));
+            }
           }
+          $node[$type] = node_submit($node[$type]);
+          node_save($node[$type]);
         }
-        $node = node_submit($node);
-        node_save($node);
       }
     }
   }

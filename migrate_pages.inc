@@ -536,11 +536,11 @@ function migrate_destination_mappings($form_state, $mcsid) {
       $form['srcfield'][$destfield] = array(
         '#type' => 'select',
         '#options' => $srcoptions,
-        '#default_value' => $row->srcfield,
+        '#default_value' => isset($row->srcfield) ? $row->srcfield : '',
       );
       $form['default_value'][$destfield] = array(
         '#type' => 'textfield',
-        '#default_value' => $row->default_value,
+        '#default_value' => isset($row->default_value) ? $row->default_value : '',
         '#size' => 25,
         '#maxlength' => 255,
       );
@@ -1019,7 +1019,7 @@ function _migrate_tools_form($form_state) {
 }
 
 function theme_migrate_tools($form) {
-  $output .= drupal_render($form['description']);
+  $output = drupal_render($form['description']);
   if (isset($form['data']) && is_array($form['data'])) {
     foreach (element_children($form['data']) as $rownum) {
       $row = array();

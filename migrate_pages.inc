@@ -964,7 +964,6 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
 }
 
 function migrate_clear_semaphore() {
-  print('Unexpected exit: clearing migrate semaphore');
   variable_del('migrate_semaphore');
 }
 

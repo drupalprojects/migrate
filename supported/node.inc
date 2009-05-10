@@ -145,9 +145,12 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $node->name = $account->name;
   } elseif (isset($node->name)) {
     // We have a mapped username.
-    $account = user_load(array('name' => $node->name));
-    // @TODO: What if no match...
-    $node->uid = $account->uid;
+    if ($account = user_load(array('name' => $node->name))) {
+      $node->uid = $account->uid;
+    } elseif ($account = user_load(array('mail' => $node->name))) {
+      $node->uid = $account->uid;
+    }
+    // If no valid incoming user, the node owner will end up being the current user
   } elseif ($user->uid > 0) {
     $node->uid = $user->uid;
     $node->name = $user->name;

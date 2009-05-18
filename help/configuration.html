@@ -1,0 +1,59 @@
+<!-- $Id$ -->
+
+<p>Performing a large migration exercises a Drupal installation in different ways
+than normal production usage. There are several things you can do to improve the
+performance of your migration processes.</p>
+
+<h3>.htaccess</h3>
+
+<p>If you are going to upload large files through Table Wizard, you should increase
+the following parameters, as well as increasing Drupal's 
+<a href="&base_url&admin/settings/uploads">maximum file upload values</a>:</p>
+
+<pre>
+  php_value max_input_time      600
+  php_value upload_max_filesize 255M
+  php_value post_max_size       255M
+</pre>
+
+<p>Bulk creation and deletiong of nodes and users can strain memory usage - you
+should consider significantly boosting <em>memory_limit</em>:</p>
+
+<pre>
+  php_value memory_limit       256M
+</pre>
+
+<p>When performing a migration process, whether interactively or via cron, the
+Migrate module monitors execution time and exits a few seconds before 
+max_execution_time is exhausted, to avoid partial updates. To get the most out
+of each processing step (in light of <a href="http://drupal.org/node/375578">cron's 
+limitation to 240 seconds max</a>), set max_execution_time to 240 seconds:</p>
+
+<pre>
+  php_value max_execution_time 240
+</pre>
+
+<h3>Core patches</h3>
+
+<p>In normal Drupal usage, nodes and users are created and deleted one at a time -
+thus, the core is optimized for that kind of load and is not well optimized for
+the bulk operations that the Migrate module performs. The following patches are 
+recommended to help your performance when performing migrations.</p>
+
+<p>node_delete() unnecessarily caches the node being deleted - when hundreds or
+thousands of nodes are deleted in a single request, you can very quickly run out of memory.
+Go to <a href="http://drupal.org/node/287063">issue #287063</a> and apply the patch 
+in comment #8 to prevent this caching.</p> 
+
+<p>Deleting a user updates the comments and node_comment_statistics tables rows
+referencing that user's uid, but those columns are node indexed, making deletion
+of users in bulk very slow. The patch at 
+<a href="http://drupal.org/node/289504">http://drupal.org/node/289504</a> addresses
+this.</p>
+
+<h3>Other patches</h3>
+
+<p>When using the <a href="http://drupal.org/project/email_registration">Email 
+registration module</a>, if you would like an explicit username you're migrating
+to override that module's automated username generation, apply the patch at
+<a href="http://drupal.org/node/247717">http://drupal.org/node/247717</a>.</p>

@@ -2,30 +2,24 @@
 /* $Id$ */
 
 function content_profile_migrate_destination_fields_user($type) {
-  // if content_profile is present, get any CCK fields attached to it
-  if (module_exists('content_profile')) {
-    $cp_types = content_profile_get_types();
-    foreach ($cp_types as $type => $info) {
-      $profile_fields = migrate_invoke_all('destination', 'fields', 'node', $type);
+  // Get any CCK fields attached to content profiles
+  $cp_types = content_profile_get_types();
+  foreach ($cp_types as $type => $info) {
+    $profile_fields = migrate_invoke_all('destination', 'fields', 'node', $type);
 
-      foreach ($profile_fields as $key => $value) {
-        if (!preg_match('/^field_/', $key)) {
-          unset($profile_fields[$key]);
-        } else {
-          $profile_fields[$key] = $info->name . ' ' . $value;
-        }
+    foreach ($profile_fields as $key => $value) {
+      if (!preg_match('/^field_/', $key)) {
+        unset($profile_fields[$key]);
+      } else {
+        $profile_fields[$key] = $info->name . ' ' . $value;
       }
-      $fields = array_merge($fields, $profile_fields);
     }
+    $fields = array_merge($fields, $profile_fields);
   }
   return $profile_fields;
 }
 
 function content_profile_migrate_destination_complete_user(&$account, $tblinfo, $row) {
-  if (!module_exists('content_profile')) {
-    return array();
-  }
-
   // Initialize all related profile nodes
   $cp_types = content_profile_get_types();
   $cp_fields = array();

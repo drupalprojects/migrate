@@ -9,7 +9,7 @@
 /**
  * Loads the hooks for the supported modules.
  */
-$path = drupal_get_path('module', 'migrate') .'/supported';
+$path = drupal_get_path('module', 'migrate') .'/modules';
 $files = drupal_system_listing('.*\.inc$', $path, 'name', 0);
 foreach ($files as $module_name => $file) {
   if (module_exists($module_name)) {

@@ -364,20 +364,6 @@ function migrate_theme() {
   );
 }
 
-function _migrate_print_timers() {
-  global $timers;
-  $times = array();
-  foreach ($timers as $name => $timerec) {
-    if (isset($timerec['time'])) {
-      $times[$name] = $timerec['time']/1000;
-    }
-  }
-  arsort($times);
-  foreach ($times as $name => $total) {
-    drupal_set_message("$name: ".round($total,2));
-  }
-}
-
 function _migrate_message_table_name($view_name, $contenttype) {
   return $view_name . '_' . $contenttype . '_msgs';
 }

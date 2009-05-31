@@ -302,8 +302,32 @@ function _migrate_dashboard_form_submit($form, &$form_state) {
   }
   if ($form_state['values']['donow']) {
     variable_set('migrate_limit', $form_state['values']['limit']);
-    $imported = migrate_content_process($started, $form_state['values']['limit'],
-      trim($form_state['values']['idlist']));
+    $batch = array(
+      'operations' => array(
+        array('migrate_content_process', array($started, $form_state['values']['limit'],
+          trim($form_state['values']['idlist'])))),
+      'title' => t('Migration processing'),
+      'file' => drupal_get_path('module', 'migrate') . '/migrate_pages.inc',
+      'init_message' => t('Starting migration process'),
+      'progress_message' => t(''),
+      'error_message' => t('An error occurred. Some or all of the migrate processing has failed.'),
+      'finished' => '_migrate_content_process_finish',
+    );
+
+    batch_set($batch);
+  }
+}
+
+/**
+ * Batch API finished callback - report results
+ *
+ * @param $success
+ * @param $results
+ * @param $operations
+ */
+function _migrate_content_process_finish($success, $results, $operations) {
+  foreach ($results as $result) {
+    drupal_set_message($result);
   }
 }
 
@@ -683,14 +707,30 @@ function _migrate_ensure_msgtable($content_set) {
   return $msgtablename;
 }
 
-function migrate_content_process($starttime, $limit = 0, $idlist = '') {
+function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context = NULL) {
   if (variable_get('migrate_semaphore', FALSE)) {
     drupal_set_message('There is an import process already in progress');
     return 0;
   }
-  
-  register_shutdown_function('migrate_clear_semaphore');
+
   variable_set('migrate_semaphore', TRUE);
+
+  // Initialize the Batch API context if present
+  if ($context) {
+    $context['finished'] = 0;
+    $starttime = time();
+    // The Batch API progress bar will reflect the number of operations being
+    // done (clearing/importing/scanning)
+    if (!isset($context['sandbox']['numops'])) {
+      $numops = 0;
+      $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE clearing=1";
+      $numops = db_result(db_query($sql));
+      $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE importing=1 OR scanning=1";
+      $numops += db_result(db_query($sql));
+      $context['sandbox']['numops'] = $numops;
+      $context['sandbox']['numopsdone'] = 0;
+    }
+  }
 
   // A zero max_execution_time means no limit - but let's set a reasonable
   // limit anyway
@@ -764,12 +804,27 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
 
     if ($timedout) {
       $message = "$deleted previously-imported items deleted in $time seconds ($perminute/min) - continuing clearing '$description'";
-      drupal_set_message($message);
+      if (isset($context)) {
+        $context['sandbox']['message'] .= $message . '<br />';
+        $context['message'] = $context['sandbox']['message'];
+        $context['results'][] = $message;
+      }
+      else {
+        drupal_set_message($message);
+      }
       watchdog('migrate', $message);
       break;
     } else {
       $message = "$deleted previously-imported items deleted in $time seconds ($perminute/min) - done clearing '$description'";
-      drupal_set_message($message);
+      if (isset($context)) {
+        $context['sandbox']['message'] .= $message . '<br />';
+        $context['message'] = $context['sandbox']['message'];
+        $context['results'][] = $message;
+        $context['sandbox']['numopsdone']++;
+      }
+      else {
+        drupal_set_message($message);
+      }
       watchdog('migrate', $message);
       // Mark that we're done
       $tblinfo->clearing = 0;
@@ -936,12 +991,27 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
 
     if ($timedout) {
       $message = "$imported items imported in $time seconds ($perminute/min) - continuing importing '$description'";
-      drupal_set_message($message);
+      if (isset($context)) {
+        $context['sandbox']['message'] .= $message . '<br />';
+        $context['message'] = $context['sandbox']['message'];
+        $context['results'][] = $message;
+      }
+      else {
+        drupal_set_message($message);
+      }
       watchdog('migrate', $message);
       break;
     } else {
       $message = "$imported items imported in $time seconds ($perminute/min) - done importing '$description'";
-      drupal_set_message($message);
+      if (isset($context)) {
+        $context['sandbox']['message'] .= $message . '<br />';
+        $context['message'] = $context['sandbox']['message'];
+        $context['results'][] = $message;
+        $context['sandbox']['numopsdone']++;
+      }
+      else {
+        drupal_set_message($message);
+      }
       watchdog('migrate', $message);
       // Remember we're done 
       if ($importing) {
@@ -957,13 +1027,35 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '') {
       }
     }
   }
-  variable_del('migrate_semaphore');
-  if (variable_get('migrate_display_timers', 0)) {
-    _migrate_print_timers();
-  }
-}
+  
+  if (isset($context)) {
+    // If we did not arrive via a timeout, we must have finished all operations
+    if (!$timedout) {
+      $context['finished'] = 1;
+    }
+    else {
+      // Not done, report what percentage done we are (in terms of number of operations)
+      $context['finished'] = $context['sandbox']['numopsdone']/$context['sandbox']['numops'];
+    }
 
-function migrate_clear_semaphore() {
+    // When running interactively, if requested save timers for eventual display
+    if (variable_get('migrate_display_timers', 0)) {
+      global $timers;
+      foreach ($timers as $name => $timerec) {
+        if (isset($timerec['time'])) {
+          $context['sandbox']['times'][$name] += $timerec['time']/1000;
+        }
+      }
+      // When all done, display the timers
+      if ($context['finished'] == 1) {
+        global $timers;
+        arsort($context['sandbox']['times']);
+        foreach ($context['sandbox']['times'] as $name => $total) {
+          drupal_set_message("$name: ".round($total,2));
+        }
+      }
+    }
+  }
   variable_del('migrate_semaphore');
 }
 

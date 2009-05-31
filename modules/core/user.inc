@@ -52,17 +52,8 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
     }
   }
 
-  // Prepare the user for import. We could have used module_invoke_all,
-  // but unfortunately module_invoke_all passes all arguments by value.
-  $errors = array();
-  foreach (module_list() as $module_name) {
-    $function = $module_name .'_migrate_destination_prepare_user';
-    if (function_exists($function)) {
-      timer_start($function);
-      $errors = array_merge($errors, (array)$function($newuser, $tblinfo, $row));
-      timer_stop($function);
-    }
-  }
+  // Prepare the user for import. 
+  $errors = migrate_destination_invoke_all('prepare_user', $newuser, $tblinfo, $row);
   
   $success = TRUE;
   foreach ($errors as $error) {
@@ -90,14 +81,7 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
 
     // Call completion hooks, for any processing which needs to be done after user_save
     timer_start('user completion hooks');
-    foreach (module_list() as $module_name) {
-      $function = $module_name .'_migrate_destination_complete_user';
-      if (function_exists($function)) {
-        timer_start($function);
-        $errors = array_merge($errors, (array)$function($account, $tblinfo, $row));
-        timer_stop($function);
-      }
-    }
+    $errors = migrate_destination_invoke_all('complete_user', $account, $tblinfo, $row);
     timer_stop('user completion hooks');
     
     if ($account) {

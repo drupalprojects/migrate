@@ -36,18 +36,9 @@ function migrate_migrate_destination_import_node($tblinfo, $row) {
     }
   }
   
-  // Prepare the node for import. We could have written the following loop
-  // as: module_invoke_all('node_import_prepare', $node, $preview > 0);
-  // but unfortunately module_invoke_all passes all argumens by value.
-  $errors = array();
-  foreach (module_list() as $module_name) {
-    $function = $module_name .'_migrate_destination_prepare_node';
-    if (function_exists($function)) {
-      timer_start($function);
-      $errors = array_merge($errors, (array)$function($node, $tblinfo, $row));
-      timer_stop($function);
-    }
-  }
+  // Prepare the node for import.
+  $errors = migrate_destination_invoke_all('prepare_node', $node, $tblinfo, $row);
+
   $success = TRUE;
   foreach ($errors as $error) {
     if ($error['level'] != MIGRATE_MESSAGE_INFORMATIONAL) {
@@ -61,14 +52,7 @@ function migrate_migrate_destination_import_node($tblinfo, $row) {
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('node completion hooks');
-    foreach (module_list() as $module_name) {
-      $function = $module_name .'_migrate_destination_complete_node';
-      if (function_exists($function)) {
-        timer_start($function);
-        $errors = array_merge($errors, (array)$function($node, $tblinfo, $row));
-        timer_stop($function);
-      }
-    }
+    $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
     timer_stop('node completion hooks');
     
     $sourcekey = $tblinfo->sourcekey;

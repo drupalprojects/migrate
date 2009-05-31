@@ -36,6 +36,22 @@ function migrate_migrate_destination_types() {
   return $types;
 }
 
+function migrate_destination_invoke_all($hook, &$object, $tblinfo, $row) {
+  // We could have used module_invoke_all, but unfortunately
+  // module_invoke_all passes all arguments by value.
+  $errors = array();
+  $hook = 'migrate_destination_' . $hook;
+  foreach (module_implements($hook) as $module_name) {
+    $function = $module_name . '_' . $hook;
+    if (function_exists($function)) {
+      timer_start($function);
+      $errors = array_merge($errors, (array)$function($object, $tblinfo, $row));
+      timer_stop($function);
+    }
+  } 
+  return $errors;
+}
+
 /**
  * Check if a date is valid and return the correct
  * timestamp to use. Returns -1 if the date is not

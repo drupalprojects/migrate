@@ -74,7 +74,7 @@ function migrate_schema() {
       ),
     ),
     'primary key' => array('mcsid'),
-    'indexes' => array(
+    'unique keys' => array(
       'view_name' => array('view_name'),
     ),
   );
@@ -133,7 +133,7 @@ function migrate_uninstall() {
   $sql = "SELECT view_name, contenttype FROM {migrate_content_sets}";
   $result = db_query($sql);
   while ($row = db_fetch_object($result)) {
-    $maptablename = _migrate_map_table_name($row->view_name, $row->contenttype);
+    $maptablename = _migrate_map_table_name($row->view_name);
     if ($tw_active) {
       tw_remove_tables($maptablename);
     }
@@ -141,7 +141,7 @@ function migrate_uninstall() {
       $sql = "DROP TABLE $maptablename";
       db_query($sql);
     }
-    $msgtablename = _migrate_message_table_name($row->view_name, $row->contenttype);
+    $msgtablename = _migrate_message_table_name($row->view_name);
     if ($tw_active) {
       tw_remove_tables($msgtablename);
     }
@@ -151,4 +151,58 @@ function migrate_uninstall() {
     }
   }
   drupal_uninstall_schema('migrate');
+}
+
+// Refactoring of map and message tables
+function migrate_update_6000() {
+  $ret = array();
+
+  // Need to make sure schema inspect support is included
+  schema_init();
+  // Make view_name unique
+  db_drop_index($ret, 'migrate_content_sets', 'view_name');
+  db_add_unique_key($ret, 'migrate_content_sets', 'view_name', array('view_name'));
+
+  $sql = "SELECT * FROM {migrate_content_sets}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    // Rename map and message tables
+    $oldmaptable = $row->view_name . '_' . $row->contenttype . '_map';
+    $newmaptable = _migrate_map_table_name($row->view_name);
+    db_rename_table($ret, $oldmaptable, $newmaptable);
+    $oldmsgtable = $row->view_name . '_' . $row->contenttype . '_msgs';
+    if (db_table_exists($oldmsgtable)) {
+      $newmsgtable = _migrate_message_table_name($row->view_name);
+      db_rename_table($ret, $oldmsgtable, $newmsgtable);
+      $msgtableexists = TRUE;
+    }
+    else {
+      $msgtableexists = FALSE;
+    }
+
+    // Remove mcsid from map table
+    db_drop_field($ret, $newmaptable, 'mcsid');
+
+    // Rename remaining map table columns
+    db_drop_primary_key($ret, $newmaptable);
+    db_drop_unique_key($ret, $newmaptable, 'idkey');
+    db_change_field($ret, $newmaptable, $row->sourcekey, 'sourceid', 
+      array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
+      array('primary key' => array('sourceid')));
+    db_change_field($ret, $newmaptable, $row->contenttype . 'id', 'destid', 
+      array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
+      array('unique keys' => array('destid' => array('destid'))));
+      
+    // Update Table Wizard to reflect the changes
+    tw_remove_tables($oldmaptable);
+    tw_add_tables($newmaptable);
+    if ($msgtableexists) {
+      tw_remove_tables($oldmsgtable);
+      tw_add_tables($newmsgtable);
+    }
+
+    // Save the content set, to make sure the message table is created
+    migrate_save_content_set($row);
+  }
+  return $ret;
 }

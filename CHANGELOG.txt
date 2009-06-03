@@ -1,0 +1,9 @@
+//$Id$
+
+Migrate 1.0-dev
+===========
+
+2009/06/03
+- Added CHANGELOG.txt
+- #479828 - Refactored map and message tables. Any code or custom views referencing these
+    tables must be changed.

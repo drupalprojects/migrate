@@ -75,7 +75,17 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
   return $return;
 }
 
+/**
+ * Save a new or updated content set
+ *
+ * @param $content_set
+ *  An array or object representing the content set. This is passed by reference (so
+ *  when adding a new content set the ID can be set)
+ * @return 
+ *  The ID of the content set that was saved
+ */
 function migrate_save_content_set(&$content_set) {
+  // Deal with objects internally (but remember if we need to put the parameter back to an array)
   if (is_array($content_set)) {
     $was_array = TRUE;
     $content_set = (object) $content_set;
@@ -83,6 +93,7 @@ function migrate_save_content_set(&$content_set) {
     $was_array = FALSE;
   }
   
+  // Update or insert the content set record as appropriate
   if ($content_set->mcsid) {
     drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
   } else {
@@ -90,7 +101,7 @@ function migrate_save_content_set(&$content_set) {
   }
 
   // Create a map table from this view to the results
-  $maptablename = _migrate_map_table_name($content_set->view_name, $content_set->contenttype);
+  $maptablename = _migrate_map_table_name($content_set->view_name);
 
   // Get the proper field definition for the sourcekey
   $view = views_get_view($content_set->view_name);
@@ -111,9 +122,9 @@ function migrate_save_content_set(&$content_set) {
       $schema = array(
         'description' => t('Mappings from source key to destination key'),
         'fields' => array(
-          $content_set->sourcekey => $sourcefield,
+          'sourceid' => $sourcefield,
           // @TODO: Assumes destination key is unsigned int
-          $content_set->contenttype.'id' => array(
+          'destid' => array(
             'type' => 'int',
             'unsigned' => TRUE,
             'not null' => TRUE,
@@ -124,20 +135,21 @@ function migrate_save_content_set(&$content_set) {
             'not null' => TRUE,
           ),
         ),
-        'primary key' => array($content_set->sourcekey),
+        'primary key' => array('sourceid'),
          'indexes' => array(
-           'idkey' => array($content_set->contenttype.'id'),
+           'idkey' => array('destid'),
           ),
         );
       db_create_table($ret, $maptablename, $schema);
       // Expose map table to views
       tw_add_tables(array($maptablename));
-      tw_add_fk($maptablename, $content_set->contenttype.'id');
+      tw_add_fk($maptablename, 'destid');
+      _migrate_ensure_msgtable($content_set);
     } else {
-      // TODO: Handle change in PK - rebuild map table
+      // TODO: Handle change in PK - rebuild map and message tables
     }
   }
-  
+
   if ($was_array) {
     $content_set = (array)$content_set;
     return $content_set['mcsid'];
@@ -151,7 +163,7 @@ function migrate_save_content_mapping(&$mapping) {
     drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
   } else {
     drupal_write_record('migrate_content_mappings', $mapping);
-  }
+  } 
 }
 
 function migrate_delete_content_set($mcsid) {
@@ -164,9 +176,12 @@ function migrate_delete_content_set($mcsid) {
 /**
  * Convenience function for generating a message array
  *
- * @param text $message - Text describing the error condition
- * @param enum $type - One of the MIGRATE_MESSAGE constants, identifying the level of error
- * @return Structured array suitable for return from a destination hook
+ * @param $message
+ *  Text describing the error condition
+ * @param $type
+ *  One of the MIGRATE_MESSAGE constants, identifying the level of error
+ * @return 
+ *  Structured array suitable for return from a destination hook
  */
 function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
   $error = array(
@@ -326,10 +341,10 @@ function _migrate_xlat_get_new_id($contenttype, $oldid) {
                       WHERE mcs.contenttype='%s'",
                      $contenttype);
   while ($row = db_fetch_object($result)) {
-    $table = $row->importtable.'_'.$contenttype.'map';
+    $table = _migrate_map_table_name($row->importtable);
     $pkcol = $row->colname;
-    $id = db_result(db_query("SELECT ${contenttype}id
-                              FROM {$table} WHERE $pkcol=%d", $oldid));
+    $id = db_result(db_query("SELECT destid
+                              FROM {$table} WHERE sourceid=%d", $oldid));
     if ($id) {
       return $id;
     }
@@ -364,12 +379,71 @@ function migrate_theme() {
   );
 }
 
-function _migrate_message_table_name($view_name, $contenttype) {
-  return $view_name . '_' . $contenttype . '_msgs';
+function _migrate_map_table_name($view_name) {
+  return $view_name . '_map';
 }
 
-function _migrate_map_table_name($view_name, $contenttype) {
-  return $view_name . '_' . $contenttype . '_map';
+function _migrate_message_table_name($view_name) {
+  return $view_name . '_msgs';
+}
+
+// Create a message table from this view to hold processing messages
+function _migrate_ensure_msgtable($content_set) {
+  if (is_numeric($content_set)) {
+    $sql = "SELECT * FROM {migrate_content_sets} WHERE mcsid=%d";
+    $row = db_fetch_object(db_query($sql, $content_set));
+  } else {
+    $row = $content_set;
+  }
+  $msgtablename = _migrate_message_table_name($row->view_name);
+  if (!db_table_exists($msgtablename)) {
+    // TODO: We need a way to determine the true type of the sourcekey - for
+    // now, assume a srcfile key is varchar and all else is int...
+    if ($row->sourcekey == 'srcfile') {
+      $sourcefield = array(
+        'type' => 'varchar',
+         'length' => 255,
+        'not null' => TRUE,
+      );
+    } else {
+      $sourcefield = array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      );
+    }
+    $schema = array(
+      'description' => t('Import errors'),
+      'fields' => array(
+        'mceid' => array(
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'sourceid' => $sourcefield,
+        'level' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+           'default' => 1,
+        ),
+        'message' => array(
+          'type' => 'text',
+          'size' => 'medium',
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('mceid'),
+      'indexes' => array(
+        'sourceid' => array('sourceid'),
+      ),
+    );
+    db_create_table($ret, $msgtablename, $schema);
+    // Expose messages table to views
+    tw_add_tables(array($msgtablename));
+    tw_add_fk($msgtablename, 'sourceid');
+  }
+  return $msgtablename;
 }
 
 function migrate_views_api() {

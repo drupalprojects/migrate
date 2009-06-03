@@ -88,7 +88,7 @@ function _migrate_dashboard_form($form_state) {
       $importing[$row->mcsid] = '';
       $scanning[$row->mcsid] = '';
       $status = t('N/A');
-      $maptable = _migrate_map_table_name($row->view_name, $row->contenttype);
+      $maptable = _migrate_map_table_name($row->view_name);
       $sourcekey = $row->sourcekey;
       if ($row->clearing) {
         $clearingenable[] = $row->mcsid;
@@ -99,10 +99,7 @@ function _migrate_dashboard_form($form_state) {
       if ($row->scanning) {
         $scanningenable[] = $row->mcsid;
       }
-      $imported = db_result(db_query("SELECT COUNT(*)
-                                      FROM {" . $maptable . "} 
-                                      WHERE mcsid=%d", 
-                                     $row->mcsid));
+      $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
 
       // If not caching counts, override the saved count with a fresh count
       if (!variable_get('migrate_cache_counts', 0)) {
@@ -111,7 +108,7 @@ function _migrate_dashboard_form($form_state) {
                                        
       $unimported = $row->rowcount - $imported;
 
-      $msgtablename = _migrate_ensure_msgtable($row);
+      $msgtablename = _migrate_message_table_name($row->view_name);
       if ($unimported > 0) {
         $messages = '';
         /* Restore when views integration is fully implemented
@@ -648,65 +645,6 @@ function migrate_destination_mappings_submit($form, &$form_state) {
   }
 }
 
-// Create a message table from this view to hold processing messages
-function _migrate_ensure_msgtable($content_set) {
-  if (is_numeric($content_set)) {
-    $sql = "SELECT * FROM {migrate_content_sets} WHERE mcsid=%d";
-    $row = db_fetch_object(db_query($sql, $content_set));
-  } else {
-    $row = $content_set;
-  }
-  $msgtablename = _migrate_message_table_name($row->view_name, $row->contenttype);
-  if (!db_table_exists($msgtablename)) {
-    // TODO: We need a way to determine the true type of the sourcekey - for
-    // now, assume a srcfile key is varchar and all else is int...
-    if ($row->sourcekey == 'srcfile') {
-      $sourcefield = array(
-        'type' => 'varchar',
-         'length' => 255,
-        'not null' => TRUE,
-      );
-    } else {
-      $sourcefield = array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      );
-    }
-    $schema = array(
-      'description' => t('Import errors'),
-      'fields' => array(
-        'mceid' => array(
-          'type' => 'serial',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-        ),
-        'sourceid' => $sourcefield,
-        'level' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-           'default' => 1,
-        ),
-        'message' => array(
-          'type' => 'text',
-          'size' => 'medium',
-          'not null' => TRUE,
-        ),
-      ),
-      'primary key' => array('mceid'),
-      'indexes' => array(
-        'sourceid' => array('sourceid'),
-      ),
-    );
-    db_create_table($ret, $msgtablename, $schema);
-    // Expose messages table to views
-    tw_add_tables(array($msgtablename));
-    tw_add_fk($msgtablename, 'sourceid');
-  }
-  return $msgtablename;
-}
-
 function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context = NULL) {
   if (variable_get('migrate_semaphore', FALSE)) {
     drupal_set_message('There is an import process already in progress');
@@ -758,23 +696,23 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
     $description = $tblinfo->description;
     $contenttype = $tblinfo->contenttype;
     $contentid = $contenttype.'id';
-    $maptable = _migrate_map_table_name($view_name, $contenttype);
+    $maptable = _migrate_map_table_name($view_name);
     $sourcekey = $tblinfo->sourcekey;
     $processstart = microtime(TRUE);
-    $msgtablename = _migrate_ensure_msgtable($tblinfo);
+    $msgtablename = _migrate_message_table_name($view_name);
     
     $deleted = 0;
     if ($idlist) {
-      $sql = "SELECT $contentid FROM {" . $maptable . "} WHERE mcsid=%d AND $sourcekey IN ($idlist)";
+      $sql = "SELECT sourceid,destid FROM {" . $maptable . "} WHERE sourceid IN ($idlist)";
     } else {
-      $sql = "SELECT $contentid FROM {" . $maptable . "} WHERE mcsid=%d";
+      $sql = "SELECT sourceid,destid FROM {" . $maptable . "}";
     }
 
     timer_start('delete query');
     if ($limit) {
-      $deletelist = db_query_range($sql, $mcsid, 0, $limit);
+      $deletelist = db_query_range($sql, 0, $limit);
     } else {
-      $deletelist = db_query($sql, $mcsid);
+      $deletelist = db_query($sql);
     }
     timer_stop('delete query');
     while ($row = db_fetch_object($deletelist)) {
@@ -786,11 +724,11 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
         break;
       }
       // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
-      migrate_invoke_all('destination', 'delete', $contenttype, $row->$contentid);
+      migrate_invoke_all('destination', 'delete', $contenttype, $row->destid);
       timer_start('clear map/msg');
-      db_query("DELETE FROM {" . $maptable . "} WHERE $contentid=%d", $row->$contentid);
+      db_query("DELETE FROM {" . $maptable . "} WHERE sourceid=%d", $row->sourceid);
       db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid=%d AND level=%d",
-        $row->$contentid, MIGRATE_MESSAGE_INFORMATIONAL);
+        $row->sourceid, MIGRATE_MESSAGE_INFORMATIONAL);
       timer_stop('clear map/msg');
       $deleted++;
     }
@@ -848,8 +786,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
     $view_name = $tblinfo->view_name;
     $description = $tblinfo->description;
     $contenttype = $tblinfo->contenttype;
-    $contentid = $contenttype.'id';
-    $maptable = _migrate_map_table_name($view_name, $contenttype);
+    $maptable = _migrate_map_table_name($view_name);
     $sourcekey = $tblinfo->sourcekey;
     $processstart = microtime(TRUE);
     $collist = db_query("SELECT srcfield, destfield, default_value
@@ -877,13 +814,13 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
     
     // Add a left join to the map table, and only include rows not in the map
     $join = new views_join;
-    $join->construct($maptable, $view->base_table, $sourcekey, $sourcekey);
+    $join->construct($maptable, $view->base_table, $sourcekey, 'sourceid');
     $view->query->add_relationship($maptable, $join, $view->base_table);
-    $view->query->add_where(0, "$maptable.$sourcekey IS NULL", $view->base_table);
+    $view->query->add_where(0, "$maptable.sourceid IS NULL", $view->base_table);
     
     // Ditto for the errors table
     $join = new views_join;
-    $msgtablename = _migrate_ensure_msgtable($tblinfo);
+    $msgtablename = _migrate_message_table_name($view_name);
     $join->construct($msgtablename, $view->base_table, $sourcekey, 'sourceid');
     $view->query->add_relationship($msgtablename, $join, $view->base_table);
     $view->query->add_where(0, 
@@ -892,7 +829,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
     
     // If running over a selected list of IDs, pass those in to the query
     if ($idlist) {
-      $view->query->add_where($view->options['group'], $view->base_table.".$sourcekey IN ($idlist)", 
+      $view->query->add_where($view->options['group'], $view->base_table.".sourceid IN ($idlist)", 
         $view->base_table);
     }
 
@@ -981,7 +918,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
       timer_start('db_fetch_object');
     }
     timer_stop('db_fetch_object');
-    $time = (microtime(TRUE)-$processstart);
+    $time = (microtime(TRUE) - $processstart);
     if ($time > 0) {
       $perminute = round(60*$imported/$time);
       $time = round($time, 1);

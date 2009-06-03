@@ -86,9 +86,9 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
     
     if ($account) {
       db_query("INSERT INTO {" . $tblinfo->maptable . "}
-                ($sourcekey, userid, mcsid)
-                VALUES(%d, %d, %d)",
-               $row->$sourcekey, $account->uid, $tblinfo->mcsid);
+                (sourceid, destid)
+                VALUES(%d, %d)",
+               $row->$sourcekey, $account->uid);
     }
   }
   return $errors;

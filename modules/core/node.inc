@@ -63,16 +63,16 @@ function migrate_migrate_destination_import_node($tblinfo, $row) {
     // existing content
     if ($sourcekey == 'ArticleID' || $sourcekey == 'srcfile') {
       db_query("INSERT INTO {" . $tblinfo->maptable . "}
-                ($sourcekey, nodeid, mcsid)
-                VALUES('%s', %d, %d)",
-               $row->$sourcekey, $node->nid, $tblinfo->mcsid);
+                (sourceid, destid)
+                VALUES('%s', %d)",
+               $row->$sourcekey, $node->nid);
     } else {
       // @TODO: Check first for existence, we may have updated an existing node
       // @TODO: Back out a new revision?
       db_query("INSERT INTO {" . $tblinfo->maptable . "}
-                ($sourcekey, nodeid, mcsid)
-                VALUES(%d, %d, %d)",
-               $row->$sourcekey, $node->nid, $tblinfo->mcsid);
+                (sourceid, destid)
+                VALUES(%d, %d)",
+               $row->$sourcekey, $node->nid);
     }
   }
   return $errors;

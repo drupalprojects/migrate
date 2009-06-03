@@ -105,9 +105,9 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
       $sourcekey = $tblinfo->sourcekey;
       //@TODO: Factor out into caller
       db_query("INSERT INTO {" . $tblinfo->maptable . "}
-                ($sourcekey, commentid, mcsid)
-                VALUES(%d, %d, %d)",
-               $row->$sourcekey, $cid, $tblinfo->mcsid);
+                (sourceid, destid)
+                VALUES(%d, %d)",
+               $row->$sourcekey, $cid);
     } else {
       $errors[] = migrate_message(t('Comment not saved'));
     }

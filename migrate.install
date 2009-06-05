@@ -168,8 +168,14 @@ function migrate_update_6000() {
   while ($row = db_fetch_object($result)) {
     // Rename map and message tables
     $oldmaptable = $row->view_name . '_' . $row->contenttype . '_map';
-    $newmaptable = _migrate_map_table_name($row->view_name);
-    db_rename_table($ret, $oldmaptable, $newmaptable);
+    if (db_table_exists($oldmaptable)) {
+      $newmaptable = _migrate_map_table_name($row->view_name);
+      db_rename_table($ret, $oldmaptable, $newmaptable);
+      $maptableexists = TRUE;
+    }
+    else {
+      $maptableexists = FALSE;
+    }
     $oldmsgtable = $row->view_name . '_' . $row->contenttype . '_msgs';
     if (db_table_exists($oldmsgtable)) {
       $newmsgtable = _migrate_message_table_name($row->view_name);
@@ -180,22 +186,25 @@ function migrate_update_6000() {
       $msgtableexists = FALSE;
     }
 
-    // Remove mcsid from map table
-    db_drop_field($ret, $newmaptable, 'mcsid');
+    if ($maptableexists) {
+      // Remove mcsid from map table
+      db_drop_field($ret, $newmaptable, 'mcsid');
+  
+      // Rename remaining map table columns
+      db_drop_primary_key($ret, $newmaptable);
+      db_drop_unique_key($ret, $newmaptable, 'idkey');
+      db_change_field($ret, $newmaptable, $row->sourcekey, 'sourceid', 
+        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
+        array('primary key' => array('sourceid')));
+      db_change_field($ret, $newmaptable, $row->contenttype . 'id', 'destid', 
+        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
+        array('unique keys' => array('destid' => array('destid'))));
+        
+      // Update Table Wizard to reflect the changes
+      tw_remove_tables($oldmaptable);
+      tw_add_tables($newmaptable);
+    }
 
-    // Rename remaining map table columns
-    db_drop_primary_key($ret, $newmaptable);
-    db_drop_unique_key($ret, $newmaptable, 'idkey');
-    db_change_field($ret, $newmaptable, $row->sourcekey, 'sourceid', 
-      array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
-      array('primary key' => array('sourceid')));
-    db_change_field($ret, $newmaptable, $row->contenttype . 'id', 'destid', 
-      array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
-      array('unique keys' => array('destid' => array('destid'))));
-      
-    // Update Table Wizard to reflect the changes
-    tw_remove_tables($oldmaptable);
-    tw_add_tables($newmaptable);
     if ($msgtableexists) {
       tw_remove_tables($oldmsgtable);
       tw_add_tables($newmsgtable);

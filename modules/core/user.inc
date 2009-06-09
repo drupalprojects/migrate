@@ -85,10 +85,7 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
     timer_stop('user completion hooks');
     
     if ($account) {
-      db_query("INSERT INTO {" . $tblinfo->maptable . "}
-                (sourceid, destid)
-                VALUES(%d, %d)",
-               $row->$sourcekey, $account->uid);
+      migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $account->uid);
     }
   }
   return $errors;

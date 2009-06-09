@@ -3,6 +3,11 @@
 Migrate 1.0-dev
 ===========
 
+2009/06/09
+- #486538 - Add method to bypass views load in migrate_save_content_set()
+- Added migrate_add_mapping() - standard API for hooks to add mappings from source
+    to destination.
+
 2009/06/03
 - Added CHANGELOG.txt
 - #479828 - Refactored map and message tables. Any code or custom views referencing these

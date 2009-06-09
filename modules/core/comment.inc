@@ -91,7 +91,7 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
       $errors[] = migrate_message(t('Provided timestamp is invalid'));
     }
   }
-  
+
   if (count($errors) == 0) {
     $cid = comment_save($comment);
     if ($cid) {
@@ -103,11 +103,7 @@ function migrate_migrate_destination_import_comment($tblinfo, $row) {
                  $comment['timestamp'], $cid);
       }
       $sourcekey = $tblinfo->sourcekey;
-      //@TODO: Factor out into caller
-      db_query("INSERT INTO {" . $tblinfo->maptable . "}
-                (sourceid, destid)
-                VALUES(%d, %d)",
-               $row->$sourcekey, $cid);
+      migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $cid);
     } else {
       $errors[] = migrate_message(t('Comment not saved'));
     }

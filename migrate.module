@@ -98,7 +98,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   } else {
     $was_array = FALSE;
   }
-  
+
   // Update or insert the content set record as appropriate
   if ($content_set->mcsid) {
     drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
@@ -210,6 +210,29 @@ function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
     'message' => $message,
   );
   return $error;
+}
+
+/**
+ * Add a mapping from source ID to destination ID for the specified content set
+ *
+ * @param $mcsid
+ *  ID of the content set being processed
+ * @param $sourceid
+ *  Primary key value from the source
+ * @param $destid
+ *  Primary key value from the destination
+ */
+function migrate_add_mapping($mcsid, $sourceid, $destid) {
+  static $insert_query = array();
+  if (!isset($insert_query[$mcsid])) {
+    $sql = "SELECT view_name FROM {migrate_content_sets} WHERE mcsid=%d";
+    $view_name = db_result(db_query($sql, $mcsid));
+    $maptable = _migrate_map_table_name($view_name);
+    $insert_query[$mcsid] = "INSERT INTO {" . $maptable . "}
+                              (sourceid, destid)
+                              VALUES(%d, %d)";
+  }
+  db_query($insert_query[$mcsid], $sourceid, $destid);
 }
 
 /*

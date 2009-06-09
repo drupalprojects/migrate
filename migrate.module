@@ -81,11 +81,17 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
  * @param $content_set
  *  An array or object representing the content set. This is passed by reference (so
  *  when adding a new content set the ID can be set)
+ * @param $options
+ *  Array of additional options for saving the content set. Currently:
+ *    base_table: The base table of the view - if provided, we don't need
+ *                to load the view.
+ *    base_database: The database of the base table - if base_table is present
+ *                and base_database omitted, it defaults to 'default'
  * @return 
  *  The ID of the content set that was saved
  */
-function migrate_save_content_set(&$content_set) {
-  // Deal with objects internally (but remember if we need to put the parameter back to an array)
+function migrate_save_content_set(&$content_set, $options = array()) {
+// Deal with objects internally (but remember if we need to put the parameter back to an array)
   if (is_array($content_set)) {
     $was_array = TRUE;
     $content_set = (object) $content_set;
@@ -103,14 +109,29 @@ function migrate_save_content_set(&$content_set) {
   // Create a map table from this view to the results
   $maptablename = _migrate_map_table_name($content_set->view_name);
 
-  // Get the proper field definition for the sourcekey
-  $view = views_get_view($content_set->view_name);
-  // Must do this to load the database
-  $view->init_query();
-
   // TODO: For now, PK must be in base_table
-  $tabledb = $view->base_database;
-  $tablename = $view->base_table;
+  
+  // If the caller tells us the base table of the view, we don't need
+  // to load the view (which would not work when called from hook_install())
+  if (isset($options['base_table'])) {
+    $tablename = $options['base_table'];
+    if (isset($options['base_database'])) {
+      $tabledb = $options['base_database'];
+    }
+    else {
+      $tabledb = 'default';
+    }
+  }
+  else {
+    // Get the proper field definition for the sourcekey
+    $view = views_get_view($content_set->view_name);
+    // Must do this to load the database
+    $view->init_query();
+
+    $tabledb = $view->base_database;
+    $tablename = $view->base_table;
+  }
+
   db_set_active($tabledb);
   $inspect = schema_invoke('inspect');
   db_set_active('default');

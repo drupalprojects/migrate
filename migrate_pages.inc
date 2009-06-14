@@ -1020,7 +1020,7 @@ function _migrate_tools_form($form_state) {
     );
   $form['header'] = array('#type' => 'value', '#value' => $header);
 
-  $sql = "SELECT type, count(type) numnodes
+  $sql = "SELECT type, count(type) AS numnodes
           FROM {node}
           GROUP BY type
           ORDER BY type";

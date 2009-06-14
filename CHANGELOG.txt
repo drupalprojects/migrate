@@ -18,6 +18,7 @@ Migrate 1.0-dev
       or role names.
 - #463830 - Beginning of proper support for text primary keys in sources. Map tables fixed,
     still need to do the message tables.
+- #491368 - Added support for migrating roles
 
 2009/06/09
 - #486538 - Add method to bypass views load in migrate_save_content_set()

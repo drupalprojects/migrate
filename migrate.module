@@ -200,16 +200,16 @@ function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
  *  Primary key value from the destination
  */
 function migrate_add_mapping($mcsid, $sourceid, $destid) {
-  static $insert_query = array();
-  if (!isset($insert_query[$mcsid])) {
+  static $maptables = array();
+  if (!isset($maptables[$mcsid])) {
     $sql = "SELECT view_name FROM {migrate_content_sets} WHERE mcsid=%d";
     $view_name = db_result(db_query($sql, $mcsid));
-    $maptable = _migrate_map_table_name($view_name);
-    $insert_query[$mcsid] = "INSERT INTO {" . $maptable . "}
-                              (sourceid, destid)
-                              VALUES(%d, %d)";
+    $maptables[$mcsid] = _migrate_map_table_name($view_name);
   }
-  db_query($insert_query[$mcsid], $sourceid, $destid);
+  $mapping = new stdClass;
+  $mapping->sourceid = $sourceid;
+  $mapping->destid = $destid;
+  drupal_write_record($maptables[$mcsid], $mapping);
 }
 
 /*
@@ -330,6 +330,54 @@ function migrate_menu() {
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Implementation of hook_schema_alter
+ * @param $schema
+ */
+function migrate_schema_alter(&$schema) {
+  $result = db_query("SELECT * FROM {migrate_content_sets}");
+  while ($content_set = db_fetch_object($result)) {
+    $maptablename = _migrate_map_table_name($content_set->view_name);
+
+    // Get the proper field definition for the sourcekey
+    $view = views_get_view($content_set->view_name);
+    // Must do this to load the database
+    $view->init_query();
+
+    // TODO: For now, PK must be in base_table
+    $tabledb = $view->base_database;
+    $tablename = $view->base_table;
+    db_set_active($tabledb);
+    $inspect = schema_invoke('inspect');
+    db_set_active('default');
+    $sourceschema = $inspect[$tablename];
+    // If the PK of the content set is defined, make sure we have a mapping table
+    if ($content_set->sourcekey) {
+      $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
+      $schema[$maptablename] = array(
+        'description' => t('Mappings from source key to destination key'),
+        'module' => 'migrate',
+        'fields' => array(
+          'sourceid' => $sourcefield,
+          // @TODO: Assumes destination key is unsigned int
+          'destid' => array(
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ),
+          'mcsid' => array(
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+          ),
+        ),
+        'primary key' => array('sourceid'),
+        'indexes' => array('idkey' => array('destid')),
+      );
+    }
+  }
 }
 
 /*

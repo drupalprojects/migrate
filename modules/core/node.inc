@@ -6,7 +6,20 @@
  * Implementation of node destination handling
  */
 
-function migrate_migrate_destination_delete_node($nid) {
+function node_migrate_destination_types() {
+  static $nodetypes = NULL;
+
+  if (!isset($nodetypes)) {
+    $nodetypes = array();
+    foreach (node_get_types() as $type => $info) {
+      $nodetypes['node/' . $type] = t('Node: ') . $info->name;
+    }
+    asort($nodetypes);
+  }
+  return $nodetypes;
+}
+
+function node_migrate_destination_delete_node($nid) {
   // If we've created associations in {upload} between imported nodes
   // and files directly copied to the Drupal files directory (e.g. using
   // the auditfiles module), deleting the nodes deletes the files (not 
@@ -19,7 +32,7 @@ function migrate_migrate_destination_delete_node($nid) {
   node_delete($nid);
 }
 
-function migrate_migrate_destination_import_node($tblinfo, $row) {
+function node_migrate_destination_import_node($tblinfo, $row) {
   $node = (object)array();
   $node->type = $tblinfo->desttype;
   // Make sure the default comment settings are applied
@@ -63,7 +76,7 @@ function migrate_migrate_destination_import_node($tblinfo, $row) {
   return $errors;
 }
 
-function migrate_migrate_destination_xlat_node($nid) {
+function node_migrate_destination_xlat_node($nid) {
   return "node/$nid";
 }
 

@@ -3,6 +3,20 @@
 Migrate 1.0-dev
 ===========
 
+2009/06/14
+- #490930 - Refactoring to improve API and UI around destination definitions:
+    hook_migrate_init() no longer needs to return anything.
+    hook_migrate_destination_types() returns have changed:
+      For simple destinations, such as comments, return array('comment' => t('Comments'))
+      For destinations supporting multiple types, such as nodes, for each type return the base 
+        destination ('node') followed by a / and the subtype ('page'). E.g.,
+        array('node/page' => t('Node: Page'), 'node/story' => t('Node: Story'), ...)
+    The Content Sets page has been simplified - no more destination "kinds" and "types",
+      just "Destinations".
+    Roles are no longer used to define differ user "types" for migration, they are now
+      migrated as a mapped field consisting of a comma-separated list of either role IDs
+      or role names.
+
 2009/06/09
 - #486538 - Add method to bypass views load in migrate_save_content_set()
 - Added migrate_add_mapping() - standard API for hooks to add mappings from source

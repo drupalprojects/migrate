@@ -4,9 +4,9 @@
 function content_profile_migrate_destination_fields_user($type) {
   // Get any CCK fields attached to content profiles
   $cp_types = content_profile_get_types();
+  $fields = array();
   foreach ($cp_types as $type => $info) {
     $profile_fields = migrate_invoke_all('destination', 'fields', 'node', $type);
-
     foreach ($profile_fields as $key => $value) {
       if (!preg_match('/^field_/', $key)) {
         unset($profile_fields[$key]);
@@ -16,7 +16,7 @@ function content_profile_migrate_destination_fields_user($type) {
     }
     $fields = array_merge($fields, $profile_fields);
   }
-  return $profile_fields;
+  return $fields;
 }
 
 function content_profile_migrate_destination_complete_user(&$account, $tblinfo, $row) {

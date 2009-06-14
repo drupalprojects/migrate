@@ -6,13 +6,18 @@
  * Implementation of comment destination handling
  */
 
+function comment_migrate_destination_types() {
+  $types = array('comment' => t('Comment'));
+  return $types;
+}
+
 /**
  * Enter description here...
  *
  * @param unknown_type $type
  * @return unknown
  */
-function migrate_migrate_destination_fields_comment($type) {
+function comment_migrate_destination_fields_comment($type) {
   $fields = array(
     'subject' => t('Comment: Title'),
     'comment' => t('Comment: Body'),
@@ -26,7 +31,7 @@ function migrate_migrate_destination_fields_comment($type) {
   return $fields;
 }
 
-function migrate_migrate_destination_delete_comment($cid) {
+function comment_migrate_destination_delete_comment($cid) {
   $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
   include_once($path);
   // Backdoor deletion - query stolen from comment_delete()
@@ -41,7 +46,7 @@ function migrate_migrate_destination_delete_comment($cid) {
   comment_confirm_delete_submit($form, $form_state);
 }
 
-function migrate_migrate_destination_import_comment($tblinfo, $row) {
+function comment_migrate_destination_import_comment($tblinfo, $row) {
   $comment = array();
   $errors = array();
   $sourcekey = $tblinfo->sourcekey;

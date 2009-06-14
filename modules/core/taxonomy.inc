@@ -6,7 +6,7 @@
 // handles both cases for assigning terms to nodes.
 
 /**
- * Implementation of hook_migrate_fields().
+ * Implementation of hook_migrate_destination_fields_node().
  */
 function taxonomy_migrate_destination_fields_node($type) {
   $fields = array();

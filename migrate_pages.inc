@@ -332,18 +332,20 @@ function migrate_destinations() {
   return(drupal_get_form('_migrate_destination_form'));
 }
 
-//@TODO: Support editing/deletion of content sets
 function _migrate_destination_form($form_state) {
+  // Fetch information on available destinations
+  $desttypes = migrate_invoke_all('destination', 'types');
+
   $form['description'] = array(
     '#prefix' => '<div>',
     '#value' => t('Define sets of mappings from imported tables to Drupal content.'),
     '#suffix' => '</div>',
   );
   $header = array(
-    array('data' => t('Destination'), 'field' => 'mcs.contenttype'),
-    array('data' => t('Source'), 'field' => 'mf.importtable'),
-    array('data' => t('End type'), 'field' => 'mcs.desttype'),
     array('data' => t('Description'), 'field' => 'mcs.description'),
+    array('data' => t('Source view'), 'field' => 'mcs.view_name'),
+    array('data' => t('Destination')),
+//    array('data' => t('End type'), 'field' => 'mcs.desttype'),
     array('data' => t('Weight'), 'field' => 'mcs.weight', 'sort' => 'asc'),
     array('data' => t('')),
   );
@@ -352,19 +354,25 @@ function _migrate_destination_form($form_state) {
           FROM {migrate_content_sets} mcs
           ORDER BY mcs.weight";
   $result = db_query($sql);
-
+  $used_views = array();
   while ($row = db_fetch_object($result)) {
+    if ($row->desttype) {
+      $destination = $desttypes[$row->contenttype . '/' . $row->desttype];
+    }
+    else {
+      $destination = $desttypes[$row->contenttype];
+    }
     $rows[] = array('data' =>
       array(
-        $row->contenttype,
-        $row->view_name,
-        $row->desttype,
         $row->description,
+        $row->view_name,
+        $destination,
         $row->weight,
         l(t('Edit'), 'admin/content/migrate/destinations/'. $row->mcsid, array('html' => TRUE)),
       ),
       'class' => "migrate-content-sets-tr",
     );
+    $used_views[$row->view_name] = $row->view_name;
   }
 
   if (!isset($rows)) {
@@ -387,16 +395,18 @@ function _migrate_destination_form($form_state) {
   
   $views = views_get_all_views();
   foreach ($views as $name => $view) {
-    if ($view->tag) {
-      $options[$name] = $view->tag.': '.$name;
-    } else {
-      $options[$name] = $name;
-    }
-    if ($view->description) {
-      if (strlen($view->description) > 60) {
-        $view->description = substr($view->description, 0, 57).'...';
+    if (!isset($used_views[$name])) {
+      if ($view->tag) {
+        $options[$name] = $view->tag.': '.$name;
+      } else {
+        $options[$name] = $name;
       }
-      $options[$name] .= " ($view->description)";
+      if ($view->description) {
+        if (strlen($view->description) > 60) {
+          $view->description = substr($view->description, 0, 57).'...';
+        }
+        $options[$name] .= " ($view->description)";
+      }
     }
   }
   asort($options);
@@ -405,25 +415,13 @@ function _migrate_destination_form($form_state) {
     '#title' => t('Source view from which to import content'),
     '#options' => $options,
   );
-  
-  $supported = module_invoke_all('migrate_init');
+
   $form['addset']['contenttype'] = array(
     '#type' => 'select',
-    '#title' => t('Kind of destination'),
-    '#options' => $supported['destination'],
+    '#title' => t('Destination'),
+    '#options' => $desttypes,
   );
   
-  $desttypes = migrate_invoke_all('destination', 'types');
-  $destselect = array();
-  foreach ($desttypes as $key => $types) {
-    $destselect = array_merge($destselect, $types);
-  }
-  //@TODO: Use jQuery to dynamically pick the right set of options - look at activeselect module
-  $form['addset']['desttype'] = array(
-    '#type' => 'select',
-    '#title' => t('Destination content type'),
-    '#options' => $destselect,
-  );
   $form['addset']['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),
@@ -438,9 +436,10 @@ function _migrate_destination_form($form_state) {
 
 function _migrate_destination_form_submit($form, &$form_state) {
   $content_set['view_name'] = $form_state['values']['sourceview'];
-  $content_set['desttype'] = $form_state['values']['desttype'];
   $content_set['description'] = $form_state['values']['description'];
-  $content_set['contenttype'] = $form_state['values']['contenttype'];
+  $destination = explode('/', $form_state['values']['contenttype']);
+  $content_set['contenttype'] = $destination[0];
+  $content_set['desttype'] = $destination[1];
   $content_set['weight'] = $form_state['values']['weight'];
 
   $mcsid = migrate_save_content_set($content_set);
@@ -462,6 +461,9 @@ function migrate_destination_mappings($form_state, $mcsid) {
   $contenttype = $row->contenttype;
   $desttype = $row->desttype;
   $weight = $row->weight;
+  
+  // Fetch information on available destinations
+  $desttypes = migrate_invoke_all('destination', 'types');
   $destfields = migrate_invoke_all('destination', 'fields', $contenttype, $desttype);
   
   $form['mcsid'] = array(
@@ -475,32 +477,33 @@ function migrate_destination_mappings($form_state, $mcsid) {
   );
   $form['show_view_name'] = array(
     '#prefix' => '<div>',
-    '#value' => t('Source view: ').l($view_name, 'admin/build/views/edit/'.$view_name),
+    '#value' => t('<strong>Source view:</strong> ') . l($view_name, 'admin/build/views/edit/'.$view_name),
     '#suffix' => '</div>',
   );
   $form['view_name'] = array(
     '#type' => 'value',
     '#value' => $view_name,
   );
+  if ($desttype) {
+    $destination = $desttypes["$contenttype/$desttype"];
+  }
+  else {
+    $destination = $desttypes[$contenttype];
+  }
   $form['show_contenttype'] = array(
     '#prefix' => '<div>',
-    '#value' => t('Kind of destination: ').$contenttype,
+    '#value' => t('<strong>Destination:</strong> ') . $destination,
     '#suffix' => '</div>',
   );
   $form['contenttype'] = array(
     '#type' => 'value',
     '#value' => $contenttype,
   );
-  
-  $desttypes = migrate_invoke_all('destination', 'types');
-  $destselect = $desttypes[$contenttype];
   $form['desttype'] = array(
-    '#type' => 'select',
-    '#title' => t('Destination content type'),
-    '#options' => $destselect,
-    '#default_value' => $desttype,
+    '#type' => 'value',
+    '#value' => $desttype,
   );
-
+  
   $form['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),

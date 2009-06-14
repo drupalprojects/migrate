@@ -17,25 +17,6 @@ foreach ($files as $module_name => $file) {
   }
 }
 
-function migrate_migrate_destination_types() {
-  static $nodetypes = NULL;
-
-  if (!isset($nodetypes)) {
-    $nodetypes = array();
-    foreach (node_get_types() as $type => $info) {
-      $nodetypes[$type] = $info->name;
-    }
-    asort($nodetypes);
-  }
-
-  $types = array(
-    'comment' => array('comment' => t('Comment')),
-    'node' => $nodetypes,
-    'user' => user_roles(TRUE),
-  );
-  return $types;
-}
-
 function migrate_destination_invoke_all($hook, &$object, $tblinfo, $row) {
   // We could have used module_invoke_all, but unfortunately
   // module_invoke_all passes all arguments by value.

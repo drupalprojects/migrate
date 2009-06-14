@@ -8,7 +8,12 @@
  */
 
 
-function migrate_migrate_destination_fields_user($type) {
+function user_migrate_destination_types() {
+  $types = array('user' => t('User'));
+  return $types;
+}
+
+function user_migrate_destination_fields_user($type) {
   $fields = array(
     'name' => t('User: Username'),
     'pass' => t('User: Password'),
@@ -16,24 +21,24 @@ function migrate_migrate_destination_fields_user($type) {
     'created' => t('User: Account created'),
     'access' => t('User: Account last accessed'),
     'login' => t('User: Last logged in'),
+    'roles' => t('User: Roles'),
   );
   
   return $fields;
 }
 
-function migrate_migrate_destination_delete_user($uid) {
+function user_migrate_destination_delete_user($uid) {
   timer_start('user_delete');
   user_delete(array(), $uid);
   timer_stop('user_delete');
 }
 
-function migrate_migrate_destination_import_user($tblinfo, $row) {
+function user_migrate_destination_import_user($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
   $newuser = array();
   // Default to enabled
   $newuser['status'] = 1;
-  $newuser['roles'][$tblinfo->desttype] = $tblinfo->desttype;
   
   foreach ($tblinfo->fields as $destfield => $values) {
     // Ignore CCK fields - we assume another module such as content_profile will deal with them
@@ -47,6 +52,28 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
       // Make sense of timestamp fields
       if ($destfield == 'created' || $destfield == 'access' || $destfield == 'login') {
         $newvalue = _migrate_valid_date($newvalue);
+      }
+      else if ($destfield == 'roles') {
+        static $user_roles;
+        if (!isset($user_roles)) {
+          $user_roles = array_flip(user_roles(TRUE));
+        }
+        // Break out roles
+        $roles = explode(',', $newvalue);
+        $newvalue = array();
+        
+        // Accept either role IDs or role names (which need to be converted to role IDs)
+        // Note that a role name containing a comma will be broken up - in this case, you
+        // must use the role ID instead of the name
+        foreach ($roles as $role) {
+          $rid = $user_roles[trim($role)];
+          if ($rid) {
+            $newvalue[$rid] = $rid;
+          }
+          else {
+            $newvalue[$role] = $role;
+          }
+        }
       }
       $newuser[$destfield] = $newvalue;
     }
@@ -91,6 +118,6 @@ function migrate_migrate_destination_import_user($tblinfo, $row) {
   return $errors;
 }
 
-function migrate_migrate_destination_xlat_user($uid) {
+function user_migrate_destination_xlat_user($uid) {
   return "user/$uid";
 }

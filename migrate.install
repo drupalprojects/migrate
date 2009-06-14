@@ -215,3 +215,14 @@ function migrate_update_6000() {
   }
   return $ret;
 }
+
+/**
+ * Refactoring of content/destination types
+ *
+ */
+function migrate_update_6001() {
+  // Clear desttype, except for nodes
+  $sql = "UPDATE {migrate_content_sets} SET desttype='' WHERE contenttype <> 'node'";
+  db_query($sql);
+  return array();
+}

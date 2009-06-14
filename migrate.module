@@ -24,34 +24,11 @@ define('MIGRATE_MESSAGE_INFORMATIONAL', 4);
  */
 
 /**
- * Implementation of hook_migrate_init() - initialize support for the builtin sources
- * and destinations.
- * 
- * @return
- *    An array of descriptors for the source and destination types we support,
- */
-function migrate_migrate_init() {
-  $path = drupal_get_path('module', 'migrate') . '/migrate_destinations.inc';
-  include_once($path);
-  return array(
-    'destination' => array(
-      'comment' => t('Comment'),
-      'node' => t('Node'),
-      'user' => t('User'),
-    ),
-  );
-}
-
-/**
  * Call a migrate hook
  */
 function migrate_invoke_all($kind, $hook, $type = NULL) {
-  // First time in initialize the modules implementing hooks, and get
-  // info on what sources and destinations they support
-  static $supported = array();
-  if (empty($supported)) {
-    $supported = module_invoke_all('migrate_init');
-  }
+  // Let modules do any one-time initialization (e.g., including migration support files)
+  module_invoke_all('migrate_init');
   $args = func_get_args();
   $hookfunc = "migrate_$kind"."_$hook";
   if (isset($type)) {
@@ -239,6 +216,9 @@ function migrate_add_mapping($mcsid, $sourceid, $destid) {
  * Implementation of hook_init()
  */
 function migrate_init() {
+  $path = drupal_get_path('module', 'migrate') . '/migrate_destinations.inc';
+  include_once($path);
+  
     // Add main CSS functionality.
   drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
 }

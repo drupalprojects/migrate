@@ -987,7 +987,7 @@ function migrate_content_process($starttime, $limit = 0, $idlist = '', &$context
         }
       }
       // When all done, display the timers
-      if ($context['finished'] == 1) {
+      if ($context['finished'] == 1 && isset($context['sandbox']['times'])) {
         global $timers;
         arsort($context['sandbox']['times']);
         foreach ($context['sandbox']['times'] as $name => $total) {

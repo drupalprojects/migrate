@@ -127,11 +127,6 @@ function migrate_save_content_set(&$content_set, $options = array()) {
             'unsigned' => TRUE,
             'not null' => TRUE,
           ),
-          'mcsid' => array(
-            'type' => 'int',
-            'unsigned' => TRUE,
-            'not null' => TRUE,
-          ),
         ),
         'primary key' => array('sourceid'),
          'indexes' => array(
@@ -363,11 +358,6 @@ function migrate_schema_alter(&$schema) {
           'sourceid' => $sourcefield,
           // @TODO: Assumes destination key is unsigned int
           'destid' => array(
-            'type' => 'int',
-            'unsigned' => TRUE,
-            'not null' => TRUE,
-          ),
-          'mcsid' => array(
             'type' => 'int',
             'unsigned' => TRUE,
             'not null' => TRUE,

@@ -9,7 +9,7 @@
 
 
 function user_migrate_destination_types() {
-  $types = array('user' => t('User'));
+  $types = array('user' => t('User'), 'role' => t('Role'));
   return $types;
 }
 
@@ -120,4 +120,42 @@ function user_migrate_destination_import_user($tblinfo, $row) {
 
 function user_migrate_destination_xlat_user($uid) {
   return "user/$uid";
+}
+
+function user_migrate_destination_fields_role($type) {
+  $fields = array(
+    'name' => t('Role name'),
+  );
+  
+  return $fields;
+}
+
+function user_migrate_destination_delete_role($rid) {
+  timer_start('role_delete');
+
+  db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
+  db_query('DELETE FROM {permission} WHERE rid = %d', $rid);
+  db_query('DELETE FROM {role} WHERE rid = %d', $rid);
+  
+  timer_stop('role_delete');
+}
+
+function user_migrate_destination_import_role($tblinfo, $row) {
+  $errors = array();
+  
+  $values = $tblinfo->fields['name'];
+  if ($values['srcfield'] && isset($row->$values['srcfield'])) {
+    $role_name = $row->$values['srcfield'];
+  }
+  else {
+    $role_name = $values['default_value'];
+  }
+
+  if ($role_name) {
+    db_query("INSERT INTO {role} (name) VALUES ('%s')", $role_name);
+    $rid = db_last_insert_id('role', 'rid');
+    $sourcekey = $tblinfo->sourcekey;
+    migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $rid);
+  }
+  return $errors;
 }

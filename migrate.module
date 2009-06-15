@@ -118,20 +118,41 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   // If the PK of the content set is defined, make sure we have a mapping table
   if ($content_set->sourcekey) {
     $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
+    // The field name might be <table>_<column>...
+    if (!$sourcefield) {
+      $sourcekey = substr($content_set->sourcekey, strlen($tablename) + 1);
+      $sourcefield = $sourceschema['fields'][$sourcekey];
+    }
     if (!db_table_exists($maptablename)) {
       $schema = _migrate_map_table_schema($sourcefield);
       db_create_table($ret, $maptablename, $schema);
       // Expose map table to views
       tw_add_tables(array($maptablename));
       tw_add_fk($maptablename, 'destid');
-      
+
       $schema = _migrate_message_table_schema($sourcefield);
       db_create_table($ret, $msgtablename, $schema);
       // Expose messages table to views
       tw_add_tables(array($msgtablename));
       tw_add_fk($msgtablename, 'sourceid');
     } else {
-      // TODO: Handle change in PK - rebuild map and message tables
+      // TODO: Deal with varchar->int case where there is existing non-int data
+      $desired_schema = _migrate_map_table_schema($sourcefield);
+      $actual_schema = $inspect[$maptablename];
+      if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
+        $ret = array();
+        db_drop_primary_key($ret, $maptablename);
+        db_change_field($ret, $maptablename, 'sourceid', 'sourceid', 
+          $sourcefield, array('primary key' => array('sourceid')));
+      }
+      $desired_schema = _migrate_message_table_schema($sourcefield);
+      $actual_schema = $inspect[$msgtablename];
+      if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
+        $ret = array();
+        db_drop_index($ret, $msgtablename, 'sourceid');
+        db_change_field($ret, $msgtablename, 'sourceid', 'sourceid', 
+          $sourcefield, array('indexes' => array('sourceid' => array('sourceid'))));
+      }
     }
   }
 
@@ -337,7 +358,7 @@ function migrate_schema_alter(&$schema) {
   $result = db_query("SELECT * FROM {migrate_content_sets}");
   while ($content_set = db_fetch_object($result)) {
     $maptablename = _migrate_map_table_name($content_set->view_name);
-    $msgtablename = _migrate_msg_table_name($content_set->view_name);
+    $msgtablename = _migrate_message_table_name($content_set->view_name);
 
     // Get the proper field definition for the sourcekey
     $view = views_get_view($content_set->view_name);

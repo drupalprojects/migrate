@@ -16,8 +16,7 @@ Migrate 1.0-dev
     Roles are no longer used to define differ user "types" for migration, they are now
       migrated as a mapped field consisting of a comma-separated list of either role IDs
       or role names.
-- #463830 - Beginning of proper support for text primary keys in sources. Map tables fixed,
-    still need to do the message tables.
+- #463830 - Support for text primary keys in sources.
 - #491368 - Added support for migrating roles
 
 2009/06/09

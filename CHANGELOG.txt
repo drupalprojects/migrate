@@ -3,6 +3,9 @@
 Migrate 1.0-dev
 ===========
 
+2009/06/15
+- #492324 - Drop map and message tables when deleting content set.
+
 2009/06/14
 - #490930 - Refactoring to improve API and UI around destination definitions:
     hook_migrate_init() no longer needs to return anything.

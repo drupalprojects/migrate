@@ -125,7 +125,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       tw_add_tables(array($maptablename));
       tw_add_fk($maptablename, 'destid');
       
-      $schema = _migrate_msg_table_schema($sourcefield);
+      $schema = _migrate_message_table_schema($sourcefield);
       db_create_table($ret, $msgtablename, $schema);
       // Expose messages table to views
       tw_add_tables(array($msgtablename));
@@ -152,6 +152,16 @@ function migrate_save_content_mapping(&$mapping) {
 }
 
 function migrate_delete_content_set($mcsid) {
+  // First, remove the map and message tables
+  $ret = array();
+  $sql = "SELECT view_name FROM {migrate_content_sets} WHERE mcsid=%d";
+  $view_name = db_result(db_query($sql, $mcsid));
+  $maptable = _migrate_map_table_name($view_name);
+  db_drop_table($ret, $maptable);
+  $msgtable = _migrate_message_table_name($view_name);
+  db_drop_table($ret, $msgtable);
+  
+  // Then, delete the content set data
   $sql = "DELETE FROM {migrate_content_mappings} WHERE mcsid=%d";
   db_query($sql, $mcsid);
   $sql = "DELETE FROM {migrate_content_sets} WHERE mcsid=%d";
@@ -345,7 +355,7 @@ function migrate_schema_alter(&$schema) {
     if ($content_set->sourcekey) {
       $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
       $schema[$maptablename] = _migrate_map_table_schema($sourcefield);
-      $schema[$msgtablename] = _migrate_msg_table_schema($sourcefield);
+      $schema[$msgtablename] = _migrate_message_table_schema($sourcefield);
     }
   }
 }
@@ -449,7 +459,7 @@ function _migrate_map_table_schema($sourcefield) {
   return $schema;
 }
 
-function _migrate_msg_table_schema($sourcefield) {
+function _migrate_message_table_schema($sourcefield) {
   $schema = array(
     'description' => t('Import errors'),
     'fields' => array(

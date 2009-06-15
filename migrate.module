@@ -189,6 +189,11 @@ function migrate_delete_content_set($mcsid) {
   db_query($sql, $mcsid);
 }
 
+function migrate_delete_content_mapping($mcmid) {
+  $sql = "DELETE FROM {migrate_content_mappings} WHERE mcmid=%d";
+  db_query($sql, $mcmid);
+}
+
 /**
  * Convenience function for generating a message array
  *

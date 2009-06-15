@@ -7,6 +7,7 @@ Migrate 1.0-dev
 - #492324 - Drop map and message tables when deleting content set.
 - #420026 - Update map and message table sourceid fields when the type is changed in
             migrate_save_content_set()
+- #421864 - Delete obsolete content set mappings when saving a content set.
 
 2009/06/14
 - #490930 - Refactoring to improve API and UI around destination definitions:

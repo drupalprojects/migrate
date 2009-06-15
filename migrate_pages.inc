@@ -629,8 +629,15 @@ function migrate_destination_mappings_submit($form, &$form_state) {
     drupal_set_message(t('Content set deleted'));
     $form_state['redirect'] = 'admin/content/migrate/destinations';
   } else {
+    // Get list of current mappings, so we know if any need deletion
+    $sql = "SELECT mcmid,destfield FROM {migrate_content_mappings} WHERE mcsid=%d";
+    $result = db_query($sql, $mcsid);
+    $prevdests = array();
+    while ($row = db_fetch_object($result)) {
+      $prevdests[$row->destfield] = $row->mcmid;
+    }
     $sourcekey = $form_state['values']['sourcekey'];
-    foreach($form_state['values']['cols'] as $key => $destfield) {
+    foreach ($form_state['values']['cols'] as $key => $destfield) {
       $mapping = new stdClass;
       $mapping->mcsid = $mcsid;
       $mapping->srcfield = $form_state['values']['srcfield'][$destfield];
@@ -642,6 +649,12 @@ function migrate_destination_mappings_submit($form, &$form_state) {
          WHERE mcsid=%d AND destfield='%s'",
         $mcsid, $destfield));
       migrate_save_content_mapping($mapping);
+      // This mapping is currently valid, so remove from the deletion list
+      unset($prevdests[$mapping->destfield]);
+    }
+    // Delete any mappings we didn't save
+    foreach ($prevdests as $mcmid) {
+      migrate_delete_content_mapping($mcmid);
     }
     migrate_save_content_set($form_state['values']);
     drupal_set_message('Changes saved');

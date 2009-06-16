@@ -173,13 +173,14 @@ function migrate_save_content_mapping(&$mapping) {
 }
 
 function migrate_delete_content_set($mcsid) {
-  // First, remove the map and message tables
+  // First, remove the map and message tables from the Table Wizard, and drop them
   $ret = array();
   $sql = "SELECT view_name FROM {migrate_content_sets} WHERE mcsid=%d";
   $view_name = db_result(db_query($sql, $mcsid));
   $maptable = _migrate_map_table_name($view_name);
-  db_drop_table($ret, $maptable);
   $msgtable = _migrate_message_table_name($view_name);
+  tw_remove_tables(array($maptable, $msgtable));
+  db_drop_table($ret, $maptable);
   db_drop_table($ret, $msgtable);
   
   // Then, delete the content set data

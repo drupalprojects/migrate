@@ -3,6 +3,9 @@
 Migrate 1.0-dev
 ===========
 
+2009/06/21
+- #495942 - Fix creation of map/msg tables with serial primary keys in sources.
+
 2009/06/15
 - #492324 - Drop map and message tables when deleting content set.
 - #420026 - Update map and message table sourceid fields when the type is changed in

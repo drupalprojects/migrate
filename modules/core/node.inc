@@ -61,7 +61,12 @@ function node_migrate_destination_import_node($tblinfo, $row) {
   }
   if ($success) {
     timer_start('node_save');
+    // node_save() unconditionally sets the changed timestamp to time() - we need
+    // to force the migrated value if present
+    $changed = $node->changed;
     node_save($node);
+    $node->changed = $changed;
+    drupal_write_record('node', $node, 'nid');
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('node completion hooks');
@@ -89,7 +94,7 @@ function node_migrate_destination_fields_node($type) {
     $fields = array(
       'name' => t('Node: Authored by'),
       'date' => t('Node: Authored on'),
-      'updated' => t('Node: Last updated on'),
+      'changed' => t('Node: Last updated on'),
       'status' => t('Node: Published'),
       'moderate' => t('Node: In moderation queue'),
       'promote' => t('Node: Promoted to front page'),
@@ -144,7 +149,6 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   }
 
   // 2. Creation date.
-
   if (isset($node->date)) {
     // We have a mapped date.
     if (empty($node->date)) {
@@ -154,7 +158,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->date = $date;
     }
     else {
-      migrate_message(t('The date %date is not a valid date.', 
+      migrate_message(t('The created date %date is not a valid date.', 
         array('%date' => $node->date)));
       unset($node->date);
     }
@@ -184,25 +188,24 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   $node->date = format_date($node->created, 'custom', 'Y-m-d H:i:s O');
 
   // 3. Last updated
-
-  if (isset($node->updated)) {
-    // We have a mapped updated date.
-    if (empty($node->updated)) {
-      unset($node->updated);
+  if (isset($node->changed)) {
+    // We have a mapped changed date.
+    if (empty($node->changed)) {
+      unset($node->changed);
     }
-    else if (($date = _migrate_valid_date($node->updated)) > -1) {
-      $node->updated = $date;
+    else if (($date = _migrate_valid_date($node->changed)) > -1) {
+      $node->changed = $date;
     }
     else {
-      $errors[] = migrate_message(t('The date %date is not a valid date.', 
-        array('%date' => theme('placeholder', $node->updated))));
-      unset($node->updated);
+      $errors[] = migrate_message(t('The changed date %date is not a valid date.', 
+        array('%date' => theme('placeholder', $node->changed))));
+      unset($node->changed);
     }
   }
 
-  if (!isset($node->updated)) {
+  if (!isset($node->changed)) {
     // We still don't have a date yet, use the current time.
-    $node->updated = time();
+    $node->changed = time();
   }
 
   // 4. Options (published, promoted, sticky, moderated, new revision).

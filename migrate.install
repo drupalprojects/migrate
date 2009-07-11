@@ -226,3 +226,16 @@ function migrate_update_6001() {
   db_query($sql);
   return array();
 }
+
+/**
+ * The {node} field for the updated timestamp is actually called 'changed'
+ */
+function migrate_update_6002() {
+  $ret = array();
+  $sql = "UPDATE {migrate_content_mappings}
+          SET destfield='changed' 
+          WHERE destfield='updated' AND mcsid IN
+            (SELECT mcsid FROM {migrate_content_sets} WHERE contenttype='node')";
+  $ret[] = update_sql($sql);
+  return $ret;
+}

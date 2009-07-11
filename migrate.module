@@ -374,6 +374,7 @@ function migrate_schema_alter(&$schema) {
     // Get the proper field definition for the sourcekey
     $view = views_get_view($content_set->view_name);
     // Must do this to load the database
+    views_include('query');
     $view->init_query();
 
     // TODO: For now, PK must be in base_table

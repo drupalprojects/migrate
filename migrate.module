@@ -15,12 +15,8 @@ define('MIGRATE_MESSAGE_INFORMATIONAL', 4);
  * for analyzing data from various sources and importing them into Drupal tables.
  * 
  * @TODO:
- * PostGres support (MySQL is assumed in several places)
  * Robustness - check to make sure all prerequisites are done (e.g., table view should
  *  not be available until Analyze is done)
- * The analysis tool allows setting a multi-column PK for the import file, but everything
- *  else assumes a single column. Dealing with this is deferred until/unless we have a 
- *  situation requiring a multi-column PK.
  */
 
 /**
@@ -105,6 +101,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
     // Get the proper field definition for the sourcekey
     $view = views_get_view($content_set->view_name);
     // Must do this to load the database
+    views_include('query');
     $view->init_query();
 
     $tabledb = $view->base_database;
@@ -241,6 +238,255 @@ function migrate_add_mapping($mcsid, $sourceid, $destid) {
   drupal_write_record($maptables[$mcsid], $mapping);
 }
 
+function migrate_content_process_clear($mcsid, $limit = 0, $idlist = '', &$context = NULL) {
+  $result = db_query("SELECT *
+                      FROM {migrate_content_sets}
+                      WHERE mcsid=%d", $mcsid);
+  $tblinfo = db_fetch_object($result);
+  $desttype = $tblinfo->desttype;
+  $view_name = $tblinfo->view_name;
+  $description = $tblinfo->description;
+  $contenttype = $tblinfo->contenttype;
+  $contentid = $contenttype.'id';
+  $maptable = _migrate_map_table_name($view_name);
+  $sourcekey = $tblinfo->sourcekey;
+  $processstart = microtime(TRUE);
+  $msgtablename = _migrate_message_table_name($view_name);
+
+  $deleted = 0;
+  if ($idlist) {
+    $sql = "SELECT sourceid,destid FROM {" . $maptable . "} WHERE sourceid IN ($idlist)";
+  } else {
+    $sql = "SELECT sourceid,destid FROM {" . $maptable . "}";
+  }
+
+  timer_start('delete query');
+  if ($limit) {
+    $deletelist = db_query_range($sql, 0, $limit);
+  } else {
+    $deletelist = db_query($sql);
+  }
+  timer_stop('delete query');
+  while ($row = db_fetch_object($deletelist)) {
+    // Recheck clearing flag - permits dynamic interruption of cron jobs
+    $sql = "SELECT clearing FROM {migrate_content_sets} WHERE mcsid=%d";
+    $clearing = db_result(db_query($sql, $mcsid));
+    if ((time() >= $context['sandbox']['timelimit']) || !$clearing) {
+        $context['sandbox']['timedout'] = TRUE;
+        break;
+      }
+    // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
+    migrate_invoke_all('destination', 'delete', $contenttype, $row->destid);
+    timer_start('clear map/msg');
+    db_query("DELETE FROM {" . $maptable . "} WHERE sourceid=%d", $row->sourceid);
+    db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid=%d AND level=%d",
+      $row->sourceid, MIGRATE_MESSAGE_INFORMATIONAL);
+    timer_stop('clear map/msg');
+    $deleted++;
+  }
+  $time = (microtime(TRUE) - $processstart);
+  if ($time > 0) {
+    $perminute = round(60*$deleted/$time);
+    $time = round($time, 1);
+  } else {
+    $perminute = '?';
+  }
+
+  if ($context['sandbox']['timedout']) {
+    $message = "$deleted previously-imported items deleted in $time seconds ($perminute/min) - continuing clearing '$description'";
+    $context['sandbox']['message'] .= $message . '<br />';
+    $context['message'] = $context['sandbox']['message'];
+    $context['results'][] = $message;
+    watchdog('migrate', $message);
+  } else {
+    $message = "$deleted previously-imported items deleted in $time seconds ($perminute/min) - done clearing '$description'";
+    $context['sandbox']['message'] .= $message . '<br />';
+    $context['message'] = $context['sandbox']['message'];
+    $context['results'][] = $message;
+    $context['sandbox']['numopsdone']++;
+    watchdog('migrate', $message);
+    // Mark that we're done
+    $tblinfo->clearing = 0;
+    migrate_save_content_set($tblinfo);
+    // Remove old messages before beginning new import process
+    db_query("DELETE FROM {" . $msgtablename . "} WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
+  }
+}
+
+function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$context = NULL) {
+  $result = db_query("SELECT *
+                      FROM {migrate_content_sets}
+                      WHERE mcsid=%d", $mcsid);
+  $tblinfo = db_fetch_object($result);
+  $desttype = $tblinfo->desttype;
+  $view_name = $tblinfo->view_name;
+  $description = $tblinfo->description;
+  $contenttype = $tblinfo->contenttype;
+  $maptable = _migrate_map_table_name($view_name);
+  $sourcekey = $tblinfo->sourcekey;
+  $processstart = microtime(TRUE);
+  $collist = db_query("SELECT srcfield, destfield, default_value
+                       FROM {migrate_content_mappings} 
+                       WHERE mcsid=%d AND (srcfield <> '' OR default_value <> '')",
+                      $mcsid);
+  $fields = array();
+  while ($row = db_fetch_object($collist)) {
+    $fields[$row->destfield]['srcfield'] = $row->srcfield;
+    $fields[$row->destfield]['default_value'] = $row->default_value;
+  }
+  $tblinfo->fields = $fields;
+  $tblinfo->maptable = $maptable;
+  // We pick up everything in the input view that is not already imported, and 
+  // not already errored out
+  // Emulate views execute(), so we can scroll through the results ourselves
+  $view = views_get_view($view_name);
+  $view->build();
+    
+  // Let modules modify the view just prior to executing it.
+  foreach (module_implements('views_pre_execute') as $module) {
+    $function = $module . '_views_pre_execute';
+    $function($view);
+  }
+
+  // Add a left join to the map table, and only include rows not in the map
+  $join = new views_join;
+  $join->construct($maptable, $view->base_table, $sourcekey, 'sourceid');
+  $view->query->add_relationship($maptable, $join, $view->base_table);
+  $view->query->add_where(0, "$maptable.sourceid IS NULL", $view->base_table);
+
+  // Ditto for the errors table
+  $join = new views_join;
+  $msgtablename = _migrate_message_table_name($view_name);
+  $join->construct($msgtablename, $view->base_table, $sourcekey, 'sourceid');
+  $view->query->add_relationship($msgtablename, $join, $view->base_table);
+  $view->query->add_where(0, "$msgtablename.sourceid IS NULL", $view->base_table);
+
+  // If running over a selected list of IDs, pass those in to the query
+  if ($idlist) {
+    $view->query->add_where($view->options['group'], $view->base_table.".sourceid IN ($idlist)", 
+      $view->base_table);
+  }
+
+  // We can't seem to get $view->build() to rebuild build_info, so go straight into the query object
+  $query = $view->query->query();
+
+  $query = db_rewrite_sql($query, $view->base_table, $view->base_field, 
+                          array('view' => &$view));
+  $args = $view->build_info['query_args'];
+  $replacements = module_invoke_all('views_query_substitutions', $view);
+  $query = str_replace(array_keys($replacements), $replacements, $query);
+  if (is_array($args)) {
+    foreach ($args as $id => $arg) {
+      $args[$id] = str_replace(array_keys($replacements), $replacements, $arg);
+    }
+  }
+
+  // Now, make the current db name explicit if content set is pulling tables from another DB
+  $viewdb = $view->base_database;
+  if ($viewdb <> 'default') {
+    global $db_url;
+    $url = parse_url(is_array($db_url) ? $db_url['default'] : $db_url);
+    $currdb = substr($url['path'], 1);
+    $query = str_replace('{' . $maptable . '}', 
+      $currdb . '.' . '{' . $maptable . '}', $query);
+    $query = str_replace('{' . $msgtablename . '}', 
+      $currdb . '.' . '{' . $msgtablename . '}', $query);
+    db_set_active($viewdb);
+  }
+    
+  //drupal_set_message($query);
+  timer_start('execute view query');
+  if ($limit) {
+    $importlist = db_query_range($query, $args, 0, $limit);
+  } else {
+    $importlist = db_query($query, $args);
+  }
+  timer_stop('execute view query');
+
+  if ($viewdb != 'default') {
+    db_set_active('default');
+  }
+
+  $imported = 0;
+  timer_start('db_fetch_object');
+  while ($row = db_fetch_object($importlist)) {
+    timer_stop('db_fetch_object');
+    // Recheck importing flag - permits dynamic interruption of cron jobs
+    $sql = "SELECT importing,scanning FROM {migrate_content_sets} WHERE mcsid=%d";
+    $checkrow = db_fetch_object(db_query($sql, $mcsid));
+    $importing = $checkrow->importing;
+    $scanning = $checkrow->scanning;
+
+    if ((time() >= $context['sandbox']['timelimit']) || !($importing || $scanning)) {
+        $context['sandbox']['timedout'] = TRUE;
+        break;
+      }
+
+    timer_start('import hooks');
+    $errors = migrate_invoke_all('destination', 'import', $contenttype, $tblinfo, $row);
+    timer_stop('import hooks');
+
+    // Ok, we're done. Preview the node or save it (if no errors).
+    if (count($errors)) {
+      $success = TRUE;
+      foreach ($errors as $error) {
+        if (!isset($error['level'])) {
+          $error['level'] = MIGRATE_MESSAGE_ERROR;
+        }
+        if ($error['level'] != MIGRATE_MESSAGE_INFORMATIONAL) {
+          $success = FALSE;
+        }
+        db_query("INSERT INTO {" . $msgtablename . "}
+                  (sourceid, level, message)
+                  VALUES('%s', %d, '%s')",
+                  $row->$sourcekey, $error['level'], $error['message']);
+      }
+      if ($success) {
+        $imported++;
+      }
+    }
+    else {
+      $imported++;
+    }
+    timer_start('db_fetch_object');
+  }
+  timer_stop('db_fetch_object');
+  $time = (microtime(TRUE) - $processstart);
+  if ($time > 0) {
+    $perminute = round(60*$imported/$time);
+    $time = round($time, 1);
+  } else {
+    $perminute = '?';
+  }
+
+  if ($context['sandbox']['timedout']) {
+    $message = "$imported items imported in $time seconds ($perminute/min) - continuing importing '$description'";
+    $context['sandbox']['message'] .= $message . '<br />';
+    $context['message'] = $context['sandbox']['message'];
+    $context['results'][] = $message;
+    watchdog('migrate', $message);
+  } else {
+    $message = "$imported items imported in $time seconds ($perminute/min) - done importing '$description'";
+    $context['sandbox']['message'] .= $message . '<br />';
+    $context['message'] = $context['sandbox']['message'];
+    $context['results'][] = $message;
+    $context['sandbox']['numopsdone']++;
+    watchdog('migrate', $message);
+    // Remember we're done 
+    if ($importing) {
+      db_query("UPDATE {migrate_content_sets}
+                SET importing=0, lastimported=NOW()
+                WHERE mcsid=%d",
+               $mcsid);
+    } else {
+      db_query("UPDATE {migrate_content_sets}
+                SET lastimported=NOW()
+                WHERE mcsid=%d",
+               $mcsid);
+    }
+  }
+}
+
 /*
  * Implementation of hook_init()
  */
@@ -250,6 +496,37 @@ function migrate_init() {
   
     // Add main CSS functionality.
   drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
+}
+
+/**
+ * Implementation of hook_action_info()
+ */
+function migrate_action_info() {
+/*  $info['migrate_content_process_clear'] = array(
+    'type' => 'migrate',
+    'description' => t('Clear a migration content set'),
+    'configurable' => FALSE,
+    'hooks' => array(
+      'cron' => array('run'),
+    ),
+  );
+  $info['migrate_content_process_import'] = array(
+    'type' => 'migrate',
+    'description' => t('Import a migration content set'),
+    'configurable' => FALSE,
+    'hooks' => array(
+      'cron' => array('run'),
+    ),
+  );*/
+  $info['migrate_content_process_all'] = array(
+    'type' => 'migrate',
+    'description' => t('Perform all active migration processes'),
+    'configurable' => FALSE,
+    'hooks' => array(
+      'cron' => array('run'),
+    ),
+  );
+  return $info;
 }
 
 /**
@@ -263,7 +540,7 @@ function migrate_cron() {
   global $user;
   $saveuser = $user;
   $user = user_load(array('uid' => 1));
-  migrate_content_process(variable_get('cron_semaphore', 0));
+  migrate_content_process_all(variable_get('cron_semaphore', 0));
   $user = $saveuser;
 }
 

@@ -185,10 +185,12 @@ function migrate_delete_content_set($mcsid) {
   $view_name = db_result(db_query($sql, $mcsid));
   $maptable = _migrate_map_table_name($view_name);
   $msgtable = _migrate_message_table_name($view_name);
-  tw_remove_tables(array($maptable, $msgtable));
-  db_drop_table($ret, $maptable);
-  db_drop_table($ret, $msgtable);
-  
+  if (db_table_exists($maptable)) {
+    tw_remove_tables(array($maptable, $msgtable));
+    db_drop_table($ret, $maptable);
+    db_drop_table($ret, $msgtable);
+  }
+
   // Then, delete the content set data
   $sql = "DELETE FROM {migrate_content_mappings} WHERE mcsid=%d";
   db_query($sql, $mcsid);

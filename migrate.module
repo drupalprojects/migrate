@@ -361,14 +361,23 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
 
   // Add a left join to the map table, and only include rows not in the map
   $join = new views_join;
-  $join->construct($maptable, $view->base_table, $sourcekey, 'sourceid');
+  // Views prepends <base_table>_ to column names other than the base table's
+  // primary key - we need to strip that here for the join to work
+  $baselen = strlen($view->base_table);
+  if (!strncasecmp($sourcekey, $view->base_table . '_', $baselen + 1)) {
+    $joinkey = substr($sourcekey, $baselen + 1);
+  } 
+  else {
+    $joinkey = $sourcekey;
+  }
+  $join->construct($maptable, $view->base_table, $joinkey, 'sourceid');
   $view->query->add_relationship($maptable, $join, $view->base_table);
   $view->query->add_where(0, "$maptable.sourceid IS NULL", $view->base_table);
 
   // Ditto for the errors table
   $join = new views_join;
   $msgtablename = _migrate_message_table_name($view_name);
-  $join->construct($msgtablename, $view->base_table, $sourcekey, 'sourceid');
+  $join->construct($msgtablename, $view->base_table, $joinkey, 'sourceid');
   $view->query->add_relationship($msgtablename, $join, $view->base_table);
   $view->query->add_where(0, "$msgtablename.sourceid IS NULL", $view->base_table);
 
@@ -496,6 +505,95 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
                $mcsid);
     }
   }
+}
+
+function migrate_content_process_all($starttime, $limit = 0, $idlist = '', &$context = NULL) {
+  if (variable_get('migrate_semaphore', FALSE)) {
+    drupal_set_message('There is an import process already in progress');
+    return 0;
+  }
+
+  variable_set('migrate_semaphore', TRUE);
+
+  // A zero max_execution_time means no limit - but let's set a reasonable
+  // limit anyway
+  $maxexectime = ini_get('max_execution_time');
+  if (!$maxexectime) {
+    $maxexectime = 240;
+  }
+  
+  // Initialize the Batch API context if present
+  if ($context) {
+    $context['finished'] = 0;
+    $starttime = time();
+    // The Batch API progress bar will reflect the number of operations being
+    // done (clearing/importing/scanning)
+    if (!isset($context['sandbox']['numops'])) {
+      $numops = 0;
+      $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE clearing=1";
+      $numops = db_result(db_query($sql));
+      $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE importing=1 OR scanning=1";
+      $numops += db_result(db_query($sql));
+      $context['sandbox']['numops'] = $numops;
+      $context['sandbox']['numopsdone'] = 0;
+    }
+  }
+
+  // Subtract more than enough time to clean up
+  $context['sandbox']['timelimit'] = $starttime + $maxexectime - 20;
+
+  // First, perform any clearing actions in reverse order
+  $result = db_query("SELECT mcsid
+                      FROM {migrate_content_sets}
+                      WHERE clearing=1
+                      ORDER BY weight DESC");
+  $context['sandbox']['timedout'] = FALSE;
+  while ($row = db_fetch_object($result)) {
+    if ($context['sandbox']['timedout']) {
+      break;
+    }
+    migrate_content_process_clear($row->mcsid, $limit, $idlist, $context);
+  }
+
+  // Then, any import actions going forward
+  $result = db_query("SELECT mcsid
+                      FROM {migrate_content_sets} 
+                      WHERE importing=1 OR scanning=1
+                      ORDER BY weight");
+  while ($row = db_fetch_object($result)) {
+    if ($context['sandbox']['timedout']) {
+      break;
+    }
+    migrate_content_process_import($row->mcsid, $limit, $idlist, $context);
+  }
+  
+  // If we did not arrive via a timeout, we must have finished all operations
+  if (!$context['sandbox']['timedout']) {
+    $context['finished'] = 1;
+  }
+  else {
+    // Not done, report what percentage done we are (in terms of number of operations)
+    $context['finished'] = $context['sandbox']['numopsdone']/$context['sandbox']['numops'];
+  }
+
+  // When running interactively, if requested save timers for eventual display
+  if (variable_get('migrate_display_timers', 0)) {
+    global $timers;
+    foreach ($timers as $name => $timerec) {
+      if (isset($timerec['time'])) {
+        $context['sandbox']['times'][$name] += $timerec['time']/1000;
+      }
+    }
+    // When all done, display the timers
+    if ($context['finished'] == 1 && isset($context['sandbox']['times'])) {
+      global $timers;
+      arsort($context['sandbox']['times']);
+      foreach ($context['sandbox']['times'] as $name => $total) {
+        drupal_set_message("$name: ".round($total,2));
+      }
+    }
+  }
+  variable_del('migrate_semaphore');
 }
 
 /*

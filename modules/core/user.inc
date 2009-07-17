@@ -4,7 +4,6 @@
 /**
  * @file
  * Implementation of user destination handling
- * TODO: Support for core profile module
  */
 
 

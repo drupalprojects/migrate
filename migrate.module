@@ -1,4 +1,4 @@
-<?php 
+<?php
 // $Id$
 
 define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
@@ -9,14 +9,15 @@ define('MIGRATE_MESSAGE_WARNING', 2);
 define('MIGRATE_MESSAGE_NOTICE', 3);
 define('MIGRATE_MESSAGE_INFORMATIONAL', 4);
 
+define('MIGRATE_STATUS_SUCCESS', 1);
+define('MIGRATE_STATUS_FAILURE', 2);
+define('MIGRATE_STATUS_TIMEDOUT', 3);
+define('MIGRATE_STATUS_CANCELLED', 4);
+
 /**
  * @file
  * This module provides tools at "administer >> content >> migrate"
  * for analyzing data from various sources and importing them into Drupal tables.
- * 
- * @TODO:
- * Robustness - check to make sure all prerequisites are done (e.g., table view should
- *  not be available until Analyze is done)
  */
 
 /**
@@ -60,7 +61,7 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
  *                to load the view.
  *    base_database: The database of the base table - if base_table is present
  *                and base_database omitted, it defaults to 'default'
- * @return 
+ * @return
  *  The ID of the content set that was saved, or NULL if nothing was saved
  */
 function migrate_save_content_set(&$content_set, $options = array()) {
@@ -83,9 +84,9 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   // Create or modify map and message tables
   $maptablename = _migrate_map_table_name($content_set->view_name);
   $msgtablename = _migrate_message_table_name($content_set->view_name);
-  
+
   // TODO: For now, PK must be in base_table
-  
+
   // If the caller tells us the base table of the view, we don't need
   // to load the view (which would not work when called from hook_install())
   if (isset($options['base_table'])) {
@@ -148,7 +149,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
         $ret = array();
         db_drop_primary_key($ret, $maptablename);
-        db_change_field($ret, $maptablename, 'sourceid', 'sourceid', 
+        db_change_field($ret, $maptablename, 'sourceid', 'sourceid',
           $sourcefield, array('primary key' => array('sourceid')));
       }
       $desired_schema = _migrate_message_table_schema($sourcefield);
@@ -156,7 +157,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
         $ret = array();
         db_drop_index($ret, $msgtablename, 'sourceid');
-        db_change_field($ret, $msgtablename, 'sourceid', 'sourceid', 
+        db_change_field($ret, $msgtablename, 'sourceid', 'sourceid',
           $sourcefield, array('indexes' => array('sourceid' => array('sourceid'))));
       }
     }
@@ -175,7 +176,7 @@ function migrate_save_content_mapping(&$mapping) {
     drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
   } else {
     drupal_write_record('migrate_content_mappings', $mapping);
-  } 
+  }
 }
 
 function migrate_delete_content_set($mcsid) {
@@ -210,7 +211,7 @@ function migrate_delete_content_mapping($mcmid) {
  *  Text describing the error condition
  * @param $type
  *  One of the MIGRATE_MESSAGE constants, identifying the level of error
- * @return 
+ * @return
  *  Structured array suitable for return from a destination hook
  */
 function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
@@ -244,7 +245,38 @@ function migrate_add_mapping($mcsid, $sourceid, $destid) {
   drupal_write_record($maptables[$mcsid], $mapping);
 }
 
-function migrate_content_process_clear($mcsid, $limit = 0, $idlist = '', &$context = NULL) {
+/**
+ * Clear migrated objects from the specified content set
+ *
+ * @param $mcsid
+ *  ID of the content set to clear
+ * @param $messages
+ *  Array of messages to (ultimately) be displayed by the caller.
+ * @param $options
+ *  Keyed array of optional options:
+ *    itemlimit - Maximum number of items to process
+ *    timelimit - Unix timestamp after which to stop processing
+ *    idlist - Comma-separated list of source IDs to process, instead of proceeding through
+ *      all unmigrated rows
+ *    feedback - Keyed array controlling status feedback to the caller
+ *      function - PHP function to call, passing a message to be displayed
+ *      frequency - How often to call the function
+ *      frequency_unit - How to interpret frequency (items or seconds)
+ *
+ * @return
+ *  Status of the migration process:
+ */
+function migrate_content_process_clear($mcsid, &$messages = array(), &$options = array()) {
+  $itemlimit = $options['itemlimit'];
+  $timelimit = $options['timelimit'];
+  $idlist = $options['idlist'];
+  if (isset($options['feedback'])) {
+    $feedback = $options['feedback']['function'];
+    $frequency = $options['feedback']['frequency'];
+    $frequency_unit = $options['feedback']['frequency_unit'];
+    $lastfeedback = time();
+  }
+
   $result = db_query("SELECT *
                       FROM {migrate_content_sets}
                       WHERE mcsid=%d", $mcsid);
@@ -253,11 +285,19 @@ function migrate_content_process_clear($mcsid, $limit = 0, $idlist = '', &$conte
   $view_name = $tblinfo->view_name;
   $description = $tblinfo->description;
   $contenttype = $tblinfo->contenttype;
-  $contentid = $contenttype.'id';
-  $maptable = _migrate_map_table_name($view_name);
   $sourcekey = $tblinfo->sourcekey;
-  $processstart = microtime(TRUE);
+
+  $maptable = _migrate_map_table_name($view_name);
   $msgtablename = _migrate_message_table_name($view_name);
+  $processstart = microtime(TRUE);
+  $status = MIGRATE_STATUS_SUCCESS;
+
+  // If we're being called on a content set that isn't flagged for clearing, temporarily flag it
+  $original_clearing = $tblinfo->clearing;
+  if (!$original_clearing) {
+    $sql = "UPDATE {migrate_content_sets} SET clearing=1 WHERE mcsid=%d";
+    db_query($sql, $mcsid);
+  }
 
   $deleted = 0;
   if ($idlist) {
@@ -267,20 +307,35 @@ function migrate_content_process_clear($mcsid, $limit = 0, $idlist = '', &$conte
   }
 
   timer_start('delete query');
-  if ($limit) {
-    $deletelist = db_query_range($sql, 0, $limit);
+  if ($itemlimit) {
+    $deletelist = db_query_range($sql, 0, $itemlimit);
   } else {
     $deletelist = db_query($sql);
   }
   timer_stop('delete query');
+
   while ($row = db_fetch_object($deletelist)) {
-    // Recheck clearing flag - permits dynamic interruption of cron jobs
+    // Recheck clearing flag - permits dynamic interruption of jobs
     $sql = "SELECT clearing FROM {migrate_content_sets} WHERE mcsid=%d";
     $clearing = db_result(db_query($sql, $mcsid));
-    if ((time() >= $context['sandbox']['timelimit']) || !$clearing) {
-        $context['sandbox']['timedout'] = TRUE;
-        break;
+    if (!$clearing) {
+      $status = MIGRATE_STATUS_CANCELLED;
+      break;
+    }
+    // Check for time out if there is time info present
+    if (isset($timelimit) && time() >= $timelimit) {
+      $status = MIGRATE_STATUS_TIMEDOUT;
+      break;
+    }
+    if (isset($feedback)) {
+      if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
+          ($frequency_unit == 'items' && $deleted >= $frequency)) {
+        $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, FALSE);
+        $feedback($message);
+        $lastfeedback = time();
+        $deleted = 0;
       }
+    }
     // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
     migrate_invoke_all('destination', 'delete', $contenttype, $row->destid);
     timer_start('clear map/msg');
@@ -290,36 +345,62 @@ function migrate_content_process_clear($mcsid, $limit = 0, $idlist = '', &$conte
     timer_stop('clear map/msg');
     $deleted++;
   }
-  $time = (microtime(TRUE) - $processstart);
-  if ($time > 0) {
-    $perminute = round(60*$deleted/$time);
-    $time = round($time, 1);
-  } else {
-    $perminute = '?';
-  }
 
-  if ($context['sandbox']['timedout']) {
-    $message = "$deleted previously-imported items deleted in $time seconds ($perminute/min) - continuing clearing '$description'";
-    $context['sandbox']['message'] .= $message . '<br />';
-    $context['message'] = $context['sandbox']['message'];
-    $context['results'][] = $message;
-    watchdog('migrate', $message);
+  if ($status == MIGRATE_STATUS_CANCELLED || $status == MIGRATE_STATUS_TIMEDOUT) {
+    $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, FALSE);
   } else {
-    $message = "$deleted previously-imported items deleted in $time seconds ($perminute/min) - done clearing '$description'";
-    $context['sandbox']['message'] .= $message . '<br />';
-    $context['message'] = $context['sandbox']['message'];
-    $context['results'][] = $message;
-    $context['sandbox']['numopsdone']++;
-    watchdog('migrate', $message);
+    $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, TRUE);
     // Mark that we're done
     $tblinfo->clearing = 0;
     migrate_save_content_set($tblinfo);
     // Remove old messages before beginning new import process
     db_query("DELETE FROM {" . $msgtablename . "} WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
   }
+  if (isset($feedback)) {
+    $feedback($message);
+  }
+  else {
+    $messages[] = $message;
+  }
+  watchdog('migrate', $message);
+  if (!$original_clearing) {
+    $sql = "UPDATE {migrate_content_sets} SET clearing=0 WHERE mcsid=%d";
+    db_query($sql, $mcsid);
+  }
+  return $status;
 }
 
-function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$context = NULL) {
+/**
+ * Import objects from the specified content set
+ *
+ * @param $mcsid
+ *  ID of the content set to clear
+ * @param $messages
+ *  Array of messages to (ultimately) be displayed by the caller.
+ * @param $options
+ *  Keyed array of optional options:
+ *    itemlimit - Maximum number of items to process
+ *    timelimit - Unix timestamp after which to stop processing
+ *    idlist - Comma-separated list of source IDs to process, instead of proceeding through
+ *      all unmigrated rows
+ *    feedback - Keyed array controlling status feedback to the caller
+ *      function - PHP function to call, passing a message to be displayed
+ *      frequency - How often to call the function
+ *      frequency_unit - How to interpret frequency (items or seconds)
+ *
+ * @return
+ *  Status of the migration process:
+ */
+function migrate_content_process_import($mcsid,  &$messages = array(), &$options = array()) {
+  $itemlimit = $options['itemlimit'];
+  $timelimit = $options['timelimit'];
+  $idlist = $options['idlist'];
+  if (isset($options['feedback'])) {
+    $feedback = $options['feedback']['function'];
+    $frequency = $options['feedback']['frequency'];
+    $frequency_unit = $options['feedback']['frequency_unit'];
+    $lastfeedback = time();
+  }
   $result = db_query("SELECT *
                       FROM {migrate_content_sets}
                       WHERE mcsid=%d", $mcsid);
@@ -328,11 +409,22 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
   $view_name = $tblinfo->view_name;
   $description = $tblinfo->description;
   $contenttype = $tblinfo->contenttype;
-  $maptable = _migrate_map_table_name($view_name);
   $sourcekey = $tblinfo->sourcekey;
+
+  $maptable = _migrate_map_table_name($view_name);
+  $msgtablename = _migrate_message_table_name($view_name);
   $processstart = microtime(TRUE);
+  $status = MIGRATE_STATUS_SUCCESS;
+
+  // If we're being called on a content set that isn't flagged for importing, temporarily flag it
+  $original_importing = $tblinfo->importing || $tblinfo->scanning;
+  if (!$original_importing) {
+    $sql = "UPDATE {migrate_content_sets} SET importing=1 WHERE mcsid=%d";
+    db_query($sql, $mcsid);
+  }
+
   $collist = db_query("SELECT srcfield, destfield, default_value
-                       FROM {migrate_content_mappings} 
+                       FROM {migrate_content_mappings}
                        WHERE mcsid=%d AND (srcfield <> '' OR default_value <> '')",
                       $mcsid);
   $fields = array();
@@ -342,17 +434,17 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
   }
   $tblinfo->fields = $fields;
   $tblinfo->maptable = $maptable;
-  // We pick up everything in the input view that is not already imported, and 
+  // We pick up everything in the input view that is not already imported, and
   // not already errored out
   // Emulate views execute(), so we can scroll through the results ourselves
   $view = views_get_view($view_name);
   if (!$view) {
     drupal_set_message(t('View !view does not exist - either (re)create this view, or
       remove the content set using it.', array('!view' => $view_name)));
-    return;
+    return MIGRATE_STATUS_FAILURE;
   }
   $view->build();
-    
+
   // Let modules modify the view just prior to executing it.
   foreach (module_implements('views_pre_execute') as $module) {
     $function = $module . '_views_pre_execute';
@@ -366,7 +458,7 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
   $baselen = strlen($view->base_table);
   if (!strncasecmp($sourcekey, $view->base_table . '_', $baselen + 1)) {
     $joinkey = substr($sourcekey, $baselen + 1);
-  } 
+  }
   else {
     $joinkey = $sourcekey;
   }
@@ -376,21 +468,21 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
 
   // Ditto for the errors table
   $join = new views_join;
-  $msgtablename = _migrate_message_table_name($view_name);
+
   $join->construct($msgtablename, $view->base_table, $joinkey, 'sourceid');
   $view->query->add_relationship($msgtablename, $join, $view->base_table);
   $view->query->add_where(0, "$msgtablename.sourceid IS NULL", $view->base_table);
 
   // If running over a selected list of IDs, pass those in to the query
   if ($idlist) {
-    $view->query->add_where($view->options['group'], $view->base_table.".sourceid IN ($idlist)", 
+    $view->query->add_where($view->options['group'], $view->base_table.".$sourceid IN ($idlist)",
       $view->base_table);
   }
 
   // We can't seem to get $view->build() to rebuild build_info, so go straight into the query object
   $query = $view->query->query();
 
-  $query = db_rewrite_sql($query, $view->base_table, $view->base_field, 
+  $query = db_rewrite_sql($query, $view->base_table, $view->base_field,
                           array('view' => &$view));
   $args = $view->build_info['query_args'];
   $replacements = module_invoke_all('views_query_substitutions', $view);
@@ -407,17 +499,17 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
     global $db_url;
     $url = parse_url(is_array($db_url) ? $db_url['default'] : $db_url);
     $currdb = substr($url['path'], 1);
-    $query = str_replace('{' . $maptable . '}', 
+    $query = str_replace('{' . $maptable . '}',
       $currdb . '.' . '{' . $maptable . '}', $query);
-    $query = str_replace('{' . $msgtablename . '}', 
+    $query = str_replace('{' . $msgtablename . '}',
       $currdb . '.' . '{' . $msgtablename . '}', $query);
     db_set_active($viewdb);
   }
-    
+
   //drupal_set_message($query);
   timer_start('execute view query');
-  if ($limit) {
-    $importlist = db_query_range($query, $args, 0, $limit);
+  if ($itemlimit) {
+    $importlist = db_query_range($query, $args, 0, $itemlimit);
   } else {
     $importlist = db_query($query, $args);
   }
@@ -436,12 +528,26 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
     $checkrow = db_fetch_object(db_query($sql, $mcsid));
     $importing = $checkrow->importing;
     $scanning = $checkrow->scanning;
+    if (!($importing || $scanning)) {
+      $status = MIGRATE_STATUS_CANCELLED;
+      break;
+    }
 
-    if ((time() >= $context['sandbox']['timelimit']) || !($importing || $scanning)) {
-        $context['sandbox']['timedout'] = TRUE;
-        break;
+    // Check for time out if there is time info present
+    if (isset($timelimit) && time() >= $timelimit) {
+      $status = MIGRATE_STATUS_TIMEDOUT;
+      break;
+    }
+
+    if (isset($feedback)) {
+      if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
+          ($frequency_unit == 'items' && $imported >= $frequency)) {
+        $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, FALSE);
+        $feedback($message);
+        $lastfeedback = time();
+        $imported = 0;
       }
-
+    }
     timer_start('import hooks');
     $errors = migrate_invoke_all('destination', 'import', $contenttype, $tblinfo, $row);
     timer_stop('import hooks');
@@ -471,28 +577,12 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
     timer_start('db_fetch_object');
   }
   timer_stop('db_fetch_object');
-  $time = (microtime(TRUE) - $processstart);
-  if ($time > 0) {
-    $perminute = round(60*$imported/$time);
-    $time = round($time, 1);
-  } else {
-    $perminute = '?';
-  }
 
-  if ($context['sandbox']['timedout']) {
-    $message = "$imported items imported in $time seconds ($perminute/min) - continuing importing '$description'";
-    $context['sandbox']['message'] .= $message . '<br />';
-    $context['message'] = $context['sandbox']['message'];
-    $context['results'][] = $message;
-    watchdog('migrate', $message);
+  if ($status == MIGRATE_STATUS_CANCELLED || $status == MIGRATE_STATUS_TIMEDOUT) {
+    $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, FALSE);
   } else {
-    $message = "$imported items imported in $time seconds ($perminute/min) - done importing '$description'";
-    $context['sandbox']['message'] .= $message . '<br />';
-    $context['message'] = $context['sandbox']['message'];
-    $context['results'][] = $message;
-    $context['sandbox']['numopsdone']++;
-    watchdog('migrate', $message);
-    // Remember we're done 
+    $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, TRUE);
+    // Remember we're done
     if ($importing) {
       db_query("UPDATE {migrate_content_sets}
                 SET importing=0, lastimported=NOW()
@@ -505,70 +595,68 @@ function migrate_content_process_import($mcsid, $limit = 0, $idlist = '', &$cont
                $mcsid);
     }
   }
+  if (isset($feedback)) {
+    $feedback($message);
+  }
+  else {
+    $messages[] = $message;
+  }
+  watchdog('migrate', $message);
+  if (!$original_importing) {
+    $sql = "UPDATE {migrate_content_sets} SET importing=0 WHERE mcsid=%d";
+    db_query($sql, $mcsid);
+  }
+  return $status;
 }
 
-function migrate_content_process_all($starttime, $limit = 0, $idlist = '', &$context = NULL) {
-  if (variable_get('migrate_semaphore', FALSE)) {
-    drupal_set_message('There is an import process already in progress');
-    return 0;
-  }
+/* Revisit
+function migrate_content_process_all_action(&$dummy, $action_context, $a1, $a2) {
+  migrate_content_process_all(time());
+}
+*/
 
-  variable_set('migrate_semaphore', TRUE);
+function migrate_content_process_all_batch($starttime, $limit, $idlist, &$context) {
+  $messages = array();
 
   // A zero max_execution_time means no limit - but let's set a reasonable
   // limit anyway
+  $starttime = time();
   $maxexectime = ini_get('max_execution_time');
   if (!$maxexectime) {
     $maxexectime = 240;
   }
-  
-  // Initialize the Batch API context if present
-  if ($context) {
-    $context['finished'] = 0;
-    $starttime = time();
-    // The Batch API progress bar will reflect the number of operations being
-    // done (clearing/importing/scanning)
-    if (!isset($context['sandbox']['numops'])) {
-      $numops = 0;
-      $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE clearing=1";
-      $numops = db_result(db_query($sql));
-      $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE importing=1 OR scanning=1";
-      $numops += db_result(db_query($sql));
-      $context['sandbox']['numops'] = $numops;
-      $context['sandbox']['numopsdone'] = 0;
-    }
+
+  // Initialize the Batch API context
+  $context['finished'] = 0;
+
+  // The Batch API progress bar will reflect the number of operations being
+  // done (clearing/importing/scanning)
+  if (!isset($context['sandbox']['numops'])) {
+    $numops = 0;
+    $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE clearing=1";
+    $numops = db_result(db_query($sql));
+    $sql = "SELECT COUNT(*) FROM {migrate_content_sets} WHERE importing=1 OR scanning=1";
+    $numops += db_result(db_query($sql));
+    $context['sandbox']['numops'] = $numops;
+    $context['sandbox']['numopsdone'] = 0;
   }
 
-  // Subtract more than enough time to clean up
-  $context['sandbox']['timelimit'] = $starttime + $maxexectime - 20;
-
-  // First, perform any clearing actions in reverse order
-  $result = db_query("SELECT mcsid
-                      FROM {migrate_content_sets}
-                      WHERE clearing=1
-                      ORDER BY weight DESC");
-  $context['sandbox']['timedout'] = FALSE;
-  while ($row = db_fetch_object($result)) {
-    if ($context['sandbox']['timedout']) {
-      break;
-    }
-    migrate_content_process_clear($row->mcsid, $limit, $idlist, $context);
+  // For the timelimit, subtract more than enough time to clean up
+  $options = array(
+    'itemlimit' => $limit,
+    'timelimit' => $starttime + $maxexectime - 20,
+    'idlist' => $idlist,
+  );
+  $status = migrate_content_process_all($messages, $options);
+  foreach ($messages as $message) {
+    $context['sandbox']['message'] .= $message . '<br />';
+    $context['message'] = $context['sandbox']['message'];
+    $context['results'][] = $message;
+    $context['sandbox']['numopsdone'] += $options['opcount'];
   }
 
-  // Then, any import actions going forward
-  $result = db_query("SELECT mcsid
-                      FROM {migrate_content_sets} 
-                      WHERE importing=1 OR scanning=1
-                      ORDER BY weight");
-  while ($row = db_fetch_object($result)) {
-    if ($context['sandbox']['timedout']) {
-      break;
-    }
-    migrate_content_process_import($row->mcsid, $limit, $idlist, $context);
-  }
-  
   // If we did not arrive via a timeout, we must have finished all operations
-  if (!$context['sandbox']['timedout']) {
+  if ($status != MIGRATE_STATUS_TIMEDOUT) {
     $context['finished'] = 1;
   }
   else {
@@ -576,7 +664,7 @@ function migrate_content_process_all($starttime, $limit = 0, $idlist = '', &$con
     $context['finished'] = $context['sandbox']['numopsdone']/$context['sandbox']['numops'];
   }
 
-  // When running interactively, if requested save timers for eventual display
+  // If requested save timers for eventual display
   if (variable_get('migrate_display_timers', 0)) {
     global $timers;
     foreach ($timers as $name => $timerec) {
@@ -593,7 +681,97 @@ function migrate_content_process_all($starttime, $limit = 0, $idlist = '', &$con
       }
     }
   }
+}
+
+/**
+ * Process all enabled migration processes
+ *
+ * @param $messages
+ *  Array of messages to (ultimately) be displayed by the caller.
+ * @param $options
+ *  Keyed array of optional options:
+ *    itemlimit - Maximum number of items to process
+ *    timelimit - Unix timestamp after which to stop processing
+ *    idlist - Comma-separated list of source IDs to process, instead of proceeding through
+ *      all unmigrated rows
+ *    opcount - Number of clearing or import operations performed
+ *    feedback - Keyed array controlling status feedback to the caller
+ *      function - PHP function to call, passing a message to be displayed
+ *      frequency - How often to call the function
+ *      frequency_unit - How to interpret frequency (items or seconds)
+ *
+ * @return
+ *  Status of the migration process:
+ */
+function migrate_content_process_all(&$messages = array(), &$options = array()) {
+  if (variable_get('migrate_semaphore', FALSE)) {
+    drupal_set_message('There is an import process already in progress');
+    return 0;
+  }
+
+  variable_set('migrate_semaphore', TRUE);
+
+  // First, perform any clearing actions in reverse order
+  $result = db_query("SELECT mcsid
+                      FROM {migrate_content_sets}
+                      WHERE clearing=1
+                      ORDER BY weight DESC");
+  $context['sandbox']['timedout'] = FALSE;
+  while ($row = db_fetch_object($result)) {
+    $status = migrate_content_process_clear($row->mcsid, $messages, $options);
+    if ($status != MIGRATE_STATUS_SUCCESS) {
+      break;
+    }
+    $options['opcount']++;
+  }
+
+  // Then, any import actions going forward
+  $result = db_query("SELECT mcsid
+                      FROM {migrate_content_sets}
+                      WHERE importing=1 OR scanning=1
+                      ORDER BY weight");
+  while ($row = db_fetch_object($result)) {
+    $status = migrate_content_process_import($row->mcsid, $messages, $options);
+    if ($status != MIGRATE_STATUS_SUCCESS) {
+      break;
+    }
+    $options['opcount']++;
+  }
+
   variable_del('migrate_semaphore');
+  return $status;
+}
+
+function _migrate_progress_message($starttime, $numitems, $description, $import = TRUE, $done = TRUE) {
+  $time = (microtime(TRUE) - $starttime);
+  if ($time > 0) {
+    $perminute = round(60*$numitems/$time);
+    $time = round($time, 1);
+  } else {
+    $perminute = '?';
+  }
+
+  if ($import) {
+    if ($done) {
+      $basetext = "!numitems items imported in !time seconds (!perminute/min) - done importing '!description'";;
+    }
+    else {
+      $basetext = "!numitems items imported in !time seconds (!perminute/min) - continuing importing '!description'";
+    }
+  }
+  else {
+    if ($done) {
+      $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - done clearing '!description'";
+    }
+    else {
+      $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - continuing clearing '!description'";
+    }
+  }
+  $message = t($basetext,
+      array('!numitems' => $numitems, '!time' => $time, '!perminute' => $perminute,
+            '!description' => $description));
+
+  return $message;
 }
 
 /*
@@ -602,7 +780,7 @@ function migrate_content_process_all($starttime, $limit = 0, $idlist = '', &$con
 function migrate_init() {
   $path = drupal_get_path('module', 'migrate') . '/migrate_destinations.inc';
   include_once($path);
-  
+
     // Add main CSS functionality.
   drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
 }
@@ -610,8 +788,9 @@ function migrate_init() {
 /**
  * Implementation of hook_action_info()
  */
+/* Revisit
 function migrate_action_info() {
-/*  $info['migrate_content_process_clear'] = array(
+  $info['migrate_content_process_clear'] = array(
     'type' => 'migrate',
     'description' => t('Clear a migration content set'),
     'configurable' => FALSE,
@@ -626,8 +805,8 @@ function migrate_action_info() {
     'hooks' => array(
       'cron' => array('run'),
     ),
-  );*/
-  $info['migrate_content_process_all'] = array(
+  );
+  $info['migrate_content_process_all_action'] = array(
     'type' => 'migrate',
     'description' => t('Perform all active migration processes'),
     'configurable' => FALSE,
@@ -637,6 +816,7 @@ function migrate_action_info() {
   );
   return $info;
 }
+*/
 
 /**
  * Implementation of hook_cron()
@@ -649,7 +829,16 @@ function migrate_cron() {
   global $user;
   $saveuser = $user;
   $user = user_load(array('uid' => 1));
-  migrate_content_process_all(variable_get('cron_semaphore', 0));
+  $messages = array();
+  // A zero max_execution_time means no limit - but let's set a reasonable
+  // limit anyway
+  $starttime = variable_get('cron_semaphore', 0);
+  $maxexectime = ini_get('max_execution_time');
+  if (!$maxexectime) {
+    $maxexectime = 240;
+  }
+  $options = array('timelimit' => $starttime + $maxexectime - 20);
+  migrate_content_process_all($messages, $options);
   $user = $saveuser;
 }
 
@@ -657,7 +846,7 @@ function migrate_cron() {
  * Implementation of hook_perm().
  */
 function migrate_perm() {
-  return array(MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED);  
+  return array(MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED);
 }
 
 /**
@@ -668,18 +857,18 @@ function migrate_help($page, $arg) {
     case 'admin/help#migrate':
       $output = '<p>'. t('The migrate module aids in the importing of data into your site from
         comma separated values format (CSV) or tab separated values format (TSV) files.') .'</p>';
-      $output .= '<p>'. t('Migrate accepts a CSV or TSV file as input. CSV or TSV files can be generated 
-        using spreadsheet programs. Your CSV or TSV file must contain field names in its first row. These 
+      $output .= '<p>'. t('Migrate accepts a CSV or TSV file as input. CSV or TSV files can be generated
+        using spreadsheet programs. Your CSV or TSV file must contain field names in its first row. These
         field names can be anything. Modules, such as contact_manager, will add additional import types.') .'</p>';
       $output .= t('<p>You can</p>
 <ul>
-<li>read about the PHP function that reads CSV files: 
+<li>read about the PHP function that reads CSV files:
   <a href="@external-http-us3-php-net-fgetcvs" title="fgetcsv programmer function page">fgetcsv</a>.</li>
 <li>import files at <a href="@admin-node-migrate">administer &gt;&gt; content &gt;&gt; migrate</a>.</li>
-<li>administer node permissions at <a href="@admin-access-permission">administer &gt;&gt; access &gt;&gt; 
+<li>administer node permissions at <a href="@admin-access-permission">administer &gt;&gt; access &gt;&gt;
   permissions &gt;&gt; node import</a>.</li>
-</ul>', array('@external-http-us3-php-net-fgetcvs' => 'http://us3.php.net/fgetcsv', 
-              '@admin-node-migrate' => url('admin/content/tw'), 
+</ul>', array('@external-http-us3-php-net-fgetcvs' => 'http://us3.php.net/fgetcsv',
+              '@admin-node-migrate' => url('admin/content/tw'),
               '@admin-access-permission' => url('admin/user/permissions')));
       return $output;
   }
@@ -790,9 +979,9 @@ function migrate_schema_alter(&$schema) {
 /*
  * Translate URIs from an old site to the new one
  * Requires adding RewriteRules to .htaccess. For example, if the URLs
- * for news articles had the form 
+ * for news articles had the form
  * http://example.com/issues/news/[OldID].html, use this rule:
- * 
+ *
  * RewriteRule ^issues/news/([0-9]+).html$ /migrate/xlat/node/$1 [L]
  */
 function migrate_xlat($contenttype=NULL, $oldid=NULL) {
@@ -809,7 +998,7 @@ function migrate_xlat($contenttype=NULL, $oldid=NULL) {
 /*
  * Helper function to translate an ID from a source file to the corresponding
  * Drupal-side ID (nid, uid, etc.)
- * 
+ *
  * TODO: Update to new world (content sets as the basis of migration)
  */
 function _migrate_xlat_get_new_id($contenttype, $oldid) {

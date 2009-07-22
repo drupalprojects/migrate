@@ -301,7 +301,7 @@ function _migrate_dashboard_form_submit($form, &$form_state) {
     variable_set('migrate_limit', $form_state['values']['limit']);
     $batch = array(
       'operations' => array(
-        array('migrate_content_process_all', array($started, $form_state['values']['limit'],
+        array('migrate_content_process_all_batch', array($started, $form_state['values']['limit'],
           trim($form_state['values']['idlist'])))),
       'title' => t('Migration processing'),
       'file' => drupal_get_path('module', 'migrate') . '/migrate_pages.inc',

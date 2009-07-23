@@ -38,10 +38,10 @@ function comment_migrate_destination_delete_comment($cid) {
   $form = array();
   $form_state = array();
   $form['#comment'] = db_fetch_object(db_query(
-    'SELECT c.*, u.name AS registered_name, u.uid 
-     FROM {comments} c 
-     INNER JOIN {users} u ON u.uid = c.uid 
-     WHERE c.cid = %d', 
+    'SELECT c.*, u.name AS registered_name, u.uid
+     FROM {comments} c
+     INNER JOIN {users} u ON u.uid = c.uid
+     WHERE c.cid = %d',
     $cid));
   comment_confirm_delete_submit($form, $form_state);
 }
@@ -50,7 +50,7 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
   $comment = array();
   $errors = array();
   $sourcekey = $tblinfo->sourcekey;
-  
+
   foreach ($tblinfo->fields as $destfield => $values) {
      if ($values['srcfield'] && $row->$values['srcfield']) {
       $comment[$destfield] = $row->$values['srcfield'];
@@ -58,7 +58,7 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
       $comment[$destfield] = $values['default_value'];
     }
   }
-  
+
   // Prepare the comment for import. We could have use migrate_invoke_all()
   // but unfortunately arguments are passed by value
   foreach (module_list() as $module_name) {
@@ -69,26 +69,21 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
       timer_stop($function);
     }
   }
-  
-  // nid and uid are initially populated with the source file's ID - translate to 
-  // Drupal IDs
-  if ($comment['nid']) {
-    $comment['nid'] = _migrate_xlat_get_new_id('node', $comment['nid']);
-  }
+
+  /*
+   * Validation: should probably create a validation hook instead
+   */
   if (!$comment['nid']) {
     $errors[] = migrate_message(t('No node found'));
   }
-  if ($comment['uid']) {
-    $comment['uid'] = _migrate_xlat_get_new_id('user', $comment['uid']);
-    if (!$comment['name']) {
-      $commentuser = user_load(array('uid' => $comment['uid']));
-      $comment['name'] = $commentuser->name;
-    }
+  if (!$comment['name']) {
+    $commentuser = user_load(array('uid' => $comment['uid']));
+    $comment['name'] = $commentuser->name;
   }
   if (!$comment['name']) {
     $errors[] = migrate_message(t('No user id or name found'));
   }
-  
+
   // Do our best to interpret timestamps
   if ($comment['timestamp']) {
     $comment['timestamp'] = _migrate_valid_date($comment['timestamp']);
@@ -97,21 +92,42 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
     }
   }
 
+  //TODO: we should probably check actual errors, some may be info messages.
   if (count($errors) == 0) {
     $cid = comment_save($comment);
-    if ($cid) {
-      // comment_save() always saves time() as the timestamp, override if we have a value
-      if ($comment['timestamp']) {
-        db_query("UPDATE {comments}
-                  SET timestamp=%d
-                  WHERE cid=%d",
-                 $comment['timestamp'], $cid);
-      }
-      $sourcekey = $tblinfo->sourcekey;
-      migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $cid);
-    } else {
-      $errors[] = migrate_message(t('Comment not saved'));
+  }
+
+  //TODO: replace this with the migrate_destination_invoke_all();
+  foreach (module_list() as $module_name) {
+    $function = $module_name .'_migrate_destination_complete_comment';
+    if (function_exists($function)) {
+      timer_start($function);
+      $errors = array_merge($errors, (array)$function($cid, $tblinfo, $row));
+      timer_stop($function);
     }
+  }
+
+  return $errors;
+}
+
+function comment_migrate_destination_complete_comment(&$cid, $tblinfo, $row) {
+  if ($cid) {
+    // comment_save() always saves time() as the timestamp, override if we have a value
+    if ($comment['timestamp']) {
+      db_query("UPDATE {comments}
+                SET timestamp=%d
+                WHERE cid=%d",
+               $comment['timestamp'], $cid);
+    }
+    $sourcekey = $tblinfo->sourcekey;
+    //@TODO: Factor out into caller
+    db_query("INSERT INTO {" . $tblinfo->maptable . "}
+              (sourceid, destid)
+              VALUES(%d, %d)",
+             $row->$sourcekey, $cid);
+  } else {
+    $errors[] = migrate_message(t('Comment not saved'));
   }
   return $errors;
 }
+

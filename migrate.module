@@ -270,11 +270,11 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
   $itemlimit = $options['itemlimit'];
   $timelimit = $options['timelimit'];
   $idlist = $options['idlist'];
+  $lastfeedback = time();
   if (isset($options['feedback'])) {
     $feedback = $options['feedback']['function'];
     $frequency = $options['feedback']['frequency'];
     $frequency_unit = $options['feedback']['frequency_unit'];
-    $lastfeedback = time();
   }
 
   $result = db_query("SELECT *
@@ -395,11 +395,11 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   $itemlimit = $options['itemlimit'];
   $timelimit = $options['timelimit'];
   $idlist = $options['idlist'];
+  $lastfeedback = time();
   if (isset($options['feedback'])) {
     $feedback = $options['feedback']['function'];
     $frequency = $options['feedback']['frequency'];
     $frequency_unit = $options['feedback']['frequency_unit'];
-    $lastfeedback = time();
   }
   $result = db_query("SELECT *
                       FROM {migrate_content_sets}

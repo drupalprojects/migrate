@@ -3,6 +3,9 @@
 Migrate 1.0-dev
 ===========
 
+2009/07/23
+- #426824 - Partial fix for comment import
+
 2009/07/19
 - #484790 - Support running migrations via Drush. Note there has been significant refactoring
             of the migrate_content_process*() API.

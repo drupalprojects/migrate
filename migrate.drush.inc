@@ -102,6 +102,15 @@ function drush_migrate_clear($content_set) {
   if ($itemlimit) {
     $options['itemlimit'] = $itemlimit;
   }
+  $options['feedback'] = array(
+    'function' => 'drush_print',
+  );
+  $feedback = drush_get_option('feedback');
+  if ($feedback) {
+    $parts = explode(' ', $feedback);
+    $options['feedback']['frequency'] = $parts[0];
+    $options['feedback']['frequency_unit'] = $parts[1];
+  }
   migrate_content_process_clear($mcsid, $messages, $options);
   foreach ($messages as $message) {
     drush_print($message);
@@ -122,6 +131,15 @@ function drush_migrate_import($content_set) {
   $itemlimit = drush_get_option('itemlimit');
   if ($itemlimit) {
     $options['itemlimit'] = $itemlimit;
+  }
+  $options['feedback'] = array(
+    'function' => 'drush_print',
+  );
+  $feedback = drush_get_option('feedback');
+  if ($feedback) {
+    $parts = explode(' ', $feedback);
+    $options['feedback']['frequency'] = $parts[0];
+    $options['feedback']['frequency_unit'] = $parts[1];
   }
   migrate_content_process_import($mcsid, $messages, $options);
   foreach ($messages as $message) {

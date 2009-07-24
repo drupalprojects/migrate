@@ -22,9 +22,9 @@ function node_migrate_destination_types() {
 function node_migrate_destination_delete_node($nid) {
   // If we've created associations in {upload} between imported nodes
   // and files directly copied to the Drupal files directory (e.g. using
-  // the auditfiles module), deleting the nodes deletes the files (not 
-  // what we typically want when going through clear/import cycles). We 
-  // short-circuit this behavior by explicitly deleting the {upload} 
+  // the auditfiles module), deleting the nodes deletes the files (not
+  // what we typically want when going through clear/import cycles). We
+  // short-circuit this behavior by explicitly deleting the {upload}
   // table entries for this node, so the upload module leaves the files alone.
   if (db_table_exists('upload')) {
     db_query("DELETE FROM {upload} WHERE nid=%d", $nid);
@@ -40,7 +40,7 @@ function node_migrate_destination_import_node($tblinfo, $row) {
   if (function_exists($function)) {
     $function($node, "prepare");
   }
-  
+
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && $row->$values['srcfield']) {
       $node->$destfield = $row->$values['srcfield'];
@@ -48,7 +48,7 @@ function node_migrate_destination_import_node($tblinfo, $row) {
       $node->$destfield = $values['default_value'];
     }
   }
-  
+
   // Prepare the node for import.
   $errors = migrate_destination_invoke_all('prepare_node', $node, $tblinfo, $row);
 
@@ -72,7 +72,7 @@ function node_migrate_destination_import_node($tblinfo, $row) {
     timer_start('node completion hooks');
     $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
     timer_stop('node completion hooks');
-    
+
     $sourcekey = $tblinfo->sourcekey;
     // @TODO: Check first for existence, we may have updated an existing node
     // @TODO: Back out a new revision?
@@ -111,6 +111,10 @@ function node_migrate_destination_fields_node($type) {
   if ($type_info->has_body) {
     $fields['body'] = t('Node: ').$type_info->body_label;
     $fields['teaser'] = t('Node: Teaser');
+  }
+
+  if (module_exists('path') && (user_access('create url aliases') || user_access('administer url aliases'))) {
+    $fields['path'] = t('Path: URL Alias');
   }
 
   return $fields;
@@ -158,7 +162,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->date = $date;
     }
     else {
-      migrate_message(t('The created date %date is not a valid date.', 
+      migrate_message(t('The created date %date is not a valid date.',
         array('%date' => $node->date)));
       unset($node->date);
     }
@@ -174,7 +178,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->date = $date;
     }
     else {
-      migrate_message(t('The date %date is not a valid date.', 
+      migrate_message(t('The date %date is not a valid date.',
         array('%date' => $author['date'])));
     }
   }
@@ -197,7 +201,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
       $node->changed = $date;
     }
     else {
-      $errors[] = migrate_message(t('The changed date %date is not a valid date.', 
+      $errors[] = migrate_message(t('The changed date %date is not a valid date.',
         array('%date' => theme('placeholder', $node->changed))));
       unset($node->changed);
     }
@@ -213,7 +217,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $options = variable_get('node_options_'. $node->type, array('status', 'promote'));
   }
   $all_options = array('status', 'moderate', 'promote', 'sticky', 'revision');
-  
+
   foreach ($all_options as $key) {
     if (isset($node->$key) && strlen($node->$key) > 0) {
       // If the field was mapped, use that value.
@@ -235,11 +239,11 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   if (isset($node->title)) {
     $node->title = strip_tags($node->title);
   }
-  
+
   // 6. Input Format
   // Default to Full HTML
   $node->format = 2;
-  
+
   // 7. Body/teaser
   if ($type_info->has_body) {
     // If incoming data has a teaser and no body, copy the teaser into the body

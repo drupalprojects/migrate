@@ -425,7 +425,8 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
 
   $collist = db_query("SELECT srcfield, destfield, default_value
                        FROM {migrate_content_mappings}
-                       WHERE mcsid=%d AND (srcfield <> '' OR default_value <> '')",
+                       WHERE mcsid=%d AND (srcfield <> '' OR default_value <> '')
+                       ORDER BY mcmid",
                       $mcsid);
   $fields = array();
   while ($row = db_fetch_object($collist)) {

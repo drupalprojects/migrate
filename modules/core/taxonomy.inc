@@ -1,9 +1,27 @@
 <?php
 // $Id$
 
-// Note: this file is included both for taxonomy.module and for
-// the wrapper taxonomy.module of category.module. This file
-// handles both cases for assigning terms to nodes.
+/**
+ * Implementation of hook_migrate_destination_types().
+ */
+function taxonomy_migrate_destination_types() {
+  $types = array('term' => t('Taxonomy Term'));
+  return $types;
+}
+
+/**
+ * Implementation of hook_migrate_destination_fields_taxonomy().
+ */
+function taxonomy_migrate_destination_fields_term($type) {
+  $fields = array(
+    'vid' => t('Taxonomy: Vocabulary'),
+    'name' => t('Taxonomy: Name'),
+    'description' => t('Taxonomy: Description'),
+    'weight' => t('Taxonomy: Weight'),
+    'parent' => t('Taxonomy: Parent'),
+  );
+  return $fields;
+}
 
 /**
  * Implementation of hook_migrate_destination_fields_node().
@@ -17,6 +35,132 @@ function taxonomy_migrate_destination_fields_node($type) {
 }
 
 /**
+ * Implementation of hook_migrate_destination_delete_term().
+ */
+function taxonomy_migrate_destination_delete_term($tid) {
+  taxonomy_del_term($tid);
+}
+
+/**
+ * Implementation of hook_migrate_destination_import_term().
+ */
+function taxonomy_migrate_destination_import_term($tblinfo, $row) {
+  static $vocabularies = NULL;
+  if (!isset($vocabularies)) {
+    $vocabularies = array();
+    $sql = "SELECT vid,name FROM {vocabulary}";
+    $result = db_query($sql);
+    while ($vocabrow = db_fetch_object($result)) {
+      $vocabularies[$vocabrow->name] = $vocabrow->vid;
+    }
+  }
+
+  $sourcekey = $tblinfo->sourcekey;
+  $errors = array();
+  // Begin building term array.
+  $term = array();
+
+  foreach ($tblinfo->fields as $destfield => $values) {
+    if ($values['srcfield'] && $row->$values['srcfield']) {
+      $source_value = $row->$values['srcfield'];
+    } else {
+      $source_value = $values['default_value'];
+    }
+    switch ($destfield) {
+      case 'vid':
+        // Get vocabulary by name
+        if (!is_numeric($source_value)) {
+          if (isset($vocabularies[$source_value])) {
+            $source_value = $vocabularies[$source_value];
+          }
+          else {
+            $errors[] = migrate_message(t('Provided vocabulary "!vocab" not found',
+              array('!vocab' => $source_value)));
+          }
+        }
+        $term['vid'] = $source_value;
+        break;
+      case 'parent':
+        // @TODO: what if parent term is not already loaded into database?
+        // Interpret a numeric parent as the source ID of the parent term
+        if (is_numeric($source_value)) {
+          $parent = db_result(db_query("SELECT destid FROM {". $tblinfo->maptable ."} WHERE sourceid = %d", $source_value));
+          $term[$destfield] = ($parent >= 0 ? $parent : 0);
+        }
+        else if ($source_value) {
+          // Interpret a string parent as the name of the parent term
+          $matches = taxonomy_get_term_by_name($source_value);
+
+          // No matches - maybe the parent isn't migrated yet
+          if (count($matches) == 0) {
+            $errors[] = migrate_message(t('Parent term "!parent" not found. You may need
+              to change the ordering of your content set view so all parents are migrated
+              before their children.', array('!parent' => $source_value)));
+          }
+          else {
+            // If there's no explicit vocabulary for the term...
+            if (!$term['vid']) {
+              // ...use a single match...
+              if (count($matches) == 1) {
+                $term['parent'] = $matches[0]->tid;
+              }
+              // ...but deprecate ambiguity
+              else {
+                $errors[] = migrate_message(t('Multiple potential parent terms named "!parent"
+                  were found.', array('!parent' => $source_value)));
+              }
+            }
+            // If the term is tied to a vocabulary, look for the parent only in that vocab
+            else {
+              foreach ($matches as $parent_term) {
+                if ($parent_term->vid == $term['vid']) {
+                  $term['parent'] = $parent_term->tid;
+                  break;
+                }
+              }
+              // No parent found
+              if (!isset($term['parent'])) {
+                $errors[] = migrate_message(t('Parent term "!parent" not found in vocabulary !vid.
+                  You may need to change the ordering of your content set view so all parents are
+                  migrated before their children.',
+                  array('!parent' => $source_value, '!vid' => $term['vid'])));
+              }
+            }
+          }
+        }
+        break;
+      default:
+        $term[$destfield] = $source_value;
+        break;
+    }
+  }
+
+  // Prepare the term for import.
+  $errors += migrate_destination_invoke_all('prepare_term', $term, $tblinfo, $row);
+
+  $success = TRUE;
+  foreach ($errors as $error) {
+    if ($error['level'] != MIGRATE_MESSAGE_INFORMATIONAL) {
+      $success = FALSE;
+      break;
+    }
+  }
+  if ($success) {
+    timer_start('taxonomy_save');
+    taxonomy_save_term($term);
+    timer_stop('taxonomy_save');
+    // Call completion hooks, for any processing which needs to be done after node_save
+    timer_start('taxonomy completion hooks');
+    $errors = migrate_destination_invoke_all('complete_taxonomy', $term, $tblinfo, $row);
+    timer_stop('taxonomy completion hooks');
+
+    // @TODO: Check first for existence, we may have updated an existing term - do we care about duplicates?
+    migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $term['tid']);
+  }
+  return $errors;
+}
+
+/**
  * Implementation of hook_migrate_prepare().
  */
 function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
@@ -25,7 +169,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $vocabs = taxonomy_get_vocabularies($node->type);
   }
   if (!$vocabs || count($vocabs) < 1) return;
-  
+
   $multiple_separator = variable_get('migrate_multiple_separator', '|');
 
   $taxonomy = array(); // Here we will store the final taxonomy for this node.
@@ -60,7 +204,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
 
       // Error if the vocabulary was required, but there are no terms.
       if ($vocab->required && empty($taxonomy['tags'][$vid])) {
-        $errors[] = migrate_message(t('You need to assign at least one term of the vocabulary %name.', 
+        $errors[] = migrate_message(t('You need to assign at least one term of the vocabulary %name.',
           array('%name' => theme('placeholder', $vocab->name))));
       }
     }
@@ -91,7 +235,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               $taxonomy[$vid][] = $tid;
             }
             else if ($tid < 0) {
-              $errors[] = migrate_message(t('The term %term does not exist in the %name vocabulary.', 
+              $errors[] = migrate_message(t('The term %term does not exist in the %name vocabulary.',
                 array('%term' => theme('placeholder', $value), '%name' => theme('placeholder', $vocab->name))));
             }
           }
@@ -101,7 +245,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
 
       // Error if the vocabulary was required, but there are no terms.
       if ($vocab->required && count($taxonomy[$vid]) == 0) {
-        $errors[] = migrate_message(t('You need to assign at least one term of the %name vocabulary.', 
+        $errors[] = migrate_message(t('You need to assign at least one term of the %name vocabulary.',
           array('%name' => theme('placeholder', $vocab->name))));
       }
 
@@ -128,6 +272,10 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   }
 
   return $errors;
+}
+
+function taxonomy_migrate_destination_xlat_term($tid) {
+  return "taxonomy/term/$tid";
 }
 
 /**
@@ -191,3 +339,4 @@ function _migrate_taxonomy_get_term($vocab, $text, $handler) {
   $missing_terms[$vid][$text] = $tid;
   return $tid;
 }
+

@@ -13,6 +13,7 @@ define('MIGRATE_STATUS_SUCCESS', 1);
 define('MIGRATE_STATUS_FAILURE', 2);
 define('MIGRATE_STATUS_TIMEDOUT', 3);
 define('MIGRATE_STATUS_CANCELLED', 4);
+define('MIGRATE_STATUS_IN_PROGRESS', 5);
 
 /**
  * @file
@@ -290,7 +291,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
   $maptable = _migrate_map_table_name($view_name);
   $msgtablename = _migrate_message_table_name($view_name);
   $processstart = microtime(TRUE);
-  $status = MIGRATE_STATUS_SUCCESS;
+  $status = MIGRATE_STATUS_IN_PROGRESS;
 
   // If we're being called on a content set that isn't flagged for clearing, temporarily flag it
   $original_clearing = $tblinfo->clearing;
@@ -320,6 +321,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     $clearing = db_result(db_query($sql, $mcsid));
     if (!$clearing) {
       $status = MIGRATE_STATUS_CANCELLED;
+      dsm('canncelled');
       break;
     }
     // Check for time out if there is time info present
@@ -330,7 +332,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     if (isset($feedback)) {
       if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
           ($frequency_unit == 'items' && $deleted >= $frequency)) {
-        $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, FALSE);
+        $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, $status);
         $feedback($message);
         $lastfeedback = time();
         $deleted = 0;
@@ -346,10 +348,12 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     $deleted++;
   }
 
-  if ($status == MIGRATE_STATUS_CANCELLED || $status == MIGRATE_STATUS_TIMEDOUT) {
-    $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, FALSE);
-  } else {
-    $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, TRUE);
+  if ($status == MIGRATE_STATUS_IN_PROGRESS) {
+    $status = MIGRATE_STATUS_SUCCESS;
+  }
+dsm("status=$status");
+  $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, $status);
+  if ($status == MIGRATE_STATUS_SUCCESS) {
     // Mark that we're done
     $tblinfo->clearing = 0;
     migrate_save_content_set($tblinfo);
@@ -414,7 +418,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   $maptable = _migrate_map_table_name($view_name);
   $msgtablename = _migrate_message_table_name($view_name);
   $processstart = microtime(TRUE);
-  $status = MIGRATE_STATUS_SUCCESS;
+  $status = MIGRATE_STATUS_IN_PROGRESS;
 
   // If we're being called on a content set that isn't flagged for importing, temporarily flag it
   $original_importing = $tblinfo->importing || $tblinfo->scanning;
@@ -543,7 +547,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     if (isset($feedback)) {
       if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
           ($frequency_unit == 'items' && $imported >= $frequency)) {
-        $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, FALSE);
+        $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, $status);
         $feedback($message);
         $lastfeedback = time();
         $imported = 0;
@@ -579,10 +583,11 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   }
   timer_stop('db_fetch_object');
 
-  if ($status == MIGRATE_STATUS_CANCELLED || $status == MIGRATE_STATUS_TIMEDOUT) {
-    $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, FALSE);
-  } else {
-    $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, TRUE);
+  if ($status == MIGRATE_STATUS_IN_PROGRESS) {
+    $status = MIGRATE_STATUS_SUCCESS;
+  }
+  $message = _migrate_progress_message($lastfeedback, $imported, $description, TRUE, $status);
+  if ($status == MIGRATE_STATUS_SUCCESS) {
     // Remember we're done
     if ($importing) {
       db_query("UPDATE {migrate_content_sets}
@@ -743,7 +748,7 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
   return $status;
 }
 
-function _migrate_progress_message($starttime, $numitems, $description, $import = TRUE, $done = TRUE) {
+function _migrate_progress_message($starttime, $numitems, $description, $import = TRUE, $status = MIGRATE_STATUS_SUCCESS) {
   $time = (microtime(TRUE) - $starttime);
   if ($time > 0) {
     $perminute = round(60*$numitems/$time);
@@ -753,19 +758,37 @@ function _migrate_progress_message($starttime, $numitems, $description, $import 
   }
 
   if ($import) {
-    if ($done) {
-      $basetext = "!numitems items imported in !time seconds (!perminute/min) - done importing '!description'";;
-    }
-    else {
-      $basetext = "!numitems items imported in !time seconds (!perminute/min) - continuing importing '!description'";
+    switch ($status) {
+      case MIGRATE_STATUS_SUCCESS:
+        $basetext = "!numitems items imported in !time seconds (!perminute/min) - done importing '!description'";;
+        break;
+      case MIGRATE_STATUS_FAILURE:
+        $basetext = "!numitems items imported in !time seconds (!perminute/min) - failure importing '!description'";;
+        break;
+      case MIGRATE_STATUS_TIMEDOUT:
+      case MIGRATE_STATUS_IN_PROGRESS:
+        $basetext = "!numitems items imported in !time seconds (!perminute/min) - continuing importing '!description'";
+        break;
+      case MIGRATE_STATUS_CANCELLED:
+        $basetext = "!numitems items imported in !time seconds (!perminute/min) - cancelled importing '!description'";
+        break;
     }
   }
   else {
-    if ($done) {
-      $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - done clearing '!description'";
-    }
-    else {
-      $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - continuing clearing '!description'";
+    switch ($status) {
+      case MIGRATE_STATUS_SUCCESS:
+        $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - done clearing '!description'";;
+        break;
+      case MIGRATE_STATUS_FAILURE:
+        $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - failure clearing '!description'";;
+        break;
+      case MIGRATE_STATUS_TIMEDOUT:
+      case MIGRATE_STATUS_IN_PROGRESS:
+        $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - continuing clearing '!description'";
+        break;
+      case MIGRATE_STATUS_CANCELLED:
+        $basetext = "!numitems previously-imported items deleted in !time seconds (!perminute/min) - cancelled clearing '!description'";
+        break;
     }
   }
   $message = t($basetext,

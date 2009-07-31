@@ -456,13 +456,35 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     $function($view);
   }
 
+  $viewdb = $view->base_database;
+
   // Add a left join to the map table, and only include rows not in the map
   $join = new views_join;
+
   // Views prepends <base_table>_ to column names other than the base table's
-  // primary key - we need to strip that here for the join to work
+  // primary key - we need to strip that here for the join to work. But, it's
+  // common for tables to have the tablename beginning field names (e.g.,
+  // table cms with PK cms_id). Deal with that as well...
   $baselen = strlen($view->base_table);
   if (!strncasecmp($sourcekey, $view->base_table . '_', $baselen + 1)) {
-    $joinkey = substr($sourcekey, $baselen + 1);
+    // So, which case is it? Ask the schema module...
+    db_set_active($viewdb);
+    $inspect = schema_invoke('inspect', $view->base_table);
+    db_set_active('default');
+    $tableschema = $inspect[$view->base_table];
+    $sourcefield = $tableschema['fields'][$sourcekey];
+    if (!$sourcefield) {
+      $joinkey = substr($sourcekey, $baselen + 1);
+      $sourcefield = $tableschema['fields'][$joinkey];
+      if (!$sourcefield) {
+        drupal_set_message(t("In view !view, can't find key !key for table !table",
+          array('!view' => $view_name, '!key' => $sourcekey, '!table' => $view->base_table)));
+        return MIGRATE_STATUS_FAILURE;
+      }
+    }
+    else {
+      $joinkey = $sourcekey;
+    }
   }
   else {
     $joinkey = $sourcekey;
@@ -499,7 +521,6 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   }
 
   // Now, make the current db name explicit if content set is pulling tables from another DB
-  $viewdb = $view->base_database;
   if ($viewdb <> 'default') {
     global $db_url;
     $url = parse_url(is_array($db_url) ? $db_url['default'] : $db_url);
@@ -989,12 +1010,15 @@ function migrate_schema_alter(&$schema) {
     $sourceschema = $inspect[$tablename];
     // If the PK of the content set is defined, make sure we have a mapping table
     if ($sourcekey = $content_set->sourcekey) {
-      // strip base table name if views prepended it
-      $baselen = strlen($tablename);
-      if (!strncasecmp($sourcekey, $tablename . '_', $baselen + 1)) {
-        $sourcekey = substr($sourcekey, $baselen + 1);
-      }
       $sourcefield = $sourceschema['fields'][$sourcekey];
+      if (!$sourcefield) {
+        // strip base table name if views prepended it
+        $baselen = strlen($tablename);
+        if (!strncasecmp($sourcekey, $tablename . '_', $baselen + 1)) {
+          $sourcekey = substr($sourcekey, $baselen + 1);
+        }
+        $sourcefield = $sourceschema['fields'][$sourcekey];
+      }
       // We don't want serial fields to behave serially, so change to int
       if ($sourcefield['type'] == 'serial') {
         $sourcefield['type'] = 'int';

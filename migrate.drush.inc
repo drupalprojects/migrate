@@ -5,11 +5,13 @@
 function migrate_drush_help($section) {
   switch ($section) {
     case 'drush:migrate all':
-      return dt("Run the full migration process");
+      return dt('Run the full migration process');
     case 'drush:migrate clear':
-      return dt("Clear a given migration content set");
+      return dt('Clear a given migration content set');
     case 'drush:migrate import':
-      return dt("Import a given migration content set");
+      return dt('Import a given migration content set');
+    case 'drush:migrate status':
+      return dt('List all content sets with current status');
   }
 }
 
@@ -20,6 +22,10 @@ function migrate_drush_command() {
   $migration_options = array(
     '--itemlimit' => 'The maximum number of items to migrate. If unspecified, all are migrated',
     '--feedback' => 'Frequency of progress messages, in seconds or items processed'
+  );
+  $items['migrate status'] = array(
+    'callback' => 'drush_migrate_status',
+    'description' => 'List all content sets with current status',
   );
   $items['migrate all'] = array(
     'callback' => 'drush_migrate_all',
@@ -63,6 +69,47 @@ function migrate_drush_command() {
     ),
   );
   return $items;
+}
+
+function drush_migrate_status() {
+  $table = array();
+  $table[] = array(dt('Status'), dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'));
+  $sql = "SELECT *
+          FROM {migrate_content_sets}
+          ORDER BY weight, contenttype, view_name";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    if ($row->clearing) {
+      $status = dt('Clearing');
+    }
+    else if ($row->importing) {
+      $status = dt('Importing');
+    }
+    else if ($row->scanning) {
+      $status = dt('Scanning');
+    }
+    else {
+      $status = dt('');
+    }
+    $view = views_get_view($row->view_name);
+    if (!$view) {
+      drush_print(dt('View !view does not exist - either (re)create this view, or
+        remove the content set using it.', array('!view' => $row->view_name)));
+      continue;
+    }
+    $maptable = _migrate_map_table_name($row->view_name);
+    $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
+    // If not caching counts, override the saved count with a fresh count
+    if (!variable_get('migrate_cache_counts', 0)) {
+      $total = _migrate_get_view_count($view);
+    }
+    else {
+      $total = $row->rowcount;
+    }
+
+    $table[] = array($status, $row->description, $total, $imported, $total-$imported);
+  }
+  drush_print_table($table, TRUE);
 }
 
 function drush_migrate_all() {

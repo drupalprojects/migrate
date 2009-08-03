@@ -351,7 +351,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
   if ($status == MIGRATE_STATUS_IN_PROGRESS) {
     $status = MIGRATE_STATUS_SUCCESS;
   }
-dsm("status=$status");
+
   $message = _migrate_progress_message($lastfeedback, $deleted, $description, FALSE, $status);
   if ($status == MIGRATE_STATUS_SUCCESS) {
     // Mark that we're done

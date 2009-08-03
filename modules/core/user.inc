@@ -141,27 +141,34 @@ function user_migrate_destination_delete_role($rid) {
 
 function user_migrate_destination_import_role($tblinfo, $row) {
   $errors = array();
+  $new_role = array();
+  foreach ($tblinfo->fields as $destfield => $values) {
+    if ($values['srcfield'] && isset($row->$values['srcfield'])) {
+      $newvalue = $row->$values['srcfield'];
+    } else {
+      $newvalue = $values['default_value'];
+    }
+    $new_role[$destfield] = $newvalue;
+  }
 
-  $values = $tblinfo->fields['name'];
-  if ($values['srcfield'] && isset($row->$values['srcfield'])) {
-    $role_name = $row->$values['srcfield'];
-  }
-  else {
-    $role_name = $values['default_value'];
-  }
+  // Prepare the role for import
+  $errors = migrate_destination_invoke_all('prepare_role', $new_role, $tblinfo, $row);
+
+  $role_name = $new_role['name'];
 
   if ($role_name) {
     db_query("INSERT INTO {role} (name) VALUES ('%s')", $role_name);
-    $sql = "SELECT * FROM {role} WHERE name='%s'";
-    $role = db_fetch_object(db_query($sql, $role_name));
+    $sql = "SELECT rid FROM {role} WHERE name='%s'";
+    $rid = db_result(db_query($sql, $role_name));
+    $new_role['rid'] = $rid;
     // Call completion hooks, for any additional role-related processing
     // (such as assigning permissions)
     timer_start('role completion hooks');
-    $errors = migrate_destination_invoke_all('complete_role', $role, $tblinfo, $row);
+    $errors = migrate_destination_invoke_all('complete_role', $new_role, $tblinfo, $row);
     timer_stop('role completion hooks');
 
     $sourcekey = $tblinfo->sourcekey;
-    migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $role->rid);
+    migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $rid);
   }
   return $errors;
 }

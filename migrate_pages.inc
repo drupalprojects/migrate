@@ -15,7 +15,7 @@ function migrate_front() {
          migration process would work as follows:</div>
     <ol><li>Under <strong>Sources</strong>, upload the external data. The raw data is imported
             without filtering into database tables on your server.</li>
-        <li>Analyze each imported table. Each column of data in the table is scanned, 
+        <li>Analyze each imported table. Each column of data in the table is scanned,
             identifying uniqueness (implying a potential primary key),
             empty columns (automatically hidden by default), possible data types, and data ranges
             and sizes. Each column may be annotated to document its meaning, any special handling, etc.,
@@ -31,7 +31,7 @@ function migrate_front() {
             monitor its progress (if necessary, the processing will continue via cron). Migrated
             data may be cleared and re-imported any number of times as you refine the migration
             process.</li>
-    </ol></div>            
+    </ol></div>
     ');
   module_load_include('inc', 'system', 'system.admin');
   return system_admin_menu_block_page().$content;
@@ -105,7 +105,7 @@ function _migrate_dashboard_form($form_state) {
       if (!variable_get('migrate_cache_counts', 0)) {
         $row->rowcount = _migrate_get_view_count($view);
       }
-                                       
+
       $unimported = $row->rowcount - $imported;
 
       $msgtablename = _migrate_message_table_name($row->view_name);
@@ -147,8 +147,8 @@ function _migrate_dashboard_form($form_state) {
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_INFORMATIONAL));
         if ($numinformational > 0) {
-          $imported .= format_plural($numinformational, 
-            '<br />(1 informational message)', 
+          $imported .= format_plural($numinformational,
+            '<br />(1 informational message)',
             '<br />(@count informational messages)').'<br />';
         }
       }
@@ -160,11 +160,11 @@ function _migrate_dashboard_form($form_state) {
     $form['data'][$rownum]['clearing'] = array('#value' => check_plain($row->clearing));
     $form['data'][$rownum]['importing'] = array('#value' => check_plain($row->importing));
     $form['data'][$rownum]['scanning'] = array('#value' => check_plain($row->scanning));
-    $form['data'][$rownum]['description'] = array('#value' => 
-      l($row->description, 'admin/content/migrate/destinations/'.$row->mcsid, 
+    $form['data'][$rownum]['description'] = array('#value' =>
+      l($row->description, 'admin/content/migrate/destinations/'.$row->mcsid,
         array('html' => TRUE)));
-    $form['data'][$rownum]['view_name'] = array('#value' => 
-      l($row->view_name, 'admin/build/views/edit/'. $row->view_name, 
+    $form['data'][$rownum]['view_name'] = array('#value' =>
+      l($row->view_name, 'admin/build/views/edit/'. $row->view_name,
         array('html' => TRUE)));
     $form['data'][$rownum]['importrows'] = array('#value' => check_plain($row->rowcount));
     $form['data'][$rownum]['imported'] = array('#value' => $imported);
@@ -175,17 +175,17 @@ function _migrate_dashboard_form($form_state) {
   }
 
   $form['clearing'] = array(
-    '#type' => 'checkboxes', 
+    '#type' => 'checkboxes',
     '#options' => $clearing,
     '#default_value' => $clearingenable,
   );
   $form['importing'] = array(
-    '#type' => 'checkboxes', 
+    '#type' => 'checkboxes',
     '#options' => $importing,
     '#default_value' => $importingenable,
   );
   $form['scanning'] = array(
-    '#type' => 'checkboxes', 
+    '#type' => 'checkboxes',
     '#options' => $scanning,
     '#default_value' => $scanningenable,
   );
@@ -204,7 +204,7 @@ function _migrate_dashboard_form($form_state) {
       '#default_value' => 1,
       '#title' => t('Enable'),
       '#description' => t('If enabled, processing of selected processes begins immediately
-        upon clicking Submit, with any unfinished processing continued in the background. 
+        upon clicking Submit, with any unfinished processing continued in the background.
         If disabled, processing will be done entirely in the background beginning with the next cron.'),
     );
     $form['interactive']['limit'] = array(
@@ -256,12 +256,12 @@ function theme_migrate_dashboard($form) {
       $rows[] = $row;
     }
   }
-  
+
   $header = $form['header']['#value'];
   if (!$rows) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
-  
+
   $output .= theme('table', $header, $rows);
   $output .= drupal_render($form);
 
@@ -392,7 +392,7 @@ function _migrate_destination_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Description of the content set'),
   );
-  
+
   $views = views_get_all_views();
   foreach ($views as $name => $view) {
     if (!isset($used_views[$name])) {
@@ -421,7 +421,7 @@ function _migrate_destination_form($form_state) {
     '#title' => t('Destination'),
     '#options' => $desttypes,
   );
-  
+
   $form['addset']['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),
@@ -461,11 +461,11 @@ function migrate_destination_mappings($form_state, $mcsid) {
   $contenttype = $row->contenttype;
   $desttype = $row->desttype;
   $weight = $row->weight;
-  
+
   // Fetch information on available destinations
   $desttypes = migrate_invoke_all('destination', 'types');
   $destfields = migrate_invoke_all('destination', 'fields', $contenttype, $desttype);
-  
+
   $form['mcsid'] = array(
     '#type' => 'value',
     '#value' => $mcsid,
@@ -503,14 +503,14 @@ function migrate_destination_mappings($form_state, $mcsid) {
     '#type' => 'value',
     '#value' => $desttype,
   );
-  
+
   $form['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),
     '#description' => t('The order in which content sets will be processed and displayed.'),
     '#default_value' => $weight,
   );
-  
+
   $form['header'] = array(
     '#type' => 'value',
     '#value' => array(
@@ -519,36 +519,44 @@ function migrate_destination_mappings($form_state, $mcsid) {
       array('data' => t('Destination field')),
     ),
   );
-  
+
   $view = views_get_view($view_name);
   if (!$view) {
     drupal_set_message(t('View !view does not exist - either (re)create a view with
       this name, or delete this content set.', array('!view' => $view_name)));
   } else {
-    // Need to fill in the query, to find out the aliases that will be returned by the 
+    // Need to fill in the query, to find out the aliases that will be returned by the
     // query
     $view->build();
     $fields = $view->get_items('field');
     $srcoptions = array();
     foreach ($view->query->fields as $fieldalias => $field) {
       $fieldname = $field['field'];
-      if (isset($fields[$fieldname]['label']) && $fields[$fieldname]['label']) {
-        $srcoptions[$fieldalias] = $fields[$fieldname]['label'];
-      } else {
+      $fieldtable = $field['table'];
+      // The field name can be ambiguous (e.g., two map tables in the view), so
+      // we can't just do $fields[$fieldname] - we need to iterate and match the
+      // table as weel
+      foreach ($fields as $viewfieldname => $viewfield) {
+        if ($viewfield['field'] == $fieldname && $viewfield['table'] == $fieldtable) {
+          $srcoptions[$fieldalias] = $viewfield['label'];
+          break;
+        }
+      }
+      if (!isset($srcoptions[$fieldalias])) {
         $srcoptions[$fieldalias] = $fieldname;
       }
     }
-  
+
     $form['sourcekey'] = array(
       '#type' => 'select',
       '#options' => $srcoptions,
       '#default_value' => $sourcekey,
       '#title' => t('Primary key of source view'),
     );
-    
+
     $mappings = array();
     $defaults = array();
-    
+
     $srcoptions = array_merge(array('' => t('<none>')), $srcoptions);
     foreach ($destfields as $destfield => $destname) {
       $sql = "SELECT *
@@ -570,12 +578,12 @@ function migrate_destination_mappings($form_state, $mcsid) {
       );
       $form['destfield'][$destfield] = array('#value' => $destname);
     }
-    
+
     $form['cols'] = array(
       '#type' => 'value',
       '#value' => $cols,
     );
-    
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Submit changes'),
@@ -606,12 +614,12 @@ function theme_migrate_destination_mappings($form) {
       $rows[] = $row;
     }
   }
-  
+
   $header = $form['header']['#value'];
   if (!$rows) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
-  
+
   $output .= theme('table', $header, $rows);
   $output .= drupal_render($form['submit']);
   $output .= drupal_render($form);
@@ -674,7 +682,7 @@ function _migrate_tools_form($form_state) {
       given type should be deleted, you can do so here.'),
     '#suffix' => '</div>',
   );
-  
+
   $header = array(
     array('data' => t('Clearing')),
     array('data' => t('Type')),
@@ -700,7 +708,7 @@ function _migrate_tools_form($form_state) {
   }
 
   $form['clearing'] = array(
-    '#type' => 'checkboxes', 
+    '#type' => 'checkboxes',
     '#options' => $clearing,
     '#default_value' => array(),
   );
@@ -728,12 +736,12 @@ function theme_migrate_tools($form) {
       $rows[] = $row;
     }
   }
-  
+
   $header = $form['header']['#value'];
   if (!$rows) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
-  
+
   $output .= theme('table', $header, $rows);
   $output .= drupal_render($form);
 
@@ -770,7 +778,7 @@ function _migrate_settings_form($form_state) {
       tasks will be displayed.'),
     '#default_value' => variable_get('migrate_display_timers', 0),
    );
-   
+
   $form['cache_counts'] = array(
     '#type' => 'checkbox',
     '#title' => t('Cache content set counts'),
@@ -788,7 +796,7 @@ function _migrate_settings_form($form_state) {
       '#default_value' => 0,
     );
   }
-  
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t("Submit"),
@@ -839,6 +847,6 @@ function _migrate_get_view_count($view) {
   // @TODO: Find way to execute ONLY count query
   $view->pager['items_per_page'] = 1;
   $view->get_total_rows = TRUE;
-  $view->execute(); 
+  $view->execute();
   return $view->total_rows;
 }

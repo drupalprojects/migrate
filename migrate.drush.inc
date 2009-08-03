@@ -71,6 +71,10 @@ function migrate_drush_command() {
   return $items;
 }
 
+/**
+ * A simplified version of the Process (dashboard) page
+ *
+ */
 function drush_migrate_status() {
   $table = array();
   $table[] = array(dt('Status'), dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'));
@@ -112,6 +116,10 @@ function drush_migrate_status() {
   drush_print_table($table, TRUE);
 }
 
+/**
+ * Process all enabled operations
+ *
+ */
 function drush_migrate_all() {
   $messages = array();
   $options = array();
@@ -126,7 +134,13 @@ function drush_migrate_all() {
   if ($feedback) {
     $parts = explode(' ', $feedback);
     $options['feedback']['frequency'] = $parts[0];
-    $options['feedback']['frequency_unit'] = $parts[1];
+    $options['feedback']['frequency_unit'] = strtolower($parts[1]);
+    if ($options['feedback']['frequency_unit'] != 'seconds' &&
+        $options['feedback']['frequency_unit'] != 'items') {
+      drush_print(dt("Invalid feedback frequency unit '!unit'",
+        array('!unit' => $options['feedback']['frequency_unit'])));
+      return;
+    }
   }
   migrate_content_process_all($messages, $options);
   foreach ($messages as $message) {
@@ -134,6 +148,12 @@ function drush_migrate_all() {
   }
 }
 
+/**
+ * Clear one specified content set
+ *
+ * @param $content_set
+ *  The mcsid or the name of the content set
+ */
 function drush_migrate_clear($content_set) {
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
@@ -157,6 +177,12 @@ function drush_migrate_clear($content_set) {
     $parts = explode(' ', $feedback);
     $options['feedback']['frequency'] = $parts[0];
     $options['feedback']['frequency_unit'] = $parts[1];
+    if ($options['feedback']['frequency_unit'] != 'seconds' &&
+        $options['feedback']['frequency_unit'] != 'items') {
+      drush_print(dt("Invalid feedback frequency unit '!unit'",
+        array('!unit' => $options['feedback']['frequency_unit'])));
+      return;
+    }
   }
   migrate_content_process_clear($mcsid, $messages, $options);
   foreach ($messages as $message) {
@@ -164,6 +190,12 @@ function drush_migrate_clear($content_set) {
   }
 }
 
+/**
+ * Import one specified content set
+ *
+ * @param $content_set
+ *  The mcsid or the name of the content set
+ */
 function drush_migrate_import($content_set) {
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
@@ -187,6 +219,12 @@ function drush_migrate_import($content_set) {
     $parts = explode(' ', $feedback);
     $options['feedback']['frequency'] = $parts[0];
     $options['feedback']['frequency_unit'] = $parts[1];
+    if ($options['feedback']['frequency_unit'] != 'seconds' &&
+        $options['feedback']['frequency_unit'] != 'items') {
+      drush_print(dt("Invalid feedback frequency unit '!unit'",
+        array('!unit' => $options['feedback']['frequency_unit'])));
+      return;
+    }
   }
   migrate_content_process_import($mcsid, $messages, $options);
   foreach ($messages as $message) {

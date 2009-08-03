@@ -62,7 +62,7 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
 
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && $row->$values['srcfield']) {
-      $source_value = $row->$values['srcfield'];
+      $source_value = trim($row->$values['srcfield']);
     } else {
       $source_value = $values['default_value'];
     }

@@ -10,6 +10,8 @@ define('MIGRATE_COLS_NONEMPTY', 3);
  */
 
 function migrate_front() {
+  migrate_check_advanced_help();
+  
   $content = t('
     <div>Above are tools for managing the migration of external data into Drupal. A typical
          migration process would work as follows:</div>
@@ -778,6 +780,13 @@ function _migrate_settings_form($form_state) {
       tasks will be displayed.'),
     '#default_value' => variable_get('migrate_display_timers', 0),
    );
+   
+   $form['hide_help_message'] = array(
+     '#type' => 'checkbox',
+     '#title' => t('Ignore missing advanced help module'),
+     '#description' => t('Migrate uses the Advanced Help module to provide help text; if this module is not present Migrate will complain, unless this setting is checked.'),
+     '#default_value' => variable_get('migrate_hide_help_message', FALSE),
+    );
 
   $form['cache_counts'] = array(
     '#type' => 'checkbox',
@@ -819,6 +828,7 @@ function theme_migrate_settings($form) {
 function _migrate_settings_form_submit($form, &$form_state) {
   $values = $form_state['values'];
   variable_set('migrate_display_timers', $values['display_timers']);
+  variable_set('migrate_hide_help_message', $values['hide_help_message']);
   $original_cache = variable_get('migrate_cache_counts', 0);
   variable_set('migrate_cache_counts', $values['cache_counts']);
   if ($values['refresh_counts'] || ($values['cache_counts'] && !$original_cache)) {

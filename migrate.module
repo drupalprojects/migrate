@@ -502,7 +502,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
 
   // If running over a selected list of IDs, pass those in to the query
   if ($idlist) {
-    $view->query->add_where($view->options['group'], $view->base_table.".$sourceid IN ($idlist)",
+    $view->query->add_where($view->options['group'], $view->base_table.".$sourcekey IN ($idlist)",
       $view->base_table);
   }
 

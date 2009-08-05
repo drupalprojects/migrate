@@ -3,6 +3,9 @@
 Migrate 1.0-dev
 ===========
 
+2009/08/05
+- #540908 - Fix processing of sample list
+
 2009/08/03
 - #536976 - Trim taxonomy terms on import.
 - #432528 - Fix field labels with ambiguous field names

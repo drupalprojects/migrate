@@ -321,7 +321,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     $clearing = db_result(db_query($sql, $mcsid));
     if (!$clearing) {
       $status = MIGRATE_STATUS_CANCELLED;
-      dsm('canncelled');
+      drupal_set_message('cancelled');
       break;
     }
     // Check for time out if there is time info present
@@ -899,23 +899,8 @@ function migrate_perm() {
  */
 function migrate_help($page, $arg) {
   switch ($page) {
-    case 'admin/help#migrate':
-      $output = '<p>'. t('The migrate module aids in the importing of data into your site from
-        comma separated values format (CSV) or tab separated values format (TSV) files.') .'</p>';
-      $output .= '<p>'. t('Migrate accepts a CSV or TSV file as input. CSV or TSV files can be generated
-        using spreadsheet programs. Your CSV or TSV file must contain field names in its first row. These
-        field names can be anything. Modules, such as contact_manager, will add additional import types.') .'</p>';
-      $output .= t('<p>You can</p>
-<ul>
-<li>read about the PHP function that reads CSV files:
-  <a href="@external-http-us3-php-net-fgetcvs" title="fgetcsv programmer function page">fgetcsv</a>.</li>
-<li>import files at <a href="@admin-node-migrate">administer &gt;&gt; content &gt;&gt; migrate</a>.</li>
-<li>administer node permissions at <a href="@admin-access-permission">administer &gt;&gt; access &gt;&gt;
-  permissions &gt;&gt; node import</a>.</li>
-</ul>', array('@external-http-us3-php-net-fgetcvs' => 'http://us3.php.net/fgetcsv',
-              '@admin-node-migrate' => url('admin/content/tw'),
-              '@admin-access-permission' => url('admin/user/permissions')));
-      return $output;
+    case 'admin/content/migrate':
+      return theme('advanced_help_topic', 'migrate', 'about', 'icon') . t('Click the question marks like this one to read the migrate module help topics.');
   }
 }
 

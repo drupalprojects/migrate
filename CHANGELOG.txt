@@ -3,6 +3,9 @@
 Migrate 1.0-dev
 ===========
 
+2009/08/06
+- #541700 - Fix problem with migrating multiple node content types
+
 2009/08/05
 - #540908 - Fix processing of sample list
 

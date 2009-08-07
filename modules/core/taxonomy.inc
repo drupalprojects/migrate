@@ -165,10 +165,10 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
  */
 function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   static $vocabs;
-  if (!isset($vocabs)) {
-    $vocabs = taxonomy_get_vocabularies($node->type);
+  if (!isset($vocabs) || !isset($vocabs[$node->type])) {
+    $vocabs[$node->type] = taxonomy_get_vocabularies($node->type);
   }
-  if (!$vocabs || count($vocabs) < 1) return;
+  if (!$vocabs[$node->type] || count($vocabs[$node->type]) < 1) return;
 
   $multiple_separator = variable_get('migrate_multiple_separator', '|');
 
@@ -180,7 +180,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $taxonomy = is_array($node->taxonomy) ? $node->taxonomy : array();
   }
 
-  foreach ((array)$vocabs as $vocab) {
+  foreach ((array)$vocabs[$node->type] as $vocab) {
     $field = 'migrate_taxonomy_'. $vocab->vid;
     if (isset($field) && isset($node->$field)) {
       $value = trim($node->$field);

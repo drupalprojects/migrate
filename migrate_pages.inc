@@ -275,16 +275,16 @@ function theme_migrate_dashboard($form) {
  */
 function _migrate_dashboard_form_submit($form, &$form_state) {
   $started = time();
-  foreach ($form_state['values']['clearing'] as $mcsid => $value) {
+  foreach ($form_state['values']['importing'] as $mcsid => $value) {
     if ($value) {
-      $clearing = TRUE;
-    } else {
-      $clearing = FALSE;
-    }
-    if ($form_state['values']['importing'][$mcsid]) {
       $importing = TRUE;
     } else {
       $importing = FALSE;
+    }
+    if ($form_state['values']['clearing'][$mcsid]) {
+      $clearing = TRUE;
+    } else {
+      $clearing = FALSE;
     }
     if ($form_state['values']['scanning'][$mcsid]) {
       $scanning = TRUE;

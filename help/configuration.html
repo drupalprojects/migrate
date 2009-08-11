@@ -16,14 +16,14 @@ the following parameters, as well as increasing Drupal's
   php_value post_max_size       255M
 </pre>
 
-<p>Bulk creation and deletiong of nodes and users can strain memory usage - you
+<p>Bulk creation and deleting of nodes and users can strain memory usage - you
 should consider significantly boosting <em>memory_limit</em>:</p>
 
 <pre>
   php_value memory_limit       256M
 </pre>
 
-<p>When performing a migration process, whether interactively or via cron, the
+<p>When performing a migration process, whether interactively, via cron, or via drush, the
 Migrate module monitors execution time and exits a few seconds before 
 max_execution_time is exhausted, to avoid partial updates. To get the most out
 of each processing step (in light of <a href="http://drupal.org/node/375578">cron's 
@@ -33,7 +33,7 @@ limitation to 240 seconds max</a>), set max_execution_time to 240 seconds:</p>
   php_value max_execution_time 240
 </pre>
 
-<h3>Core patches</h3>
+<h3>Drupal 6 Core patches</h3>
 
 <p>In normal Drupal usage, nodes and users are created and deleted one at a time -
 thus, the core is optimized for that kind of load and is not well optimized for
@@ -50,6 +50,8 @@ referencing that user's uid, but those columns are node indexed, making deletion
 of users in bulk very slow. The patch at 
 <a href="http://drupal.org/node/289504">http://drupal.org/node/289504</a> addresses
 this.</p>
+
+<p>Note: These patches have already been incorporated into Drupal 7.
 
 <h3>Other patches</h3>
 

@@ -12,31 +12,8 @@ define('MIGRATE_COLS_NONEMPTY', 3);
 function migrate_front() {
   migrate_check_advanced_help();
   
-  $content = t('
-    <div>Above are tools for managing the migration of external data into Drupal. A typical
-         migration process would work as follows:</div>
-    <ol><li>Under <strong>Sources</strong>, upload the external data. The raw data is imported
-            without filtering into database tables on your server.</li>
-        <li>Analyze each imported table. Each column of data in the table is scanned,
-            identifying uniqueness (implying a potential primary key),
-            empty columns (automatically hidden by default), possible data types, and data ranges
-            and sizes. Each column may be annotated to document its meaning, any special handling, etc.,
-            and may be checked Ignore to omit from views and the migration process.</li>
-        <li>View the data for each imported table, to aid in the analysis and to mark Excluded
-            any rows you don\'t want to import.</li>
-        <li>Under <strong>Destinations</strong>, define mappings from the imported data to
-            Drupal objects (nodes, users, comments; plus any other types you define through hooks).
-            First specify an imported table (with optional SQL selection criteria) and destination
-            kind (node, user, comment) and type (story, page, etc.). Then map fields in the imported
-            table to fields in the Drupal object.</li>
-        <li>Under <strong>Process</strong>, start the actual migration of data into Drupal and
-            monitor its progress (if necessary, the processing will continue via cron). Migrated
-            data may be cleared and re-imported any number of times as you refine the migration
-            process.</li>
-    </ol></div>
-    ');
   module_load_include('inc', 'system', 'system.admin');
-  return system_admin_menu_block_page().$content;
+  return system_admin_menu_block_page();
 }
 
 function migrate_dashboard() {
@@ -44,15 +21,6 @@ function migrate_dashboard() {
 }
 
 function _migrate_dashboard_form($form_state) {
-  $form['description'] = array(
-    '#prefix' => '<div>',
-    '#value' => t('View and manage import processes here. Processes that are in progress are checked -
-      they can be cancelled by unchecking, or new processes begun by checking, then clicking Submit.
-      Any checked process will run in the background (via cron) automatically - you may also run
-      them interactively.'),
-    '#suffix' => '</div>',
-  );
-
   $header = array(
     array('data' => t('Clear')),
     array('data' => t('Import')),
@@ -197,7 +165,7 @@ function _migrate_dashboard_form($form_state) {
       '#title' => t('Interactive mode'),
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
-      '#description' => t('While large migration tasks are best run in the background (via cron),
+      '#description' => t('While large migration tasks are best run in the non interactively (via drush or cron),
         you may choose here to begin tasks interactively; either because they are relatively small,
         or to test subsets of the migration.'),
     );
@@ -338,11 +306,6 @@ function _migrate_destination_form($form_state) {
   // Fetch information on available destinations
   $desttypes = migrate_invoke_all('destination', 'types');
 
-  $form['description'] = array(
-    '#prefix' => '<div>',
-    '#value' => t('Define sets of mappings from imported tables to Drupal content.'),
-    '#suffix' => '</div>',
-  );
   $header = array(
     array('data' => t('Description'), 'field' => 'mcs.description'),
     array('data' => t('Source view'), 'field' => 'mcs.view_name'),
@@ -393,6 +356,7 @@ function _migrate_destination_form($form_state) {
   $form['addset']['description'] = array(
     '#type' => 'textfield',
     '#title' => t('Description of the content set'),
+    '#description' => t('A friendly phrase only used for display.'),
   );
 
   $views = views_get_all_views();
@@ -416,12 +380,14 @@ function _migrate_destination_form($form_state) {
     '#type' => 'select',
     '#title' => t('Source view from which to import content'),
     '#options' => $options,
+    '#description' => t('This View defines the records which are to be migrated.'),
   );
 
   $form['addset']['contenttype'] = array(
     '#type' => 'select',
     '#title' => t('Destination'),
     '#options' => $desttypes,
+    '#description' => t('The type of Drupal content which will store the incoming records.'),
   );
 
   $form['addset']['weight'] = array(
@@ -621,7 +587,7 @@ function theme_migrate_destination_mappings($form) {
   if (!$rows) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
-
+  $output .=     t('Map fields in the Source recordset to proprties in a Drupal object. More complex fields such as multiple value elements need to be handled in code using the prepare hook.');
   $output .= theme('table', $header, $rows);
   $output .= drupal_render($form['submit']);
   $output .= drupal_render($form);
@@ -676,15 +642,6 @@ function migrate_tools() {
 }
 
 function _migrate_tools_form($form_state) {
-  $form['description'] = array(
-    '#prefix' => '<div>',
-    '#value' => t('Besides content that is migrated into a new site, nodes will be manually
-      created during the testing process. Typically you will want to clear these before the
-      final migration - if you are <strong>absolutely positive</strong> that all nodes of a
-      given type should be deleted, you can do so here.'),
-    '#suffix' => '</div>',
-  );
-
   $header = array(
     array('data' => t('Clearing')),
     array('data' => t('Type')),
@@ -716,7 +673,7 @@ function _migrate_tools_form($form_state) {
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t("Submit"),
+    '#value' => t("Delete nodes"),
   );
   return $form;
 }

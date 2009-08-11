@@ -2,8 +2,7 @@
 
 <p>The Migrate module provides a flexible framework for migrating content into Drupal 
 from other sources (e.g., when converting a web site from another CMS to Drupal). 
-Out-of-the-box, support for creating Drupal nodes, users, and comments is included - 
-hooks permit migration of other types of content.</p>
+Out-of-the-box, support for creating Drupal nodes, fields, comments, url aliases, users+profiles and roles are included. Hooks permit migration of other types of content.</p>
 
 <p>The combination of the <a href="http://drupal.org/project/tw">Table Wizard</a> and 
 Migrate modules is designed to support a migration process along these lines:</p>
@@ -14,29 +13,23 @@ Drupal database. Any tables in your Drupal database, or in other databases on th
 same server, can be made available to views for review and migration.</li>
 <li>Analysis - Table Wizard performs analysis of table data (ranges, sizes, etc.), and
 supports collaborative documentation of table fields.</li>
-<li>Migration - Migrate takes data from the views enabled by Table Wizard and creates
-Drupal objects from them. Migration is reversable - migrated data can be backed out and
+<li>Content sets - Create Views which represent the different source records that you wish to migrate. The Views utilize the Vies integration you just created with Table Wizard.</li>
+<li>Migration - Migrate takes rows from the content sets creates
+Drupal objects from them. Migration is reversible - migrated data can be quickly backed out and
 migrated again. A dashboard is provided to easily manage the process. Background processing
 via cron is supported for large migrations.</li>
 <li>Auditing - Errors and other conditions flagged during migration are flagged and can be reviewed
-in views (TBD). Also, Migrate maintains mapping tables from the source data to the
+in Views). Also, Migrate maintains mapping tables from the source data to the
 resulting Drupal objects, enabling the creation of comparison views.</li>
 </ol>
 
 <h3>Status</h3>
 
-<p>Migrate is <b>not ready</b> for official release. There is currently 
+<p>Migrate is <b>nearly ready</b> for official release. There is currently 
 <a href="http://groups.drupal.org/node/21338">some discussion</a> in the 
 <a href="http://groups.drupal.org/content-migration-import-and-export">Content migration, 
 import, and export</a> group on future directions for the various migration and 
 import/export-related modules which may affect the design of the migrate module.</p>
-
-<p>Another requirement for official release is complete documentation, with solid 
-real-world examples (you are now reading an early draft of this documentation).
-This is a complex module addressing a complex problem space,
-and a large proportion of issues reported to date have either involved the (lack of)
-documentation directly, or at least been partially due to misunderstandings of what 
-the module does and how it does it.</p>
 
 <p>Finally, I consider a suite of simpletests a prerequisite to release.</p>
 

@@ -901,6 +901,15 @@ function migrate_help($page, $arg) {
   switch ($page) {
     case 'admin/content/migrate':
       return theme('advanced_help_topic', 'migrate', 'about', 'icon') . t('Click the question marks like this one to read the migrate module help topics.');
+    case 'admin/content/migrate/destinations':
+      return t('Define sets of mappings from imported tables to Drupal content. These are the migrations which are later processed.');
+    case 'admin/content/migrate/process':
+      return t('View and manage import processes here. Processes that are in progress are checked - they can be cancelled by unchecking, or new processes begun by checking, then clicking Submit. Any checked process will run in the background (via cron) automatically - you may also run them interactively.');
+    case 'admin/content/migrate/tools':
+      return t('Besides content that is migrated into a new site, nodes may be manually
+        created during the testing process. Typically you will want to clear these before the
+        final migration - if you are <strong>absolutely positive</strong> that all nodes of a
+        given type should be deleted, you may do so here.');
   }
 }
 

@@ -871,6 +871,7 @@ function migrate_cron() {
   $path = drupal_get_path('module', 'migrate') . '/migrate_pages.inc';
   include_once($path);
   // Elevate privileges so node deletion/creation works in cron
+  session_save_session(FALSE);
   global $user;
   $saveuser = $user;
   $user = user_load(array('uid' => 1));
@@ -885,6 +886,7 @@ function migrate_cron() {
   $options = array('timelimit' => $starttime + $maxexectime - 20);
   migrate_content_process_all($messages, $options);
   $user = $saveuser;
+  session_save_session(TRUE);
 }
 
 /**

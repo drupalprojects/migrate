@@ -7,13 +7,13 @@
 <p>Here are the steps we took to create the Role destination type. Your destination types will follow a similar pattern.</p> 
  
 <ul> 
-<li><p>Implement hook_migrate_destination_types(), returning an array mapped from the internal name of the type (used to build hook names, in particular) to the user-visible type name:</p> 
+<li><p>Implement <strong>hook_migrate_destination_types()</strong>, returning an array mapped from the internal name of the type (used to build hook names, in particular) to the user-visible type name:</p> 
  
 <p><pre>function user_migrate_destination_types() {
   $types = array('user' =&gt; t('User'), 'role' =&gt; t('Role'));
   return $types;
 }</pre></p></li> 
-<li><p>Implement hook_migrate_destination_fields_<type>, returning an array mapped from the internal field name (within Drupal) to the user-visible name:</p> 
+<li><p>Implement <strong>hook_migrate_destination_fields_<type></strong>, returning an array mapped from the internal field name (within Drupal) to the user-visible name:</p> 
  
 <p><pre>function user_migrate_destination_fields_role($type) {
   $fields = array(
@@ -21,14 +21,14 @@
   );
   return $fields;
 }</pre></p></li> 
-<li><p>Implement hook_migrate_destination_delete_<type>, which takes the unique identifier of the destination object on the Drupal side and deletes that object and everything that depends on that object:</p> 
+<li><p>Implement <strong>hook_migrate_destination_delete_<type></strong>, which takes the unique identifier of the destination object on the Drupal side and deletes that object and everything that depends on that object:</p> 
  
 <p><pre>function user_migrate_destination_delete_role($rid) {
   db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
   db_query('DELETE FROM {permission} WHERE rid = %d', $rid);
   db_query('DELETE FROM {role} WHERE rid = %d', $rid);
 }</pre></p></li> 
-<li><p>Now, here&#8217;s the major work: implement hook_migrate_destination_import_<type> :</p> 
+<li><p>Now, here&#8217;s the major work: implement <strong>hook_migrate_destination_import_<type></strong> :</p> 
  
 <p><pre>
 function user_migrate_destination_import_role($tblinfo, $row) {
@@ -94,7 +94,7 @@ $mapping-&gt;mcsid = $mcsid;
 $mapping-&gt;srcfield = 'role_o_role_name';
 $mapping-&gt;destfield = 'name';
 migrate_save_content_mapping($mapping);</pre></p></li> 
-<li><p>Usually, simply copying source fields to destination fields are not enough - you need to implement a hook to perform further manipulations. A destination type may support a prepare hook (called for each object after the automatic mappings are applied but before the destination is saved) and/or a complete hook (called after the destination is saved). The standard signature is:</p> 
+<li><p>Usually, simply copying source fields to destination fields are not enough - you need to implement a hook to perform further manipulations. A destination type may support a prepare hook such as <strong>hook_migrate_destination_prepare_OBJECT</strong> (called for each object after the automatic mappings are applied but before the destination is saved) and/or a complete hook (called after the destination is saved). The standard signature is:</p> 
  
 <p><pre>function ec_migrate_migrate_destination_prepare_user(&amp;$account, $tblinfo, $row)</pre></p> 
  

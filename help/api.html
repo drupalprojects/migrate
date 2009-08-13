@@ -74,7 +74,26 @@ function user_migrate_destination_import_role($tblinfo, $row) {
 <p><pre>tw_add_tables('role_o', TRUE);</pre></p></li> 
 <li><p>If these tables need to relate to other tables, add FK flags to any columns used in joins, and add the relationships:</p> 
  
-<p><pre>TBD</pre></p></li> 
+<p><pre>
+   function tw_add_fk($tablename, $colname)
+   
+   }
+   
+   /**
+    * Add a relationship between two table columns, making it possible to join them in Views
+    *
+    * @param $leftcol 
+    *  The left side of a potential join, expressed either as a column ID from
+    *  {tw_columns} or as a string in [connection.]table.column format.
+    * @param $rightcol
+    *  The right side of a potential join, expressed either as a column ID from
+    *  {tw_columns} or as a string in [connection.]table.column format.
+    * @param $automatic
+    *  Boolean indicating whether to create views joins (i.e., relate the table
+    *  automatically) or relationships.
+    */
+   function tw_add_relationship($leftcol, $rightcol, $automatic = FALSE) {
+</pre></p></li> 
 <li><p>If the content set is based only on a single source table with a single primary key, and requires no filtering, the default view instantiated by the Table Wizard for that table can be used in the content set. Otherwise, you need to define a view containing all the necessary data as a default view (create the view interactively, export, and paste the code into ec_migrate.views_default.inc). Naming convention is <destination><em>content</em>set (e.g., role_content_set).</p></li> 
 <li><p>Create the content set in your update function, by building the object and saving it:</p> 
  

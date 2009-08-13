@@ -96,9 +96,40 @@ $mapping-&gt;destfield = 'name';
 migrate_save_content_mapping($mapping);</pre></p></li> 
 <li><p>Usually, simply copying source fields to destination fields are not enough - you need to implement a hook to perform further manipulations. A destination type may support a prepare hook such as <strong>hook_migrate_destination_prepare_OBJECT</strong> (called for each object after the automatic mappings are applied but before the destination is saved) and/or a complete hook (called after the destination is saved). The standard signature is:</p> 
  
-<p><pre>function ec_migrate_migrate_destination_prepare_user(&amp;$account, $tblinfo, $row)</pre></p> 
+<p><pre>
+  function ec_migrate_migrate_destination_prepare_user(&amp;$account, $tblinfo, $row)
+    // Role assignments
+    timer_start('role assignments');
+
+    // Everyone's a contributor
+    if (!isset($account['roles'])) {
+      $account['roles'] = array();
+    }
+    static $contributor_rid;
+    if (!isset($contributor_rid)) {
+      install_include(array('user'));
+      $contributor_rid = install_get_rid('contributor');
+    }
+    $account['roles'][$contributor_rid] = $contributor_rid;
+
+    $sql = "SELECT map.destid AS rid
+            FROM {customer_role} cr
+            INNER JOIN {role_content_set_map} map ON cr.role_id=map.sourceid
+            WHERE cr.customer_id=%d AND cr.active='Y' AND
+              (cr.expires IS NULL OR cr.expires > NOW())";
+    $result = db_query($sql, $row->customer_id);
+    while ($row = db_fetch_object($result)) {
+      $account['roles'][$row->rid] = $row->rid;
+    }
+    timer_stop('role assignments');
+
+    return $errors;
+  }
+  </pre></p> 
  
-<p>$account - The destination object (in this case, a user account object)
-$tblinfo - Information on the content set itself
-$row - The source data</p></li> 
-</ul>
+  <ul>
+  <li>$account - The destination object (in this case, a user account object)
+  <li>$tblinfo - Information on the content set itself
+  <li>$row - The source data
+  </ul>
+</li> 

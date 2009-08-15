@@ -11,7 +11,7 @@ define('MIGRATE_COLS_NONEMPTY', 3);
 
 function migrate_front() {
   migrate_check_advanced_help();
-  
+
   module_load_include('inc', 'system', 'system.admin');
   return system_admin_menu_block_page();
 }
@@ -88,24 +88,30 @@ function _migrate_dashboard_form($form_state) {
                                          WHERE level=%d",
                                         MIGRATE_MESSAGE_ERROR));
         if ($numerrors > 0) {
-          $messages = format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors').'<br />';
-          /* Restore when errors are integrated with views
-            " (".l($numerrors. ' errors', 'admin/content/migrate/view/'.$row->importtable.'/errors',
-            array('html' => TRUE, 'attributes' => array('class' => 'error_link'))).')';*/
+          $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
+            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
+            array('html' => TRUE))
+            . '<br />';
         }
         $numwarnings = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
                                            FROM {" . $msgtablename . "}
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_WARNING));
         if ($numwarnings > 0) {
-          $messages .= format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings').'<br />';
+          $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
+            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
+            array('html' => TRUE))
+            . '<br />';
         }
         $numnotices = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
                                            FROM {" . $msgtablename . "}
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_NOTICE));
         if ($numnotices > 0) {
-          $messages .= format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices').'<br />';
+          $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
+            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
+            array('html' => TRUE))
+            . '<br />';
         }
         if ($messages) {
           $unimported = $messages." $unimported&nbsp;total";
@@ -117,9 +123,11 @@ function _migrate_dashboard_form($form_state) {
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_INFORMATIONAL));
         if ($numinformational > 0) {
-          $imported .= format_plural($numinformational,
-            '<br />(1 informational message)',
-            '<br />(@count informational messages)').'<br />';
+          $imported .= '<br />' .
+            l(format_plural($numinformational, '1 informational message', '@count informational messages'),
+            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_INFORMATIONAL,
+            array('html' => TRUE))
+            . '<br />';
         }
       }
     } else {
@@ -737,7 +745,7 @@ function _migrate_settings_form($form_state) {
       tasks will be displayed.'),
     '#default_value' => variable_get('migrate_display_timers', 0),
    );
-   
+
    $form['hide_help_message'] = array(
      '#type' => 'checkbox',
      '#title' => t('Ignore missing advanced help module'),

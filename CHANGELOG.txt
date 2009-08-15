@@ -3,6 +3,12 @@
 Migrate 1.0-dev
 ===========
 
+2009/08/15
+- #545282 - Stray character in email_registration.inc
+
+2009/08/07-2009/08/13
+- #398632 - Mucho improvements to documentation
+
 2009/08/06
 - #541700 - Fix problem with migrating multiple node content types
 

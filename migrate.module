@@ -982,6 +982,8 @@ function migrate_menu() {
  * @param $schema
  */
 function migrate_schema_alter(&$schema) {
+  // Check for table existence - at install time, hook_schema_alter() may be called
+  // before our install hook.
   if (db_table_exists('migrate_content_sets')) {
     $result = db_query("SELECT * FROM {migrate_content_sets}");
     while ($content_set = db_fetch_object($result)) {

@@ -5,6 +5,7 @@ Migrate 1.0-dev
 
 2009/08/15
 - #545282 - Stray character in email_registration.inc
+- #545290 - Error on drush enable - check for table existence in schema_alter hook 
 
 2009/08/07-2009/08/13
 - #398632 - Mucho improvements to documentation

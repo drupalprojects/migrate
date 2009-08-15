@@ -982,45 +982,47 @@ function migrate_menu() {
  * @param $schema
  */
 function migrate_schema_alter(&$schema) {
-  $result = db_query("SELECT * FROM {migrate_content_sets}");
-  while ($content_set = db_fetch_object($result)) {
-    $maptablename = _migrate_map_table_name($content_set->view_name);
-    $msgtablename = _migrate_message_table_name($content_set->view_name);
+  if (db_table_exists('migrate_content_sets')) {
+    $result = db_query("SELECT * FROM {migrate_content_sets}");
+    while ($content_set = db_fetch_object($result)) {
+      $maptablename = _migrate_map_table_name($content_set->view_name);
+      $msgtablename = _migrate_message_table_name($content_set->view_name);
 
-    // Get the proper field definition for the sourcekey
-    $view = views_get_view($content_set->view_name);
-    if (!$view) {
-      drupal_set_message(t('View !view does not exist - either (re)create this view, or
-        remove the migrate content set using it.', array('!view' => $content_set->view_name)));
-      continue;
-    }
-    // Must do this to load the database
-    $view->init_query();
+      // Get the proper field definition for the sourcekey
+      $view = views_get_view($content_set->view_name);
+      if (!$view) {
+        drupal_set_message(t('View !view does not exist - either (re)create this view, or
+          remove the migrate content set using it.', array('!view' => $content_set->view_name)));
+        continue;
+      }
+      // Must do this to load the database
+      $view->init_query();
 
-    // TODO: For now, PK must be in base_table
-    $tabledb = $view->base_database;
-    $tablename = $view->base_table;
-    db_set_active($tabledb);
-    $inspect = schema_invoke('inspect');
-    db_set_active('default');
-    $sourceschema = $inspect[$tablename];
-    // If the PK of the content set is defined, make sure we have a mapping table
-    if ($sourcekey = $content_set->sourcekey) {
-      $sourcefield = $sourceschema['fields'][$sourcekey];
-      if (!$sourcefield) {
-        // strip base table name if views prepended it
-        $baselen = strlen($tablename);
-        if (!strncasecmp($sourcekey, $tablename . '_', $baselen + 1)) {
-          $sourcekey = substr($sourcekey, $baselen + 1);
-        }
+      // TODO: For now, PK must be in base_table
+      $tabledb = $view->base_database;
+      $tablename = $view->base_table;
+      db_set_active($tabledb);
+      $inspect = schema_invoke('inspect');
+      db_set_active('default');
+      $sourceschema = $inspect[$tablename];
+      // If the PK of the content set is defined, make sure we have a mapping table
+      if ($sourcekey = $content_set->sourcekey) {
         $sourcefield = $sourceschema['fields'][$sourcekey];
+        if (!$sourcefield) {
+          // strip base table name if views prepended it
+          $baselen = strlen($tablename);
+          if (!strncasecmp($sourcekey, $tablename . '_', $baselen + 1)) {
+            $sourcekey = substr($sourcekey, $baselen + 1);
+          }
+          $sourcefield = $sourceschema['fields'][$sourcekey];
+        }
+        // We don't want serial fields to behave serially, so change to int
+        if ($sourcefield['type'] == 'serial') {
+          $sourcefield['type'] = 'int';
+        }
+        $schema[$maptablename] = _migrate_map_table_schema($sourcefield);
+        $schema[$msgtablename] = _migrate_message_table_schema($sourcefield);
       }
-      // We don't want serial fields to behave serially, so change to int
-      if ($sourcefield['type'] == 'serial') {
-        $sourcefield['type'] = 'int';
-      }
-      $schema[$maptablename] = _migrate_map_table_schema($sourcefield);
-      $schema[$msgtablename] = _migrate_message_table_schema($sourcefield);
     }
   }
 }

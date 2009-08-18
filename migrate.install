@@ -1,9 +1,14 @@
 <?php
-/* $Id$ */
+// $Id$
 
 /**
-* Implementation of hook_schema().
-*/
+ * @file
+ * Implementation of profile destination handling
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
 function migrate_schema() {
   $schema['migrate_content_sets'] = array(
     'description' => t('Sets of content mappings'),
@@ -112,21 +117,21 @@ function migrate_schema() {
       'colkey' => array('mcsid', 'destfield'),
     ),
   );
-    
+
   return $schema;
 }
 
 /**
-* Implementation of hook_install().
-*/
+ * Implementation of hook_install().
+ */
 function migrate_install() {
   // Create tables
   drupal_install_schema('migrate');
 }
 
 /**
-* Implementation of hook_uninstall().
-*/
+ * Implementation of hook_uninstall().
+ */
 function migrate_uninstall() {
   // Remove dynamically-created mapping and message tables
   $tw_active = module_exists('tw');
@@ -189,17 +194,17 @@ function migrate_update_6000() {
     if ($maptableexists) {
       // Remove mcsid from map table
       db_drop_field($ret, $newmaptable, 'mcsid');
-  
+
       // Rename remaining map table columns
       db_drop_primary_key($ret, $newmaptable);
       db_drop_unique_key($ret, $newmaptable, 'idkey');
-      db_change_field($ret, $newmaptable, $row->sourcekey, 'sourceid', 
-        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
+      db_change_field($ret, $newmaptable, $row->sourcekey, 'sourceid',
+        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
         array('primary key' => array('sourceid')));
-      db_change_field($ret, $newmaptable, $row->contenttype . 'id', 'destid', 
-        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE), 
+      db_change_field($ret, $newmaptable, $row->contenttype . 'id', 'destid',
+        array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE),
         array('unique keys' => array('destid' => array('destid'))));
-        
+
       // Update Table Wizard to reflect the changes
       tw_remove_tables($oldmaptable);
       tw_add_tables($newmaptable);
@@ -233,7 +238,7 @@ function migrate_update_6001() {
 function migrate_update_6002() {
   $ret = array();
   $sql = "UPDATE {migrate_content_mappings}
-          SET destfield='changed' 
+          SET destfield='changed'
           WHERE destfield='updated' AND mcsid IN
             (SELECT mcsid FROM {migrate_content_sets} WHERE contenttype='node')";
   $ret[] = update_sql($sql);

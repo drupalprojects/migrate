@@ -114,7 +114,7 @@ function _migrate_dashboard_form($form_state) {
             . '<br />';
         }
         if ($messages) {
-          $unimported = $messages." $unimported&nbsp;total";
+          $unimported = $messages . " $unimported&nbsp;total";
         }
       }
       if ($imported > 0) {
@@ -130,7 +130,8 @@ function _migrate_dashboard_form($form_state) {
             . '<br />';
         }
       }
-    } else {
+    }
+    else {
       $imported = '';
       $unimported = '';
     }
@@ -139,7 +140,7 @@ function _migrate_dashboard_form($form_state) {
     $form['data'][$rownum]['importing'] = array('#value' => check_plain($row->importing));
     $form['data'][$rownum]['scanning'] = array('#value' => check_plain($row->scanning));
     $form['data'][$rownum]['description'] = array('#value' =>
-      l($row->description, 'admin/content/migrate/destinations/'.$row->mcsid,
+      l($row->description, 'admin/content/migrate/destinations/' . $row->mcsid,
         array('html' => TRUE)));
     $form['data'][$rownum]['view_name'] = array('#value' =>
       l($row->view_name, 'admin/build/views/edit/'. $row->view_name,
@@ -227,7 +228,8 @@ function theme_migrate_dashboard($form) {
           // Throw out the column contents
           drupal_render($form['data'][$rownum][$colname]);
           drupal_render($form['data'][$rownum]['mcsid']);
-        } else {
+        }
+        else {
           $row[] = drupal_render($form['data'][$rownum][$colname]);
         }
       }
@@ -247,24 +249,27 @@ function theme_migrate_dashboard($form) {
 }
 
 /*
- * Implementation of hook_submit()
+ * Implementation of hook_submit().
  */
 function _migrate_dashboard_form_submit($form, &$form_state) {
   $started = time();
   foreach ($form_state['values']['importing'] as $mcsid => $value) {
     if ($value) {
       $importing = TRUE;
-    } else {
+    }
+    else {
       $importing = FALSE;
     }
     if ($form_state['values']['clearing'][$mcsid]) {
       $clearing = TRUE;
-    } else {
+    }
+    else {
       $clearing = FALSE;
     }
     if ($form_state['values']['scanning'][$mcsid]) {
       $scanning = TRUE;
-    } else {
+    }
+    else {
       $scanning = FALSE;
     }
     db_query("UPDATE {migrate_content_sets}
@@ -306,8 +311,13 @@ function _migrate_content_process_finish($success, $results, $operations) {
   }
 }
 
+/**
+ * Enter description here...
+ *
+ * @return unknown
+ */
 function migrate_destinations() {
-  return(drupal_get_form('_migrate_destination_form'));
+  return (drupal_get_form('_migrate_destination_form'));
 }
 
 function _migrate_destination_form($form_state) {
@@ -371,13 +381,14 @@ function _migrate_destination_form($form_state) {
   foreach ($views as $name => $view) {
     if (!isset($used_views[$name])) {
       if ($view->tag) {
-        $options[$name] = $view->tag.': '.$name;
-      } else {
+        $options[$name] = $view->tag . ': ' . $name;
+      }
+      else {
         $options[$name] = $name;
       }
       if ($view->description) {
-        if (strlen($view->description) > 60) {
-          $view->description = substr($view->description, 0, 57).'...';
+        if (drupal_strlen($view->description) > 60) {
+          $view->description = drupal_substr($view->description, 0, 57) . '...';
         }
         $options[$name] .= " ($view->description)";
       }
@@ -453,7 +464,7 @@ function migrate_destination_mappings($form_state, $mcsid) {
   );
   $form['show_view_name'] = array(
     '#prefix' => '<div>',
-    '#value' => t('<strong>Source view:</strong> ') . l($view_name, 'admin/build/views/edit/'.$view_name),
+    '#value' => t('<strong>Source view:</strong> ') . l($view_name, 'admin/build/views/edit/' . $view_name),
     '#suffix' => '</div>',
   );
   $form['view_name'] = array(
@@ -500,7 +511,8 @@ function migrate_destination_mappings($form_state, $mcsid) {
   if (!$view) {
     drupal_set_message(t('View !view does not exist - either (re)create a view with
       this name, or delete this content set.', array('!view' => $view_name)));
-  } else {
+  }
+  else {
     // Need to fill in the query, to find out the aliases that will be returned by the
     // query
     $view->build();
@@ -582,7 +594,7 @@ function theme_migrate_destination_mappings($form) {
   $output .= drupal_render($form['weight']);
 
   if (isset($form['destfield']) && is_array($form['destfield'])) {
-    foreach(element_children($form['destfield']) as $destfield) {
+    foreach (element_children($form['destfield']) as $destfield) {
       $row = array();
       $row[] = drupal_render($form['srcfield'][$destfield]);
       $row[] = drupal_render($form['default_value'][$destfield]);
@@ -604,7 +616,7 @@ function theme_migrate_destination_mappings($form) {
 }
 
 /**
- * Implementation of hook_submit()
+ * Implementation of hook_submit().
  */
 function migrate_destination_mappings_submit($form, &$form_state) {
   $mcsid = $form_state['values']['mcsid'];
@@ -612,7 +624,8 @@ function migrate_destination_mappings_submit($form, &$form_state) {
     migrate_delete_content_set($mcsid);
     drupal_set_message(t('Content set deleted'));
     $form_state['redirect'] = 'admin/content/migrate/destinations';
-  } else {
+  }
+  else {
     // Get list of current mappings, so we know if any need deletion
     $sql = "SELECT mcmid,destfield FROM {migrate_content_mappings} WHERE mcsid=%d";
     $result = db_query($sql, $mcsid);
@@ -696,7 +709,8 @@ function theme_migrate_tools($form) {
           $row[] = drupal_render($form[$colname][$form['data'][$rownum]['type']['#value']]);
           // Throw out the column contents
           drupal_render($form['data'][$rownum][$colname]);
-        } else {
+        }
+        else {
           $row[] = drupal_render($form['data'][$rownum][$colname]);
         }
       }
@@ -716,7 +730,7 @@ function theme_migrate_tools($form) {
 }
 
 /*
- * Implementation of hook_submit()
+ * Implementation of hook_submit().
  */
 function _migrate_tools_form_submit($form, &$form_state) {
   $started = time();
@@ -744,14 +758,14 @@ function _migrate_settings_form($form_state) {
       on - at the completion of a processing round, cumulative times of
       tasks will be displayed.'),
     '#default_value' => variable_get('migrate_display_timers', 0),
-   );
+  );
 
-   $form['hide_help_message'] = array(
-     '#type' => 'checkbox',
-     '#title' => t('Ignore missing advanced help module'),
-     '#description' => t('Migrate uses the Advanced Help module to provide help text; if this module is not present Migrate will complain, unless this setting is checked.'),
-     '#default_value' => variable_get('migrate_hide_help_message', FALSE),
-    );
+  $form['hide_help_message'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Ignore missing advanced help module'),
+    '#description' => t('Migrate uses the Advanced Help module to provide help text; if this module is not present Migrate will complain, unless this setting is checked.'),
+    '#default_value' => variable_get('migrate_hide_help_message', FALSE),
+  );
 
   $form['cache_counts'] = array(
     '#type' => 'checkbox',
@@ -788,7 +802,7 @@ function theme_migrate_settings($form) {
 }
 
 /*
- * Implementation of hook_submit()
+ * Implementation of hook_submit().
  */
 function _migrate_settings_form_submit($form, &$form_state) {
   $values = $form_state['values'];
@@ -807,7 +821,8 @@ function _migrate_settings_form_submit($form, &$form_state) {
     }
     if ($values['refresh_counts']) {
       drupal_set_message(t('Content set counts refreshed'));
-    } else {
+    }
+    else {
       drupal_set_message(t('Content set counts saved'));
     }
   }

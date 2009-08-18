@@ -52,9 +52,10 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
 
   foreach ($tblinfo->fields as $destfield => $values) {
-     if ($values['srcfield'] && $row->$values['srcfield']) {
+    if ($values['srcfield'] && $row->$values['srcfield']) {
       $comment[$destfield] = $row->$values['srcfield'];
-    } else {
+    }
+    else {
       $comment[$destfield] = $values['default_value'];
     }
   }
@@ -125,7 +126,8 @@ function comment_migrate_destination_complete_comment(&$cid, $tblinfo, $row) {
               (sourceid, destid)
               VALUES(%d, %d)",
              $row->$sourcekey, $cid);
-  } else {
+  }
+  else {
     $errors[] = migrate_message(t('Comment not saved'));
   }
   return $errors;

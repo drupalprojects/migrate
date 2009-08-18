@@ -2,6 +2,11 @@
 // $Id$
 
 /**
+ * @file
+ * Implementation of taxonomy destination handling
+ */
+
+/**
  * Implementation of hook_migrate_destination_types().
  */
 function taxonomy_migrate_destination_types() {
@@ -63,7 +68,8 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && $row->$values['srcfield']) {
       $source_value = trim($row->$values['srcfield']);
-    } else {
+    }
+    else {
       $source_value = $values['default_value'];
     }
     switch ($destfield) {
@@ -87,7 +93,7 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
           $parent = db_result(db_query("SELECT destid FROM {". $tblinfo->maptable ."} WHERE sourceid = %d", $source_value));
           $term[$destfield] = ($parent >= 0 ? $parent : 0);
         }
-        else if ($source_value) {
+        elseif ($source_value) {
           // Interpret a string parent as the name of the parent term
           $matches = taxonomy_get_term_by_name($source_value);
 
@@ -184,7 +190,8 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     $field = 'migrate_taxonomy_'. $vocab->vid;
     if (isset($field) && isset($node->$field)) {
       $value = trim($node->$field);
-    } else {
+    }
+    else {
       $value = '';
     }
     unset($node->$field);
@@ -234,7 +241,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
               // vocabularies, we need to add it to the array.
               $taxonomy[$vid][] = $tid;
             }
-            else if ($tid < 0) {
+            elseif ($tid < 0) {
               $errors[] = migrate_message(t('The term %term does not exist in the %name vocabulary.',
                 array('%term' => theme('placeholder', $value), '%name' => theme('placeholder', $vocab->name))));
             }

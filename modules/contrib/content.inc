@@ -1,33 +1,38 @@
 <?php
-/* $Id$ */
+// $Id$
+
+/**
+ * @file
+ * Hooks for handling CCK fields on destination nodes
+ */
 
 /**
  *  CCK data can be imported into any column of a CCK field.
- *  Most fields have a 'value' column, but there are others that 
+ *  Most fields have a 'value' column, but there are others that
  *  can be used, for example:
  *   - Textareas have a 'value' and a 'format'
  *   - Date fields have a 'value', if date-specific timezones are
  *       used they also have a 'timezone' and 'offset'
  *   - Nodereference fields have a 'nid' column
  *   - Userreference fields have a 'uid' column
- * 
+ *
  *  For nodereference and userreference fields you can either import the
  *  numeric value for a nid or uid, or a text value for the title or
  *  name. If a numeric value is imported, it is used as is.
- *  If a title or name is imported, the module will search for 
+ *  If a title or name is imported, the module will search for
  *  the nid or uid that goes with that title or name.
- * 
+ *
  *  Date values can be imported as unix timestamps, as ISO values, or as
  *  any text that can be interpreted by the php strtotime function.
- *  The date 'timezone' column expects a full timezone name like 'US/Central', 
+ *  The date 'timezone' column expects a full timezone name like 'US/Central',
  *  timezone abbreviations are not unique and will not work.
  *  The date 'offset' column is the plus or minus value in seconds.
- * 
+ *
  *  @todo
  *  Multiple values are not importing correctly yet -- CCK is creating
  *  three blank values before the valid values, so a fix to CCK is needed.
- *  Once fixed the idea is that multiple values can be imported into any 
- *  CCK field that has multiple values enabled by separating the values 
+ *  Once fixed the idea is that multiple values can be imported into any
+ *  CCK field that has multiple values enabled by separating the values
  *  with a double pipe (||).
  */
 
@@ -45,7 +50,8 @@ function content_migrate_destination_fields_node($type) {
       // Create a potential input field for each field column by creating a dummy name for each column.
       $db_info = content_database_info($field);
       foreach ($db_info['columns'] as $column => $info) {
-        $fields[$field['field_name'] .'_'. $column] = t('CCK: ').$field['widget']['label'] .' '. $column;
+        $fields[$field['field_name'] . '_' . $column] = t('CCK: ') . $field['widget']['label'] .
+          ' ' . $column;
       }
     }
   }
@@ -86,7 +92,7 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
             $values = array(0 => $node->$dummy_name);
           }
         }
-        
+
         foreach ($values as $delta => $value) {
           switch ($field['type']) {
             case 'date':
@@ -97,7 +103,7 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
                 if ($field['type'] == 'date') {
                   // A value like "1957" could be either a Unix timestamp
                   // or an ISO year-only date... Favor the ISO interpreation
-                  
+
                   // If the imported date is a (partial) ISO date, convert it
                   // to date's ISO date.
                   // TODO: Need to pass granularity for partial dates to work
@@ -105,10 +111,10 @@ function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
                     $value = date_convert($value, DATE_ISO, DATE_ISO);
                   }
                   // Is the imported date a unix timestamp? If so convert it to ISO date.
-                  else if (is_numeric($value) && date_is_valid($value, DATE_UNIX)) {
+                  elseif (is_numeric($value) && date_is_valid($value, DATE_UNIX)) {
                     $value = date_convert($value, DATE_UNIX, DATE_ISO);
                   }
-                  // Otherwise, use strtotime and unix2iso to convert 
+                  // Otherwise, use strtotime and unix2iso to convert
                   // partial ISO or text date into full ISO.
                   else {
                     $value = date_convert(strtotime($value), DATE_UNIX, DATE_ISO);

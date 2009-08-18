@@ -44,7 +44,8 @@ function user_migrate_destination_import_user($tblinfo, $row) {
     if (!preg_match('/^field_/', $destfield)) {
       if ($values['srcfield'] && isset($row->$values['srcfield'])) {
         $newvalue = $row->$values['srcfield'];
-      } else {
+      }
+      else {
         $newvalue = $values['default_value'];
       }
 
@@ -52,7 +53,7 @@ function user_migrate_destination_import_user($tblinfo, $row) {
       if ($destfield == 'created' || $destfield == 'access' || $destfield == 'login') {
         $newvalue = _migrate_valid_date($newvalue);
       }
-      else if ($destfield == 'roles') {
+      elseif ($destfield == 'roles') {
         static $user_roles;
         if (!isset($user_roles)) {
           $user_roles = array_flip(user_roles(TRUE));
@@ -145,7 +146,8 @@ function user_migrate_destination_import_role($tblinfo, $row) {
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && isset($row->$values['srcfield'])) {
       $newvalue = $row->$values['srcfield'];
-    } else {
+    }
+    else {
       $newvalue = $values['default_value'];
     }
     $new_role[$destfield] = $newvalue;

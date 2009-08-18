@@ -1,5 +1,10 @@
 <?php
-/* $Id$ */
+// $Id$
+
+/**
+ * @file
+ * Hooks to support content_profile when migrating users
+ */
 
 function content_profile_migrate_destination_fields_user($type) {
   // Get any CCK fields attached to content profiles
@@ -10,7 +15,8 @@ function content_profile_migrate_destination_fields_user($type) {
     foreach ($profile_fields as $key => $value) {
       if (!preg_match('/^field_/', $key)) {
         unset($profile_fields[$key]);
-      } else {
+      }
+      else {
         $profile_fields[$key] = $info->name . ' ' . $value;
       }
     }
@@ -28,12 +34,13 @@ function content_profile_migrate_destination_complete_user(&$account, $tblinfo, 
     $node[$type] = new StdClass;
     $node[$type]->type = $type;
   }
-  
-  // Process all CCK fields in the input as content_profile 
+
+  // Process all CCK fields in the input as content_profile
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && isset($row->$values['srcfield'])) {
       $newvalue = $row->$values['srcfield'];
-    } else {
+    }
+    else {
       $newvalue = $values['default_value'];
     }
     // Find the content profile type containing this field

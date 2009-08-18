@@ -1,7 +1,13 @@
 <?php
+// $Id$
 
 /**
- * Implementation of hook_email_registration_name()
+ * @file
+ * Hooks to suport email_registration during user migration
+ */
+
+/**
+ * Implementation of hook_email_registration_name().
  *
  * If email_registration is in use, it overwrites any explicit username
  * with one generated from the email address. If you install the patch at
@@ -21,6 +27,9 @@ function migrate_email_registration_name($edit, $account) {
   return $edit['name'];
 }
 
+/**
+ * Implementation of hook_migrate_destination_prepare_user().
+ */
 function email_registration_migrate_destination_prepare_user(&$newuser, $tblinfo, $row) {
   // Generate a random username if none was provided
   if (!$newuser['name']) {

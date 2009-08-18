@@ -1,4 +1,11 @@
 <?php
+// $Id$
+
+/**
+ * @file
+ * Drush support for the migrate module
+ */
+
 /**
  * Implementation of hook_drush_help().
  */
@@ -86,10 +93,10 @@ function drush_migrate_status() {
     if ($row->clearing) {
       $status = dt('Clearing');
     }
-    else if ($row->importing) {
+    elseif ($row->importing) {
       $status = dt('Importing');
     }
-    else if ($row->scanning) {
+    elseif ($row->scanning) {
       $status = dt('Scanning');
     }
     else {
@@ -134,7 +141,7 @@ function drush_migrate_all() {
   if ($feedback) {
     $parts = explode(' ', $feedback);
     $options['feedback']['frequency'] = $parts[0];
-    $options['feedback']['frequency_unit'] = strtolower($parts[1]);
+    $options['feedback']['frequency_unit'] = drupal_strtolower($parts[1]);
     if ($options['feedback']['frequency_unit'] != 'seconds' &&
         $options['feedback']['frequency_unit'] != 'items') {
       drush_print(dt("Invalid feedback frequency unit '!unit'",

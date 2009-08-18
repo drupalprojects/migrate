@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+// $Id$
 
 /**
  * @file
@@ -44,7 +44,8 @@ function node_migrate_destination_import_node($tblinfo, $row) {
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && $row->$values['srcfield']) {
       $node->$destfield = $row->$values['srcfield'];
-    } else {
+    }
+    else {
       $node->$destfield = $values['default_value'];
     }
   }
@@ -106,10 +107,10 @@ function node_migrate_destination_fields_node($type) {
   $type_info = node_get_types('type', $type);
 
   if ($type_info->has_title) {
-    $fields['title'] = t('Node: ').$type_info->title_label;
+    $fields['title'] = t('Node: ') . $type_info->title_label;
   }
   if ($type_info->has_body) {
-    $fields['body'] = t('Node: ').$type_info->body_label;
+    $fields['body'] = t('Node: ') . $type_info->body_label;
     $fields['teaser'] = t('Node: Teaser');
   }
 
@@ -134,18 +135,22 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   if (isset($node->uid)) {
     $account = user_load(array('uid' => $node->uid));
     $node->name = $account->name;
-  } elseif (isset($node->name)) {
+  }
+  elseif (isset($node->name)) {
     // We have a mapped username.
     if ($account = user_load(array('name' => $node->name))) {
       $node->uid = $account->uid;
-    } elseif ($account = user_load(array('mail' => $node->name))) {
+    }
+    elseif ($account = user_load(array('mail' => $node->name))) {
       $node->uid = $account->uid;
     }
     // If no valid incoming user, the node owner will end up being the current user
-  } elseif ($user->uid > 0) {
+  }
+  elseif ($user->uid > 0) {
     $node->uid = $user->uid;
     $node->name = $user->name;
-  } else {
+  }
+  else {
     // Default to admin user
     $node->uid = 1;
     $account = user_load(array('name' => $node->uid));
@@ -158,7 +163,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     if (empty($node->date)) {
       unset($node->date);
     }
-    else if (($date = _migrate_valid_date($node->date)) > -1) {
+    elseif (($date = _migrate_valid_date($node->date)) > -1) {
       $node->date = $date;
     }
     else {
@@ -174,7 +179,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     if ($author['date'] == '') {
       $node->date = time();
     }
-    else if (($date = _migrate_valid_date($author['date'])) > -1) {
+    elseif (($date = _migrate_valid_date($author['date'])) > -1) {
       $node->date = $date;
     }
     else {
@@ -197,7 +202,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     if (empty($node->changed)) {
       unset($node->changed);
     }
-    else if (($date = _migrate_valid_date($node->changed)) > -1) {
+    elseif (($date = _migrate_valid_date($node->changed)) > -1) {
       $node->changed = $date;
     }
     else {
@@ -219,7 +224,7 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   $all_options = array('status', 'moderate', 'promote', 'sticky', 'revision');
 
   foreach ($all_options as $key) {
-    if (isset($node->$key) && strlen($node->$key) > 0) {
+    if (isset($node->$key) && drupal_strlen($node->$key) > 0) {
       // If the field was mapped, use that value.
       $node->$key = ($node->$key ? 1 : 0);
     }
@@ -249,17 +254,20 @@ function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
     // If incoming data has a teaser and no body, copy the teaser into the body
     if (isset($node->teaser)) {
       $node->teaser = trim($node->teaser);
-    } else {
+    }
+    else {
       $node->teaser = '';
     }
     if (isset($node->body)) {
       $node->body = trim($node->body);
-    } else {
+    }
+    else {
       $node->body = '';
     }
     if ($node->teaser && !$node->body) {
       $node->body = $node->teaser;
-    } elseif ($node->body && !$node->teaser) {
+    }
+    elseif ($node->body && !$node->teaser) {
       // Teaser not automatically generated
       $node->teaser = node_teaser($node->body);
     }

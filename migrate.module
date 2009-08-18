@@ -43,7 +43,7 @@ function migrate_invoke_all($kind, $hook, $type = NULL) {
     if (isset($result) && is_array($result)) {
       $return = array_merge_recursive($return, $result);
     }
-    else if (isset($result)) {
+    elseif (isset($result)) {
       $return[] = $result;
     }
   }
@@ -71,14 +71,16 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   if (is_array($content_set)) {
     $was_array = TRUE;
     $content_set = (object) $content_set;
-  } else {
+  }
+  else {
     $was_array = FALSE;
   }
 
   // Update or insert the content set record as appropriate
   if ($content_set->mcsid) {
     drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
-  } else {
+  }
+  else {
     drupal_write_record('migrate_content_sets', $content_set);
   }
 
@@ -123,7 +125,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
     $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
     // The field name might be <table>_<column>...
     if (!$sourcefield) {
-      $sourcekey = substr($content_set->sourcekey, strlen($tablename) + 1);
+      $sourcekey = drupal_substr($content_set->sourcekey, drupal_strlen($tablename) + 1);
       $sourcefield = $sourceschema['fields'][$sourcekey];
     }
     // But - we don't want serial fields to behave serially, so change to int
@@ -143,7 +145,8 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       // Expose messages table to views
       tw_add_tables(array($msgtablename));
       tw_add_fk($msgtablename, 'sourceid');
-    } else {
+    }
+    else {
       // TODO: Deal with varchar->int case where there is existing non-int data
       $desired_schema = _migrate_map_table_schema($sourcefield);
       $actual_schema = $inspect[$maptablename];
@@ -167,7 +170,8 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   if ($was_array) {
     $content_set = (array)$content_set;
     return $content_set['mcsid'];
-  } else {
+  }
+  else {
     return $content_set->mcsid;
   }
 }
@@ -175,7 +179,8 @@ function migrate_save_content_set(&$content_set, $options = array()) {
 function migrate_save_content_mapping(&$mapping) {
   if ($mapping->mcmid) {
     drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
-  } else {
+  }
+  else {
     drupal_write_record('migrate_content_mappings', $mapping);
   }
 }
@@ -303,14 +308,16 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
   $deleted = 0;
   if ($idlist) {
     $sql = "SELECT sourceid,destid FROM {" . $maptable . "} WHERE sourceid IN ($idlist)";
-  } else {
+  }
+  else {
     $sql = "SELECT sourceid,destid FROM {" . $maptable . "}";
   }
 
   timer_start('delete query');
   if ($itemlimit) {
     $deletelist = db_query_range($sql, 0, $itemlimit);
-  } else {
+  }
+  else {
     $deletelist = db_query($sql);
   }
   timer_stop('delete query');
@@ -465,7 +472,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   // primary key - we need to strip that here for the join to work. But, it's
   // common for tables to have the tablename beginning field names (e.g.,
   // table cms with PK cms_id). Deal with that as well...
-  $baselen = strlen($view->base_table);
+  $baselen = drupal_strlen($view->base_table);
   if (!strncasecmp($sourcekey, $view->base_table . '_', $baselen + 1)) {
     // So, which case is it? Ask the schema module...
     db_set_active($viewdb);
@@ -474,7 +481,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     $tableschema = $inspect[$view->base_table];
     $sourcefield = $tableschema['fields'][$sourcekey];
     if (!$sourcefield) {
-      $joinkey = substr($sourcekey, $baselen + 1);
+      $joinkey = drupal_substr($sourcekey, $baselen + 1);
       $sourcefield = $tableschema['fields'][$joinkey];
       if (!$sourcefield) {
         drupal_set_message(t("In view !view, can't find key !key for table !table",
@@ -502,7 +509,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
 
   // If running over a selected list of IDs, pass those in to the query
   if ($idlist) {
-    $view->query->add_where($view->options['group'], $view->base_table.".$sourcekey IN ($idlist)",
+    $view->query->add_where($view->options['group'], $view->base_table . ".$sourcekey IN ($idlist)",
       $view->base_table);
   }
 
@@ -524,7 +531,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   if ($viewdb <> 'default') {
     global $db_url;
     $url = parse_url(is_array($db_url) ? $db_url['default'] : $db_url);
-    $currdb = substr($url['path'], 1);
+    $currdb = drupal_substr($url['path'], 1);
     $query = str_replace('{' . $maptable . '}',
       $currdb . '.' . '{' . $maptable . '}', $query);
     $query = str_replace('{' . $msgtablename . '}',
@@ -536,7 +543,8 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   timer_start('execute view query');
   if ($itemlimit) {
     $importlist = db_query_range($query, $args, 0, $itemlimit);
-  } else {
+  }
+  else {
     $importlist = db_query($query, $args);
   }
   timer_stop('execute view query');
@@ -615,7 +623,8 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
                 SET importing=0, lastimported=NOW()
                 WHERE mcsid=%d",
                $mcsid);
-    } else {
+    }
+    else {
       db_query("UPDATE {migrate_content_sets}
                 SET lastimported=NOW()
                 WHERE mcsid=%d",
@@ -640,7 +649,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
 function migrate_content_process_all_action(&$dummy, $action_context, $a1, $a2) {
   migrate_content_process_all(time());
 }
-*/
+ */
 
 function migrate_content_process_all_batch($starttime, $limit, $idlist, &$context) {
   $messages = array();
@@ -704,7 +713,7 @@ function migrate_content_process_all_batch($starttime, $limit, $idlist, &$contex
       global $timers;
       arsort($context['sandbox']['times']);
       foreach ($context['sandbox']['times'] as $name => $total) {
-        drupal_set_message("$name: ".round($total,2));
+        drupal_set_message("$name: " . round($total, 2));
       }
     }
   }
@@ -774,7 +783,8 @@ function _migrate_progress_message($starttime, $numitems, $description, $import 
   if ($time > 0) {
     $perminute = round(60*$numitems/$time);
     $time = round($time, 1);
-  } else {
+  }
+  else {
     $perminute = '?';
   }
 
@@ -820,7 +830,7 @@ function _migrate_progress_message($starttime, $numitems, $description, $import 
 }
 
 /*
- * Implementation of hook_init()
+ * Implementation of hook_init().
  */
 function migrate_init() {
   $path = drupal_get_path('module', 'migrate') . '/migrate_destinations.inc';
@@ -831,7 +841,7 @@ function migrate_init() {
 }
 
 /**
- * Implementation of hook_action_info()
+ * Implementation of hook_action_info().
  */
 /* Revisit
 function migrate_action_info() {
@@ -861,10 +871,10 @@ function migrate_action_info() {
   );
   return $info;
 }
-*/
+ */
 
 /**
- * Implementation of hook_cron()
+ * Implementation of hook_cron().
  *
  */
 function migrate_cron() {
@@ -978,7 +988,7 @@ function migrate_menu() {
 }
 
 /**
- * Implementation of hook_schema_alter
+ * Implementation of hook_schema_alter().
  * @param $schema
  */
 function migrate_schema_alter(&$schema) {
@@ -1012,9 +1022,9 @@ function migrate_schema_alter(&$schema) {
         $sourcefield = $sourceschema['fields'][$sourcekey];
         if (!$sourcefield) {
           // strip base table name if views prepended it
-          $baselen = strlen($tablename);
+          $baselen = drupal_strlen($tablename);
           if (!strncasecmp($sourcekey, $tablename . '_', $baselen + 1)) {
-            $sourcekey = substr($sourcekey, $baselen + 1);
+            $sourcekey = drupal_substr($sourcekey, $baselen + 1);
           }
           $sourcefield = $sourceschema['fields'][$sourcekey];
         }
@@ -1177,7 +1187,10 @@ function migrate_check_advanced_help() {
   if (!module_exists('advanced_help')) {
     $filename = db_result(db_query("SELECT filename FROM {system} WHERE type = 'module' AND name = 'advanced_help'"));
     if ($filename && file_exists($filename)) {
-      drupal_set_message(t('If you <a href="@modules">enable the advanced help module</a>, Migrate will provide more and better help. <a href="@hide">Hide this message.</a>', array('@modules' => url('admin/build/modules'),'@hide' => url('admin/build/views/tools'))));
+      drupal_set_message(t('If you <a href="@modules">enable the advanced help module</a>,
+              Migrate will provide more and better help. <a href="@hide">Hide this message.</a>',
+              array('@modules' => url('admin/build/modules'),
+        '@hide' => url('admin/build/views/tools'))));
     }
     else {
       drupal_set_message(t('If you install the advanced help module from !href, Migrate will provide more and better help. <a href="@hide">Hide this message.</a>', array('!href' => l('http://drupal.org/project/advanced_help', 'http://drupal.org/project/advanced_help'), '@hide' => url('admin/content/migrate/settings'))));

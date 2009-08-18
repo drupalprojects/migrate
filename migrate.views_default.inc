@@ -1,4 +1,10 @@
 <?php
+// $Id$
+
+/**
+ * @file
+ * Modify the default views of message tables
+ */
 
 /**
  * TODO:
@@ -11,7 +17,7 @@
  */
 
 /**
- * Implementation of hook_views_default_views_alter()
+ * Implementation of hook_views_default_views_alter().
  */
 function migrate_views_default_views_alter(&$views) {
   // Go through each content set and alter the Table Wizard's default view for its message

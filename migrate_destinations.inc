@@ -1,4 +1,4 @@
-<?php 
+<?php
 // $Id$
 
 /**
@@ -29,7 +29,7 @@ function migrate_destination_invoke_all($hook, &$object, $tblinfo, $row) {
       $errors = array_merge($errors, (array)$function($object, $tblinfo, $row));
       timer_stop($function);
     }
-  } 
+  }
   return $errors;
 }
 
@@ -49,12 +49,12 @@ function _migrate_valid_date($date) {
   }
   // strtotime() doesn't recognize dashes as separators, change to slashes
   $date = str_replace('-', '/', $date);
-  
+
   $time = strtotime($date);
   if ($time < 0 || !$time) {
     // Handles form YYYY-MM-DD HH:MM:SS.garbage
-    if (strlen($date) > 19) {
-      $time = strtotime(substr($date, 0, 19));
+    if (drupal_strlen($date) > 19) {
+      $time = strtotime(drupal_substr($date, 0, 19));
       if ($time < 0 || !$time) {
         return -1;
       }

@@ -114,6 +114,12 @@ function user_migrate_destination_import_user($tblinfo, $row) {
     if ($account) {
       migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $account->uid);
     }
+    else {
+      // User record wasn't created, but we weren't given back a reason
+      if (empty($errors)) {
+        $errors[] = migrate_message(t('user_save failed: Unknown reason'));
+      }
+    }
   }
   return $errors;
 }

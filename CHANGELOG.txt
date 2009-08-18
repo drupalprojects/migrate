@@ -5,6 +5,7 @@ Migrate 1.0-dev
 2009/08/18
 - #542096 - Return, don't display, messages
 - #392378 - Coder cleanup
+- #550874 - Must clear schema cache for map to be updated on import
 - Errors on user migration with no profile fields mapped
 
 2009/08/15

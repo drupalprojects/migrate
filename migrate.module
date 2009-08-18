@@ -133,6 +133,8 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       $sourcefield['type'] = 'int';
     }
 
+    $schema_change = FALSE;
+
     if (!db_table_exists($maptablename)) {
       $schema = _migrate_map_table_schema($sourcefield);
       db_create_table($ret, $maptablename, $schema);
@@ -145,6 +147,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       // Expose messages table to views
       tw_add_tables(array($msgtablename));
       tw_add_fk($msgtablename, 'sourceid');
+      $schema_change = TRUE;
     }
     else {
       // TODO: Deal with varchar->int case where there is existing non-int data
@@ -155,6 +158,8 @@ function migrate_save_content_set(&$content_set, $options = array()) {
         db_drop_primary_key($ret, $maptablename);
         db_change_field($ret, $maptablename, 'sourceid', 'sourceid',
           $sourcefield, array('primary key' => array('sourceid')));
+        tw_perform_analysis($maptablename);
+        $schema_change = TRUE;
       }
       $desired_schema = _migrate_message_table_schema($sourcefield);
       $actual_schema = $inspect[$msgtablename];
@@ -163,7 +168,13 @@ function migrate_save_content_set(&$content_set, $options = array()) {
         db_drop_index($ret, $msgtablename, 'sourceid');
         db_change_field($ret, $msgtablename, 'sourceid', 'sourceid',
           $sourcefield, array('indexes' => array('sourceid' => array('sourceid'))));
+        tw_perform_analysis($maptablename);
+        $schema_change = TRUE;
       }
+    }
+    // Make sure the schema gets updated to reflect changes
+    if ($schema_change) {
+      cache_clear_all('schema', 'cache');
     }
   }
 

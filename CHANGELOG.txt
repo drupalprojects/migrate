@@ -2,6 +2,19 @@
 
 Migrate 1.0-dev
 ===========
+
+IMPORTANT!
+
+Until we have the first stable beta, there may be incompatible changes that require you
+to take manual action when updating the migrate module (i.e., you can't assume update.php
+will handle everything for you).
+
+Updating from a version before 2009/08/18:
+
+The way content_profile mappings are stored has changed - if you are migrating users
+using content_profile, you must edit your user content sets and reestablish your mappings 
+to any content_profile fields. 
+
 2009/08/18
 - #542096 - Return, don't display, messages
 - #392378 - Coder cleanup

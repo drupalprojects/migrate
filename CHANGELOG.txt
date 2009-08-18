@@ -2,6 +2,9 @@
 
 Migrate 1.0-dev
 ===========
+2009/08/18
+- #542096 - Return, don't display, messages
+- #392378 - Coder cleanup
 
 2009/08/15
 - #392416 - Integrate migration messages with views

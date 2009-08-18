@@ -328,7 +328,6 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     $clearing = db_result(db_query($sql, $mcsid));
     if (!$clearing) {
       $status = MIGRATE_STATUS_CANCELLED;
-      drupal_set_message('cancelled');
       break;
     }
     // Check for time out if there is time info present
@@ -451,8 +450,8 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   // Emulate views execute(), so we can scroll through the results ourselves
   $view = views_get_view($view_name);
   if (!$view) {
-    drupal_set_message(t('View !view does not exist - either (re)create this view, or
-      remove the content set using it.', array('!view' => $view_name)));
+    $messages[] = t('View !view does not exist - either (re)create this view, or
+      remove the content set using it.', array('!view' => $view_name));
     return MIGRATE_STATUS_FAILURE;
   }
   $view->build();
@@ -484,8 +483,8 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
       $joinkey = drupal_substr($sourcekey, $baselen + 1);
       $sourcefield = $tableschema['fields'][$joinkey];
       if (!$sourcefield) {
-        drupal_set_message(t("In view !view, can't find key !key for table !table",
-          array('!view' => $view_name, '!key' => $sourcekey, '!table' => $view->base_table)));
+        $messages[] = t("In view !view, can't find key !key for table !table",
+          array('!view' => $view_name, '!key' => $sourcekey, '!table' => $view->base_table));
         return MIGRATE_STATUS_FAILURE;
       }
     }

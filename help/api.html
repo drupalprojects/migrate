@@ -13,7 +13,7 @@
   $types = array('user' =&gt; t('User'), 'role' =&gt; t('Role'));
   return $types;
 }</pre></p></li> 
-<li><p>Implement <strong>hook_migrate_destination_fields_<type></strong>, returning an array mapped from the internal field name (within Drupal) to the user-visible name:</p> 
+<li><p>Implement <strong>hook_migrate_destination_fields_&lt;type&gt;</strong>, returning an array mapped from the internal field name (within Drupal) to the user-visible name:</p> 
  
 <p><pre>function user_migrate_destination_fields_role($type) {
   $fields = array(
@@ -21,14 +21,14 @@
   );
   return $fields;
 }</pre></p></li> 
-<li><p>Implement <strong>hook_migrate_destination_delete_<type></strong>, which takes the unique identifier of the destination object on the Drupal side and deletes that object and everything that depends on that object:</p> 
+<li><p>Implement <strong>hook_migrate_destination_delete_&lt;type&gt;</strong>, which takes the unique identifier of the destination object on the Drupal side and deletes that object and everything that depends on that object:</p> 
  
 <p><pre>function user_migrate_destination_delete_role($rid) {
   db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
   db_query('DELETE FROM {permission} WHERE rid = %d', $rid);
   db_query('DELETE FROM {role} WHERE rid = %d', $rid);
 }</pre></p></li> 
-<li><p>Now, here&#8217;s the major work: implement <strong>hook_migrate_destination_import_<type></strong> :</p> 
+<li><p>Now, here&#8217;s the major work: implement <strong>hook_migrate_destination_import_&lt;type&gt;</strong> :</p> 
  
 <p><pre>
 function user_migrate_destination_import_role($tblinfo, $row) {
@@ -94,7 +94,7 @@ function user_migrate_destination_import_role($tblinfo, $row) {
     */
    function tw_add_relationship($leftcol, $rightcol, $automatic = FALSE) {
 </pre></p></li> 
-<li><p>If the content set is based only on a single source table with a single primary key, and requires no filtering, the default view instantiated by the Table Wizard for that table can be used in the content set. Otherwise, you need to define a view containing all the necessary data as a default view (create the view interactively, export, and paste the code into ec_migrate.views_default.inc). Naming convention is <destination><em>content</em>set (e.g., role_content_set).</p></li> 
+<li><p>If the content set is based only on a single source table with a single primary key, and requires no filtering, the default view instantiated by the Table Wizard for that table can be used in the content set. Otherwise, you need to define a view containing all the necessary data as a default view (create the view interactively, export, and paste the code into ec_migrate.views_default.inc). Naming convention is &lt;destination&gt;_content_set (e.g., role_content_set).</p></li> 
 <li><p>Create the content set in your update function, by building the object and saving it:</p> 
  
 <p><pre>$content_set = new stdClass;
@@ -135,10 +135,10 @@ migrate_save_content_mapping($mapping);</pre></p></li>
             FROM {customer_role} cr
             INNER JOIN {role_content_set_map} map ON cr.role_id=map.sourceid
             WHERE cr.customer_id=%d AND cr.active='Y' AND
-              (cr.expires IS NULL OR cr.expires > NOW())";
-    $result = db_query($sql, $row->customer_id);
+              (cr.expires IS NULL OR cr.expires &gt; NOW())";
+    $result = db_query($sql, $row-&gt;customer_id);
     while ($row = db_fetch_object($result)) {
-      $account['roles'][$row->rid] = $row->rid;
+      $account['roles'][$row-&gt;rid] = $row-&gt;rid;
     }
     timer_stop('role assignments');
 

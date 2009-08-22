@@ -15,6 +15,9 @@ The way content_profile mappings are stored has changed - if you are migrating u
 using content_profile, you must edit your user content sets and reestablish your mappings 
 to any content_profile fields. 
 
+2009/08/22
+- #554010 - Don't let $maxexectime go to zero or below
+
 2009/08/19
 - #398632 - Add some HTML entities for < and > in API documentation
 

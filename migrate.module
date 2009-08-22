@@ -690,7 +690,7 @@ function migrate_content_process_all_batch($starttime, $limit, $idlist, &$contex
   // For the timelimit, subtract more than enough time to clean up
   $options = array(
     'itemlimit' => $limit,
-    'timelimit' => $starttime + $maxexectime - 20,
+    'timelimit' => $starttime + (($maxexectime < 20) ? $maxexectime : ($maxexectime - 20)),
     'idlist' => $idlist,
   );
   $status = migrate_content_process_all($messages, $options);
@@ -903,7 +903,7 @@ function migrate_cron() {
   if (!$maxexectime) {
     $maxexectime = 240;
   }
-  $options = array('timelimit' => $starttime + $maxexectime - 20);
+  $options = array('timelimit' => $starttime + (($maxexectime < 20) ? $maxexectime : ($maxexectime - 20)));
   migrate_content_process_all($messages, $options);
   $user = $saveuser;
   session_save_session(TRUE);

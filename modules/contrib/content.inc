@@ -40,7 +40,7 @@
 /**
  * Implementation of hook_migrate_fields().
  */
-function content_migrate_destination_fields_node($type) {
+function content_migrate_fields_node($type) {
   $types = (array) content_types();
   $fields = array();
 
@@ -61,7 +61,7 @@ function content_migrate_destination_fields_node($type) {
 /**
  * Implementation of hook_migrate_prepare().
  */
-function content_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
+function content_migrate_prepare_node(&$node, $tblinfo, $row) {
   static $types, $fieldinfo = array();
   $errors = array();
   if (!isset($types)) {

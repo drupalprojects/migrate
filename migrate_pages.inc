@@ -140,7 +140,7 @@ function _migrate_dashboard_form($form_state) {
     $form['data'][$rownum]['importing'] = array('#value' => check_plain($row->importing));
     $form['data'][$rownum]['scanning'] = array('#value' => check_plain($row->scanning));
     $form['data'][$rownum]['description'] = array('#value' =>
-      l($row->description, 'admin/content/migrate/destinations/' . $row->mcsid,
+      l($row->description, 'admin/content/migrate/content_sets/' . $row->mcsid,
         array('html' => TRUE)));
     $form['data'][$rownum]['view_name'] = array('#value' =>
       l($row->view_name, 'admin/build/views/edit/'. $row->view_name,
@@ -316,19 +316,18 @@ function _migrate_content_process_finish($success, $results, $operations) {
  *
  * @return unknown
  */
-function migrate_destinations() {
-  return (drupal_get_form('_migrate_destination_form'));
+function migrate_content_sets() {
+  return (drupal_get_form('_migrate_content_set_form'));
 }
 
-function _migrate_destination_form($form_state) {
+function _migrate_content_set_form($form_state) {
   // Fetch information on available destinations
-  $desttypes = migrate_invoke_all('destination', 'types');
+  $desttypes = migrate_invoke_all('types');
 
   $header = array(
     array('data' => t('Description'), 'field' => 'mcs.description'),
     array('data' => t('Source view'), 'field' => 'mcs.view_name'),
     array('data' => t('Destination')),
-//    array('data' => t('End type'), 'field' => 'mcs.desttype'),
     array('data' => t('Weight'), 'field' => 'mcs.weight', 'sort' => 'asc'),
     array('data' => t('')),
   );
@@ -351,7 +350,7 @@ function _migrate_destination_form($form_state) {
         $row->view_name,
         $destination,
         $row->weight,
-        l(t('Edit'), 'admin/content/migrate/destinations/'. $row->mcsid, array('html' => TRUE)),
+        l(t('Edit'), 'admin/content/migrate/content_sets/'. $row->mcsid, array('html' => TRUE)),
       ),
       'class' => "migrate-content-sets-tr",
     );
@@ -421,7 +420,7 @@ function _migrate_destination_form($form_state) {
   return $form;
 }
 
-function _migrate_destination_form_submit($form, &$form_state) {
+function _migrate_content_set_form_submit($form, &$form_state) {
   $content_set['view_name'] = $form_state['values']['sourceview'];
   $content_set['description'] = $form_state['values']['description'];
   $destination = explode('/', $form_state['values']['contenttype']);
@@ -431,13 +430,13 @@ function _migrate_destination_form_submit($form, &$form_state) {
 
   $mcsid = migrate_save_content_set($content_set);
   // Go straight to the mapping form
-  $form_state['redirect'] = "admin/content/migrate/destinations/$mcsid";
+  $form_state['redirect'] = "admin/content/migrate/content_sets/$mcsid";
 }
 
 /**
  * Menu callback function.
  */
-function migrate_destination_mappings($form_state, $mcsid) {
+function migrate_content_set_mappings($form_state, $mcsid) {
   $row = db_fetch_object(db_query("SELECT * FROM {migrate_content_sets}
                                    WHERE mcsid=%d",
                                   $mcsid));
@@ -450,8 +449,8 @@ function migrate_destination_mappings($form_state, $mcsid) {
   $weight = $row->weight;
 
   // Fetch information on available destinations
-  $desttypes = migrate_invoke_all('destination', 'types');
-  $destfields = migrate_invoke_all('destination', 'fields', $contenttype, $desttype);
+  $desttypes = migrate_invoke_all('types');
+  $destfields = migrate_invoke_all("fields_$contenttype", $desttype);
 
   $form['mcsid'] = array(
     '#type' => 'value',
@@ -585,7 +584,7 @@ function migrate_destination_mappings($form_state, $mcsid) {
   return $form;
 }
 
-function theme_migrate_destination_mappings($form) {
+function theme_migrate_content_set_mappings($form) {
   $output = drupal_render($form['description']);
   $output .= drupal_render($form['show_view_name']);
   $output .= drupal_render($form['show_contenttype']);
@@ -618,12 +617,12 @@ function theme_migrate_destination_mappings($form) {
 /**
  * Implementation of hook_submit().
  */
-function migrate_destination_mappings_submit($form, &$form_state) {
+function migrate_content_set_mappings_submit($form, &$form_state) {
   $mcsid = $form_state['values']['mcsid'];
   if ($form_state['clicked_button']['#parents'][0] == 'delete') {
     migrate_delete_content_set($mcsid);
     drupal_set_message(t('Content set deleted'));
-    $form_state['redirect'] = 'admin/content/migrate/destinations';
+    $form_state['redirect'] = 'admin/content/migrate/content_sets';
   }
   else {
     // Get list of current mappings, so we know if any need deletion

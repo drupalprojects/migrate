@@ -7,14 +7,14 @@
  */
 
 /**
- * Implementation of hook_migrate_destination_fields_user().
+ * Implementation of hook_migrate_fields_user().
  */
-function content_profile_migrate_destination_fields_user($type) {
+function content_profile_migrate_fields_user($type) {
   // Get any CCK fields attached to content profiles
   $cp_types = content_profile_get_types();
   $fields = array();
   foreach ($cp_types as $type => $info) {
-    $profile_fields = migrate_invoke_all('destination', 'fields', 'node', $type);
+    $profile_fields = migrate_invoke_all('fields_node', $type);
     foreach ($profile_fields as $key => $value) {
       if (preg_match('/^field_/', $key) || $key == 'title' || $key == 'body') {
         $profile_fields[$type . '|' . $key] = $info->name . ' ' . $value;
@@ -26,12 +26,12 @@ function content_profile_migrate_destination_fields_user($type) {
   return $fields;
 }
 
-function content_profile_migrate_destination_complete_user(&$account, $tblinfo, $row) {
+function content_profile_migrate_complete_user(&$account, $tblinfo, $row) {
   // Initialize all related profile nodes
   $cp_types = content_profile_get_types();
   $cp_fields = array();
   foreach ($cp_types as $type => $info) {
-    $cp_fields[$type] = content_migrate_destination_fields_node($type);
+    $cp_fields[$type] = content_migrate_fields_node($type);
     $node[$type] = new StdClass;
     $node[$type]->type = $type;
   }
@@ -67,7 +67,7 @@ function content_profile_migrate_destination_complete_user(&$account, $tblinfo, 
     // as: module_invoke_all('node_import_prepare', $node, $preview > 0);
     // but unfortunately module_invoke_all passes all argumens by value.
     foreach (module_list() as $module_name) {
-      $function = $module_name . '_migrate_destination_prepare_node';
+      $function = $module_name . '_migrate_prepare_node';
       if (function_exists($function)) {
         $errors = array_merge((array)$errors, (array)$function($node[$type], $tblinfo, $row));
       }

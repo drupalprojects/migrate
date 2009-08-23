@@ -2,36 +2,44 @@
 
 <h2 id="destinationtypes">Destination types</h2> 
  
-<p>The migrate module supports the definition of different destination types - kinds of objects to be created in a migration. There is built-in support for nodes, users, comments, roles, and taxonomy terms - hooks can be defined for additional destination types.</p> 
+<p>The migrate module supports the definition of different destination types - kinds of objects 
+to be created in a migration. There is built-in support for nodes, users, comments, roles, and 
+taxonomy terms - hooks can be defined for additional destination types.</p> 
  
-<p>Here are the steps we took to create the Role destination type. Your destination types will follow a similar pattern.</p> 
+<p>Here are the steps we took to create the Role destination type. Your destination types will 
+follow a similar pattern.</p> 
  
 <ul> 
-<li><p>Implement <strong>hook_migrate_destination_types()</strong>, returning an array mapped from the internal name of the type (used to build hook names, in particular) to the user-visible type name:</p> 
+<li><p>Implement <strong>hook_migrate_types()</strong>, returning an array mapped 
+from the internal name of the type (used to build hook names, in particular) to the user-visible 
+type name:</p> 
  
-<p><pre>function user_migrate_destination_types() {
+<p><pre>function user_migrate_types() {
   $types = array('user' =&gt; t('User'), 'role' =&gt; t('Role'));
   return $types;
 }</pre></p></li> 
-<li><p>Implement <strong>hook_migrate_destination_fields_&lt;type&gt;</strong>, returning an array mapped from the internal field name (within Drupal) to the user-visible name:</p> 
+<li><p>Implement <strong>hook_migrate_fields_&lt;type&gt;</strong>, returning an 
+array mapped from the internal field name (within Drupal) to the user-visible name:</p> 
  
-<p><pre>function user_migrate_destination_fields_role($type) {
+<p><pre>function user_migrate_fields_role($type) {
   $fields = array(
     'name' =&gt; t('Role name'),
   );
   return $fields;
 }</pre></p></li> 
-<li><p>Implement <strong>hook_migrate_destination_delete_&lt;type&gt;</strong>, which takes the unique identifier of the destination object on the Drupal side and deletes that object and everything that depends on that object:</p> 
+<li><p>Implement <strong>hook_migrate_delete_&lt;type&gt;</strong>, which takes the 
+unique identifier of the destination object on the Drupal side and deletes that object and 
+everything that depends on that object:</p> 
  
-<p><pre>function user_migrate_destination_delete_role($rid) {
+<p><pre>function user_migrate_delete_role($rid) {
   db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
   db_query('DELETE FROM {permission} WHERE rid = %d', $rid);
   db_query('DELETE FROM {role} WHERE rid = %d', $rid);
 }</pre></p></li> 
-<li><p>Now, here&#8217;s the major work: implement <strong>hook_migrate_destination_import_&lt;type&gt;</strong> :</p> 
+<li><p>Now, here&#8217;s the major work: implement <strong>hook_migrate_import_&lt;type&gt;</strong> :</p> 
  
 <p><pre>
-function user_migrate_destination_import_role($tblinfo, $row) {
+function user_migrate_import_role($tblinfo, $row) {
   $errors = array();
   $newrole = array();
   // For each destination field, populate it with the source value if present, and if
@@ -52,7 +60,7 @@ function user_migrate_destination_import_role($tblinfo, $row) {
     // Call completion hooks, for any additional role-related processing
     // (such as assigning permissions)
     timer_start('role completion hooks');
-    $errors = migrate_destination_invoke_all('complete_role', $role, $tblinfo, $row);
+    $errors = migrate_invoke_all('complete_role', $role, $tblinfo, $row);
     timer_stop('role completion hooks');
     // Fill in the map table, so the migrate module knows this row is done
     $sourcekey = $tblinfo-&gt;sourcekey;
@@ -62,17 +70,24 @@ function user_migrate_destination_import_role($tblinfo, $row) {
 }</pre></p></li> 
 </ul> 
  
-<p>$tblinfo contains the meta-information on the content set, and $row is the source data for one object. An array of messages is returned - use migrate_message() to generate a message. </p> 
+<p>$tblinfo contains the meta-information on the content set, and $row is the source data for one object. 
+An array of messages is returned - use migrate_message() to generate a message. </p> 
  
 <h2 id="contentsets">Content sets</h2> 
  
-<p>A content set defines the migration from a set of source data (implemented as a view) into a given destination type. Content sets can be defined interactively or programmatically. The typical process to create a content set programmatically would be as follows:</p> 
+<p>A content set defines the migration from a set of source data (implemented as a view) into 
+a given destination type. Content sets can be defined interactively or programmatically. The
+typical process to create a content set programmatically would be as follows:</p> 
  
 <ul> 
-<li><p>Add an update function to the .install file for a custom module (this document calls it ec_migrate.install). In the update function, first add any source tables to the Table Wizard. Pass TRUE to prevent immediate full analysis of the table (otherwise, for large tables, the update function risks timing out).</p> 
+<li><p>Add an update function to the .install file for a custom module (this document calls it 
+ec_migrate.install). In the update function, first add any source tables to the Table Wizard. 
+Pass TRUE to prevent immediate full analysis of the table (otherwise, for large tables, the 
+update function risks timing out).</p> 
  
 <p><pre>tw_add_tables('role_o', TRUE);</pre></p></li> 
-<li><p>If these tables need to relate to other tables, add FK flags to any columns used in joins, and add the relationships:</p> 
+<li><p>If these tables need to relate to other tables, add FK flags to any columns used in joins, 
+and add the relationships:</p> 
  
 <p><pre>
    function tw_add_fk($tablename, $colname)
@@ -94,7 +109,12 @@ function user_migrate_destination_import_role($tblinfo, $row) {
     */
    function tw_add_relationship($leftcol, $rightcol, $automatic = FALSE) {
 </pre></p></li> 
-<li><p>If the content set is based only on a single source table with a single primary key, and requires no filtering, the default view instantiated by the Table Wizard for that table can be used in the content set. Otherwise, you need to define a view containing all the necessary data as a default view (create the view interactively, export, and paste the code into ec_migrate.views_default.inc). Naming convention is &lt;destination&gt;_content_set (e.g., role_content_set).</p></li> 
+<li><p>If the content set is based only on a single source table with a single primary key, and 
+requires no filtering, the default view instantiated by the Table Wizard for that table can be 
+used in the content set. Otherwise, you need to define a view containing all the necessary data 
+as a default view (create the view interactively, export, and paste the code into 
+ec_migrate.views_default.inc). Naming convention is &lt;destination&gt;_content_set (e.g., 
+role_content_set).</p></li> 
 <li><p>Create the content set in your update function, by building the object and saving it:</p> 
  
 <p><pre>$content_set = new stdClass;
@@ -106,17 +126,22 @@ $content_set-&gt;weight = 9;
 migrate_save_content_set($content_set, array('base_table' =&gt; 'role_o'));
 $mcsid = $content_set-&gt;mcsid;</pre></p> 
  
-<p>For each field to automatically be copied from a source field to a destination field, build a mapping object and save it:</p> 
+<p>For each field to automatically be copied from a source field to a destination field, build 
+a mapping object and save it:</p> 
  
 <p><pre>$mapping = new stdClass;
 $mapping-&gt;mcsid = $mcsid;
 $mapping-&gt;srcfield = 'role_o_role_name';
 $mapping-&gt;destfield = 'name';
 migrate_save_content_mapping($mapping);</pre></p></li> 
-<li><p>Usually, simply copying source fields to destination fields are not enough - you need to implement a hook to perform further manipulations. A destination type may support a prepare hook such as <strong>hook_migrate_destination_prepare_OBJECT</strong> (called for each object after the automatic mappings are applied but before the destination is saved) and/or a complete hook (called after the destination is saved). The standard signature is:</p> 
+<li><p>Usually, simply copying source fields to destination fields are not enough - you need 
+to implement a hook to perform further manipulations. A destination type may support a prepare 
+hook such as <strong>hook_migrate_prepare_OBJECT</strong> (called for each object 
+after the automatic mappings are applied but before the destination is saved) and/or a complete
+hook (called after the destination is saved). The standard signature is:</p> 
  
 <p><pre>
-  function ec_migrate_migrate_destination_prepare_user(&amp;$account, $tblinfo, $row)
+  function ec_migrate_migrate_prepare_user(&amp;$account, $tblinfo, $row)
     // Role assignments
     timer_start('role assignments');
 

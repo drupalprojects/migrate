@@ -7,17 +7,17 @@
  */
 
 /**
- * Implementation of hook_migrate_destination_types().
+ * Implementation of hook_migrate_types().
  */
-function taxonomy_migrate_destination_types() {
+function taxonomy_migrate_types() {
   $types = array('term' => t('Taxonomy Term'));
   return $types;
 }
 
 /**
- * Implementation of hook_migrate_destination_fields_taxonomy().
+ * Implementation of hook_migrate_fields_taxonomy().
  */
-function taxonomy_migrate_destination_fields_term($type) {
+function taxonomy_migrate_fields_term($type) {
   $fields = array(
     'vid' => t('Taxonomy: Vocabulary'),
     'name' => t('Taxonomy: Name'),
@@ -29,9 +29,9 @@ function taxonomy_migrate_destination_fields_term($type) {
 }
 
 /**
- * Implementation of hook_migrate_destination_fields_node().
+ * Implementation of hook_migrate_fields_node().
  */
-function taxonomy_migrate_destination_fields_node($type) {
+function taxonomy_migrate_fields_node($type) {
   $fields = array();
   foreach ((array)taxonomy_get_vocabularies($type) as $vocab) {
     $fields['migrate_taxonomy_'. $vocab->vid] = t('Taxonomy: %name', array('%name' => check_plain($vocab->name)));
@@ -40,16 +40,16 @@ function taxonomy_migrate_destination_fields_node($type) {
 }
 
 /**
- * Implementation of hook_migrate_destination_delete_term().
+ * Implementation of hook_migrate_delete_term().
  */
-function taxonomy_migrate_destination_delete_term($tid) {
+function taxonomy_migrate_delete_term($tid) {
   taxonomy_del_term($tid);
 }
 
 /**
- * Implementation of hook_migrate_destination_import_term().
+ * Implementation of hook_migrate_import_term().
  */
-function taxonomy_migrate_destination_import_term($tblinfo, $row) {
+function taxonomy_migrate_import_term($tblinfo, $row) {
   static $vocabularies = NULL;
   if (!isset($vocabularies)) {
     $vocabularies = array();
@@ -142,7 +142,7 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
   }
 
   // Prepare the term for import.
-  $errors += migrate_destination_invoke_all('prepare_term', $term, $tblinfo, $row);
+  $errors += migrate_invoke_all('prepare_term', $term, $tblinfo, $row);
 
   $success = TRUE;
   foreach ($errors as $error) {
@@ -157,7 +157,7 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
     timer_stop('taxonomy_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('taxonomy completion hooks');
-    $errors = migrate_destination_invoke_all('complete_taxonomy', $term, $tblinfo, $row);
+    $errors = migrate_invoke_all('complete_term', $term, $tblinfo, $row);
     timer_stop('taxonomy completion hooks');
 
     // @TODO: Check first for existence, we may have updated an existing term - do we care about duplicates?
@@ -169,7 +169,7 @@ function taxonomy_migrate_destination_import_term($tblinfo, $row) {
 /**
  * Implementation of hook_migrate_prepare().
  */
-function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
+function taxonomy_migrate_prepare_node(&$node, $tblinfo, $row) {
   static $vocabs;
   if (!isset($vocabs) || !isset($vocabs[$node->type])) {
     $vocabs[$node->type] = taxonomy_get_vocabularies($node->type);
@@ -281,7 +281,7 @@ function taxonomy_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
   return $errors;
 }
 
-function taxonomy_migrate_destination_xlat_term($tid) {
+function taxonomy_migrate_xlat_term($tid) {
   return "taxonomy/term/$tid";
 }
 

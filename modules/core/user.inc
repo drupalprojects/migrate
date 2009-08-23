@@ -7,12 +7,12 @@
  */
 
 
-function user_migrate_destination_types() {
+function user_migrate_types() {
   $types = array('user' => t('User'), 'role' => t('Role'));
   return $types;
 }
 
-function user_migrate_destination_fields_user($type) {
+function user_migrate_fields_user($type) {
   $fields = array(
     'name' => t('User: Username'),
     'pass' => t('User: Password'),
@@ -26,13 +26,13 @@ function user_migrate_destination_fields_user($type) {
   return $fields;
 }
 
-function user_migrate_destination_delete_user($uid) {
+function user_migrate_delete_user($uid) {
   timer_start('user_delete');
   user_delete(array(), $uid);
   timer_stop('user_delete');
 }
 
-function user_migrate_destination_import_user($tblinfo, $row) {
+function user_migrate_import_user($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
   $newuser = array();
@@ -80,7 +80,7 @@ function user_migrate_destination_import_user($tblinfo, $row) {
   }
 
   // Prepare the user for import.
-  $errors = migrate_destination_invoke_all('prepare_user', $newuser, $tblinfo, $row);
+  $errors = migrate_invoke_all('prepare_user', $newuser, $tblinfo, $row);
 
   $success = TRUE;
   foreach ($errors as $error) {
@@ -108,7 +108,7 @@ function user_migrate_destination_import_user($tblinfo, $row) {
 
     // Call completion hooks, for any processing which needs to be done after user_save
     timer_start('user completion hooks');
-    $errors += migrate_destination_invoke_all('complete_user', $account, $tblinfo, $row);
+    $errors += migrate_invoke_all('complete_user', $account, $tblinfo, $row);
     timer_stop('user completion hooks');
 
     if ($account) {
@@ -124,11 +124,11 @@ function user_migrate_destination_import_user($tblinfo, $row) {
   return $errors;
 }
 
-function user_migrate_destination_xlat_user($uid) {
+function user_migrate_xlat_user($uid) {
   return "user/$uid";
 }
 
-function user_migrate_destination_fields_role($type) {
+function user_migrate_fields_role($type) {
   $fields = array(
     'name' => t('Role name'),
   );
@@ -136,7 +136,7 @@ function user_migrate_destination_fields_role($type) {
   return $fields;
 }
 
-function user_migrate_destination_delete_role($rid) {
+function user_migrate_delete_role($rid) {
   timer_start('role_delete');
 
   db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
@@ -146,7 +146,7 @@ function user_migrate_destination_delete_role($rid) {
   timer_stop('role_delete');
 }
 
-function user_migrate_destination_import_role($tblinfo, $row) {
+function user_migrate_import_role($tblinfo, $row) {
   $errors = array();
   $new_role = array();
   foreach ($tblinfo->fields as $destfield => $values) {
@@ -160,7 +160,7 @@ function user_migrate_destination_import_role($tblinfo, $row) {
   }
 
   // Prepare the role for import
-  $errors = migrate_destination_invoke_all('prepare_role', $new_role, $tblinfo, $row);
+  $errors = migrate_invoke_all('prepare_role', $new_role, $tblinfo, $row);
 
   $role_name = $new_role['name'];
 
@@ -172,7 +172,7 @@ function user_migrate_destination_import_role($tblinfo, $row) {
     // Call completion hooks, for any additional role-related processing
     // (such as assigning permissions)
     timer_start('role completion hooks');
-    $errors = migrate_destination_invoke_all('complete_role', $new_role, $tblinfo, $row);
+    $errors = migrate_invoke_all('complete_role', $new_role, $tblinfo, $row);
     timer_stop('role completion hooks');
 
     $sourcekey = $tblinfo->sourcekey;

@@ -6,7 +6,7 @@
  * Implementation of node destination handling
  */
 
-function node_migrate_destination_types() {
+function node_migrate_types() {
   static $nodetypes = NULL;
 
   if (!isset($nodetypes)) {
@@ -19,7 +19,7 @@ function node_migrate_destination_types() {
   return $nodetypes;
 }
 
-function node_migrate_destination_delete_node($nid) {
+function node_migrate_delete_node($nid) {
   // If we've created associations in {upload} between imported nodes
   // and files directly copied to the Drupal files directory (e.g. using
   // the auditfiles module), deleting the nodes deletes the files (not
@@ -32,7 +32,7 @@ function node_migrate_destination_delete_node($nid) {
   node_delete($nid);
 }
 
-function node_migrate_destination_import_node($tblinfo, $row) {
+function node_migrate_import_node($tblinfo, $row) {
   $node = (object)array();
   $node->type = $tblinfo->desttype;
   // Make sure the default comment settings are applied
@@ -51,7 +51,7 @@ function node_migrate_destination_import_node($tblinfo, $row) {
   }
 
   // Prepare the node for import.
-  $errors = migrate_destination_invoke_all('prepare_node', $node, $tblinfo, $row);
+  $errors = migrate_invoke_all('prepare_node', $node, $tblinfo, $row);
 
   $success = TRUE;
   foreach ($errors as $error) {
@@ -71,7 +71,7 @@ function node_migrate_destination_import_node($tblinfo, $row) {
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('node completion hooks');
-    $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
+    $errors = migrate_invoke_all('complete_node', $node, $tblinfo, $row);
     timer_stop('node completion hooks');
 
     $sourcekey = $tblinfo->sourcekey;
@@ -82,14 +82,14 @@ function node_migrate_destination_import_node($tblinfo, $row) {
   return $errors;
 }
 
-function node_migrate_destination_xlat_node($nid) {
+function node_migrate_xlat_node($nid) {
   return "node/$nid";
 }
 
 /**
  * Implementation of hook_migrate_fields().
  */
-function node_migrate_destination_fields_node($type) {
+function node_migrate_fields_node($type) {
   $fields = array();
   if (user_access('administer nodes')) {
     $fields = array(
@@ -124,7 +124,7 @@ function node_migrate_destination_fields_node($type) {
 /**
  * Implementation of hook_migrate_prepare().
  */
-function node_migrate_destination_prepare_node(&$node, $tblinfo, $row) {
+function node_migrate_prepare_node(&$node, $tblinfo, $row) {
   global $user;
 
   $type_info = node_get_types('type', $node->type);

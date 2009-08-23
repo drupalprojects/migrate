@@ -7,9 +7,9 @@
  */
 
 /**
- * Implementation of hook_migrate_destination_fields_user().
+ * Implementation of hook_migrate_fields_user().
  */
-function profile_migrate_destination_fields_user($type) {
+function profile_migrate_fields_user($type) {
   $fields = array();
 
   $profile = db_query("SELECT title, name FROM {profile_fields}");
@@ -21,12 +21,12 @@ function profile_migrate_destination_fields_user($type) {
 }
 
 /**
- * Implementation of hook_migrate_destination_prepare_user().
+ * Implementation of hook_migrate_prepare_user().
  * Because user_save() on a new user record only saves those profile fields
  * with register=1, we pull the profile fields out and stash them in the row
  * object to be saved later.
  */
-function profile_migrate_destination_prepare_user(&$account, $tblinfo, &$row) {
+function profile_migrate_prepare_user(&$account, $tblinfo, &$row) {
   // Cache categories for each field
   static $cats;
   if (!isset($cats)) {
@@ -48,9 +48,9 @@ function profile_migrate_destination_prepare_user(&$account, $tblinfo, &$row) {
 }
 
 /**
- * Implementation of hook_migrate_destination_complete_user().
+ * Implementation of hook_migrate_complete_user().
  */
-function profile_migrate_destination_complete_user($account, $tblinfo, $row) {
+function profile_migrate_complete_user($account, $tblinfo, $row) {
   if (isset($row->profile_fields) && is_array($row->profile_fields)) {
     foreach ($row->profile_fields as $category => $fields) {
       profile_save_profile($fields, $account, $category);

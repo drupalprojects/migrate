@@ -28,9 +28,9 @@ function migrate_email_registration_name($edit, $account) {
 }
 
 /**
- * Implementation of hook_migrate_destination_prepare_user().
+ * Implementation of hook_migrate_prepare_user().
  */
-function email_registration_migrate_destination_prepare_user(&$newuser, $tblinfo, $row) {
+function email_registration_migrate_prepare_user(&$newuser, $tblinfo, $row) {
   // Generate a random username if none was provided
   if (!$newuser['name']) {
     // There is a tiny risk that the generated name will not be unique

@@ -6,7 +6,7 @@
  * Implementation of comment destination handling
  */
 
-function comment_migrate_destination_types() {
+function comment_migrate_types() {
   $types = array('comment' => t('Comment'));
   return $types;
 }
@@ -17,7 +17,7 @@ function comment_migrate_destination_types() {
  * @param unknown_type $type
  * @return unknown
  */
-function comment_migrate_destination_fields_comment($type) {
+function comment_migrate_fields_comment($type) {
   $fields = array(
     'subject' => t('Comment: Title'),
     'comment' => t('Comment: Body'),
@@ -31,7 +31,7 @@ function comment_migrate_destination_fields_comment($type) {
   return $fields;
 }
 
-function comment_migrate_destination_delete_comment($cid) {
+function comment_migrate_delete_comment($cid) {
   $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
   include_once($path);
   // Backdoor deletion - query stolen from comment_delete()
@@ -46,7 +46,7 @@ function comment_migrate_destination_delete_comment($cid) {
   comment_confirm_delete_submit($form, $form_state);
 }
 
-function comment_migrate_destination_import_comment($tblinfo, $row) {
+function comment_migrate_import_comment($tblinfo, $row) {
   $comment = array();
   $errors = array();
   $sourcekey = $tblinfo->sourcekey;
@@ -63,7 +63,7 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
   // Prepare the comment for import. We could have use migrate_invoke_all()
   // but unfortunately arguments are passed by value
   foreach (module_list() as $module_name) {
-    $function = $module_name .'_migrate_destination_prepare_comment';
+    $function = $module_name .'_migrate_prepare_comment';
     if (function_exists($function)) {
       timer_start($function);
       $errors = array_merge($errors, (array)$function($comment, $tblinfo, $row));
@@ -98,9 +98,9 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
     $cid = comment_save($comment);
   }
 
-  //TODO: replace this with the migrate_destination_invoke_all();
+  //TODO: replace this with the migrate_invoke_all();
   foreach (module_list() as $module_name) {
-    $function = $module_name .'_migrate_destination_complete_comment';
+    $function = $module_name .'_migrate_complete_comment';
     if (function_exists($function)) {
       timer_start($function);
       $errors = array_merge($errors, (array)$function($cid, $tblinfo, $row));
@@ -111,7 +111,7 @@ function comment_migrate_destination_import_comment($tblinfo, $row) {
   return $errors;
 }
 
-function comment_migrate_destination_complete_comment(&$cid, $tblinfo, $row) {
+function comment_migrate_complete_comment(&$cid, $tblinfo, $row) {
   if ($cid) {
     // comment_save() always saves time() as the timestamp, override if we have a value
     if ($comment['timestamp']) {

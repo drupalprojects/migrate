@@ -244,3 +244,73 @@ function migrate_update_6002() {
   $ret[] = update_sql($sql);
   return $ret;
 }
+
+/**
+ * Hook names have changed - notify the admin
+ */
+function migrate_update_6003() {
+  drupal_set_message(t('The Migrate module API has changed - all functions and hooks
+    containing the word destination have been renamed to remove that word. Any hooks
+    listed below will need to be renamed - please review your code carefully
+    to make sure there are no other changes to make.'));
+  // Tell modules to include their migrate hooks
+  module_invoke_all('migrate_init');
+
+  foreach (module_implements('migrate_destination_types') as $module) {
+    drupal_set_message($module . '_migrate_destination_types');
+  }
+
+  $desttypes = migrate_invoke_all('destination_types');
+  foreach ($desttypes as $type => $info) {
+    foreach (module_implements("migrate_destination_fields_$type") as $module) {
+      drupal_set_message($module . "_migrate_destination_fields_$type");
+    }
+    foreach (module_implements("migrate_destination_delete_$type") as $module) {
+      drupal_set_message($module . "_migrate_destination_delete_$type");
+    }
+    foreach (module_implements("migrate_destination_import_$type") as $module) {
+      drupal_set_message($module . "_migrate_destination_import_$type");
+    }
+  }
+
+  foreach (module_implements('migrate_destination_prepare_node') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_node');
+  }
+  foreach (module_implements('migrate_destination_prepare_user') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_user');
+  }
+  foreach (module_implements('migrate_destination_prepare_role') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_role');
+  }
+  foreach (module_implements('migrate_destination_prepare_comment') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_comment');
+  }
+  foreach (module_implements('migrate_destination_prepare_term') as $module) {
+    drupal_set_message($module . '_migrate_destination_prepare_term');
+  }
+  foreach (module_implements('migrate_destination_complete_node') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_node');
+  }
+  foreach (module_implements('migrate_destination_complete_user') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_user');
+  }
+  foreach (module_implements('migrate_destination_complete_role') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_role');
+  }
+  foreach (module_implements('migrate_destination_complete_comment') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_comment');
+  }
+  foreach (module_implements('migrate_destination_complete_term') as $module) {
+    drupal_set_message($module . '_migrate_destination_complete_term');
+  }
+  foreach (module_implements('migrate_destination_xlat_node') as $module) {
+    drupal_set_message($module . '_migrate_destination_xlat_node');
+  }
+  foreach (module_implements('migrate_destination_xlat_user') as $module) {
+    drupal_set_message($module . '_migrate_destination_xlat_user');
+  }
+  foreach (module_implements('migrate_destination_xlat_term') as $module) {
+    drupal_set_message($module . '_migrate_destination_xlat_term');
+  }
+  return array();
+}

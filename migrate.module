@@ -24,16 +24,11 @@ define('MIGRATE_STATUS_IN_PROGRESS', 5);
 /**
  * Call a migrate hook
  */
-function migrate_invoke_all($kind, $hook, $type = NULL) {
+function migrate_invoke_all($hook) {
   // Let modules do any one-time initialization (e.g., including migration support files)
   module_invoke_all('migrate_init');
   $args = func_get_args();
-  $hookfunc = "migrate_$kind"."_$hook";
-  if (isset($type)) {
-    $hookfunc .= "_$type";
-    unset($args[2]);
-  }
-  unset($args[1]);
+  $hookfunc = "migrate"."_$hook";
   unset($args[0]);
   $return = array();
   $modulelist = module_implements($hookfunc);
@@ -229,7 +224,7 @@ function migrate_delete_content_mapping($mcmid) {
  * @param $type
  *  One of the MIGRATE_MESSAGE constants, identifying the level of error
  * @return
- *  Structured array suitable for return from a destination hook
+ *  Structured array suitable for return from an import hook
  */
 function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
   $error = array(
@@ -356,7 +351,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
       }
     }
     // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
-    migrate_invoke_all('destination', 'delete', $contenttype, $row->destid);
+    migrate_invoke_all("delete_$contenttype", $row->destid);
     timer_start('clear map/msg');
     db_query("DELETE FROM {" . $maptable . "} WHERE sourceid=%d", $row->sourceid);
     db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid=%d AND level=%d",
@@ -593,7 +588,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
       }
     }
     timer_start('import hooks');
-    $errors = migrate_invoke_all('destination', 'import', $contenttype, $tblinfo, $row);
+    $errors = migrate_invoke_all("import_$contenttype", $tblinfo, $row);
     timer_stop('import hooks');
 
     // Ok, we're done. Preview the node or save it (if no errors).
@@ -843,10 +838,17 @@ function _migrate_progress_message($starttime, $numitems, $description, $import 
  * Implementation of hook_init().
  */
 function migrate_init() {
-  $path = drupal_get_path('module', 'migrate') . '/migrate_destinations.inc';
-  include_once($path);
+  // Loads the hooks for the supported modules.
+  // TODO: Be more lazy - only load when really needed
+  $path = drupal_get_path('module', 'migrate') .'/modules';
+  $files = drupal_system_listing('.*\.inc$', $path, 'name', 0);
+  foreach ($files as $module_name => $file) {
+    if (module_exists($module_name)) {
+      include_once($file->filename);
+    }
+  }
 
-    // Add main CSS functionality.
+  // Add main CSS functionality.
   drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
 }
 
@@ -923,7 +925,7 @@ function migrate_help($page, $arg) {
   switch ($page) {
     case 'admin/content/migrate':
       return theme('advanced_help_topic', 'migrate', 'about', 'icon') . t('Click the question marks like this one to read the migrate module help topics.');
-    case 'admin/content/migrate/destinations':
+    case 'admin/content/migrate/content_sets':
       return t('Define sets of mappings from imported tables to Drupal content. These are the migrations which are later processed.');
     case 'admin/content/migrate/process':
       return t('View and manage import processes here. Processes that are in progress are checked - they can be cancelled by unchecking, or new processes begun by checking, then clicking Submit. Any checked process will run in the background (via cron) automatically - you may also run them interactively.');
@@ -948,11 +950,11 @@ function migrate_menu() {
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_pages.inc',
   );
-  $items['admin/content/migrate/destinations'] = array(
+  $items['admin/content/migrate/content_sets'] = array(
     'title' => 'Content sets',
     'description' => 'Manage content sets: mappings of source data to Drupal content',
     'weight' => 2,
-    'page callback' => 'migrate_destinations',
+    'page callback' => 'migrate_content_sets',
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_pages.inc',
   );
@@ -980,10 +982,10 @@ function migrate_menu() {
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_pages.inc',
   );
-  $items['admin/content/migrate/destinations/%'] = array(
+  $items['admin/content/migrate/content_sets/%'] = array(
     'title' => 'Content set',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('migrate_destination_mappings', 4),
+    'page arguments' => array('migrate_content_set_mappings', 4),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'type' => MENU_CALLBACK,
     'file' => 'migrate_pages.inc',
@@ -1062,7 +1064,7 @@ function migrate_xlat($contenttype=NULL, $oldid=NULL) {
   if ($contenttype && $oldid) {
     $newid = _migrate_xlat_get_new_id($contenttype, $oldid);
     if ($newid) {
-      $uri = migrate_invoke_all('destination', 'xlat', $contenttype, $newid);
+      $uri = migrate_invoke_all("xlat_$contenttype", $newid);
       drupal_goto($uri[0], NULL, NULL, 301);
     }
   }
@@ -1113,9 +1115,9 @@ function migrate_theme() {
       'arguments' => array('form' => NULL),
       'function' => 'theme_migrate_settings',
     ),
-    'migrate_destination_mappings' => array(
+    'migrate_content_set_mappings' => array(
       'arguments' => array('form' => NULL),
-      'function' => 'theme_migrate_destination_mappings',
+      'function' => 'theme_migrate_content_set_mappings',
     ),
   );
 }
@@ -1206,5 +1208,35 @@ function migrate_check_advanced_help() {
       drupal_set_message(t('If you install the advanced help module from !href, Migrate will provide more and better help. <a href="@hide">Hide this message.</a>', array('!href' => l('http://drupal.org/project/advanced_help', 'http://drupal.org/project/advanced_help'), '@hide' => url('admin/content/migrate/settings'))));
     }
   }
+}
+
+/**
+ * Check if a date is valid and return the correct
+ * timestamp to use. Returns -1 if the date is not
+ * considered valid.
+ */
+function _migrate_valid_date($date) {
+  //TODO: really check whether the date is valid!!
+  if (empty($date)) {
+    return -1;
+  }
+
+  if (is_numeric($date) && $date > -1) {
+    return $date;
+  }
+  // strtotime() doesn't recognize dashes as separators, change to slashes
+  $date = str_replace('-', '/', $date);
+
+  $time = strtotime($date);
+  if ($time < 0 || !$time) {
+    // Handles form YYYY-MM-DD HH:MM:SS.garbage
+    if (drupal_strlen($date) > 19) {
+      $time = strtotime(drupal_substr($date, 0, 19));
+      if ($time < 0 || !$time) {
+        return -1;
+      }
+    }
+  }
+  return $time;
 }
 

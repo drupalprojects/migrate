@@ -58,7 +58,7 @@ function _migrate_dashboard_form($form_state) {
       $importing[$row->mcsid] = '';
       $scanning[$row->mcsid] = '';
       $status = t('N/A');
-      $maptable = _migrate_map_table_name($row->view_name);
+      $maptable = _migrate_map_table_name($row->mcsid);
       $sourcekey = $row->sourcekey;
       if ($row->clearing) {
         $clearingenable[] = $row->mcsid;
@@ -78,7 +78,7 @@ function _migrate_dashboard_form($form_state) {
 
       $unimported = $row->rowcount - $imported;
 
-      $msgtablename = _migrate_message_table_name($row->view_name);
+      $msgtablename = _migrate_message_table_name($row->mcsid);
       if ($unimported > 0) {
         $messages = '';
         /* Restore when views integration is fully implemented

@@ -108,7 +108,7 @@ function drush_migrate_status() {
         remove the content set using it.', array('!view' => $row->view_name)));
       continue;
     }
-    $maptable = _migrate_map_table_name($row->view_name);
+    $maptable = _migrate_map_table_name($row->mcsid);
     $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
     // If not caching counts, override the saved count with a fresh count
     if (!variable_get('migrate_cache_counts', 0)) {

@@ -135,10 +135,10 @@ function migrate_install() {
 function migrate_uninstall() {
   // Remove dynamically-created mapping and message tables
   $tw_active = module_exists('tw');
-  $sql = "SELECT view_name, contenttype FROM {migrate_content_sets}";
+  $sql = "SELECT mcsid FROM {migrate_content_sets}";
   $result = db_query($sql);
   while ($row = db_fetch_object($result)) {
-    $maptablename = _migrate_map_table_name($row->view_name);
+    $maptablename = 'migrate_map_' . $row->mcsid;
     if ($tw_active) {
       tw_remove_tables($maptablename);
     }
@@ -146,7 +146,7 @@ function migrate_uninstall() {
       $sql = "DROP TABLE $maptablename";
       db_query($sql);
     }
-    $msgtablename = _migrate_message_table_name($row->view_name);
+    $msgtablename = 'migrate_msgs_' . $row->mcsid;
     if ($tw_active) {
       tw_remove_tables($msgtablename);
     }
@@ -314,3 +314,37 @@ function migrate_update_6003() {
   }
   return array();
 }
+
+// Refactoring of map and message table names
+function migrate_update_6004() {
+  $ret = array();
+
+  // Need to make sure schema inspect support is included
+  schema_init();
+  // Make view_name unique
+
+  $sql = "SELECT * FROM {migrate_content_sets}";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    // Rename map and message tables
+    $oldmaptable = $row->view_name . '_map';
+    if (db_table_exists($oldmaptable)) {
+      $newmaptable = _migrate_map_table_name($row->mcsid);
+      db_rename_table($ret, $oldmaptable, $newmaptable);
+      // Update Table Wizard to reflect the changes
+      tw_remove_tables($oldmaptable);
+      tw_add_tables($newmaptable);
+    }
+
+    $oldmsgtable = $row->view_name . '_msgs';
+    if (db_table_exists($oldmsgtable)) {
+      $newmsgtable = _migrate_message_table_name($row->mcsid);
+      db_rename_table($ret, $oldmsgtable, $newmsgtable);
+      // Update Table Wizard to reflect the changes
+      tw_remove_tables($oldmsgtable);
+      tw_add_tables($newmsgtable);
+    }
+  }
+  return $ret;
+}
+

@@ -25,7 +25,7 @@ function migrate_views_default_views_alter(&$views) {
   $sql = "SELECT mcsid, view_name, sourcekey FROM {migrate_content_sets}";
   $tblresult = db_query($sql);
   while ($tblrow = db_fetch_object($tblresult)) {
-    $viewname = _migrate_message_table_name($tblrow->view_name);
+    $viewname = _migrate_message_table_name($tblrow->mcsid);
     $view = $views[$viewname];
     $view->display['default']->display_options['arguments'] = array(
       'level' => array(

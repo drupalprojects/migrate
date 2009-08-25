@@ -477,7 +477,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   if (!strncasecmp($sourcekey, $view->base_table . '_', $baselen + 1)) {
     // So, which case is it? Ask the schema module...
     db_set_active($viewdb);
-    $inspect = schema_invoke('inspect', $view->base_table);
+    $inspect = schema_invoke('inspect', db_prefix_tables('{'. $view->base_table .'}'));
     db_set_active('default');
     $tableschema = $inspect[$view->base_table];
     $sourcefield = $tableschema['fields'][$sourcekey];

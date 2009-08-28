@@ -1,0 +1,65 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for the Migrate UI.
+ *
+ */
+
+/**
+ * UI tests for the Migrate module
+ *
+ */
+class MigrateFunctionalTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate UI'),
+      'description' => t('Test Migrate user interface'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test UI for listing/creating content sets
+   */
+  function testContentSetsPage() {
+  }
+
+  /**
+   * Test UI for editing/deleting content sets
+   */
+  function testContentSetsEditPage() {
+  }
+
+  /**
+   * Test UI for processing
+   */
+  function testProcessPage() {
+  }
+
+  /**
+   * Test UI for tools
+   */
+  function testToolsPage() {
+  }
+
+  /**
+   * Test UI for settings
+   */
+  function testSettingsPage() {
+  }
+
+}

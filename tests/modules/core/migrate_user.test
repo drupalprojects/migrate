@@ -1,0 +1,38 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for user migration
+ *
+ */
+
+class MigrateUserTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Users'),
+      'description' => t('Test migration support for users'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test user migration
+   */
+  function testUser() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+}

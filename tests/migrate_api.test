@@ -1,0 +1,50 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for the Migrate API.
+ *
+ */
+
+/**
+ * API tests for the Migrate module
+ *
+ */
+class MigrateUnitTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate API'),
+      'description' => t('Test Migrate API functions'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test API for adding tables
+   */
+  function testCRUD() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+
+  /**
+   * Test hooks
+   */
+  function testHooks() {
+    // hook_migrate_types, hook_migrate_fields_<type>, hook_migrate_delete_<type>,
+    // hook_migrate_import_<type>, hook_migrate_xlat_<type>
+  }
+}

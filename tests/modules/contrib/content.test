@@ -1,0 +1,38 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for CCK migration
+ *
+ */
+
+class MigrateCCKTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate CCK fields'),
+      'description' => t('Test migration support for CCK fields'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'comment', 'content');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test comment migration
+   */
+  function testCCK() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+}

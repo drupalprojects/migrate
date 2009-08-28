@@ -1,0 +1,38 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for profile migration
+ *
+ */
+
+class MigrateProfileTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Profiles'),
+      'description' => t('Test migration support for profiles'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'profile');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test taxonomy migration
+   */
+  function testProfile() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+}

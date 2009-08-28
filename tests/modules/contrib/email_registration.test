@@ -1,0 +1,38 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for Email Registration migration
+ *
+ */
+
+class MigrateEmailRegistrationTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Email Registration support'),
+      'description' => t('Test migration support for Email Registration'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'comment', 'email_registration');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test email_registration
+   */
+  function testEmailRegistration() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+}

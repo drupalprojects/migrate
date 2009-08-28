@@ -1,0 +1,38 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for Content Profile migration
+ *
+ */
+
+class MigrateContentProfileTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Content Profiles'),
+      'description' => t('Test migration support for content profiles'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'comment', 'content', 'content_profile');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    $ret = array();
+    parent::tearDown();
+  }
+
+  /**
+   * Test comment migration
+   */
+  function testContentProfile() {
+    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // migrate_delete_content_mapping()
+  }
+}

@@ -26,6 +26,9 @@ The way content_profile mappings are stored has changed - if you are migrating u
 using content_profile, you must edit your user content sets and reestablish your mappings 
 to any content_profile fields. 
 
+2009/08/27:
+- #392404 - Initial templates for simpletests
+
 2009/08/25:
 - #558384 - Need to prefix table name passed to schema inspection
 

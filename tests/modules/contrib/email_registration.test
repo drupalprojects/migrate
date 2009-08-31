@@ -16,6 +16,8 @@ class MigrateEmailRegistrationTest extends DrupalWebTestCase {
   }
 
   function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    error_reporting(E_ALL & ~E_NOTICE);
     parent::setUp('views', 'schema', 'tw', 'migrate', 'comment', 'email_registration');
 
     // Create and login user

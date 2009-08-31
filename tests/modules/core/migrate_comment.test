@@ -16,6 +16,8 @@ class MigrateCommentTest extends DrupalWebTestCase {
   }
 
   function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    error_reporting(E_ALL & ~E_NOTICE);
     parent::setUp('views', 'schema', 'tw', 'migrate', 'comment');
 
     // Create and login user

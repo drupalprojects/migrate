@@ -20,6 +20,8 @@ class MigrateUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    error_reporting(E_ALL & ~E_NOTICE);
     parent::setUp('views', 'schema', 'tw', 'migrate');
 
     // Create and login user
@@ -28,7 +30,6 @@ class MigrateUnitTest extends DrupalWebTestCase {
   }
 
   function tearDown() {
-    $ret = array();
     parent::tearDown();
   }
 
@@ -36,15 +37,99 @@ class MigrateUnitTest extends DrupalWebTestCase {
    * Test API for adding tables
    */
   function testCRUD() {
-    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
+    // Create test table
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'body' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $tablename = 'migrate_simpletest_sample';
+    db_create_table($ret, $tablename, $schema);
+    $sql = "INSERT INTO {" . $tablename . "} (title, body) VALUES('%s', '%s')";
+    db_query($sql, 'Title 1', 'This is a body');
+    db_query($sql, 'Title 2', 'This is another body');
+    db_query($sql, 'Title 3', 'This is yet another body');
+
+    // Creates default view '$tablename'
+    tw_add_tables($tablename);
+
+    // migrate_save_content_set() cases to test:
+    //  Int vs. serial vs. string key
+    //  Changing key
+    //  Array vs. object parameter
+    //  New vs. updated content set
+    //  External database
+    //  Passing explicit base_table/base_database options
+    $content_set = new stdClass;
+    $content_set->view_name = $tablename;
+    $content_set->sourcekey = 'id';
+    $content_set->contenttype = 'node';
+    $content_set->desttype = 'page';
+    $content_set->description = 'Node test';
+    $content_set->weight = 3;
+    $content_set->lastimported = NULL;
+    $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
+    if ($this->assertTrue($mcsid, t('Create simple page content set'))) {
+      $row = db_fetch_object(db_query("SELECT * FROM {migrate_content_sets} WHERE mcsid=%d", $mcsid));
+      if (!$this->assertEqual($row, $content_set, t('Content set data matches'))) {
+        $this->error('row: '.print_r($row, TRUE));
+        $this->error('content_set: '.print_r($content_set, TRUE));
+      }
+      $sourceidschema = array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE);
+      $maptablename = _migrate_map_table_name($mcsid);
+      if ($this->assertTrue(db_table_exists($maptablename), t('Map table exists'))) {
+        $mapschema = _migrate_map_table_schema($sourceidschema);
+        $mapschema['name'] = $maptablename;
+        $info = schema_compare_table($mapschema);
+        if (!$this->assertEqual($info['status'], 'same', t('Map table schema matches'))) {
+          $this->error('Comparison returned: '.print_r($info, TRUE));
+        }
+      }
+      $msgtablename = _migrate_message_table_name($mcsid);
+      if ($this->assertTrue(db_table_exists($msgtablename), t('Message table exists'))) {
+        $msgschema = _migrate_message_table_schema($sourceidschema);
+        $msgschema['name'] = $msgtablename;
+        $info = schema_compare_table($msgschema);
+        if (!$this->assertEqual($info['status'], 'same', t('Message table schema matches'))) {
+          $this->error('Comparison returned: '.print_r($info, TRUE));
+        }
+      }
+    }
+
+    // migrate_save_content_mapping(), migrate_delete_content_set(),
     // migrate_delete_content_mapping()
   }
 
   /**
+   * Test actual processing of content sets
+   *
+
+  function testProcess() {
+    // migrate_content_process_clear(), migrate_content_process_import(),
+    // migrate_content_process_all()
+  }*/
+
+  /**
    * Test hooks
-   */
+
   function testHooks() {
     // hook_migrate_types, hook_migrate_fields_<type>, hook_migrate_delete_<type>,
     // hook_migrate_import_<type>, hook_migrate_xlat_<type>
-  }
+  }*/
 }

@@ -24,7 +24,6 @@ class MigrateNodeTest extends DrupalWebTestCase {
   }
 
   function tearDown() {
-    $ret = array();
     parent::tearDown();
   }
 

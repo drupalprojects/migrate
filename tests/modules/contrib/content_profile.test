@@ -24,7 +24,6 @@ class MigrateContentProfileTest extends DrupalWebTestCase {
   }
 
   function tearDown() {
-    $ret = array();
     parent::tearDown();
   }
 

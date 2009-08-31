@@ -28,6 +28,7 @@ to any content_profile fields.
 
 2009/08/30:
 - #554758 - Separate fields for importing node authors by username or by uid
+- #392404 - More simpletests
 
 2009/08/27:
 - #392404 - Initial templates for simpletests

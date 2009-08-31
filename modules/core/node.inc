@@ -93,7 +93,8 @@ function node_migrate_fields_node($type) {
   $fields = array();
   if (user_access('administer nodes')) {
     $fields = array(
-      'name' => t('Node: Authored by'),
+      'name' => t('Node: Authored by (username)'),
+      'uid' => t('Node: Authored by (uid)'),
       'date' => t('Node: Authored on'),
       'changed' => t('Node: Last updated on'),
       'status' => t('Node: Published'),

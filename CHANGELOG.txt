@@ -1,13 +1,12 @@
 //$Id$
 
-Migrate 1.0-dev
+Migrate 1.0 Beta 1
 ===========
 
 IMPORTANT!
 
-Until we have the first stable beta, there may be incompatible changes that require you
-to take manual action when updating the migrate module (i.e., you can't assume update.php
-will handle everything for you).
+If you have been using a development version of the migrate module, please note that
+shortly before the release of beta 1 some refactoring was done that requires manual attention.
 
 Updating from a version before 2009/08/23:
 
@@ -25,118 +24,3 @@ Updating from a version before 2009/08/18:
 The way content_profile mappings are stored has changed - if you are migrating users
 using content_profile, you must edit your user content sets and reestablish your mappings 
 to any content_profile fields. 
-
-2009/08/30:
-- #554758 - Separate fields for importing node authors by username or by uid
-- #392404 - More simpletests
-
-2009/08/27:
-- #392404 - Initial templates for simpletests
-
-2009/08/25:
-- #558384 - Need to prefix table name passed to schema inspection
-
-2009/08/23:
-- #552928 - Refactoring of hook and menu names using "destination", see above.
-- #557436 - Refactoring of map and message table names
-
-2009/08/22
-- #554010 - Don't let $maxexectime go to zero or below
-
-2009/08/19
-- #398632 - Add some HTML entities for < and > in API documentation
-
-2009/08/18
-- #542096 - Return, don't display, messages
-- #392378 - Coder cleanup
-- #550874 - Must clear schema cache for map to be updated on import
-- Errors on user migration with no profile fields mapped
-
-2009/08/15
-- #392416 - Integrate migration messages with views
-- #545282 - Stray character in email_registration.inc
-- #545290 - Error on drush enable - check for table existence in schema_alter hook 
-
-2009/08/07-2009/08/13
-- #398632 - Mucho improvements to documentation
-
-2009/08/06
-- #541700 - Fix problem with migrating multiple node content types
-
-2009/08/05
-- #540908 - Fix processing of sample list
-
-2009/08/03
-- #536976 - Trim taxonomy terms on import.
-- #432528 - Fix field labels with ambiguous field names
-- #484790 - Add status command to drush support, also some cleanup
-- Add prepare and complete hooks for roles
-
-2009/07/31
-- #529964 - Also deal with a key name prefixed (in the table itself) with the table name
-
-2009/07/25
-- #529964 - Source key name wrong if it's not the table PK
-- #484790 - Provide feedback for cancelling actions
-
-2009/07/24
-- #411156 - Add support for migrating taxonomy terms
-- #525996 - Add path alias to node fields
-
-2009/07/23
-- #426824 - Partial fix for comment import
-
-2009/07/19
-- #484790 - Support running migrations via Drush. Note there has been significant refactoring
-            of the migrate_content_process*() API.
-
-2009/07/17
-- #515618 - Handle using fields other than the base table PK as the source key for the content set view
-- #520264 - Support for core profile fields
-
-2009/07/15
-- #513622 - init_query() errors due to trying to process missing views
-- #520152 - Check for existence before dropping map/msg tables
-
-2009/07/12
-- #484428 - Prep for workflow integration - create new API functions migrate_content_process_clear(),
-    migrate_content_process_import(), migrate_content_process_all(); expose as actions
-
-2009/07/11
-- #516478 - Node updated date not properly set on migration
-- #513622 - Include views query.inc in hook_schema_alter()
-
-2009/06/21
-- #495942 - Fix creation of map/msg tables with serial primary keys in sources.
-
-2009/06/15
-- #492324 - Drop map and message tables when deleting content set.
-- #420026 - Update map and message table sourceid fields when the type is changed in
-            migrate_save_content_set()
-- #421864 - Delete obsolete content set mappings when saving a content set.
-
-2009/06/14
-- #490930 - Refactoring to improve API and UI around destination definitions:
-    hook_migrate_init() no longer needs to return anything.
-    hook_migrate_destination_types() returns have changed:
-      For simple destinations, such as comments, return array('comment' => t('Comments'))
-      For destinations supporting multiple types, such as nodes, for each type return the base 
-        destination ('node') followed by a / and the subtype ('page'). E.g.,
-        array('node/page' => t('Node: Page'), 'node/story' => t('Node: Story'), ...)
-    The Content Sets page has been simplified - no more destination "kinds" and "types",
-      just "Destinations".
-    Roles are no longer used to define differ user "types" for migration, they are now
-      migrated as a mapped field consisting of a comma-separated list of either role IDs
-      or role names.
-- #463830 - Support for text primary keys in sources.
-- #491368 - Added support for migrating roles
-
-2009/06/09
-- #486538 - Add method to bypass views load in migrate_save_content_set()
-- Added migrate_add_mapping() - standard API for hooks to add mappings from source
-    to destination.
-
-2009/06/03
-- Added CHANGELOG.txt
-- #479828 - Refactored map and message tables. Any code or custom views referencing these
-    tables must be changed.

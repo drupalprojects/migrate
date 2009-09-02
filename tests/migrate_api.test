@@ -92,7 +92,7 @@ class MigrateUnitTest extends DrupalWebTestCase {
         $this->error('content_set: '.print_r($content_set, TRUE));
       }
       $sourceidschema = array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE);
-      $maptablename = _migrate_map_table_name($mcsid);
+      $maptablename = migrate_map_table_name($mcsid);
       if ($this->assertTrue(db_table_exists($maptablename), t('Map table exists'))) {
         $mapschema = _migrate_map_table_schema($sourceidschema);
         $mapschema['name'] = $maptablename;
@@ -101,7 +101,7 @@ class MigrateUnitTest extends DrupalWebTestCase {
           $this->error('Comparison returned: '.print_r($info, TRUE));
         }
       }
-      $msgtablename = _migrate_message_table_name($mcsid);
+      $msgtablename = migrate_message_table_name($mcsid);
       if ($this->assertTrue(db_table_exists($msgtablename), t('Message table exists'))) {
         $msgschema = _migrate_message_table_schema($sourceidschema);
         $msgschema['name'] = $msgtablename;

@@ -174,7 +174,7 @@ function migrate_update_6000() {
     // Rename map and message tables
     $oldmaptable = $row->view_name . '_' . $row->contenttype . '_map';
     if (db_table_exists($oldmaptable)) {
-      $newmaptable = _migrate_map_table_name($row->view_name);
+      $newmaptable = migrate_map_table_name($row->view_name);
       db_rename_table($ret, $oldmaptable, $newmaptable);
       $maptableexists = TRUE;
     }
@@ -183,7 +183,7 @@ function migrate_update_6000() {
     }
     $oldmsgtable = $row->view_name . '_' . $row->contenttype . '_msgs';
     if (db_table_exists($oldmsgtable)) {
-      $newmsgtable = _migrate_message_table_name($row->view_name);
+      $newmsgtable = migrate_message_table_name($row->view_name);
       db_rename_table($ret, $oldmsgtable, $newmsgtable);
       $msgtableexists = TRUE;
     }
@@ -329,7 +329,7 @@ function migrate_update_6004() {
     // Rename map and message tables
     $oldmaptable = $row->view_name . '_map';
     if (db_table_exists($oldmaptable)) {
-      $newmaptable = _migrate_map_table_name($row->mcsid);
+      $newmaptable = migrate_map_table_name($row->mcsid);
       db_rename_table($ret, $oldmaptable, $newmaptable);
       // Update Table Wizard to reflect the changes
       tw_remove_tables($oldmaptable);
@@ -338,7 +338,7 @@ function migrate_update_6004() {
 
     $oldmsgtable = $row->view_name . '_msgs';
     if (db_table_exists($oldmsgtable)) {
-      $newmsgtable = _migrate_message_table_name($row->mcsid);
+      $newmsgtable = migrate_message_table_name($row->mcsid);
       db_rename_table($ret, $oldmsgtable, $newmsgtable);
       // Update Table Wizard to reflect the changes
       tw_remove_tables($oldmsgtable);

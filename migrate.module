@@ -107,8 +107,8 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   }
 
   // Create or modify map and message tables
-  $maptablename = _migrate_map_table_name($content_set->mcsid);
-  $msgtablename = _migrate_message_table_name($content_set->mcsid);
+  $maptablename = migrate_map_table_name($content_set->mcsid);
+  $msgtablename = migrate_message_table_name($content_set->mcsid);
 
   // TODO: For now, PK must be in base_table
 
@@ -221,8 +221,8 @@ function migrate_save_content_mapping(&$mapping) {
 function migrate_delete_content_set($mcsid) {
   // First, remove the map and message tables from the Table Wizard, and drop them
   $ret = array();
-  $maptable = _migrate_map_table_name($mcsid);
-  $msgtable = _migrate_message_table_name($mcsid);
+  $maptable = migrate_map_table_name($mcsid);
+  $msgtable = migrate_message_table_name($mcsid);
   if (db_table_exists($maptable)) {
     tw_remove_tables(array($maptable, $msgtable));
     db_drop_table($ret, $maptable);
@@ -272,7 +272,7 @@ function migrate_message($message, $type = MIGRATE_MESSAGE_ERROR) {
 function migrate_add_mapping($mcsid, $sourceid, $destid) {
   static $maptables = array();
   if (!isset($maptables[$mcsid])) {
-    $maptables[$mcsid] = _migrate_map_table_name($mcsid);
+    $maptables[$mcsid] = migrate_map_table_name($mcsid);
   }
   $mapping = new stdClass;
   $mapping->sourceid = $sourceid;
@@ -322,8 +322,8 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
 
-  $maptable = _migrate_map_table_name($mcsid);
-  $msgtablename = _migrate_message_table_name($mcsid);
+  $maptable = migrate_map_table_name($mcsid);
+  $msgtablename = migrate_message_table_name($mcsid);
   $processstart = microtime(TRUE);
   $status = MIGRATE_STATUS_IN_PROGRESS;
 
@@ -450,8 +450,8 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
 
-  $maptable = _migrate_map_table_name($mcsid);
-  $msgtablename = _migrate_message_table_name($mcsid);
+  $maptable = migrate_map_table_name($mcsid);
+  $msgtablename = migrate_message_table_name($mcsid);
   $processstart = microtime(TRUE);
   $status = MIGRATE_STATUS_IN_PROGRESS;
 
@@ -1032,8 +1032,8 @@ function migrate_schema_alter(&$schema) {
   if (db_table_exists('migrate_content_sets')) {
     $result = db_query("SELECT * FROM {migrate_content_sets}");
     while ($content_set = db_fetch_object($result)) {
-      $maptablename = _migrate_map_table_name($content_set->mcsid);
-      $msgtablename = _migrate_message_table_name($content_set->mcsid);
+      $maptablename = migrate_map_table_name($content_set->mcsid);
+      $msgtablename = migrate_message_table_name($content_set->mcsid);
 
       // Get the proper field definition for the sourcekey
       $view = views_get_view($content_set->view_name);
@@ -1107,7 +1107,7 @@ function _migrate_xlat_get_new_id($contenttype, $oldid) {
                       WHERE mcs.contenttype='%s'",
                      $contenttype);
   while ($row = db_fetch_object($result)) {
-    $table = _migrate_map_table_name($row->mcsid);
+    $table = migrate_map_table_name($row->mcsid);
     $pkcol = $row->colname;
     $id = db_result(db_query("SELECT destid
                               FROM {$table} WHERE sourceid=%d", $oldid));
@@ -1145,12 +1145,20 @@ function migrate_theme() {
   );
 }
 
-function _migrate_map_table_name($mcsid) {
+function migrate_map_table_name($mcsid) {
   return "migrate_map_$mcsid";
 }
 
-function _migrate_message_table_name($mcsid) {
+function migrate_message_table_name($mcsid) {
   return "migrate_msgs_$mcsid";
+}
+
+function _migrate_map_table_name($mcsid) {
+  return migrate_map_table_name($mcsid);
+}
+
+function _migrate_message_table_name($mcsid) {
+  return migrate_message_table_name($mcsid);
 }
 
 function _migrate_map_table_schema($sourcefield) {

@@ -3,6 +3,7 @@
 Migrate 1.0 Beta 2
 ===========
 - #566562 - Objects not being passed by reference to prepare and complete hooks
+- #566588 - Provide public API functions for map and message table names
 
 Migrate 1.0 Beta 1
 ===========

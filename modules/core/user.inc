@@ -80,7 +80,7 @@ function user_migrate_import_user($tblinfo, $row) {
   }
 
   // Prepare the user for import.
-  $errors = migrate_invoke_all('prepare_user', $newuser, $tblinfo, $row);
+  $errors = migrate_destination_invoke_all('prepare_user', $newuser, $tblinfo, $row);
 
   $success = TRUE;
   foreach ($errors as $error) {
@@ -108,7 +108,7 @@ function user_migrate_import_user($tblinfo, $row) {
 
     // Call completion hooks, for any processing which needs to be done after user_save
     timer_start('user completion hooks');
-    $errors += migrate_invoke_all('complete_user', $account, $tblinfo, $row);
+    $errors += migrate_destination_invoke_all('complete_user', $account, $tblinfo, $row);
     timer_stop('user completion hooks');
 
     if ($account) {
@@ -160,7 +160,7 @@ function user_migrate_import_role($tblinfo, $row) {
   }
 
   // Prepare the role for import
-  $errors = migrate_invoke_all('prepare_role', $new_role, $tblinfo, $row);
+  $errors = migrate_destination_invoke_all('prepare_role', $new_role, $tblinfo, $row);
 
   $role_name = $new_role['name'];
 
@@ -172,7 +172,7 @@ function user_migrate_import_role($tblinfo, $row) {
     // Call completion hooks, for any additional role-related processing
     // (such as assigning permissions)
     timer_start('role completion hooks');
-    $errors = migrate_invoke_all('complete_role', $new_role, $tblinfo, $row);
+    $errors = migrate_destination_invoke_all('complete_role', $new_role, $tblinfo, $row);
     timer_stop('role completion hooks');
 
     $sourcekey = $tblinfo->sourcekey;

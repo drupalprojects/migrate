@@ -51,7 +51,7 @@ function node_migrate_import_node($tblinfo, $row) {
   }
 
   // Prepare the node for import.
-  $errors = migrate_invoke_all('prepare_node', $node, $tblinfo, $row);
+  $errors = migrate_destination_invoke_all('prepare_node', $node, $tblinfo, $row);
 
   $success = TRUE;
   foreach ($errors as $error) {
@@ -71,7 +71,7 @@ function node_migrate_import_node($tblinfo, $row) {
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('node completion hooks');
-    $errors = migrate_invoke_all('complete_node', $node, $tblinfo, $row);
+    $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
     timer_stop('node completion hooks');
 
     $sourcekey = $tblinfo->sourcekey;

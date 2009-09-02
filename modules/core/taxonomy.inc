@@ -142,7 +142,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   }
 
   // Prepare the term for import.
-  $errors += migrate_invoke_all('prepare_term', $term, $tblinfo, $row);
+  $errors += migrate_destination_invoke_all('prepare_term', $term, $tblinfo, $row);
 
   $success = TRUE;
   foreach ($errors as $error) {
@@ -157,7 +157,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
     timer_stop('taxonomy_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('taxonomy completion hooks');
-    $errors = migrate_invoke_all('complete_term', $term, $tblinfo, $row);
+    $errors = migrate_destination_invoke_all('complete_term', $term, $tblinfo, $row);
     timer_stop('taxonomy completion hooks');
 
     // @TODO: Check first for existence, we may have updated an existing term - do we care about duplicates?

@@ -1,5 +1,9 @@
 //$Id$
 
+Migrate 1.0 Beta 2
+===========
+- #566562 - Objects not being passed by reference to prepare and complete hooks
+
 Migrate 1.0 Beta 1
 ===========
 

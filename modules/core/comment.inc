@@ -98,7 +98,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
     $cid = comment_save($comment);
   }
 
-  //TODO: replace this with the migrate_invoke_all();
+  //TODO: replace this with the migrate_destination_invoke_all();
   foreach (module_list() as $module_name) {
     $function = $module_name .'_migrate_complete_comment';
     if (function_exists($function)) {

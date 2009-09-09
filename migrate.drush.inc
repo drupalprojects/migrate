@@ -62,7 +62,7 @@ function migrate_drush_command() {
   );
   $items['migrate import'] = array(
     'callback' => 'drush_migrate_import',
-    'description' => 'Clear imported data for the specified content set',
+    'description' => 'Import a given migration content set',
     'options' => $migration_options,
     'arguments' => array(
       'content_set' => 'Name or mcsid of content set to import',
@@ -70,7 +70,7 @@ function migrate_drush_command() {
     'examples' => array(
       'migrate import 4' => 'Import the content set with mcsid 4',
       'migrate import Articles --itemlimit=50' =>
-        'Import up to 50 items from the content set named Articles',
+      'Import up to 50 items from the content set named Articles',
       'migrate import Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
       'migrate import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),

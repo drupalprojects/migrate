@@ -28,7 +28,8 @@ function migrate_drush_help($section) {
 function migrate_drush_command() {
   $migration_options = array(
     '--itemlimit' => 'The maximum number of items to migrate. If unspecified, all are migrated',
-    '--feedback' => 'Frequency of progress messages, in seconds or items processed'
+    '--feedback' => 'Frequency of progress messages, in seconds or items processed',
+    '--idlist' => 'A comma delimited list of ids to import or clear. If unspecified, migrate imports all pending items or clears all items for the content set.',
   );
   $items['migrate status'] = array(
     'callback' => 'drush_migrate_status',
@@ -54,6 +55,7 @@ function migrate_drush_command() {
     ),
     'examples' => array(
       'migrate clear 4' => 'Clear the content set with mcsid 4',
+      'migrate clear 4 --idlist=4,9' => 'Clear two items in mcsid 4. The ids refer to the value of the primary key in base table',
       'migrate clear Articles --itemlimit=50' =>
         'Clear up to 50 items from the content set named Articles',
       'migrate clear Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
@@ -69,6 +71,7 @@ function migrate_drush_command() {
     ),
     'examples' => array(
       'migrate import 4' => 'Import the content set with mcsid 4',
+      'migrate import 4 --idlist=4,9' => 'Import two items in mcsid 4. The ids refer to the value of the primary key in base table',
       'migrate import Articles --itemlimit=50' =>
       'Import up to 50 items from the content set named Articles',
       'migrate import Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
@@ -174,8 +177,10 @@ function drush_migrate_clear($content_set) {
   }
   $messages = array();
   $options = array();
-  $itemlimit = drush_get_option('itemlimit');
-  if ($itemlimit) {
+  if ($idlist = drush_get_option('idlist', FALSE)) {
+    $options['idlist'] = $idlist;
+  }
+  if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
     $options['itemlimit'] = $itemlimit;
   }
   $options['feedback'] = array(
@@ -217,8 +222,10 @@ function drush_migrate_import($content_set) {
   }
   $messages = array();
   $options = array();
-  $itemlimit = drush_get_option('itemlimit');
-  if ($itemlimit) {
+  if ($idlist = drush_get_option('idlist', FALSE)) {
+    $options['idlist'] = $idlist;
+  }
+  if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
     $options['itemlimit'] = $itemlimit;
   }
   $options['feedback'] = array(

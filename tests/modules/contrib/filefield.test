@@ -1,0 +1,37 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Tests for Filefield migration
+ *
+ */
+
+class MigrateFilefieldTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Migrate Filefields'),
+      'description' => t('Test migration support for filefields'),
+      'group' => t('Migrate'),
+    );
+  }
+
+  function setUp() {
+    // Somehow, we're running in E_STRICT, and Views generates notices.
+    error_reporting(E_ALL & ~E_NOTICE);
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'content', 'filefield');
+
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $this->drupalLogin($migrate_user);
+  }
+
+  function tearDown() {
+    parent::tearDown();
+  }
+
+  /**
+   * Test filefield migration
+   */
+  function testFilefield() {
+  }
+}

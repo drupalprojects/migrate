@@ -97,10 +97,11 @@ function content_migrate_prepare_node(&$node, $tblinfo, $row) {
           switch ($field['type']) {
             case 'date':
             case 'datestamp':
+            case 'datetime':
               // Get properly formatted date for value column.
               // Assume timezone and offset values are correct as input.
               if ($column == 'value') {
-                if ($field['type'] == 'date') {
+                if ($field['type'] == 'date' || $field['type'] == 'datetime') {
                   // A value like "1957" could be either a Unix timestamp
                   // or an ISO year-only date... Favor the ISO interpreation
 

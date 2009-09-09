@@ -1,3 +1,5 @@
+$Id$
+
 The Migrate module provides a flexible framework for migrating content into Drupal from other
 sources (e.g., when converting a web site from another CMS to Drupal). Out-of-the-box, support 
 for creating Drupal nodes, fields, comments, url aliases, users+profiles and roles are included. 

@@ -25,7 +25,8 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
     parent::setUp('views', 'schema', 'tw', 'migrate');
 
     // Create and login user
-    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $migrate_user = $this->drupalCreateUser(array('access administration pages',
+      MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED));
     $this->drupalLogin($migrate_user);
   }
 
@@ -37,30 +38,120 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
    * Test UI for listing/creating content sets
    */
   function testContentSetsPage() {
+    // Valid content set
+    // Missing description
+    // Missing weight
+    // Duplicate view
+    // Validate listing
+    // Source field present/none, default value present/empty
+    // Delete
   }
 
   /**
    * Test UI for editing/deleting content sets
    */
   function testContentSetsEditPage() {
+    // Test new content set, vs. old one
+    // Change primary key int->int, int->string, string->int, string->string
+    // Weight change
   }
 
   /**
    * Test UI for processing
    */
   function testProcessPage() {
+    // Combos for clear/import/scan
+    // Create test table
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'body' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $tablename = 'migrate_simpletest_sample';
+    db_create_table($ret, $tablename, $schema);
+    $sql = "INSERT INTO {" . $tablename . "} (title, body) VALUES('%s', '%s')";
+    db_query($sql, 'Title 1', 'This is a body');
+    db_query($sql, 'Title 2', 'This is another body');
+    db_query($sql, 'Title 3', 'This is yet another body');
+
+    // Creates default view '$tablename'
+    tw_add_tables($tablename);
+
+    $content_set = new stdClass;
+    $content_set->view_name = $tablename;
+    $content_set->sourcekey = 'id';
+    $content_set->contenttype = 'node';
+    $content_set->desttype = 'page';
+    $content_set->description = 'Node test';
+    $content_set->weight = 3;
+    $content_set->lastimported = NULL;
+    $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
+    if ($this->assertTrue($mcsid, t('Create simple page content set'))) {
+      $mapping = new stdClass;
+      $mapping->mcsid = $mcsid;
+      $mapping->srcfield = $tablename . '_title';
+      $mapping->destfield = 'title';
+      migrate_save_content_mapping($mapping);
+      $mapping = new stdClass;
+      $mapping->mcsid = $mcsid;
+      $mapping->srcfield = $tablename . '_body';
+      $mapping->destfield = 'body';
+      migrate_save_content_mapping($mapping);
+
+      $sql = "UPDATE {migrate_content_sets} SET importing=1 WHERE mcsid=%d";
+      db_query($sql, $mcsid);
+      $this->drupalPost('admin/content/migrate/process', array(),
+        'Submit');
+      if (!$this->assertText('3 items imported in', t('Migration completed successfully'))) {
+        $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+            $this->content, $matches);
+        $this->error('Actual messages: ' . $matches[1]);
+        return;
+      }
+
+      $node = node_load(array('title' => 'Title 1'));
+      if (!$this->assertEqual($node->body, 'This is a body', t('Validate first node'))) {
+        $this->error('Actual node: '.print_r($node, TRUE));
+      }
+      $node = node_load(array('title' => 'Title 2'));
+      if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node'))) {
+        $this->error('Actual node: '.print_r($node, TRUE));
+      }
+      $node = node_load(array('title' => 'Title 3'));
+      if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node'))) {
+        $this->error('Actual node: '.print_r($node, TRUE));
+      }
+    }
   }
 
   /**
    * Test UI for tools
    */
   function testToolsPage() {
+    // Drop it?
   }
 
   /**
    * Test UI for settings
    */
   function testSettingsPage() {
+    // Validate each setting, operation of refresh
   }
 
 }

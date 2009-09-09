@@ -47,11 +47,14 @@ function content_migrate_fields_node($type) {
   if (isset($types[$type])) {
     $content_type = $types[$type];
     foreach ($content_type['fields'] as $field) {
-      // Create a potential input field for each field column by creating a dummy name for each column.
-      $db_info = content_database_info($field);
-      foreach ($db_info['columns'] as $column => $info) {
-        $fields[$field['field_name'] . '_' . $column] = t('CCK: ') . $field['widget']['label'] .
-          ' ' . $column;
+      // filefield has own impementation of hook_migrate_fields
+      if ($field['type'] != 'filefield') {
+        // Create a potential input field for each field column by creating a dummy name for each column.
+        $db_info = content_database_info($field);
+        foreach ($db_info['columns'] as $column => $info) {
+          $fields[$field['field_name'] . '_' . $column] = t('CCK: ') . $field['widget']['label'] .
+            ' ' . $column;
+        }
       }
     }
   }

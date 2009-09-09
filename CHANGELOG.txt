@@ -1,5 +1,12 @@
 //$Id$
 
+Migrate 1.0 Beta 3
+===========
+- #546398 - Drush improvements - message and timer logging
+- #572670 - Drush - import specific IDs
+- #568558 - Support for datetime fields
+- #430100 - Filefield support
+
 Migrate 1.0 Beta 2
 ===========
 - #566562 - Objects not being passed by reference to prepare and complete hooks

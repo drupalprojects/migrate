@@ -32,11 +32,11 @@ function migrate_drush_command() {
   );
   $items['migrate status'] = array(
     'callback' => 'drush_migrate_status',
-    'description' => 'List all content sets with current status',
+    'description' => 'List all content sets with current status.',
   );
   $items['migrate all'] = array(
     'callback' => 'drush_migrate_all',
-    'description' => 'Run the full migration process',
+    'description' => 'Run the full migration process.',
     'options' => $migration_options,
     'examples' => array(
       'migrate all' => 'Process all selected content sets completely',
@@ -104,7 +104,7 @@ function drush_migrate_status() {
     }
     $view = views_get_view($row->view_name);
     if (!$view) {
-      drush_print(dt('View !view does not exist - either (re)create this view, or
+      drush_set_error(NULL, dt('View !view does not exist - either (re)create this view, or
         remove the content set using it.', array('!view' => $row->view_name)));
       continue;
     }
@@ -128,6 +128,7 @@ function drush_migrate_status() {
  *
  */
 function drush_migrate_all() {
+  drush_migrate_set_verbose();
   $messages = array();
   $options = array();
   $itemlimit = drush_get_option('itemlimit');
@@ -135,7 +136,7 @@ function drush_migrate_all() {
     $options['itemlimit'] = $itemlimit;
   }
   $options['feedback'] = array(
-    'function' => 'drush_print',
+    'function' => 'drush_log',
   );
   $feedback = drush_get_option('feedback');
   if ($feedback) {
@@ -144,14 +145,14 @@ function drush_migrate_all() {
     $options['feedback']['frequency_unit'] = drupal_strtolower($parts[1]);
     if ($options['feedback']['frequency_unit'] != 'seconds' &&
         $options['feedback']['frequency_unit'] != 'items') {
-      drush_print(dt("Invalid feedback frequency unit '!unit'",
+      drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
         array('!unit' => $options['feedback']['frequency_unit'])));
       return;
     }
   }
   migrate_content_process_all($messages, $options);
   foreach ($messages as $message) {
-    drush_print($message);
+    drush_log($message);
   }
 }
 
@@ -162,6 +163,7 @@ function drush_migrate_all() {
  *  The mcsid or the name of the content set
  */
 function drush_migrate_clear($content_set) {
+  drush_migrate_set_verbose();
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
                                  WHERE mcsid=%d", $content_set));
@@ -177,7 +179,7 @@ function drush_migrate_clear($content_set) {
     $options['itemlimit'] = $itemlimit;
   }
   $options['feedback'] = array(
-    'function' => 'drush_print',
+    'function' => 'drush_log',
   );
   $feedback = drush_get_option('feedback');
   if ($feedback) {
@@ -186,14 +188,14 @@ function drush_migrate_clear($content_set) {
     $options['feedback']['frequency_unit'] = $parts[1];
     if ($options['feedback']['frequency_unit'] != 'seconds' &&
         $options['feedback']['frequency_unit'] != 'items') {
-      drush_print(dt("Invalid feedback frequency unit '!unit'",
+      drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
         array('!unit' => $options['feedback']['frequency_unit'])));
       return;
     }
   }
   migrate_content_process_clear($mcsid, $messages, $options);
   foreach ($messages as $message) {
-    drush_print($message);
+    drush_log($message);
   }
 }
 
@@ -204,6 +206,7 @@ function drush_migrate_clear($content_set) {
  *  The mcsid or the name of the content set
  */
 function drush_migrate_import($content_set) {
+  drush_migrate_set_verbose();
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
                                  WHERE mcsid=%d", $content_set));
@@ -219,7 +222,7 @@ function drush_migrate_import($content_set) {
     $options['itemlimit'] = $itemlimit;
   }
   $options['feedback'] = array(
-    'function' => 'drush_print',
+    'function' => 'drush_log',
   );
   $feedback = drush_get_option('feedback');
   if ($feedback) {
@@ -228,13 +231,20 @@ function drush_migrate_import($content_set) {
     $options['feedback']['frequency_unit'] = $parts[1];
     if ($options['feedback']['frequency_unit'] != 'seconds' &&
         $options['feedback']['frequency_unit'] != 'items') {
-      drush_print(dt("Invalid feedback frequency unit '!unit'",
+      drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
         array('!unit' => $options['feedback']['frequency_unit'])));
       return;
     }
   }
   migrate_content_process_import($mcsid, $messages, $options);
   foreach ($messages as $message) {
-    drush_print($message);
+    drush_log($message);
   }
+}
+
+// Set the verbose context if 'feedback' is requested.
+function drush_migrate_set_verbose() {
+  if (drush_get_option('feedback')) {
+    drush_set_context('DRUSH_VERBOSE',  TRUE);
+  } 
 }

@@ -3,6 +3,7 @@
 2009/09/13
 ===========
 - #572896 - Fix xlat support (mapping of source URLs to Drupal URLs)
+- #567686 - Fixed sorting, tweaked layout of content set listing
 
 2009/09/09
 ===========

@@ -325,16 +325,15 @@ function _migrate_content_set_form($form_state) {
   $desttypes = migrate_invoke_all('types');
 
   $header = array(
-    array('data' => t('Description'), 'field' => 'mcs.description'),
-    array('data' => t('Source view'), 'field' => 'mcs.view_name'),
-    array('data' => t('Destination')),
-    array('data' => t('Weight'), 'field' => 'mcs.weight', 'sort' => 'asc'),
-    array('data' => t('')),
+    array('data' => t('Description'), 'field' => 'description'),
+    array('data' => t('Destination'), 'field' => 'contenttype'),
+    array('data' => t('Source view'), 'field' => 'view_name'),
+    array('data' => t('Weight'), 'field' => 'weight', 'sort' => 'asc'),
   );
 
-  $sql = "SELECT mcs.*
-          FROM {migrate_content_sets} mcs
-          ORDER BY mcs.weight";
+  $sql = "SELECT *
+          FROM {migrate_content_sets} ";
+  $sql .= tablesort_sql($header);
   $result = db_query($sql);
   $used_views = array();
   while ($row = db_fetch_object($result)) {
@@ -346,11 +345,11 @@ function _migrate_content_set_form($form_state) {
     }
     $rows[] = array('data' =>
       array(
-        $row->description,
-        $row->view_name,
+        l($row->description, 'admin/content/migrate/content_sets/' . $row->mcsid,
+          array('html' => TRUE)),
         $destination,
+        l($row->view_name, 'admin/build/views/edit/' . $row->view_name),
         $row->weight,
-        l(t('Edit'), 'admin/content/migrate/content_sets/'. $row->mcsid, array('html' => TRUE)),
       ),
       'class' => "migrate-content-sets-tr",
     );
@@ -374,6 +373,13 @@ function _migrate_content_set_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Description of the content set'),
     '#description' => t('A friendly phrase only used for display.'),
+  );
+
+  $form['addset']['contenttype'] = array(
+    '#type' => 'select',
+    '#title' => t('Destination'),
+    '#options' => $desttypes,
+    '#description' => t('The type of Drupal content which will store the incoming records.'),
   );
 
   $views = views_get_all_views();
@@ -401,13 +407,6 @@ function _migrate_content_set_form($form_state) {
     '#description' => t('This View defines the records which are to be migrated.'),
   );
 
-  $form['addset']['contenttype'] = array(
-    '#type' => 'select',
-    '#title' => t('Destination'),
-    '#options' => $desttypes,
-    '#description' => t('The type of Drupal content which will store the incoming records.'),
-  );
-
   $form['addset']['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),
@@ -425,7 +424,9 @@ function _migrate_content_set_form_submit($form, &$form_state) {
   $content_set['description'] = $form_state['values']['description'];
   $destination = explode('/', $form_state['values']['contenttype']);
   $content_set['contenttype'] = $destination[0];
-  $content_set['desttype'] = $destination[1];
+  if ($isset($destination[1])) {
+    $content_set['desttype'] = $destination[1];
+  }
   $content_set['weight'] = $form_state['values']['weight'];
 
   $mcsid = migrate_save_content_set($content_set);

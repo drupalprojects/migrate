@@ -143,7 +143,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   db_set_active('default');
   $sourceschema = $inspect[$tablename];
   // If the PK of the content set is defined, make sure we have a mapping table
-  if ($content_set->sourcekey) {
+  if (isset($content_set->sourcekey) && $content_set->sourcekey) {
     $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
     // The field name might be <table>_<column>...
     if (!$sourcefield) {

@@ -1082,7 +1082,7 @@ function migrate_schema_alter(&$schema) {
  *
  * RewriteRule ^issues/news/([0-9]+).html$ /migrate/xlat/node/$1 [L]
  */
-function migrate_xlat($contenttype=NULL, $oldid=NULL) {
+function migrate_xlat($contenttype, $oldid) {
   $uri = '';
   if ($contenttype && $oldid) {
     $newid = _migrate_xlat_get_new_id($contenttype, $oldid);
@@ -1096,19 +1096,16 @@ function migrate_xlat($contenttype=NULL, $oldid=NULL) {
 /*
  * Helper function to translate an ID from a source file to the corresponding
  * Drupal-side ID (nid, uid, etc.)
- *
- * TODO: Update to new world (content sets as the basis of migration)
+ * Note that the result may be ambiguous - for example, if you are importing
+ * nodes from different content sets, they might have overlapping source IDs.
  */
 function _migrate_xlat_get_new_id($contenttype, $oldid) {
-  $result = db_query("SELECT DISTINCT mf.importtable, mc.colname
-                      FROM {migrate_content_sets} mcs
-                      INNER JOIN {migrate_files} mf ON mcs.mfid=mf.mfid
-                      INNER JOIN {migrate_columns} mc ON mf.mfid=mc.mfid AND chosenpk=1
-                      WHERE mcs.contenttype='%s'",
+  $result = db_query("SELECT mcsid
+                      FROM {migrate_content_sets}
+                      WHERE contenttype='%s'",
                      $contenttype);
   while ($row = db_fetch_object($result)) {
     $table = migrate_map_table_name($row->mcsid);
-    $pkcol = $row->colname;
     $id = db_result(db_query("SELECT destid
                               FROM {$table} WHERE sourceid=%d", $oldid));
     if ($id) {

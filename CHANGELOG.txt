@@ -1,6 +1,10 @@
 //$Id$
 
-Migrate 1.0 Beta 3
+2009/09/13
+===========
+- #572896 - Fix xlat support (mapping of source URLs to Drupal URLs)
+
+2009/09/09
 ===========
 - #546398 - Drush improvements - message and timer logging
 - #572670 - Drush - import specific IDs
@@ -19,7 +23,7 @@ Migrate 1.0 Beta 1
 
 IMPORTANT!
 
-If you have been using a development version of the migrate module, please note that
+If you have been using a pre-beta version of the migrate module, please note that
 shortly before the release of beta 1 some refactoring was done that requires manual attention.
 
 Updating from a version before 2009/08/23:
@@ -31,7 +35,7 @@ set pages are now under admin/content/migrate/content_sets (rather than
 admin/content/migrate/destinations).
 
 The map and message table names have been renamed. If you have constructed any views
-specifically accessing these tables, the views will be to be reconstructed.
+specifically accessing these tables, the views will need to be reconstructed.
 
 Updating from a version before 2009/08/18:
 

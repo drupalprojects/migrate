@@ -424,7 +424,7 @@ function _migrate_content_set_form_submit($form, &$form_state) {
   $content_set['description'] = $form_state['values']['description'];
   $destination = explode('/', $form_state['values']['contenttype']);
   $content_set['contenttype'] = $destination[0];
-  if ($isset($destination[1])) {
+  if (isset($destination[1])) {
     $content_set['desttype'] = $destination[1];
   }
   $content_set['weight'] = $form_state['values']['weight'];

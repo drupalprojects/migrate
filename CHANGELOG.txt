@@ -4,6 +4,7 @@
 ===========
 - #572896 - Fix xlat support (mapping of source URLs to Drupal URLs)
 - #567686 - Fixed sorting, tweaked layout of content set listing
+- #531474 - Support for comment parent IDs
 
 2009/09/09
 ===========

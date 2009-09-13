@@ -26,6 +26,7 @@ function comment_migrate_fields_comment($type) {
     'timestamp' => t('Comment: Post date'),
     'nid' => t('Comment: Node'),
     'uid' => t('Comment: User'),
+    'pid' => t('Comment: Parent ID'),
   );
 
   return $fields;

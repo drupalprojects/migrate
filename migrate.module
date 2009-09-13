@@ -713,7 +713,12 @@ function migrate_content_process_all_batch($starttime, $limit, $idlist, &$contex
   );
   $status = migrate_content_process_all($messages, $options);
   foreach ($messages as $message) {
-    $context['sandbox']['message'] .= $message . '<br />';
+    if (!isset($context['sandbox']['message'])) {
+      $context['sandbox']['message'] = $message . '<br />';
+    }
+    else {
+      $context['sandbox']['message'] .= $message . '<br />';
+    }
     $context['message'] = $context['sandbox']['message'];
     $context['results'][] = $message;
     $context['sandbox']['numopsdone'] += $options['opcount'];
@@ -781,6 +786,9 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
                       WHERE clearing=1
                       ORDER BY weight DESC");
   $context['sandbox']['timedout'] = FALSE;
+  if (!isset($options['opcount'])) {
+    $options['opcount'] = 0;
+  }
   while ($row = db_fetch_object($result)) {
     $status = migrate_content_process_clear($row->mcsid, $messages, $options);
     if ($status != MIGRATE_STATUS_SUCCESS) {

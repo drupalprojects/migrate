@@ -419,6 +419,21 @@ function _migrate_content_set_form($form_state) {
   return $form;
 }
 
+function _migrate_content_set_validate($form_state) {
+  $description = trim($form_state['values']['description']);
+  if (!$description) {
+    form_set_error('description', t('A description is required.'));
+  }
+  $weight = trim($form_state['values']['weight']);
+  if (!is_numeric($weight) || (((int)$weight) != $weight)) {
+    form_set_error('weight', t('Weight must be an integer value (positive or negative)'));
+  }
+}
+
+function _migrate_content_set_form_validate($form, $form_state) {
+  _migrate_content_set_validate($form_state);
+}
+
 function _migrate_content_set_form_submit($form, &$form_state) {
   $content_set['view_name'] = $form_state['values']['sourceview'];
   $content_set['description'] = $form_state['values']['description'];
@@ -613,6 +628,10 @@ function theme_migrate_content_set_mappings($form) {
   $output .= drupal_render($form);
 
   return $output;
+}
+
+function migrate_content_set_mappings_validate($form, $form_state) {
+  _migrate_content_set_validate($form_state);
 }
 
 /**

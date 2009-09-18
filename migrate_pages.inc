@@ -775,6 +775,15 @@ function migrate_settings() {
 }
 
 function _migrate_settings_form($form_state) {
+  $form['enable_cron'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable cron processing'),
+    '#description' => t('If this is enabled, any operations checked off on the
+      dashboard page will be processed when the cron operation runs. Disable this
+      if you only perform migration operations interactively or via drush.'),
+    '#default_value' => variable_get('migrate_enable_cron', 0),
+  );
+
   $form['display_timers'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display timers when processing'),
@@ -817,7 +826,9 @@ function _migrate_settings_form($form_state) {
 }
 
 function theme_migrate_settings($form) {
-  $output = drupal_render($form['display_timers']);
+  $output = '';
+  $output .= drupal_render($form['enable_cron']);
+  $output .= drupal_render($form['display_timers']);
   $output .= drupal_render($form['cache_counts']);
   $output .= drupal_render($form['refresh_counts']);
   $output .= drupal_render($form);
@@ -830,11 +841,12 @@ function theme_migrate_settings($form) {
  */
 function _migrate_settings_form_submit($form, &$form_state) {
   $values = $form_state['values'];
+  variable_set('migrate_enable_cron', $values['enable_cron']);
   variable_set('migrate_display_timers', $values['display_timers']);
   variable_set('migrate_hide_help_message', $values['hide_help_message']);
   $original_cache = variable_get('migrate_cache_counts', 0);
   variable_set('migrate_cache_counts', $values['cache_counts']);
-  if ($values['refresh_counts'] || ($values['cache_counts'] && !$original_cache)) {
+  if (isset($values['refresh_counts']) || ($values['cache_counts'] && !$original_cache)) {
     $sql = "SELECT mcsid,view_name FROM {migrate_content_sets}";
     $result = db_query($sql);
     while ($row = db_fetch_object($result)) {

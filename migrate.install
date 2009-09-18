@@ -363,3 +363,11 @@ function migrate_update_6005() {
   variable_del('migrate_semaphore');
   return $ret;
 }
+
+// Cron processing - set to TRUE on update, so existing installations will not
+// be surprised by cron processing stopping. The default value for new installations
+// will be FALSE - drush is the preferred mechanism for long migration processes.
+function migrate_update_6006() {
+  variable_set('migrate_enable_cron', TRUE);
+  return array();
+}

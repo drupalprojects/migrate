@@ -3,7 +3,9 @@
 2009/09/18
 ===========
 - #392404 - More simpletest work.
-- #579064 - Fix semaphore handling.
+- #579064 - Fixed semaphore handling.
+- #579068 - Added a toggle to control cron processing. Note that it defaults to on for
+            existing installations, but off for new installations.
 Validation functions for content set creation/editing.
 Fixed a couple of annoying notices.
 

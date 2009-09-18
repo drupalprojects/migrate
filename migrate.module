@@ -941,28 +941,29 @@ function migrate_action_info() {
 
 /**
  * Implementation of hook_cron().
- *
  */
 function migrate_cron() {
-  $path = drupal_get_path('module', 'migrate') . '/migrate_pages.inc';
-  include_once($path);
-  // Elevate privileges so node deletion/creation works in cron
-  session_save_session(FALSE);
-  global $user;
-  $saveuser = $user;
-  $user = user_load(array('uid' => 1));
-  $messages = array();
-  // A zero max_execution_time means no limit - but let's set a reasonable
-  // limit anyway
-  $starttime = variable_get('cron_semaphore', 0);
-  $maxexectime = ini_get('max_execution_time');
-  if (!$maxexectime) {
-    $maxexectime = 240;
+  if (variable_get('migrate_enable_cron', 0)) {
+    $path = drupal_get_path('module', 'migrate') . '/migrate_pages.inc';
+    include_once($path);
+    // Elevate privileges so node deletion/creation works in cron
+    session_save_session(FALSE);
+    global $user;
+    $saveuser = $user;
+    $user = user_load(array('uid' => 1));
+    $messages = array();
+    // A zero max_execution_time means no limit - but let's set a reasonable
+    // limit anyway
+    $starttime = variable_get('cron_semaphore', 0);
+    $maxexectime = ini_get('max_execution_time');
+    if (!$maxexectime) {
+      $maxexectime = 240;
+    }
+    $options = array('timelimit' => $starttime + (($maxexectime < 20) ? $maxexectime : ($maxexectime - 20)));
+    migrate_content_process_all($messages, $options);
+    $user = $saveuser;
+    session_save_session(TRUE);
   }
-  $options = array('timelimit' => $starttime + (($maxexectime < 20) ? $maxexectime : ($maxexectime - 20)));
-  migrate_content_process_all($messages, $options);
-  $user = $saveuser;
-  session_save_session(TRUE);
 }
 
 /**

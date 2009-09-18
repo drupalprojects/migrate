@@ -1,21 +1,9 @@
 /* $Id$ */
 
-.migrate-error {
-  padding: 0.5em;
-  margin: 0.5em 0;
-  border: 1px solid #F00;
-  background: #FFC9C9;
-  color: inherit;
+table.migrate-dashboard tr.migrate-running {
+  background-color: #CFC;
 }
 
-.migrate-success {
-  padding: 0.5em;
-  margin: 0.5em 0;
-  border: 1px solid #0F0;
-  background: #DFD;
-  color: inherit;
-}
-
-a.error_link, a.error_link:visited, a.error_link:link {
-  color: red;
+.migrate-running {
+  background-color: #CFC;
 }

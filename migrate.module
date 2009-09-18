@@ -321,9 +321,18 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
                       FROM {migrate_content_sets}
                       WHERE mcsid=%d", $mcsid);
   $tblinfo = db_fetch_object($result);
+  $description = $tblinfo->description;
+  if ($tblinfo->semaphore) {
+    $messages[] = t('Content set !content_set has an operation already in progress.',
+      array('!content_set' => $description));
+    return MIGRATE_STATUS_IN_PROGRESS;
+  }
+  else {
+    $tblinfo->semaphore = TRUE;
+    drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
+  }
   $desttype = $tblinfo->desttype;
   $view_name = $tblinfo->view_name;
-  $description = $tblinfo->description;
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
 
@@ -396,7 +405,7 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
   if ($status == MIGRATE_STATUS_SUCCESS) {
     // Mark that we're done
     $tblinfo->clearing = 0;
-    migrate_save_content_set($tblinfo);
+    drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
     // Remove old messages before beginning new import process
     db_query("DELETE FROM {" . $msgtablename . "} WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
   }
@@ -411,6 +420,10 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     $sql = "UPDATE {migrate_content_sets} SET clearing=0 WHERE mcsid=%d";
     db_query($sql, $mcsid);
   }
+
+  $tblinfo->semaphore = FALSE;
+  drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
+
   return $status;
 }
 
@@ -449,9 +462,18 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
                       FROM {migrate_content_sets}
                       WHERE mcsid=%d", $mcsid);
   $tblinfo = db_fetch_object($result);
+  $description = $tblinfo->description;
+  if ($tblinfo->semaphore) {
+    $messages[] = t('Content set !content_set has an operation already in progress.',
+      array('!content_set' => $description));
+    return MIGRATE_STATUS_IN_PROGRESS;
+  }
+  else {
+    $tblinfo->semaphore = TRUE;
+    drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
+  }
   $desttype = $tblinfo->desttype;
   $view_name = $tblinfo->view_name;
-  $description = $tblinfo->description;
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
 
@@ -675,6 +697,10 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     $sql = "UPDATE {migrate_content_sets} SET importing=0 WHERE mcsid=%d";
     db_query($sql, $mcsid);
   }
+
+  $tblinfo->semaphore = FALSE;
+  drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
+
   return $status;
 }
 
@@ -778,13 +804,6 @@ function migrate_content_process_all_batch($starttime, $limit, $idlist, &$contex
  *  Status of the migration process:
  */
 function migrate_content_process_all(&$messages = array(), &$options = array()) {
-  if (variable_get('migrate_semaphore', FALSE)) {
-    drupal_set_message('There is an import process already in progress');
-    return 0;
-  }
-
-  variable_set('migrate_semaphore', TRUE);
-
   // First, perform any clearing actions in reverse order
   $result = db_query("SELECT mcsid
                       FROM {migrate_content_sets}
@@ -815,7 +834,6 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
     $options['opcount']++;
   }
 
-  variable_del('migrate_semaphore');
   return $status;
 }
 
@@ -960,11 +978,17 @@ function migrate_perm() {
 function migrate_help($page, $arg) {
   switch ($page) {
     case 'admin/content/migrate':
-      return theme('advanced_help_topic', 'migrate', 'about', 'icon') . t('Click the question marks like this one to read the migrate module help topics.');
+      return theme('advanced_help_topic', 'migrate', 'about', 'icon') .
+        t('Click the question marks like this one to read the migrate module help topics.');
     case 'admin/content/migrate/content_sets':
-      return t('Define sets of mappings from imported tables to Drupal content. These are the migrations which are later processed.');
+      return t('Define sets of mappings from imported tables to Drupal content. These are the
+        migrations which are later processed.');
     case 'admin/content/migrate/process':
-      return t('View and manage import processes here. Processes that are in progress are checked - they can be cancelled by unchecking, or new processes begun by checking, then clicking Submit. Any checked process will run in the background (via cron) automatically - you may also run them interactively.');
+      return t('View and manage import processes here. Processes that are enabled for processing
+        are checked - they can be cancelled by unchecking, or new processes begun by checking,
+        then clicking Submit. Any checked process will run in the background (via cron)
+        automatically - you may also run them interactively or in drush. A process that is
+        actively running will be <span class="migrate-running">highlighted</span>.');
     case 'admin/content/migrate/tools':
       return t('Besides content that is migrated into a new site, nodes may be manually
         created during the testing process. Typically you will want to clear these before the

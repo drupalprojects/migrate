@@ -77,6 +77,12 @@ function migrate_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'semaphore' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+      ),
     ),
     'primary key' => array('mcsid'),
     'unique keys' => array(
@@ -348,3 +354,12 @@ function migrate_update_6004() {
   return $ret;
 }
 
+// Add semaphore field
+function migrate_update_6005() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'semaphore',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => (int)FALSE));
+  variable_del('migrate_semaphore');
+  return $ret;
+}

@@ -3,6 +3,7 @@
 2009/09/18
 ===========
 - #392404 - More simpletest work.
+- #579064 - Fix semaphore handling.
 Validation functions for content set creation/editing.
 Fixed a couple of annoying notices.
 

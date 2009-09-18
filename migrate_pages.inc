@@ -140,16 +140,15 @@ function _migrate_dashboard_form($form_state) {
     $form['data'][$rownum]['importing'] = array('#value' => check_plain($row->importing));
     $form['data'][$rownum]['scanning'] = array('#value' => check_plain($row->scanning));
     $form['data'][$rownum]['description'] = array('#value' =>
-      l($row->description, 'admin/content/migrate/content_sets/' . $row->mcsid,
-        array('html' => TRUE)));
+      l($row->description, 'admin/content/migrate/content_sets/' . $row->mcsid));
     $form['data'][$rownum]['view_name'] = array('#value' =>
-      l($row->view_name, 'admin/build/views/edit/'. $row->view_name,
-        array('html' => TRUE)));
+      l($row->view_name, 'admin/build/views/edit/'. $row->view_name));
     $form['data'][$rownum]['importrows'] = array('#value' => check_plain($row->rowcount));
     $form['data'][$rownum]['imported'] = array('#value' => $imported);
     $form['data'][$rownum]['unimported'] = array('#value' => $unimported);
     $form['data'][$rownum]['lastimported'] = array('#value' => $row->lastimported);
     $form['data'][$rownum]['mcsid'] = array('#value' => check_plain($row->mcsid));
+    $form['data'][$rownum]['semaphore'] = array('#value' => $row->semaphore);
     $rownum++;
   }
 
@@ -201,13 +200,13 @@ function _migrate_dashboard_form($form_state) {
       '#description' => t('Enter a comma-separated list of IDs from the incoming content set, to
         process only those records in the current interactive run.'),
     );
-    $form['clearsemaphore'] = array(
+    $form['clearsemaphores'] = array(
       '#type' => 'checkbox',
       '#title' => t('Unstick migration process'),
-      '#description' => t('An error during processing can leave the migration semaphore enabled,
-        preventing further processing. When this happens, you will see the message "There is an
-        import process already in progress" when you are sure there is no process currently running
-        (even in cron). Check this box to clear the semaphore when this happens.'),
+      '#description' => t('An error during processing can leave a migration semaphore enabled,
+        preventing further processing. When this happens, you will see the message that a content
+        set "has an operation already in progress" when you are sure there is no process currently running
+        (even in cron or drush). Check this box to clear the semaphores when this happens.'),
     );
     $form['submit'] = array(
       '#type' => 'submit',
@@ -233,7 +232,13 @@ function theme_migrate_dashboard($form) {
           $row[] = drupal_render($form['data'][$rownum][$colname]);
         }
       }
-      $rows[] = $row;
+      // Highlight any process currently running
+      if ($form['data'][$rownum]['semaphore']['#value']) {
+        $rows[] = array('data' => $row, 'class' => 'migrate-running');
+      }
+      else {
+        $rows[] = $row;
+      }
     }
   }
 
@@ -242,7 +247,7 @@ function theme_migrate_dashboard($form) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
 
-  $output .= theme('table', $header, $rows);
+  $output .= theme('table', $header, $rows, array('class' => 'migrate-dashboard'));
   $output .= drupal_render($form);
 
   return $output;
@@ -277,8 +282,8 @@ function _migrate_dashboard_form_submit($form, &$form_state) {
               WHERE mcsid=%d",
              $clearing, $importing, $scanning, $mcsid);
   }
-  if ($form_state['values']['clearsemaphore']) {
-    variable_del('migrate_semaphore');
+  if ($form_state['values']['clearsemaphores']) {
+    db_query("UPDATE {migrate_content_sets} SET semaphore=0");
   }
   if ($form_state['values']['donow']) {
     variable_set('migrate_limit', $form_state['values']['limit']);

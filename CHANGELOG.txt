@@ -1,5 +1,9 @@
 //$Id$
 
+2009/09/18
+===========
+Fixed a couple of annoying notices.
+
 2009/09/13
 ===========
 - #572896 - Fix xlat support (mapping of source URLs to Drupal URLs)

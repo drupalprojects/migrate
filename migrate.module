@@ -134,7 +134,12 @@ function migrate_save_content_set(&$content_set, $options = array()) {
     // Must do this to load the database
     $view->init_query();
 
-    $tabledb = $view->base_database;
+    if (isset($view->base_database)) {
+      $tabledb = $view->base_database;
+    }
+    else {
+      $tabledb = 'default';
+    }
     $tablename = $view->base_table;
   }
 
@@ -1054,7 +1059,12 @@ function migrate_schema_alter(&$schema) {
       $view->init_query();
 
       // TODO: For now, PK must be in base_table
-      $tabledb = $view->base_database;
+      if (isset($view->base_database)) {
+        $tabledb = $view->base_database;
+      }
+      else {
+        $tabledb = 'default';
+      }
       $tablename = $view->base_table;
       db_set_active($tabledb);
       $inspect = schema_invoke('inspect');

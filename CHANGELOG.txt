@@ -2,6 +2,7 @@
 
 2009/09/18
 ===========
+- #392404 - More simpletest work.
 Validation functions for content set creation/editing.
 Fixed a couple of annoying notices.
 

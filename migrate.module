@@ -674,17 +674,9 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   if ($status == MIGRATE_STATUS_SUCCESS) {
     // Remember we're done
     if ($importing) {
-      db_query("UPDATE {migrate_content_sets}
-                SET importing=0, lastimported=NOW()
-                WHERE mcsid=%d",
-               $mcsid);
+      $tblinfo->importing = 0;
     }
-    else {
-      db_query("UPDATE {migrate_content_sets}
-                SET lastimported=NOW()
-                WHERE mcsid=%d",
-               $mcsid);
-    }
+    $tblinfo->lastimported = date('Y-m-d H:i:s');
   }
   if (isset($feedback)) {
     $feedback($message);
@@ -1148,9 +1140,14 @@ function _migrate_xlat_get_new_id($contenttype, $oldid) {
                       WHERE contenttype='%s'",
                      $contenttype);
   while ($row = db_fetch_object($result)) {
-    $table = migrate_map_table_name($row->mcsid);
-    $id = db_result(db_query("SELECT destid
-                              FROM {$table} WHERE sourceid=%d", $oldid));
+    static $maptables = array();
+    if (!isset($maptables[$row->mcsid])) {
+      $maptables[$row->mcsid] = migrate_map_table_name($row->mcsid);
+    }
+    $sql = "SELECT destid
+            FROM {" . $maptables[$row->mcsid] . "}
+            WHERE sourceid='%s'";
+    $id = db_result(db_query($sql, $oldid));
     if ($id) {
       return $id;
     }

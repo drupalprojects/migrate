@@ -221,6 +221,7 @@ function migrate_save_content_mapping(&$mapping) {
   else {
     drupal_write_record('migrate_content_mappings', $mapping);
   }
+  return $mapping->mcmid;
 }
 
 function migrate_delete_content_set($mcsid) {

@@ -1,5 +1,11 @@
 //$Id$
 
+Since the release of beta 2:
+
+2009/09/19
+===========
+- #576330 - Cleanup of comment migration
+
 2009/09/18
 ===========
 - #392404 - More simpletest work.

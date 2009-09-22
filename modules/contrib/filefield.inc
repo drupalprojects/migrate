@@ -37,7 +37,7 @@ function filefield_migrate_prepare_node(&$node, $tblinfo, $row) {
       $files_path = _migrate_widget_files_directory($field);
 
       if ($file = field_file_save_file($source_file, $validators, $files_path)) {
-        if(! isset($node->field_name)) {
+        if(! isset($node->$field_name)) {
           $node->$field_name = array();
         }
         array_push($node->$field_name, $file);

@@ -1,32 +1,22 @@
 //$Id$
 
-Since the release of beta 2:
-
-2009/09/19
+Migrate 1.0 Beta 3
 ===========
+- #430100 - Fix to filefield support
 - #576330 - Cleanup of comment migration
-
-2009/09/18
-===========
 - #392404 - More simpletest work.
 - #579064 - Fixed semaphore handling.
 - #579068 - Added a toggle to control cron processing. Note that it defaults to on for
             existing installations, but off for new installations.
-Validation functions for content set creation/editing.
-Fixed a couple of annoying notices.
-
-2009/09/13
-===========
 - #572896 - Fix xlat support (mapping of source URLs to Drupal URLs)
 - #567686 - Fixed sorting, tweaked layout of content set listing
 - #531474 - Support for comment parent IDs
-
-2009/09/09
-===========
 - #546398 - Drush improvements - message and timer logging
 - #572670 - Drush - import specific IDs
 - #568558 - Support for datetime fields
 - #430100 - Filefield support
+Validation functions for content set creation/editing.
+Fixed a couple of annoying notices.
 
 Migrate 1.0 Beta 2
 ===========

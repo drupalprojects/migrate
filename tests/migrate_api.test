@@ -3,7 +3,6 @@
 /**
  * @file
  * Tests for the Migrate API.
- *
  */
 
 /**
@@ -34,7 +33,7 @@ class MigrateUnitTest extends DrupalWebTestCase {
   }
 
   /**
-   * Test API for adding tables
+   * Test API for managing content sets
    */
   function testCRUD() {
     // Create test table

@@ -1,5 +1,9 @@
 //$Id$
 
+Since Beta 3:
+===========
+- #586152 - Call migrate_init hooks once
+
 Migrate 1.0 Beta 3
 ===========
 - #430100 - Fix to filefield support

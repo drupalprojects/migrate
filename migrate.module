@@ -26,7 +26,12 @@ define('MIGRATE_STATUS_IN_PROGRESS', 5);
  */
 function migrate_invoke_all($hook) {
   // Let modules do any one-time initialization (e.g., including migration support files)
-  module_invoke_all('migrate_init');
+  static $inited = FALSE;
+  if (!$inited) {
+    module_invoke_all('migrate_init');
+    $inited = TRUE;
+  }
+
   $args = func_get_args();
   $hookfunc = "migrate" . "_$hook";
   unset($args[0]);

@@ -80,6 +80,7 @@ function migrate_schema() {
       'semaphore' => array(
         'type' => 'int',
         'size' => 'tiny',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => (int)FALSE,
       ),

@@ -1109,7 +1109,9 @@ function migrate_schema_alter(&$schema) {
           $sourcefield['type'] = 'int';
         }
         $schema[$maptablename] = _migrate_map_table_schema($sourcefield);
+        $schema[$maptablename]['name'] = $maptablename;
         $schema[$msgtablename] = _migrate_message_table_schema($sourcefield);
+        $schema[$msgtablename]['name'] = $msgtablename;
       }
     }
   }

@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #588602 - Typo
 - #586152 - Call migrate_init hooks once
 
 Migrate 1.0 Beta 3

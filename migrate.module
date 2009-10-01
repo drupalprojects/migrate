@@ -1316,3 +1316,14 @@ function _migrate_valid_date($date) {
   return $time;
 }
 
+function _migrate_get_view_count($view) {
+  if (is_string($view)) {
+    $view = views_get_view($view);
+  }
+  // Force execution of count query, with minimal unnecessary results returned
+  // @TODO: Find way to execute ONLY count query
+  $view->pager['items_per_page'] = 1;
+  $view->get_total_rows = TRUE;
+  $view->execute();
+  return $view->total_rows;
+}

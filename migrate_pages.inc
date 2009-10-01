@@ -864,15 +864,3 @@ function _migrate_settings_form_submit($form, &$form_state) {
   }
   drupal_set_message(t('Settings saved'));
 }
-
-function _migrate_get_view_count($view) {
-  if (is_string($view)) {
-    $view = views_get_view($view);
-  }
-  // Force execution of count query, with minimal unnecessary results returned
-  // @TODO: Find way to execute ONLY count query
-  $view->pager['items_per_page'] = 1;
-  $view->get_total_rows = TRUE;
-  $view->execute();
-  return $view->total_rows;
-}

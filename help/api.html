@@ -1,6 +1,13 @@
 <!-- $Id$ -->
 
-<h2 id="destinationtypes">Destination types</h2> 
+<p>While simple migration projects may be accomplished purely through the administrative interference,
+complex real-world cases will require some programming. The migrate module, at its heart, is simply
+a framework for defining and performing migrations, which happens to come with default implementations
+for the most important core objects. Developers can use the same API as these default implementations to
+enhance migration to those objects, or to define other destinations.</p>
+
+<!-- -->
+<h3>Destinations</h3> 
  
 <p>The migrate module supports the definition of different destination types - kinds of objects 
 to be created in a migration. There is built-in support for nodes, users, comments, roles, and 

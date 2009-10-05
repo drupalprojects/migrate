@@ -178,7 +178,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
           }
           $edit = array();
           $edit["importing[$mcsid]"] = $mcsid;
-          $this->drupalPost('admin/content/migrate/process', $edit, t('Submit'));
+          $this->drupalPost('admin/content/migrate/dashboard', $edit, t('Submit'));
           if (!$this->assertText('3 items imported in', t('Migration completed successfully'))) {
             $result = preg_match('|<div class="messages status">(.*?)</div>|si',
                 $this->content, $matches);

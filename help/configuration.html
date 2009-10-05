@@ -46,16 +46,9 @@ Go to <a href="http://drupal.org/node/287063">issue #287063</a> and apply the pa
 in comment #8 to prevent this caching.</p> 
 
 <p>Deleting a user updates the comments and node_comment_statistics tables rows
-referencing that user's uid, but those columns are node indexed, making deletion
+referencing that user's uid, but those columns are not indexed, making deletion
 of users in bulk very slow. The patch at 
 <a href="http://drupal.org/node/289504">http://drupal.org/node/289504</a> addresses
 this.</p>
 
 <p>Note: These patches have already been incorporated into Drupal 7.
-
-<h3>Other patches</h3>
-
-<p>When using the <a href="http://drupal.org/project/email_registration">Email 
-registration module</a>, if you would like an explicit username you're migrating
-to override that module's automated username generation, apply the patch at
-<a href="http://drupal.org/node/247717">http://drupal.org/node/247717</a>.</p>

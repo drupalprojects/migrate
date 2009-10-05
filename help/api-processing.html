@@ -1,0 +1,61 @@
+<!-- $Id$ -->
+
+<p>These functions programmtically process one or more migration operations. The arguments are as
+  follows:</p>
+  
+<dl>
+  <dt>$messages</dt>
+  <dd>Array of messages to (ultimately) be displayed by the caller.</dd>
+  <dt>$options</dt>
+  <dd>Keyed array of optional options:
+    <dl>
+      <dt>itemlimit</dt>
+      <dd>Maximum number of items to process</dd>
+      <dt>timelimit</dt>
+      <dd>Unix timestamp after which to stop processing</dd>
+      <dt>idlist</dt>
+      <dd>Comma-separated list of source IDs to process, instead of proceeding through all unmigrated rows</dd>
+      <dt>feedback</dt>
+      <dd>Keyed array controlling status feedback to the caller:
+        <dl>
+          <dt>function</dt>
+          <dd>PHP function to call, passing a message to be displayed</dd>
+          <dt>frequency</dt>
+          <dd>How often to call the function</dd>
+          <dt>frequency_unit</dt>
+          <dd>How to interpret frequency (items or seconds)</dd>
+        </dl>
+      </dd>
+    </dl>
+  </dd>
+</dl>
+
+<p>These functions all return one of the following status code:</p>
+
+<dl>
+  <dt>MIGRATE_STATUS_SUCCESS</dt>
+  <dd>The operation succeeded - all specified items were processed.</dd>
+  <dt>MIGRATE_STATUS_FAILURE</dt>
+  <dd>The operation failed - e.g. the source view for the content set
+    no longer exists.</dd>
+  <dt>MIGRATE_STATUS_IN_PROGRESS</dt>
+  <dd>The content set semaphore is on - there is another operation
+    in progress, so this one cannot proceed.</dd>
+  <dt>MIGRATE_STATUS_TIMEDOUT</dt>
+  <dd>The content set was partially processed - the time limit was reached
+    before completion.</dd>
+  <dt>MIGRATE_STATUS_CANCELLED</dt>
+  <dd>The flag (clear/import/scan) for the process was turned off
+    before it was complete.</dd>
+</dl>
+
+<h3>migrate_content_process_clear($mcsid, &amp;$messages = array(), &amp;$options = array())</h3>
+<p>Clear all previously-migrated items in the specified content set (subject to the provided options).</p>
+
+<h3>migrate_content_process_import($mcsid, &amp;$messages = array(), &amp;$options = array())</h3>
+<p>Import all unimported content for the specified content set (subject to the provided options).</p>
+
+<h3>migrate_content_process_all(&amp;$messages = array(), &amp;$options = array())</h3>
+<p>Process all enabled content set operations, first taking any Clear actions in reverse order (by
+  weight), then import and scan actions in forward order.</p>
+  

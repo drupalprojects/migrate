@@ -1,0 +1,43 @@
+<!-- $Id$ -->
+
+<p>The <a href="/admin/content/migrate/content_sets">Content Sets administration page</a>
+manages content sets you have created, and allows you to create new content sets.</p>
+
+<p>The upper area of the page lists existing content sets, ordered by weight initially (you
+may resort by any column, by clicking its header). Each content set's <em>Description</em>
+links to its editor, and each <em>Source view</em> links to the editor for the view.</p>
+
+<p>In the lower area of the page, you may create a content set, providing these parameters:</p>
+
+<dl>
+  <dt>Description</dt>
+    <dd>A user-friendly name for the content set, used for display in various places. It
+        also may be used to specify which content set to process on a drush command.</dd>
+  <dt>Destination</dt>
+    <dd>The Drupal object which this content set will populate. The migrate module has
+        builtin support for the following Drupal objects, and you can also use hooks
+        to define customer destinations:
+        <ul>
+          <li>Comment</li>
+          <li>Node (a separate destination is provided for each different content type
+              defined on your site)</li>
+          <li>Taxonomy term</li>
+          <li>User</li>
+          <li>Role</li>
+        </ul>
+    </dd>
+  <dt>Source view</dt>
+    <dd>A <a href="http://drupal.org/project/views">view</a> containing the source data
+        for this content set. This view must contain a single row for each destination
+        object to be created (e.g., a single row per user, or per Page node). It also
+        must have at least one unique data column.</dd>
+  <dt>Weight</dt>
+    <dd>A numerical value used to order content sets in listings, and when processing
+        multiple content sets in a single operation. For example, if you are migrating
+        roles, then assigned migrated roles to users, you should give your role content
+        set a lower weight than the user content set so it is processed first.</dd>
+</dl>
+
+<p>When you click the <strong>Add</strong> button, the content set is created, with its 
+   primary key defaulted to the primary key of its base table (if there is one), and the
+   content set's edit page is displayed to allow you to add mappings.</p>

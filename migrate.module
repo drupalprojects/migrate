@@ -26,10 +26,10 @@ define('MIGRATE_STATUS_IN_PROGRESS', 5);
  */
 function migrate_invoke_all($hook) {
   // Let modules do any one-time initialization (e.g., including migration support files)
-  static $inited = FALSE;
-  if (!$inited) {
+  global $_migrate_inited;
+  if (!isset($_migrate_inited)) {
     module_invoke_all('migrate_init');
-    $inited = TRUE;
+    $_migrate_inited = TRUE;
   }
 
   $args = func_get_args();
@@ -62,6 +62,13 @@ function migrate_invoke_all($hook) {
  * @return
  */
 function migrate_destination_invoke_all($hook, &$object, $tblinfo, $row) {
+  // Let modules do any one-time initialization (e.g., including migration support files)
+  global $_migrate_inited;
+  if (!isset($_migrate_inited)) {
+    module_invoke_all('migrate_init');
+    $_migrate_inited = TRUE;
+  }
+
   // We could have used module_invoke_all, but unfortunately
   // module_invoke_all passes all arguments by value.
   $errors = array();
@@ -1017,9 +1024,9 @@ function migrate_menu() {
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_pages.inc',
   );
-  $items['admin/content/migrate/process'] = array(
-    'title' => 'Process',
-    'description' => 'Perform and monitor the creation of Drupal content from source data',
+  $items['admin/content/migrate/dashboard'] = array(
+    'title' => 'Dashboard',
+    'description' => 'Monitor and control the creation of Drupal content from source data',
     'weight' => 3,
     'page callback' => 'migrate_dashboard',
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
@@ -1198,6 +1205,7 @@ function migrate_message_table_name($mcsid) {
   return "migrate_msgs_$mcsid";
 }
 
+// These functions are deprecated - use the versions above
 function _migrate_map_table_name($mcsid) {
   return migrate_map_table_name($mcsid);
 }

@@ -1,0 +1,61 @@
+<!-- $Id$ -->
+
+<p>The <a href="admin/content/migrate/dashboard">dashboard page</a> is used to monitor 
+   and control migration processes.</p>
+
+<h3>Processes</h3>
+
+<p>All content sets are listed here in order of weight. For each content set listed, 
+   you will see the following items:</p>
+   
+<dl>
+  <dt>Clear/Import/Scan</dt>
+    <dd>These toggles enable processes to run - see the glossary for details.</dd>
+  <dt>Content Set</dt>
+    <dd>The name of the content set. This name can be used to specify a particular content
+        set in a drush command. It is linked to the edit page for the content set.</dd>
+  <dt>Source</dt>
+    <dd>The source view for the content set. It is linked to the edit page for the view.</dd>
+  <dt>Rows in set</dt>
+    <dd>A count of the total rows in the source view.</dd>
+  <dt>Imported</dt>
+    <dd>A count of the Drupal objects successfully created for this content set. If
+        any of these objects generated informational messages (conditions interesting
+        enough to report, but not severe enough to prevent successful import) there
+        will be a link to the messages here.</dd>
+  <dt>Unimported</dt>
+    <dd>A count of source rows which have not yet been migrated, or which failed to migrate
+        successfully. If there were any failures, there will be links to the messages here.</dd>
+  <dt>Last imported</dt>
+    <dd>The date and time that the last import or scan completed.</dd>
+</dl>
+
+<p>Any content set currently processing (i.e., whose semaphore is on) is 
+  <span class="migrate-running">highlighted</span>.</p>
+
+<h3>Interactive mode</h3>
+
+<p><a href="http://drupal.org/project/drush">Drush</a> is the preferred means of running
+  migration processes, and they can also be run in the background via cron. However, 
+  particularly while developing your migration processes, you may want to run processes
+  directly in the browser. To do so, check the <em>Enable</em> checkbox here and submit
+  the form. You may set the following parameters for an interactive run:</p>
+<dl>
+  <dt>Sample size</dt>
+  <dd>If set, this number of rows of each checked content set will be processed before completion.</dd>
+  <dt>Source IDs</dt>
+  <dd>If set to a comma-separated list of primary keys from the source view, those specific
+    IDs will be run through each checked process. This is useful when determining a problem
+    processing a specific row of source data.</dd>
+</dl>
+<p>When running in interactive mode, first any Clear actions are run in reverse order,
+then any Import and Scan actions are run in forward order.</p>
+
+<h3>Unstick migration process</h3>
+
+<p>It would be dangerous to run multiple processes on the same content set at the same
+time - for example, running a Clear in the browser while an Import is running in cron. To
+guard against this, a semaphore flag is set on a content set while it is processing, and
+cleared when it is done. Sometimes, a programming or system problem can interrupt a process
+so it fails to clear its flag. Check this toggle and Submit to clear all semaphores (but
+please be sure to verify first that no process really is running).</p>

@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #560380 - Missing message table affects Views lists
 - #576356 - Documentation improvements
 - #588602 - Typo
 - #586152 - Call migrate_init hooks once

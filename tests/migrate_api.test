@@ -21,10 +21,11 @@ class MigrateUnitTest extends DrupalWebTestCase {
   function setUp() {
     // Somehow, we're running in E_STRICT, and Views generates notices.
     error_reporting(E_ALL & ~E_NOTICE);
-    parent::setUp('views', 'schema', 'tw', 'migrate');
+    parent::setUp('views', 'schema', 'tw', 'migrate', 'views_ui');
 
     // Create and login user
-    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED,
+      'administer views', 'access all views', 'access administration pages'));
     $this->drupalLogin($migrate_user);
   }
 
@@ -111,7 +112,22 @@ class MigrateUnitTest extends DrupalWebTestCase {
       }
     }
 
-    // migrate_save_content_mapping(), migrate_delete_content_set(),
+    // Regression test for #560380 - don't break Views if message table is missing
+    tw_remove_tables(array($msgtablename));
+    $this->drupalGet('admin/build/views');
+    $this->assertResponse(200, t('Successfully got views listing'));
+
+    // Testing that deleting removes all traces
+    migrate_delete_content_set($mcsid);
+    $this->assertFalse(db_table_exists($maptablename), t('Map table deleted'));
+    $this->assertFalse(db_table_exists($msgtablename), t('Message table deleted'));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {migrate_content_sets} WHERE mcsid=%d", $mcsid));
+    $this->assertEqual($count, 0, t('Content set row deleted'));
+    $count = db_result(db_query("SELECT COUNT(*) FROM {migrate_content_mappings} WHERE mcsid=%d", $mcsid));
+    $this->assertEqual($count, 0, t('Content set mapping rows deleted'));
+
+
+    // migrate_save_content_mapping()
     // migrate_delete_content_mapping()
   }
 

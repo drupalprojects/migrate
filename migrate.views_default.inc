@@ -26,6 +26,18 @@ function migrate_views_default_views_alter(&$views) {
   $tblresult = db_query($sql);
   while ($tblrow = db_fetch_object($tblresult)) {
     $viewname = migrate_message_table_name($tblrow->mcsid);
+    // Make sure the table exists and is known to Table Wizard - otherwise we'll break stuff
+    // all over the place (#560380)
+    if (!db_table_exists($viewname)) {
+      continue;
+    }
+    else {
+      $sql = "SELECT COUNT(*) FROM {tw_tables} WHERE tablename='%s' AND dbconnection='default'";
+      $exists = db_result(db_query($sql, $viewname));
+      if (!$exists) {
+        continue;
+      }
+    }
     $view = $views[$viewname];
     $view->display['default']->display_options['arguments'] = array(
       'level' => array(

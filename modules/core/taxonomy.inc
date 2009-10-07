@@ -142,7 +142,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   }
 
   // Prepare the term for import.
-  $errors += migrate_destination_invoke_all('prepare_term', $term, $tblinfo, $row);
+  $errors = array_merge($errors, migrate_destination_invoke_all('prepare_term', $term, $tblinfo, $row));
 
   $success = TRUE;
   foreach ($errors as $error) {

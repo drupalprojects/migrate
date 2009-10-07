@@ -108,7 +108,7 @@ function user_migrate_import_user($tblinfo, $row) {
 
     // Call completion hooks, for any processing which needs to be done after user_save
     timer_start('user completion hooks');
-    $errors += migrate_destination_invoke_all('complete_user', $account, $tblinfo, $row);
+    $errors = array_merge($errors, migrate_destination_invoke_all('complete_user', $account, $tblinfo, $row));
     timer_stop('user completion hooks');
 
     if ($account) {

@@ -105,7 +105,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
   }
 
   // Prepare the comment for import.
-  $errors += migrate_destination_invoke_all('prepare_comment', $comment, $tblinfo, $row);
+  $errors = array_merge($errors, migrate_destination_invoke_all('prepare_comment', $comment, $tblinfo, $row));
 
   /*
    * Validation: should probably create a validation hook instead
@@ -134,7 +134,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
     $comment['cid'] = comment_save($comment);
   }
 
-  $errors += migrate_destination_invoke_all('complete_comment', $comment, $tblinfo, $row);
+  $errors = array_merge($errors, migrate_destination_invoke_all('complete_comment', $comment, $tblinfo, $row));
 
   return $errors;
 }

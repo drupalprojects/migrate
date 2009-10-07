@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #590768 - Use array_merge instead of += in accumulating errors
 - #560380 - Missing message table affects Views lists
 - #576356 - Documentation improvements
 - #588602 - Typo

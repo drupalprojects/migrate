@@ -243,7 +243,7 @@ function theme_migrate_dashboard($form) {
   }
 
   $header = $form['header']['#value'];
-  if (!$rows) {
+  if (empty($rows)) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
 

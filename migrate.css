@@ -7,3 +7,9 @@ table.migrate-dashboard tr.migrate-running {
 .migrate-running {
   background-color: #CFC;
 }
+
+.migrate-option-seperator {
+  margin-bottom:0.2em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid #aaa;
+}

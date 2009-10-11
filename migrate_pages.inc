@@ -627,10 +627,13 @@ function theme_migrate_content_set_mappings($form) {
   if (!$rows) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
-  $output .=     t('Map fields in the Source recordset to properties in a Drupal object. More complex fields such as multiple value elements need to be handled in code using the prepare hook.');
+  $output .= t('Map fields in the Source recordset to properties in a Drupal object. More complex fields such as multiple value elements need to be handled in code using the prepare hook.');
   $output .= theme('table', $header, $rows);
   $output .= drupal_render($form['submit']);
   $output .= drupal_render($form);
+
+  // Support dynamic visualization of already-picked fields
+  drupal_add_js(drupal_get_path('module', 'migrate') .'/migrate.js');
 
   return $output;
 }

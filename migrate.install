@@ -84,6 +84,12 @@ function migrate_schema() {
         'not null' => TRUE,
         'default' => (int)FALSE,
       ),
+      'multiple_separator' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => ',',
+      ),
     ),
     'primary key' => array('mcsid'),
     'unique keys' => array(
@@ -371,4 +377,12 @@ function migrate_update_6005() {
 function migrate_update_6006() {
   variable_set('migrate_enable_cron', TRUE);
   return array();
+}
+
+// Add separator field
+function migrate_update_6007() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'multiple_separator',
+    array('type' => 'char', 'length' => 1, 'not null' => TRUE, 'default' => ','));
+  return $ret;
 }

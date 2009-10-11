@@ -177,7 +177,7 @@ function taxonomy_migrate_prepare_node(&$node, $tblinfo, $row) {
   }
   if (!$vocabs[$node->type] || count($vocabs[$node->type]) < 1) return;
 
-  $multiple_separator = variable_get('migrate_multiple_separator', '|');
+  $multiple_separator = $tblinfo->multiple_separator;
 
   $taxonomy = array(); // Here we will store the final taxonomy for this node.
   $errors = array();   // Here we will store the errors for this node.

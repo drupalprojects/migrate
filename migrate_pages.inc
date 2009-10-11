@@ -468,6 +468,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
   $contenttype = $row->contenttype;
   $desttype = $row->desttype;
   $weight = $row->weight;
+  $multiple_separator = $row->multiple_separator;
 
   // Fetch information on available destinations
   $desttypes = migrate_invoke_all('types');
@@ -516,6 +517,13 @@ function migrate_content_set_mappings($form_state, $mcsid) {
     '#title' => t('Weight'),
     '#description' => t('The order in which content sets will be processed and displayed.'),
     '#default_value' => $weight,
+  );
+
+  $form['multiple_separator'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Separator'),
+    '#description' => t('Separator for fields potentially holding multiple values, e.g. taxonomy terms.'),
+    '#default_value' => $multiple_separator,
   );
 
   $form['header'] = array(
@@ -612,6 +620,7 @@ function theme_migrate_content_set_mappings($form) {
   $output .= drupal_render($form['desttype']);
   $output .= drupal_render($form['sourcekey']);
   $output .= drupal_render($form['weight']);
+  $output .= drupal_render($form['multiple_separator']);
 
   if (isset($form['destfield']) && is_array($form['destfield'])) {
     foreach (element_children($form['destfield']) as $destfield) {

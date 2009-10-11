@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #589824 - Set multiple separator per content set
 - #526856 - Mark already-used fields when mapping
 - #547772 - Support for taxonomy synonyms
 - #590768 - Use array_merge instead of += in accumulating errors

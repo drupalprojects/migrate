@@ -24,6 +24,7 @@ function taxonomy_migrate_fields_term($type) {
     'description' => t('Taxonomy: Description'),
     'weight' => t('Taxonomy: Weight'),
     'parent' => t('Taxonomy: Parent'),
+    'synonyms' => t('Taxonomy: Synonyms'),
   );
   return $fields;
 }

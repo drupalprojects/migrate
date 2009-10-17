@@ -32,11 +32,14 @@ function migrate_views_default_views_alter(&$views) {
       continue;
     }
     else {
-      $sql = "SELECT COUNT(*) FROM {tw_tables} WHERE tablename='%s' AND dbconnection='default'";
-      $exists = db_result(db_query($sql, $viewname));
-      if (!$exists) {
+      $sql = "SELECT twtid FROM {tw_tables} WHERE tablename='%s' AND dbconnection='default'";
+      $twtid = db_result(db_query($sql, $viewname));
+      if (!$twtid) {
         continue;
       }
+    }
+    if (function_exists('tw_get_view_name')) {
+      $viewname = tw_get_view_name($twtid);
     }
     $view = $views[$viewname];
     $view->display['default']->display_options['arguments'] = array(

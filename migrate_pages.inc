@@ -416,6 +416,8 @@ function _migrate_content_set_form($form_state) {
   $form['addset']['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),
+    '#required' => TRUE,
+    '#default_value' => 0,
     '#description' => t('The order in which content sets will be processed and displayed.'),
   );
   $form['addset']['add'] = array(

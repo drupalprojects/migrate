@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #610078 - Default weight to 0, and require it
 - #610084 - Use FAPI required property for description
 - #576356 - Documentation improvements, migrate.api.php added
 - #589824 - Set multiple separator per content set

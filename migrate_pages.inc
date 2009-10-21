@@ -378,6 +378,7 @@ function _migrate_content_set_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Description of the content set'),
     '#description' => t('A friendly phrase only used for display.'),
+    '#required' => TRUE,
   );
 
   $form['addset']['contenttype'] = array(
@@ -425,10 +426,6 @@ function _migrate_content_set_form($form_state) {
 }
 
 function _migrate_content_set_validate($form_state) {
-  $description = trim($form_state['values']['description']);
-  if (!$description) {
-    form_set_error('description', t('A description is required.'));
-  }
   $weight = trim($form_state['values']['weight']);
   if (!is_numeric($weight) || (((int)$weight) != $weight)) {
     form_set_error('weight', t('Weight must be an integer value (positive or negative)'));

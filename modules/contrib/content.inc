@@ -27,13 +27,6 @@
  *  The date 'timezone' column expects a full timezone name like 'US/Central',
  *  timezone abbreviations are not unique and will not work.
  *  The date 'offset' column is the plus or minus value in seconds.
- *
- *  @todo
- *  Multiple values are not importing correctly yet -- CCK is creating
- *  three blank values before the valid values, so a fix to CCK is needed.
- *  Once fixed the idea is that multiple values can be imported into any
- *  CCK field that has multiple values enabled by separating the values
- *  with a double pipe (||).
  */
 
 
@@ -89,7 +82,7 @@ function content_migrate_prepare_node(&$node, $tblinfo, $row) {
         else {
           // Explode multiple values to create the $delta and $value for each.
           if ($field['multiple']) {
-            $values = explode('||', $node->$dummy_name);
+            $values = explode($tblinfo->multiple_separator, $node->$dummy_name);
           }
           else {
             $values = array(0 => $node->$dummy_name);

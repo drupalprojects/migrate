@@ -403,8 +403,8 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
     migrate_invoke_all("delete_$contenttype", $row->destid);
     timer_start('clear map/msg');
-    db_query("DELETE FROM {" . $maptable . "} WHERE sourceid=%d", $row->sourceid);
-    db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid=%d AND level=%d",
+    db_query("DELETE FROM {" . $maptable . "} WHERE sourceid='%s'", $row->sourceid);
+    db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid='%s' AND level=%d",
       $row->sourceid, MIGRATE_MESSAGE_INFORMATIONAL);
     timer_stop('clear map/msg');
     $deleted++;

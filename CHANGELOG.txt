@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #625006 - Clear sources with string ids
 - #619250 - Continue migrating remaining content sets when one is busy
 - #620418 - Mail and hostname fields for comments
 - #623030 - Language field for nodes

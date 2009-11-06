@@ -94,7 +94,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
     $edit['sourceview'] = $this->tablename;
     $edit['weight'] = 5;
     $this->drupalPost('admin/content/migrate/content_sets', $edit, t('Add'));
-    $this->assertText(t('A description is required.'), t('Post with no description'));
+    $this->assertText(t('Description of the content set field is required.'), t('Post with no description'));
     $edit['description'] = t('Simple page test');
     $this->drupalPost(NULL, $edit, t('Add'));
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets} WHERE view_name='%s'",

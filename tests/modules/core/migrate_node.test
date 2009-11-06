@@ -3,7 +3,6 @@
 /**
  * @file
  * Tests for node migration
- *
  */
 
 class MigrateNodeTest extends DrupalWebTestCase {
@@ -21,8 +20,41 @@ class MigrateNodeTest extends DrupalWebTestCase {
     parent::setUp('views', 'schema', 'tw', 'migrate');
 
     // Create and login user
-    $migrate_user = $this->drupalCreateUser(array(MIGRATE_ACCESS_ADVANCED));
+    $migrate_user = $this->drupalCreateUser(array('access administration pages',
+      MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED));
     $this->drupalLogin($migrate_user);
+
+    // Create test table
+    $ret = array();
+    $schema = array(
+      'fields' => array(
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'body' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    );
+    $this->tablename = 'migrate_simpletest_node_sample';
+    db_create_table($ret, $this->tablename, $schema);
+    $sql = "INSERT INTO {" . $this->tablename . "} (id, title, body) VALUES(%d, '%s', '%s')";
+    db_query($sql, 893, 'Title 1', 'This is a body');
+    db_query($sql, 1027, 'Title 2', 'This is another body');
+    db_query($sql, 653223, 'Title 3', 'This is yet another body');
+
+    // Creates default view '$tablename'
+    tw_add_tables($this->tablename, TRUE);
   }
 
   function tearDown() {
@@ -30,10 +62,65 @@ class MigrateNodeTest extends DrupalWebTestCase {
   }
 
   /**
-   * Test node migration
+   * Test UI for processing
    */
-  function testNode() {
-    // migrate_save_content_set(), migrate_save_content_mapping(), migrate_delete_content_set(),
-    // migrate_delete_content_mapping()
+  function testNodeProcessing() {
+    // Create content set
+    $edit = array();
+    $edit['description'] = 'Node test';
+    $edit['contenttype'] = 'node/page';
+    $edit['sourceview'] = $this->tablename;
+    $edit['weight'] = 2;
+    $this->drupalPost('admin/content/migrate/content_sets', $edit, t('Add'));
+    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets} WHERE view_name='%s'",
+      $this->tablename));
+    if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
+      $path = parse_url($this->getUrl(), PHP_URL_PATH);
+      if ($this->assertEqual($path, "/admin/content/migrate/content_sets/$mcsid",
+              t('Redirected to content set edit page'))) {
+        // Add mappings to content set
+        $edit = array();
+        $edit['srcfield[title]'] = $this->tablename . '_title';
+        $edit['srcfield[body]'] = $this->tablename . '_body';
+        $this->drupalPost(NULL, $edit, t('Submit changes'));
+        if ($this->assertText(t('Changes saved'), t('Create field mappings'))) {
+          $sql = "SELECT mcmid FROM {migrate_content_mappings}
+                  WHERE mcsid=%d AND destfield='%s'";
+          $mcmid = db_result(db_query($sql, $mcsid, 'title'));
+          if (!$this->assertTrue($mcmid, t('Title mapping saved'))) {
+            return;
+          }
+          $mcmid = db_result(db_query($sql, $mcsid, 'body'));
+          if (!$this->assertTrue($mcmid, t('Body mapping saved'))) {
+            return;
+          }
+          $edit = array();
+          $edit["importing[$mcsid]"] = $mcsid;
+          $this->drupalPost('admin/content/migrate/dashboard', $edit, t('Submit'));
+          if (!$this->assertText('3 items imported in', t('Migration completed successfully'))) {
+            $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                $this->content, $matches);
+            $this->error('Actual messages: ' . $matches[1]);
+            return;
+          }
+
+          $node = node_load(array('title' => 'Title 1'));
+          if (!$this->assertEqual($node->body, 'This is a body', t('Validate first node'))) {
+            $this->error('Actual node: '.print_r($node, TRUE));
+          }
+          $node = node_load(array('title' => 'Title 2'));
+          if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node'))) {
+            $this->error('Actual node: '.print_r($node, TRUE));
+          }
+          $node = node_load(array('title' => 'Title 3'));
+          if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node'))) {
+            $this->error('Actual node: '.print_r($node, TRUE));
+          }
+        }
+      }
+      else {
+        $this->error(t('Post went to page !url', array('!url' => $path)));
+      }
+    }
   }
 }

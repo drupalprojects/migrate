@@ -820,7 +820,7 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
   }
   while ($row = db_fetch_object($result)) {
     $status = migrate_content_process_clear($row->mcsid, $messages, $options);
-    if ($status != MIGRATE_STATUS_SUCCESS) {
+    if ($status != MIGRATE_STATUS_SUCCESS && $status != MIGRATE_STATUS_IN_PROGRESS) {
       break;
     }
     $options['opcount']++;
@@ -833,7 +833,7 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
                       ORDER BY weight");
   while ($row = db_fetch_object($result)) {
     $status = migrate_content_process_import($row->mcsid, $messages, $options);
-    if ($status != MIGRATE_STATUS_SUCCESS) {
+    if ($status != MIGRATE_STATUS_SUCCESS && $status != MIGRATE_STATUS_IN_PROGRESS) {
       break;
     }
     $options['opcount']++;
@@ -1101,7 +1101,8 @@ function migrate_schema_alter(&$schema) {
       db_set_active('default');
       $sourceschema = $inspect[$tablename];
       // If the PK of the content set is defined, make sure we have a mapping table
-      if ($sourcekey = $content_set->sourcekey) {
+      $sourcekey = $content_set->sourcekey;
+      if ($sourcekey) {
         $sourcefield = $sourceschema['fields'][$sourcekey];
         if (!$sourcefield) {
           // strip base table name if views prepended it

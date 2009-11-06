@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #620418 - Mail and hostname fields for comments
 - #623030 - Language field for nodes
 - #614532 - Hard-coded separator for CCK multiple fields
 - #610078 - Default weight to 0, and require it

@@ -30,6 +30,8 @@ function comment_migrate_fields_comment($type) {
     'commentsourceid' => t('Comment: Parent by source id'),
     'pid' => t('Comment: Parent by Drupal cid'),
     'homepage' => t("Comment: Author's website"),
+    'mail' => t("Comment: Author's email"),
+    'hostname' => t("Comment: Author's hostname"),
   );
 
   return $fields;

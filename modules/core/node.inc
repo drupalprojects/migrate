@@ -114,6 +114,7 @@ function node_migrate_fields_node($type) {
   if ($type_info->has_body) {
     $fields['body'] = t('Node: ') . $type_info->body_label;
     $fields['teaser'] = t('Node: Teaser');
+    $fields['teaser_include'] = t('Node: Show summary in full view');
   }
 
   if (module_exists('path') && (user_access('create url aliases') || user_access('administer url aliases'))) {
@@ -266,7 +267,12 @@ function node_migrate_prepare_node(&$node, $tblinfo, $row) {
     else {
       $node->body = '';
     }
-    if ($node->teaser && !$node->body) {
+    // If a teaser and body, and 'show summary in full view' disabled, add in
+    // <!--break--> delimiter.
+    if ($node->teaser && $node->body && !$node->teaser_include) {
+      $node->body = "\n<!--break-->\n" . $node->body;
+    }
+    elseif ($node->teaser && !$node->body) {
       $node->body = $node->teaser;
     }
     elseif ($node->body && !$node->teaser) {

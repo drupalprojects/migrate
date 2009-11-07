@@ -47,7 +47,7 @@ function processSelects(current_element) {
       }      
     });
     sortOptions($(this));
-    addSeperator($(this));
+    addSeparator($(this));
   });
 }
 
@@ -111,12 +111,12 @@ function sortOptions(elem){
   elem.val(selected_value);
 }
 
-function addSeperator(elem) {
-  elem.children().removeClass('migrate-option-seperator');
+function addSeparator(elem) {
+  elem.children().removeClass('migrate-option-separator');
   $.each(elem.children(), function(){
     var first_out = splitNoText($(this).text()) 
     if(first_out.no != ''){
-      $(this).prev().addClass('migrate-option-seperator');
+      $(this).prev().addClass('migrate-option-separator');
       return false;
     }
   });

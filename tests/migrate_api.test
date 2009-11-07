@@ -90,8 +90,8 @@ class MigrateUnitTest extends DrupalWebTestCase {
     if ($this->assertTrue($mcsid, t('Create simple page content set'))) {
       $row = db_fetch_object(db_query("SELECT * FROM {migrate_content_sets} WHERE mcsid=%d", $mcsid));
       if (!$this->assertEqual($row, $content_set, t('Content set data matches'))) {
-        $this->error('row: '.print_r($row, TRUE));
-        $this->error('content_set: '.print_r($content_set, TRUE));
+        $this->error('row: ' . print_r($row, TRUE));
+        $this->error('content_set: ' . print_r($content_set, TRUE));
       }
       $sourceidschema = array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE);
       $maptablename = migrate_map_table_name($mcsid);
@@ -100,7 +100,7 @@ class MigrateUnitTest extends DrupalWebTestCase {
         $mapschema['name'] = $maptablename;
         $info = schema_compare_table($mapschema);
         if (!$this->assertEqual($info['status'], 'same', t('Map table schema matches'))) {
-          $this->error('Comparison returned: '.print_r($info, TRUE));
+          $this->error('Comparison returned: ' . print_r($info, TRUE));
         }
       }
       $msgtablename = migrate_message_table_name($mcsid);
@@ -109,7 +109,7 @@ class MigrateUnitTest extends DrupalWebTestCase {
         $msgschema['name'] = $msgtablename;
         $info = schema_compare_table($msgschema);
         if (!$this->assertEqual($info['status'], 'same', t('Message table schema matches'))) {
-          $this->error('Comparison returned: '.print_r($info, TRUE));
+          $this->error('Comparison returned: ' . print_r($info, TRUE));
         }
       }
     }

@@ -190,15 +190,15 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
 
           $node = node_load(array('title' => 'Title 1'));
           if (!$this->assertEqual($node->body, 'This is a body', t('Validate first node'))) {
-            $this->error('Actual node: '.print_r($node, TRUE));
+            $this->error('Actual node: ' . print_r($node, TRUE));
           }
           $node = node_load(array('title' => 'Title 2'));
           if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node'))) {
-            $this->error('Actual node: '.print_r($node, TRUE));
+            $this->error('Actual node: ' . print_r($node, TRUE));
           }
           $node = node_load(array('title' => 'Title 3'));
           if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node'))) {
-            $this->error('Actual node: '.print_r($node, TRUE));
+            $this->error('Actual node: ' . print_r($node, TRUE));
           }
         }
       }

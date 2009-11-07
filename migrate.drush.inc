@@ -83,7 +83,6 @@ function migrate_drush_command() {
 
 /**
  * A simplified version of the Process (dashboard) page
- *
  */
 function drush_migrate_status() {
   $table = array();
@@ -128,7 +127,6 @@ function drush_migrate_status() {
 
 /**
  * Process all enabled operations
- *
  */
 function drush_migrate_all() {
   drush_migrate_set_verbose();
@@ -249,9 +247,11 @@ function drush_migrate_import($content_set) {
   }
 }
 
-// Set the verbose context if 'feedback' is requested.
+/**
+ * Set the verbose context if 'feedback' is requested.
+ */
 function drush_migrate_set_verbose() {
   if (drush_get_option('feedback')) {
     drush_set_context('DRUSH_VERBOSE',  TRUE);
-  } 
+  }
 }

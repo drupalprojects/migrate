@@ -215,7 +215,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
         !$this->assertText("done importing 'Users'") ||
         !$this->assertText("done importing 'Comments")) {
       $result = preg_match('|<div class="messages status">(.*?)</div>|si',
-                 $this->content, $matches);
+                           $this->content, $matches);
       $this->error('Actual messages: ' . $matches[1]);
     }
 
@@ -252,7 +252,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
         !$this->assertText("done clearing 'Comments") ||
         !$this->assertNoText("done importing 'Comments'")) {
       $result = preg_match('|<div class="messages status">(.*?)</div>|si',
-                 $this->content, $matches);
+                           $this->content, $matches);
       $this->error('Actual messages: ' . $matches[1]);
     }
 
@@ -283,7 +283,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
     if (!$this->assertText('4 items imported') ||
         !$this->assertText("done importing 'Comments")) {
       $result = preg_match('|<div class="messages status">(.*?)</div>|si',
-                 $this->content, $matches);
+                           $this->content, $matches);
       $this->error('Actual messages: ' . $matches[1]);
     }
 

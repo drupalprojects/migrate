@@ -9,6 +9,9 @@ define('MIGRATE_COLS_NONEMPTY', 3);
  * @file
  */
 
+/**
+ * Menu callback for migrate front page
+ */
 function migrate_front() {
   migrate_check_advanced_help();
 
@@ -16,10 +19,16 @@ function migrate_front() {
   return system_admin_menu_block_page();
 }
 
+/**
+ * Menu callback for dashboard page
+ */
 function migrate_dashboard() {
   return drupal_get_form('_migrate_dashboard_form');
 }
 
+/**
+ * Form definition for dashboard page
+ */
 function _migrate_dashboard_form($form_state) {
   $header = array(
     array('data' => t('Clear')),
@@ -216,6 +225,9 @@ function _migrate_dashboard_form($form_state) {
   return $form;
 }
 
+/**
+ * Theme function for dashboard page
+ */
 function theme_migrate_dashboard($form) {
   $output = drupal_render($form['description']);
   if (isset($form['data']) && is_array($form['data'])) {
@@ -289,7 +301,7 @@ function _migrate_dashboard_form_submit($form, &$form_state) {
     variable_set('migrate_limit', $form_state['values']['limit']);
     $batch = array(
       'operations' => array(
-        array('migrate_content_process_all_batch', array($started, $form_state['values']['limit'],
+        array('migrate_content_process_all_batch', array($form_state['values']['limit'],
           trim($form_state['values']['idlist'])))),
       'title' => t('Migration processing'),
       'file' => drupal_get_path('module', 'migrate') . '/migrate_pages.inc',
@@ -307,8 +319,11 @@ function _migrate_dashboard_form_submit($form, &$form_state) {
  * Batch API finished callback - report results
  *
  * @param $success
+ *  Ignored
  * @param $results
+ *  List of results from batch processing
  * @param $operations
+ *  Ignored
  */
 function _migrate_content_process_finish($success, $results, $operations) {
   foreach ($results as $result) {
@@ -317,14 +332,15 @@ function _migrate_content_process_finish($success, $results, $operations) {
 }
 
 /**
- * Enter description here...
- *
- * @return unknown
+ * Menu callback for content sets page
  */
 function migrate_content_sets() {
   return (drupal_get_form('_migrate_content_set_form'));
 }
 
+/**
+ * Form definition for content sets page
+ */
 function _migrate_content_set_form($form_state) {
   // Fetch information on available destinations
   $desttypes = migrate_invoke_all('types');
@@ -434,7 +450,7 @@ function _migrate_content_set_form($form_state) {
 }
 
 /**
- * Implementation of hook_validate().
+ * Common validation function for content sets
  */
 function _migrate_content_set_validate($form_state) {
   $weight = trim($form_state['values']['weight']);
@@ -465,10 +481,16 @@ function _migrate_content_set_validate($form_state) {
   }
 }
 
+/**
+ * Implementation of hook_validate().
+ */
 function _migrate_content_set_form_validate($form, $form_state) {
   _migrate_content_set_validate($form_state);
 }
 
+/**
+ * Implementation of hook_submit().
+ */
 function _migrate_content_set_form_submit($form, &$form_state) {
   $content_set['view_name'] = $form_state['values']['view_name'];
   $content_set['view_args'] = trim($form_state['values']['view_args']);
@@ -485,7 +507,7 @@ function _migrate_content_set_form_submit($form, &$form_state) {
 }
 
 /**
- * Menu callback function.
+ * Menu callback function for content set edit page.
  */
 function migrate_content_set_mappings($form_state, $mcsid) {
   $row = db_fetch_object(db_query("SELECT * FROM {migrate_content_sets}
@@ -652,6 +674,9 @@ function migrate_content_set_mappings($form_state, $mcsid) {
   return $form;
 }
 
+/**
+ * Theme function for content set edit page.
+ */
 function theme_migrate_content_set_mappings($form) {
   $output = drupal_render($form['description']);
   $output .= drupal_render($form['show_view_name']);
@@ -687,6 +712,9 @@ function theme_migrate_content_set_mappings($form) {
   return $output;
 }
 
+/**
+ * Implementation of hook_validate().
+ */
 function migrate_content_set_mappings_validate($form, $form_state) {
   _migrate_content_set_validate($form_state);
 }
@@ -734,10 +762,16 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Menu callback for tools page.
+ */
 function migrate_tools() {
   return drupal_get_form('_migrate_tools_form');
 }
 
+/**
+ * Form definition for tools page
+ */
 function _migrate_tools_form($form_state) {
   $header = array(
     array('data' => t('Clearing')),
@@ -775,6 +809,9 @@ function _migrate_tools_form($form_state) {
   return $form;
 }
 
+/**
+ * Theme function for tools page.
+ */
 function theme_migrate_tools($form) {
   $output = drupal_render($form['description']);
   if (isset($form['data']) && is_array($form['data'])) {
@@ -822,10 +859,16 @@ function _migrate_tools_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Menu callback for settings page.
+ */
 function migrate_settings() {
   return drupal_get_form('_migrate_settings_form');
 }
 
+/**
+ * Form definition for settings page.
+ */
 function _migrate_settings_form($form_state) {
   $form['enable_cron'] = array(
     '#type' => 'checkbox',
@@ -877,6 +920,9 @@ function _migrate_settings_form($form_state) {
   return $form;
 }
 
+/**
+ * Theme function for settings form.
+ */
 function theme_migrate_settings($form) {
   $output = '';
   $output .= drupal_render($form['enable_cron']);

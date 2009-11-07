@@ -31,7 +31,7 @@
 
 
 /**
- * Implementation of hook_migrate_fields().
+ * Implementation of hook_migrate_fields_node().
  */
 function content_migrate_fields_node($type) {
   $types = (array) content_types();
@@ -40,7 +40,7 @@ function content_migrate_fields_node($type) {
   if (isset($types[$type])) {
     $content_type = $types[$type];
     foreach ($content_type['fields'] as $field) {
-      // filefield has own impementation of hook_migrate_fields
+      // filefield has own implementation of hook_migrate_fields
       if ($field['type'] != 'filefield') {
         // Create a potential input field for each field column by creating a dummy name for each column.
         $db_info = content_database_info($field);
@@ -55,7 +55,7 @@ function content_migrate_fields_node($type) {
 }
 
 /**
- * Implementation of hook_migrate_prepare().
+ * Implementation of hook_migrate_prepare_node().
  */
 function content_migrate_prepare_node(&$node, $tblinfo, $row) {
   static $types, $fieldinfo = array();

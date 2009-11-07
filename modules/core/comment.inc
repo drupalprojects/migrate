@@ -37,6 +37,9 @@ function comment_migrate_fields_comment($type) {
   return $fields;
 }
 
+/**
+ * Implementation of hook_migrate_delete_comment().
+ */
 function comment_migrate_delete_comment($cid) {
   $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
   include_once($path);
@@ -53,7 +56,7 @@ function comment_migrate_delete_comment($cid) {
 }
 
 /**
- * Implementation of hook_migrate_import_<type>().
+ * Implementation of hook_migrate_import_comment().
  */
 function comment_migrate_import_comment($tblinfo, $row) {
   $comment = array();
@@ -141,6 +144,9 @@ function comment_migrate_import_comment($tblinfo, $row) {
   return $errors;
 }
 
+/**
+ * Implementation of hook_migrate_complete_comment().
+ */
 function comment_migrate_complete_comment(&$comment, $tblinfo, $row) {
   $errors = array();
   if ($comment['cid']) {
@@ -159,4 +165,3 @@ function comment_migrate_complete_comment(&$comment, $tblinfo, $row) {
   }
   return $errors;
 }
-

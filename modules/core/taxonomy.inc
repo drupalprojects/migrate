@@ -15,7 +15,7 @@ function taxonomy_migrate_types() {
 }
 
 /**
- * Implementation of hook_migrate_fields_taxonomy().
+ * Implementation of hook_migrate_fields_term().
  */
 function taxonomy_migrate_fields_term($type) {
   $fields = array(
@@ -168,7 +168,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
 }
 
 /**
- * Implementation of hook_migrate_prepare().
+ * Implementation of hook_migrate_prepare_node().
  */
 function taxonomy_migrate_prepare_node(&$node, $tblinfo, $row) {
   static $vocabs;
@@ -282,16 +282,25 @@ function taxonomy_migrate_prepare_node(&$node, $tblinfo, $row) {
   return $errors;
 }
 
+/**
+ * Implementation of hook_migrate_xlat_$contenttype().
+ */
 function taxonomy_migrate_xlat_term($tid) {
   return "taxonomy/term/$tid";
 }
 
 /**
  * Return a tid for a term (text).
- *
- * Returns 0 if the term will be added.
- * Returns $tid > 0 if the term exists in this vocabulary.
- * Returns -1 if the term does not exist and will not be added.
+ * @param $vocab
+ *  Vocabulary object
+ * @param $text
+ *  Name of term searched for
+ * @param $handler
+ *  'add' to automatically add the term to the vocabulary, 'warn' to
+ *  simply test for existence
+ * @return
+ *  The tid of the existing or added term, or -1 if $handler is 'warn'
+ *  and the term does not exist.
  */
 function _migrate_taxonomy_get_term($vocab, $text, $handler) {
   static $missing_terms = array();

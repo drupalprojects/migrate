@@ -26,6 +26,9 @@ function content_profile_migrate_fields_user($type) {
   return $fields;
 }
 
+/**
+ * Implementation of hook_migrate_complete_user().
+ */
 function content_profile_migrate_complete_user(&$account, $tblinfo, $row) {
   // Initialize all related profile nodes
   $cp_types = content_profile_get_types();

@@ -6,6 +6,9 @@
  * Implementation of node destination handling
  */
 
+/**
+ * Implementation of hook_migrate_types().
+ */
 function node_migrate_types() {
   static $nodetypes = NULL;
 
@@ -19,6 +22,9 @@ function node_migrate_types() {
   return $nodetypes;
 }
 
+/**
+ * Implementation of hook_migrate_delete_node().
+ */
 function node_migrate_delete_node($nid) {
   // If we've created associations in {upload} between imported nodes
   // and files directly copied to the Drupal files directory (e.g. using
@@ -32,6 +38,9 @@ function node_migrate_delete_node($nid) {
   node_delete($nid);
 }
 
+/**
+ * Implementation of hook_migrate_import_node().
+ */
 function node_migrate_import_node($tblinfo, $row) {
   $node = (object)array();
   $node->type = $tblinfo->desttype;
@@ -82,12 +91,15 @@ function node_migrate_import_node($tblinfo, $row) {
   return $errors;
 }
 
+/**
+ * Implementation of hook_migrate_xlat_node().
+ */
 function node_migrate_xlat_node($nid) {
   return "node/$nid";
 }
 
 /**
- * Implementation of hook_migrate_fields().
+ * Implementation of hook_migrate_fields_node().
  */
 function node_migrate_fields_node($type) {
   $fields = array();
@@ -125,7 +137,7 @@ function node_migrate_fields_node($type) {
 }
 
 /**
- * Implementation of hook_migrate_prepare().
+ * Implementation of hook_migrate_prepare_node().
  */
 function node_migrate_prepare_node(&$node, $tblinfo, $row) {
   global $user;

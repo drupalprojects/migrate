@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_migrate_prepare().
+ * Implementation of hook_migrate_prepare_node().
  */
 function filefield_migrate_prepare_node(&$node, $tblinfo, $row) {
   $errors = array();
@@ -66,7 +66,7 @@ function _migrate_widget_files_directory($field) {
 }
 
 /**
- * Implementation of hook_migrate_fields().
+ * Implementation of hook_migrate_fields_node().
  */
 function filefield_migrate_fields_node($type) {
   $types = (array) content_types();

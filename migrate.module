@@ -22,7 +22,13 @@ define('MIGRATE_STATUS_IN_PROGRESS', 5);
  */
 
 /**
- * Call a migrate hook
+ * Call a migrate hook. Like module_invoke_all, but gives modules a chance
+ * to do one-time initialization before any of their hooks are called, and
+ * adds "migrate" to the hook name.
+ * @param $hook
+ *  Hook to invoke (e.g., 'types', 'fields_node', etc.)
+ * @return
+ *  Merged array of results.
  */
 function migrate_invoke_all($hook) {
   // Let modules do any one-time initialization (e.g., including migration support files)
@@ -56,10 +62,15 @@ function migrate_invoke_all($hook) {
  * reference.
  *
  * @param $hook
+ *  Hook to invoke (e.g., 'types', 'fields_node', etc.)
  * @param $object
+ *  Destination object being built - passed by reference, so hooks can modify it
  * @param $tblinfo
+ *  Metadata about the content set
  * @param $row
+ *  The raw source row.
  * @return
+ *  Merged array of results.
  */
 function migrate_destination_invoke_all($hook, &$object, $tblinfo, $row) {
   // Let modules do any one-time initialization (e.g., including migration support files)
@@ -226,6 +237,15 @@ function migrate_save_content_set(&$content_set, $options = array()) {
   }
 }
 
+/**
+ * Save a new or updated content mapping
+ *
+ * @param $mapping
+ *  An object representing the mapping. This is passed by reference (so
+ *  when adding a new mapping the ID can be set)
+ * @return
+ *  The ID of the mapping that was saved, or NULL if nothing was saved
+ */
 function migrate_save_content_mapping(&$mapping) {
   if ($mapping->mcmid) {
     drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
@@ -236,6 +256,12 @@ function migrate_save_content_mapping(&$mapping) {
   return $mapping->mcmid;
 }
 
+/**
+ * Delete the specified content set, including map and message tables.
+ *
+ * @param $mcsid
+ *  Unique identifier of the content set to delete.
+ */
 function migrate_delete_content_set($mcsid) {
   // First, remove the map and message tables from the Table Wizard, and drop them
   $ret = array();
@@ -254,6 +280,12 @@ function migrate_delete_content_set($mcsid) {
   db_query($sql, $mcsid);
 }
 
+/**
+ * Delete the specified content mapping.
+ *
+ * @param $mcmid
+ *  Unique identifier of the mapping to delete.
+ */
 function migrate_delete_content_mapping($mcmid) {
   $sql = "DELETE FROM {migrate_content_mappings} WHERE mcmid=%d";
   db_query($sql, $mcmid);
@@ -719,7 +751,19 @@ function migrate_content_process_all_action(&$dummy, $action_context, $a1, $a2) 
 }
  */
 
-function migrate_content_process_all_batch($starttime, $limit, $idlist, &$context) {
+/**
+ * Process all enabled migration processes in a browser, using the Batch API
+ * to break it into manageable chunks.
+ *
+ * @param $limit
+ *  Maximum number of items to process
+ * @param $idlist
+ *  Comma-separated list of source IDs to process, instead of proceeding through
+ *  all unmigrated rows
+ * @param $context
+ *  Batch API context structure
+ */
+function migrate_content_process_all_batch($limit, $idlist, &$context) {
   $messages = array();
 
   // A zero max_execution_time means no limit - but let's set a reasonable
@@ -846,6 +890,21 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
   return $status;
 }
 
+/**
+ * Generate a progress message
+ * @param $starttime
+ *  microtime() when this piece of work began
+ * @param $numitems
+ *  Number of items that were processed
+ * @param $description
+ *  Name (description) of the content set being processed
+ * @param $import
+ *  TRUE for an import process, FALSE for a clearing process
+ * @param $status
+ *  Status of the work
+ * @return
+ *  Formatted message
+ */
 function _migrate_progress_message($starttime, $numitems, $description, $import = TRUE, $status = MIGRATE_STATUS_SUCCESS) {
   $time = (microtime(TRUE) - $starttime);
   if ($time > 0) {
@@ -1071,7 +1130,6 @@ function migrate_menu() {
 
 /**
  * Implementation of hook_schema_alter().
- * @param $schema
  */
 function migrate_schema_alter(&$schema) {
   // Check for table existence - at install time, hook_schema_alter() may be called
@@ -1136,9 +1194,13 @@ function migrate_schema_alter(&$schema) {
  * http://example.com/issues/news/[OldID].html, use this rule:
  *
  * RewriteRule ^issues/news/([0-9]+).html$ /migrate/xlat/node/$1 [L]
+ *
+ * @param $contenttype
+ *  Content type to translate (e.g., 'node', 'user', etc.)
+ * @param $oldid
+ *  Primary key from input view
  */
 function migrate_xlat($contenttype, $oldid) {
-  $uri = '';
   if ($contenttype && $oldid) {
     $newid = _migrate_xlat_get_new_id($contenttype, $oldid);
     if ($newid) {
@@ -1153,6 +1215,13 @@ function migrate_xlat($contenttype, $oldid) {
  * Drupal-side ID (nid, uid, etc.)
  * Note that the result may be ambiguous - for example, if you are importing
  * nodes from different content sets, they might have overlapping source IDs.
+ *
+ * @param $contenttype
+ *  Content type to translate (e.g., 'node', 'user', etc.)
+ * @param $oldid
+ *  Primary key from input view
+ * @return
+ *  Drupal-side ID of the object
  */
 function _migrate_xlat_get_new_id($contenttype, $oldid) {
   $result = db_query("SELECT mcsid
@@ -1177,8 +1246,6 @@ function _migrate_xlat_get_new_id($contenttype, $oldid) {
 
 /**
  * Implementation of hook_theme().
- *
- * Registers all theme functions used in this module.
  */
 function migrate_theme() {
   return array(
@@ -1202,23 +1269,35 @@ function migrate_theme() {
   );
 }
 
+/**
+ * Determine the name of the map table for this content set
+ * @param $mcsid
+ *  Unique identifier of the content set
+ * @return
+ *  The name of the map table
+ */
 function migrate_map_table_name($mcsid) {
   return "migrate_map_$mcsid";
 }
 
+/**
+ * Determine the name of the message table for this content set
+ * @param $mcsid
+ *  Unique identifier of the content set
+ * @return
+ *  The name of the message table
+ */
 function migrate_message_table_name($mcsid) {
   return "migrate_msgs_$mcsid";
 }
 
-// These functions are deprecated - use the versions above
-function _migrate_map_table_name($mcsid) {
-  return migrate_map_table_name($mcsid);
-}
-
-function _migrate_message_table_name($mcsid) {
-  return migrate_message_table_name($mcsid);
-}
-
+/**
+ * Generate a map table schema record, given the source PK definition
+ * @param $sourcefield
+ *  Schema definition for the content set source's PK
+ * @return
+ *  Schema structure for a map table
+ */
 function _migrate_map_table_schema($sourcefield) {
   $schema = array(
     'description' => t('Mappings from source key to destination key'),
@@ -1239,6 +1318,13 @@ function _migrate_map_table_schema($sourcefield) {
   return $schema;
 }
 
+/**
+ * Generate a message table schema record, given the source PK definition
+ * @param $sourcefield
+ *  Schema definition for the content set source's PK
+ * @return
+ *  Schema structure for a message table
+ */
 function _migrate_message_table_schema($sourcefield) {
   $schema = array(
     'description' => t('Import errors'),
@@ -1269,6 +1355,9 @@ function _migrate_message_table_schema($sourcefield) {
   return $schema;
 }
 
+/**
+ * Implementation of hook_views_api().
+ */
 function migrate_views_api() {
   return array('api' => '2.0');
 }

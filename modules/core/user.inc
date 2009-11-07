@@ -6,12 +6,17 @@
  * Implementation of user destination handling
  */
 
-
+/**
+ * Implementation of hook_migrate_types().
+ */
 function user_migrate_types() {
   $types = array('user' => t('User'), 'role' => t('Role'));
   return $types;
 }
 
+/**
+ * Implementation of hook_migrate_fields_user().
+ */
 function user_migrate_fields_user($type) {
   $fields = array(
     'name' => t('User: Username'),
@@ -26,12 +31,18 @@ function user_migrate_fields_user($type) {
   return $fields;
 }
 
+/**
+ * Implementation of hook_migrate_delete_user().
+ */
 function user_migrate_delete_user($uid) {
   timer_start('user_delete');
   user_delete(array(), $uid);
   timer_stop('user_delete');
 }
 
+/**
+ * Implementation of hook_migrate_import_user().
+ */
 function user_migrate_import_user($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
@@ -124,10 +135,16 @@ function user_migrate_import_user($tblinfo, $row) {
   return $errors;
 }
 
+/**
+ * Implementation of hook_migrate_xlat_user().
+ */
 function user_migrate_xlat_user($uid) {
   return "user/$uid";
 }
 
+/**
+ * Implementation of hook_migrate_fields_role().
+ */
 function user_migrate_fields_role($type) {
   $fields = array(
     'name' => t('Role name'),
@@ -136,6 +153,9 @@ function user_migrate_fields_role($type) {
   return $fields;
 }
 
+/**
+ * Implementation of hook_migrate_delete_role().
+ */
 function user_migrate_delete_role($rid) {
   timer_start('role_delete');
 
@@ -146,6 +166,9 @@ function user_migrate_delete_role($rid) {
   timer_stop('role_delete');
 }
 
+/**
+ * Implementation of hook_migrate_import_role().
+ */
 function user_migrate_import_role($tblinfo, $row) {
   $errors = array();
   $new_role = array();

@@ -17,7 +17,9 @@ class MigrateContentProfileTest extends DrupalWebTestCase {
 
   function setUp() {
     // Somehow, we're running in E_STRICT, and Views generates notices.
-    error_reporting(E_ALL & ~E_NOTICE);
+    // Also, with PHP 5.3 deprecated notices can get in the way
+    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+
     parent::setUp('views', 'schema', 'tw', 'migrate', 'comment', 'content', 'content_profile');
 
     // Create and login user

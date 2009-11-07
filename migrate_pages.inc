@@ -35,7 +35,7 @@ function _migrate_dashboard_form($form_state) {
   $form['header'] = array('#type' => 'value', '#value' => $header);
   $sql = "SELECT *
           FROM {migrate_content_sets}
-          ORDER BY weight, contenttype, view_name";
+          ORDER BY weight, contenttype, view_name, view_args";
   $result = db_query($sql);
 
   $clearing = array();
@@ -73,7 +73,7 @@ function _migrate_dashboard_form($form_state) {
 
       // If not caching counts, override the saved count with a fresh count
       if (!variable_get('migrate_cache_counts', 0)) {
-        $row->rowcount = _migrate_get_view_count($view);
+        $row->rowcount = _migrate_get_view_count($view, $row->view_args);
       }
 
       $unimported = $row->rowcount - $imported;
@@ -333,6 +333,7 @@ function _migrate_content_set_form($form_state) {
     array('data' => t('Description'), 'field' => 'description'),
     array('data' => t('Destination'), 'field' => 'contenttype'),
     array('data' => t('Source view'), 'field' => 'view_name'),
+    array('data' => t('View args'), 'field' => 'view_args'),
     array('data' => t('Weight'), 'field' => 'weight', 'sort' => 'asc'),
   );
 
@@ -340,7 +341,6 @@ function _migrate_content_set_form($form_state) {
           FROM {migrate_content_sets} ";
   $sql .= tablesort_sql($header);
   $result = db_query($sql);
-  $used_views = array();
   while ($row = db_fetch_object($result)) {
     if ($row->desttype) {
       $destination = $desttypes[$row->contenttype . '/' . $row->desttype];
@@ -354,11 +354,11 @@ function _migrate_content_set_form($form_state) {
           array('html' => TRUE)),
         $destination,
         l($row->view_name, 'admin/build/views/edit/' . $row->view_name),
+        $row->view_args,
         $row->weight,
       ),
       'class' => "migrate-content-sets-tr",
     );
-    $used_views[$row->view_name] = $row->view_name;
   }
 
   if (!isset($rows)) {
@@ -390,29 +390,35 @@ function _migrate_content_set_form($form_state) {
 
   $views = views_get_all_views();
   foreach ($views as $name => $view) {
-    if (!isset($used_views[$name])) {
-      if ($view->tag) {
-        $options[$name] = $view->tag . ': ' . $name;
+    if ($view->tag) {
+      $options[$name] = $view->tag . ': ' . $name;
+    }
+    else {
+      $options[$name] = $name;
+    }
+    if ($view->description) {
+      if (drupal_strlen($view->description) > 60) {
+        $view->description = drupal_substr($view->description, 0, 57) . '...';
       }
-      else {
-        $options[$name] = $name;
-      }
-      if ($view->description) {
-        if (drupal_strlen($view->description) > 60) {
-          $view->description = drupal_substr($view->description, 0, 57) . '...';
-        }
-        $options[$name] .= " ($view->description)";
-      }
+      $options[$name] .= " ($view->description)";
     }
   }
   asort($options);
-  $form['addset']['sourceview'] = array(
+  $form['addset']['view_name'] = array(
     '#type' => 'select',
     '#title' => t('Source view from which to import content'),
     '#options' => $options,
     '#description' => t('This View defines the records which are to be migrated.'),
   );
 
+  $form['addset']['view_args'] = array(
+    '#type' => 'textfield',
+    '#title' => t('View arguments'),
+    '#description' => t('Arguments to apply to the view when processing,
+      separated with a / as though they were a URL path.'),
+    '#maxlength' => 255,
+    '#size' => 30,
+  );
   $form['addset']['weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Weight'),
@@ -427,10 +433,35 @@ function _migrate_content_set_form($form_state) {
   return $form;
 }
 
+/**
+ * Implementation of hook_validate().
+ */
 function _migrate_content_set_validate($form_state) {
   $weight = trim($form_state['values']['weight']);
   if (!is_numeric($weight) || (((int)$weight) != $weight)) {
     form_set_error('weight', t('Weight must be an integer value (positive or negative)'));
+  }
+  $view_name = $form_state['values']['view_name'];
+  $view_args = trim($form_state['values']['view_args']);
+  if (isset($form_state['values']['mcsid'])) {
+    $sql = "SELECT mcsid FROM {migrate_content_sets}
+            WHERE view_name='%s' AND view_args='%s' AND mcsid<>%d";
+    $mcsid = db_result(db_query($sql, $view_name, $view_args, $form_state['values']['mcsid']));
+  }
+  else {
+    $sql = "SELECT mcsid FROM {migrate_content_sets}
+            WHERE view_name='%s' AND view_args='%s'";
+    $mcsid = db_result(db_query($sql, $view_name, $view_args));
+  }
+  if ($mcsid) {
+    if ($view_args) {
+      form_set_error('view_name', t('There is already a content set with this
+        combination of source view and view arguments.'));
+    }
+    else {
+      form_set_error('view_name', t('There is already a content set with this
+        source view and no view arguments.'));
+    }
   }
 }
 
@@ -439,7 +470,8 @@ function _migrate_content_set_form_validate($form, $form_state) {
 }
 
 function _migrate_content_set_form_submit($form, &$form_state) {
-  $content_set['view_name'] = $form_state['values']['sourceview'];
+  $content_set['view_name'] = $form_state['values']['view_name'];
+  $content_set['view_args'] = trim($form_state['values']['view_args']);
   $content_set['description'] = $form_state['values']['description'];
   $destination = explode('/', $form_state['values']['contenttype']);
   $content_set['contenttype'] = $destination[0];
@@ -447,7 +479,6 @@ function _migrate_content_set_form_submit($form, &$form_state) {
     $content_set['desttype'] = $destination[1];
   }
   $content_set['weight'] = $form_state['values']['weight'];
-
   $mcsid = migrate_save_content_set($content_set);
   // Go straight to the mapping form
   $form_state['redirect'] = "admin/content/migrate/content_sets/$mcsid";
@@ -462,6 +493,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
                                   $mcsid));
   $desttype = $row->desttype;
   $view_name = $row->view_name;
+  $view_args = $row->view_args;
   $sourcekey = $row->sourcekey;
   $description = $row->description;
   $contenttype = $row->contenttype;
@@ -487,6 +519,14 @@ function migrate_content_set_mappings($form_state, $mcsid) {
     '#value' => t('<strong>Source view:</strong> ') . l($view_name, 'admin/build/views/edit/' . $view_name),
     '#suffix' => '</div>',
   );
+  $form['view_args'] = array(
+    '#type' => 'textfield',
+    '#title' => t('View arguments'),
+    '#description' => t('Arguments to apply to the view when processing,
+      separated with a / as though they were a URL path.'),
+    '#default_value' => $view_args,
+  );
+
   $form['view_name'] = array(
     '#type' => 'value',
     '#value' => $view_name,
@@ -615,6 +655,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
 function theme_migrate_content_set_mappings($form) {
   $output = drupal_render($form['description']);
   $output .= drupal_render($form['show_view_name']);
+  $output .= drupal_render($form['view_args']);
   $output .= drupal_render($form['show_contenttype']);
   $output .= drupal_render($form['desttype']);
   $output .= drupal_render($form['sourcekey']);
@@ -858,10 +899,10 @@ function _migrate_settings_form_submit($form, &$form_state) {
   $original_cache = variable_get('migrate_cache_counts', 0);
   variable_set('migrate_cache_counts', $values['cache_counts']);
   if (isset($values['refresh_counts']) || ($values['cache_counts'] && !$original_cache)) {
-    $sql = "SELECT mcsid,view_name FROM {migrate_content_sets}";
+    $sql = "SELECT mcsid,view_name,view_args FROM {migrate_content_sets}";
     $result = db_query($sql);
     while ($row = db_fetch_object($result)) {
-      $rowcount = _migrate_get_view_count($row->view_name);
+      $rowcount = _migrate_get_view_count($row->view_name, $row->view_args);
       $sql = "UPDATE {migrate_content_sets}
               SET rowcount=%d WHERE mcsid=%d";
       db_query($sql, $rowcount, $row->mcsid);

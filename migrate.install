@@ -23,6 +23,12 @@ function migrate_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
+      'view_args' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'sourcekey' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -92,7 +98,7 @@ function migrate_schema() {
       ),
     ),
     'primary key' => array('mcsid'),
-    'unique keys' => array(
+    'indexes' => array(
       'view_name' => array('view_name'),
     ),
   );
@@ -384,5 +390,19 @@ function migrate_update_6007() {
   $ret = array();
   db_add_field($ret, 'migrate_content_sets', 'multiple_separator',
     array('type' => 'char', 'length' => 1, 'not null' => TRUE, 'default' => ','));
+  return $ret;
+}
+
+// Add view_args field
+function migrate_update_6008() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'view_args',
+    array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  // Ideally we'd want a unique key on view_name,view_args. However, MySQL
+  // will complain that the key is too long (if the table has UTF8 encoding).
+  // It's up to the code to enforce uniqueness.
+  db_drop_unique_key($ret, 'migrate_content_sets', 'view_name');
+  db_add_index($ret, 'migrate_content_sets', 'view_name',
+    array('view_name'));
   return $ret;
 }

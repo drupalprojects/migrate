@@ -345,7 +345,6 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
     drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
   }
   $desttype = $tblinfo->desttype;
-  $view_name = $tblinfo->view_name;
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
 
@@ -487,6 +486,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   }
   $desttype = $tblinfo->desttype;
   $view_name = $tblinfo->view_name;
+  $view_args = $tblinfo->view_args;
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
 
@@ -522,6 +522,10 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     $messages[] = t('View !view does not exist - either (re)create this view, or
       remove the content set using it.', array('!view' => $view_name));
     return MIGRATE_STATUS_FAILURE;
+  }
+
+  if ($view_args) {
+    $view->set_arguments(explode('/', $view_args));
   }
   $view->build();
 
@@ -1325,7 +1329,16 @@ function _migrate_valid_date($date) {
   return $time;
 }
 
-function _migrate_get_view_count($view) {
+/**
+ *  Get the row count for a view, possibly filtered by arguments
+ * @param $view
+ *  Name of the view to query
+ * @param $args
+ *  Optional arguments to the view, separated by '/'
+ * @return
+ *  Number of rows in the view.
+ */
+function _migrate_get_view_count($view, $args = NULL) {
   if (is_string($view)) {
     $view = views_get_view($view);
   }
@@ -1333,6 +1346,9 @@ function _migrate_get_view_count($view) {
   // @TODO: Find way to execute ONLY count query
   $view->pager['items_per_page'] = 1;
   $view->get_total_rows = TRUE;
+  if ($args) {
+    $view->set_arguments(explode('/', $args));
+  }
   $view->execute();
   return $view->total_rows;
 }

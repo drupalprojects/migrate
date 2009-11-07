@@ -71,7 +71,7 @@ class MigrateNodeTest extends DrupalWebTestCase {
     $edit = array();
     $edit['description'] = 'Node test';
     $edit['contenttype'] = 'node/page';
-    $edit['sourceview'] = $this->tablename;
+    $edit['view_name'] = $this->tablename;
     $edit['weight'] = 2;
     $this->drupalPost('admin/content/migrate/content_sets', $edit, t('Add'));
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets} WHERE view_name='%s'",

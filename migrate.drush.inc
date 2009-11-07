@@ -90,7 +90,7 @@ function drush_migrate_status() {
   $table[] = array(dt('Status'), dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'));
   $sql = "SELECT *
           FROM {migrate_content_sets}
-          ORDER BY weight, contenttype, view_name";
+          ORDER BY weight, contenttype, view_name, view_args";
   $result = db_query($sql);
   while ($row = db_fetch_object($result)) {
     if ($row->clearing) {
@@ -115,7 +115,7 @@ function drush_migrate_status() {
     $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
     // If not caching counts, override the saved count with a fresh count
     if (!variable_get('migrate_cache_counts', 0)) {
-      $total = _migrate_get_view_count($view);
+      $total = _migrate_get_view_count($view, $row->view_args);
     }
     else {
       $total = $row->rowcount;

@@ -1136,6 +1136,7 @@ function migrate_schema_alter(&$schema) {
   // before our install hook.
   if (db_table_exists('migrate_content_sets')) {
     $result = db_query("SELECT * FROM {migrate_content_sets}");
+    static $inspect = array();
     while ($content_set = db_fetch_object($result)) {
       $maptablename = migrate_map_table_name($content_set->mcsid);
       $msgtablename = migrate_message_table_name($content_set->mcsid);
@@ -1158,10 +1159,12 @@ function migrate_schema_alter(&$schema) {
         $tabledb = 'default';
       }
       $tablename = $view->base_table;
-      db_set_active($tabledb);
-      $inspect = schema_invoke('inspect');
-      db_set_active('default');
-      $sourceschema = $inspect[$tablename];
+      if (!isset($inspect[$tabledb])) {
+        db_set_active($tabledb);
+        $inspect[$tabledb] = schema_invoke('inspect');
+        db_set_active('default');
+      }
+      $sourceschema = $inspect[$tabledb][$tablename];
       // If the PK of the content set is defined, make sure we have a mapping table
       $sourcekey = $content_set->sourcekey;
       if ($sourcekey) {

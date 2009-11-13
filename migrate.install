@@ -177,7 +177,9 @@ function migrate_uninstall() {
   drupal_uninstall_schema('migrate');
 }
 
-// Refactoring of map and message tables
+/*
+ * Refactoring of map and message tables
+ */ 
 function migrate_update_6000() {
   $ret = array();
 
@@ -334,7 +336,9 @@ function migrate_update_6003() {
   return array();
 }
 
-// Refactoring of map and message table names
+/*
+ * Refactoring of map and message table names
+ */
 function migrate_update_6004() {
   $ret = array();
 
@@ -367,7 +371,10 @@ function migrate_update_6004() {
   return $ret;
 }
 
-// Add semaphore field
+
+/*
+ * Add semaphore field
+ */
 function migrate_update_6005() {
   $ret = array();
   db_add_field($ret, 'migrate_content_sets', 'semaphore',
@@ -377,15 +384,19 @@ function migrate_update_6005() {
   return $ret;
 }
 
-// Cron processing - set to TRUE on update, so existing installations will not
-// be surprised by cron processing stopping. The default value for new installations
-// will be FALSE - drush is the preferred mechanism for long migration processes.
+/*
+ * Cron processing - set to TRUE on update, so existing installations will not
+ * be surprised by cron processing stopping. The default value for new installations
+ * will be FALSE - drush is the preferred mechanism for long migration processes.
+ */
 function migrate_update_6006() {
   variable_set('migrate_enable_cron', TRUE);
   return array();
 }
 
-// Add separator field
+/*
+ * Add separator field.
+ */
 function migrate_update_6007() {
   $ret = array();
   db_add_field($ret, 'migrate_content_sets', 'multiple_separator',
@@ -393,7 +404,9 @@ function migrate_update_6007() {
   return $ret;
 }
 
-// Add view_args field
+/*
+ * Add view_args field
+ */
 function migrate_update_6008() {
   $ret = array();
   db_add_field($ret, 'migrate_content_sets', 'view_args',

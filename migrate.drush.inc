@@ -19,6 +19,8 @@ function migrate_drush_help($section) {
       return dt('Import a given migration content set');
     case 'drush:migrate status':
       return dt('List all content sets with current status');
+    case 'drush:migrate wipe':
+      return dt('Delete all nodes from specified content types.');
   }
 }
 
@@ -32,11 +34,9 @@ function migrate_drush_command() {
     '--idlist' => 'A comma delimited list of ids to import or clear. If unspecified, migrate imports all pending items or clears all items for the content set.',
   );
   $items['migrate status'] = array(
-    'callback' => 'drush_migrate_status',
     'description' => 'List all content sets with current status.',
   );
   $items['migrate all'] = array(
-    'callback' => 'drush_migrate_all',
     'description' => 'Run the full migration process.',
     'options' => $migration_options,
     'examples' => array(
@@ -47,7 +47,6 @@ function migrate_drush_command() {
     ),
   );
   $items['migrate clear'] = array(
-    'callback' => 'drush_migrate_clear',
     'description' => 'Clear migrated data for the specified content set',
     'options' => $migration_options,
     'arguments' => array(
@@ -63,7 +62,6 @@ function migrate_drush_command() {
     ),
   );
   $items['migrate import'] = array(
-    'callback' => 'drush_migrate_import',
     'description' => 'Import a given migration content set',
     'options' => $migration_options,
     'arguments' => array(
@@ -78,13 +76,22 @@ function migrate_drush_command() {
       'migrate import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
+  $items['migrate wipe'] = array(
+    'description' => 'Delete all nodes from specified content types.',
+    'examples' => array(
+       "drush migrate wipe story article" => 'Delete all story and article nodes.',
+    ),
+    'arguments' => array(
+      'type' => 'A space delimited list of content type machine readable Ids.',
+    ),
+  );
   return $items;
 }
 
 /**
  * A simplified version of the Process (dashboard) page
  */
-function drush_migrate_status() {
+function drush_migrate_migrate_status() {
   $table = array();
   $table[] = array(dt('Status'), dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'));
   $sql = "SELECT *
@@ -128,7 +135,7 @@ function drush_migrate_status() {
 /**
  * Process all enabled operations
  */
-function drush_migrate_all() {
+function drush_migrate_migrate_all() {
   drush_migrate_set_verbose();
   $messages = array();
   $options = array();
@@ -163,7 +170,7 @@ function drush_migrate_all() {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_clear($content_set) {
+function drush_migrate_migrate_clear($content_set) {
   drush_migrate_set_verbose();
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
@@ -208,7 +215,7 @@ function drush_migrate_clear($content_set) {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_import($content_set) {
+function drush_migrate_migrate_import($content_set) {
   drush_migrate_set_verbose();
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
@@ -244,6 +251,25 @@ function drush_migrate_import($content_set) {
   migrate_content_process_import($mcsid, $messages, $options);
   foreach ($messages as $message) {
     drush_log($message);
+  }
+}
+
+/**
+ * A drush command callback.
+ */
+function drush_migrate_migrate_wipe() {
+  $types = func_get_args();
+  $placeholders = db_placeholders($types, 'varchar');
+  $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";
+  $result = db_query($sql, $types);
+  while ($row = db_fetch_object($result)) {
+    node_delete($row->nid);
+
+    // Quickly wipe node_load() cache to avoid memory bloat.
+    node_load('invalid_condition', NULL, TRUE);
+    
+    // Only shows for verbose level.
+    drush_log(dt('Memory usage is @mem MB', array('@mem' => round(memory_get_usage() / 1048576, 2))));
   }
 }
 

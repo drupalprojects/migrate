@@ -32,7 +32,7 @@ function node_migrate_delete_node($nid) {
   // what we typically want when going through clear/import cycles). We
   // short-circuit this behavior by explicitly deleting the {upload}
   // table entries for this node, so the upload module leaves the files alone.
-  if (db_table_exists('upload')) {
+  if (module_exists('upload') && db_table_exists('upload')) {
     db_query("DELETE FROM {upload} WHERE nid=%d", $nid);
   }
   node_delete($nid);

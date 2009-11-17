@@ -209,12 +209,6 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
   }
 
   /**
-   * Test UI for tools
-   */
-  function testToolsPage() {
-  }
-
-  /**
    * Test UI for settings
    */
   function testSettingsPage() {

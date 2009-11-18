@@ -259,6 +259,11 @@ function drush_migrate_migrate_import($content_set) {
  */
 function drush_migrate_migrate_wipe() {
   $types = func_get_args();
+  
+  if (!drush_confirm(dt('You are about to delete all nodes from the @types content type(s). Do you want to continue?', array('@types' => implode(', ', $types))))) {
+    return drush_set_error('Aborting.');
+  }
+  
   $placeholders = db_placeholders($types, 'varchar');
   $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";
   $result = db_query($sql, $types);

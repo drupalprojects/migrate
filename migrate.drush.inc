@@ -259,22 +259,21 @@ function drush_migrate_migrate_import($content_set) {
  */
 function drush_migrate_migrate_wipe() {
   $types = func_get_args();
-  
-  if (!drush_confirm(dt('You are about to delete all nodes from the @types content type(s). Do you want to continue?', array('@types' => implode(', ', $types))))) {
-    return drush_set_error('Aborting.');
-  }
-  
   $placeholders = db_placeholders($types, 'varchar');
   $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";
   $result = db_query($sql, $types);
+  $i=0;
   while ($row = db_fetch_object($result)) {
     node_delete($row->nid);
 
     // Quickly wipe node_load() cache to avoid memory bloat.
     node_load('invalid_condition', NULL, TRUE);
     
-    // Only shows for verbose level.
-    drush_log(dt('Memory usage is @mem MB', array('@mem' => round(memory_get_usage() / 1048576, 2))));
+    $i++;
+    if ($i % 100 == 0) {
+      // Only shows for verbose level.
+      drush_log(dt('Memory usage is after deleting @num items is @mem MB', array('@num' => $i, '@mem' => round(memory_get_usage() / 1048576, 2))));
+    }
   }
 }
 

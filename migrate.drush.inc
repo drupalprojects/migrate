@@ -84,6 +84,8 @@ function migrate_drush_command() {
     'arguments' => array(
       'type' => 'A space delimited list of content type machine readable Ids.',
     ),
+    // We will bootstrap to login from within the command callback.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
   );
   return $items;
 }
@@ -258,6 +260,10 @@ function drush_migrate_migrate_import($content_set) {
  * A drush command callback.
  */
 function drush_migrate_migrate_wipe() {
+  // node_delete() has silly perm requirements in d5/d6.
+  drush_set_option('user', 1);
+  drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
+  
   $types = func_get_args();
   $placeholders = db_placeholders($types, 'varchar');
   $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";

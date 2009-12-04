@@ -49,6 +49,8 @@ function migrate_drush_command() {
   $items['migrate clear'] = array(
     'description' => 'Clear migrated data for the specified content set',
     'options' => $migration_options,
+    // We will bootstrap to login from within the command callback.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     'arguments' => array(
       'content_set' => 'Name or mcsid of content set to clear',
     ),
@@ -173,6 +175,10 @@ function drush_migrate_migrate_all() {
  *  The mcsid or the name of the content set
  */
 function drush_migrate_migrate_clear($content_set) {
+  // node_delete() has silly perm requirements in d5/d6.
+  drush_set_option('user', 1);
+  drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
+  
   drush_migrate_set_verbose();
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}

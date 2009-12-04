@@ -42,7 +42,10 @@ function node_migrate_delete_node($nid) {
  * Implementation of hook_migrate_import_node().
  */
 function node_migrate_import_node($tblinfo, $row) {
-  $node = (object)array();
+  $node = new stdClass;
+  // Data which might be useful for node hooks.
+  $node->migrate_tblinfo = $tblinfo;
+  
   $node->type = $tblinfo->desttype;
   // Make sure the default comment settings are applied
   $function = 'comment_nodeapi';

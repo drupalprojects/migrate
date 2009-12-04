@@ -555,6 +555,11 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
       remove the content set using it.', array('!view' => $view_name));
     return MIGRATE_STATUS_FAILURE;
   }
+  
+  // Identify the content set being processed. Simplifies $view alterations.
+  $view->migrate_content_set = $tblinfo;
+  $view->is_cacheable = FALSE;
+
 
   if ($view_args) {
     $view->set_arguments(explode('/', $view_args));

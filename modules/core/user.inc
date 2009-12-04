@@ -47,6 +47,10 @@ function user_migrate_import_user($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
   $newuser = array();
+  
+  // Data which might be useful for user hooks.
+  $newuser['migrate_tblinfo'] = $tblinfo;
+  
   // Default to enabled
   $newuser['status'] = 1;
 

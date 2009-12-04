@@ -65,6 +65,9 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   $errors = array();
   // Begin building term array.
   $term = array();
+  
+  // Data which might be useful for taxonomy hooks.
+  $term['migrate_tblinfo'] = $tblinfo;
 
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && $row->$values['srcfield']) {

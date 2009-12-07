@@ -2,6 +2,9 @@
 
 Since Beta 3:
 ===========
+- #601656 - Support updating migrated content in-place (via Drush only)
+- #631756 - Fixes to clear and wipe commands
+- #649762 - Insert migrate info into views and destination objects
 - #630088 - Improved performance of migrate_schema_alter()
 - #551254 - Support 'show summary in full view'
 - #429070 - Allow content sets to share views, using distinct arguments
@@ -42,7 +45,7 @@ Fixed a couple of annoying notices.
 Migrate 1.0 Beta 2
 ===========
 - #566562 - Objects not being passed by reference to prepare and complete hooks
-- #566588 - Provide public API functions for map and message table names. 
+- #566588 - Provide public API functions for map and message table names.
             _migrate_map_table_name() and _migrate_message_table_name() are now
             deprecated.
 
@@ -68,5 +71,5 @@ specifically accessing these tables, the views will need to be reconstructed.
 Updating from a version before 2009/08/18:
 
 The way content_profile mappings are stored has changed - if you are migrating users
-using content_profile, you must edit your user content sets and reestablish your mappings 
-to any content_profile fields. 
+using content_profile, you must edit your user content sets and reestablish your mappings
+to any content_profile fields.

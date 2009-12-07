@@ -59,12 +59,16 @@ function comment_migrate_delete_comment($cid) {
  * Implementation of hook_migrate_import_comment().
  */
 function comment_migrate_import_comment($tblinfo, $row) {
-  $comment = array();
   $errors = array();
-  
+  $comment = array();
+  // Handle the update case
+  if ($row->destid) {
+    $comment['cid'] = $row->destid;
+  }
+
   // Data which might be useful for comment hooks.
   $comment['migrate_tblinfo'] = $tblinfo;
-  
+
   $sourcekey = $tblinfo->sourcekey;
 
   foreach ($tblinfo->fields as $destfield => $values) {

@@ -63,6 +63,7 @@ function migrate_drush_command() {
       'migrate clear 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
+  $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
   $items['migrate import'] = array(
     'description' => 'Import a given migration content set',
     'options' => $migration_options,
@@ -70,10 +71,11 @@ function migrate_drush_command() {
       'content_set' => 'Name or mcsid of content set to import',
     ),
     'examples' => array(
-      'migrate import 4' => 'Import the content set with mcsid 4',
+      'migrate import 4' => 'Import new items in the content set with mcsid 4',
+      'migrate import 4 --update' => 'Import new items, and also update previously-imported items',
       'migrate import 4 --idlist=4,9' => 'Import two items in mcsid 4. The ids refer to the value of the primary key in base table',
       'migrate import Articles --itemlimit=50' =>
-      'Import up to 50 items from the content set named Articles',
+        'Import up to 50 items from the content set named Articles',
       'migrate import Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
       'migrate import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
@@ -178,7 +180,7 @@ function drush_migrate_migrate_clear($content_set) {
   // node_delete() has silly perm requirements in d5/d6.
   drush_set_option('user', 1);
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
-  
+
   drush_migrate_set_verbose();
   if (is_numeric($content_set)) {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
@@ -256,6 +258,9 @@ function drush_migrate_migrate_import($content_set) {
       return;
     }
   }
+  if (drush_get_option('update')) {
+    migrate_content_set_update($mcsid);
+  }
   migrate_content_process_import($mcsid, $messages, $options);
   foreach ($messages as $message) {
     drush_log($message);
@@ -269,7 +274,7 @@ function drush_migrate_migrate_wipe() {
   // node_delete() has silly perm requirements in d5/d6.
   drush_set_option('user', 1);
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
-  
+
   $types = func_get_args();
   $placeholders = db_placeholders($types, 'varchar');
   $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";
@@ -280,7 +285,7 @@ function drush_migrate_migrate_wipe() {
 
     // Quickly wipe node_load() cache to avoid memory bloat.
     node_load('invalid_condition', NULL, TRUE);
-    
+
     $i++;
     if ($i % 100 == 0) {
       // Only shows for verbose level.

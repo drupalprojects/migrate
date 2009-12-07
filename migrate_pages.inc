@@ -240,6 +240,9 @@ function theme_migrate_dashboard($form) {
           drupal_render($form['data'][$rownum][$colname]);
           drupal_render($form['data'][$rownum]['mcsid']);
         }
+        elseif ($colname == 'semaphore') {
+          drupal_render($form['data'][$rownum][$colname]);
+        }
         else {
           $row[] = drupal_render($form['data'][$rownum][$colname]);
         }

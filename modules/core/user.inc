@@ -47,10 +47,14 @@ function user_migrate_import_user($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
   $newuser = array();
-  
+  // Handle the update case
+  if ($row->destid) {
+    $newuser['uid'] = $row->destid;
+  }
+
   // Data which might be useful for user hooks.
   $newuser['migrate_tblinfo'] = $tblinfo;
-  
+
   // Default to enabled
   $newuser['status'] = 1;
 
@@ -176,6 +180,11 @@ function user_migrate_delete_role($rid) {
 function user_migrate_import_role($tblinfo, $row) {
   $errors = array();
   $new_role = array();
+  // Handle the update case
+  if ($row->destid) {
+    $new_role['rid'] = $row->destid;
+  }
+
   foreach ($tblinfo->fields as $destfield => $values) {
     if ($values['srcfield'] && isset($row->$values['srcfield'])) {
       $newvalue = $row->$values['srcfield'];
@@ -192,7 +201,12 @@ function user_migrate_import_role($tblinfo, $row) {
   $role_name = $new_role['name'];
 
   if ($role_name) {
-    db_query("INSERT INTO {role} (name) VALUES ('%s')", $role_name);
+    if ($new_role['rid']) {
+      db_query("UPDATE {role} SET name='%s' WHERE rid=%d", $role_name, $new_role['rid']);
+    }
+    else {
+      db_query("INSERT INTO {role} (name) VALUES ('%s')", $role_name);
+    }
     $sql = "SELECT rid FROM {role} WHERE name='%s'";
     $rid = db_result(db_query($sql, $role_name));
     $new_role['rid'] = $rid;

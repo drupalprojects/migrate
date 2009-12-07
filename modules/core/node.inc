@@ -43,11 +43,17 @@ function node_migrate_delete_node($nid) {
  */
 function node_migrate_import_node($tblinfo, $row) {
   $node = new stdClass;
+  $node->type = $tblinfo->desttype;
+  // Handle the update case
+  if ($row->destid) {
+    $node->nid = $row->destid;
+  }
+
   // Data which might be useful for node hooks.
   $node->migrate_tblinfo = $tblinfo;
-  
-  $node->type = $tblinfo->desttype;
-  // Make sure the default comment settings are applied
+
+  // Make sure the default comment settings are applied first, so they
+  // can be overridden
   $function = 'comment_nodeapi';
   if (function_exists($function)) {
     $function($node, "prepare");
@@ -62,94 +68,13 @@ function node_migrate_import_node($tblinfo, $row) {
     }
   }
 
-  // Prepare the node for import.
-  $errors = migrate_destination_invoke_all('prepare_node', $node, $tblinfo, $row);
-
-  $success = TRUE;
-  foreach ($errors as $error) {
-    if ($error['level'] != MIGRATE_MESSAGE_INFORMATIONAL) {
-      $success = FALSE;
-      break;
-    }
-  }
-  if ($success) {
-    timer_start('node_save');
-    // node_save() unconditionally sets the changed timestamp to time() - we need
-    // to force the migrated value if present
-    $changed = $node->changed;
-    node_save($node);
-    $node->changed = $changed;
-    drupal_write_record('node', $node, 'nid');
-    timer_stop('node_save');
-    // Call completion hooks, for any processing which needs to be done after node_save
-    timer_start('node completion hooks');
-    $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
-    timer_stop('node completion hooks');
-
-    $sourcekey = $tblinfo->sourcekey;
-    // @TODO: Check first for existence, we may have updated an existing node
-    // @TODO: Back out a new revision?
-    migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $node->nid);
-  }
-  return $errors;
-}
-
-/**
- * Implementation of hook_migrate_xlat_node().
- */
-function node_migrate_xlat_node($nid) {
-  return "node/$nid";
-}
-
-/**
- * Implementation of hook_migrate_fields_node().
- */
-function node_migrate_fields_node($type) {
-  $fields = array();
-  if (user_access('administer nodes')) {
-    $fields = array(
-      'name' => t('Node: Authored by (username)'),
-      'uid' => t('Node: Authored by (uid)'),
-      'date' => t('Node: Authored on'),
-      'changed' => t('Node: Last updated on'),
-      'status' => t('Node: Published'),
-      'moderate' => t('Node: In moderation queue'),
-      'promote' => t('Node: Promoted to front page'),
-      'sticky' => t('Node: Sticky at top of lists'),
-      'revision' => t('Node: Create new revision'),
-      'language' => t('Node: Language (fr, en)'),
-    );
-  }
-
-  $type_info = node_get_types('type', $type);
-
-  if ($type_info->has_title) {
-    $fields['title'] = t('Node: ') . $type_info->title_label;
-  }
-  if ($type_info->has_body) {
-    $fields['body'] = t('Node: ') . $type_info->body_label;
-    $fields['teaser'] = t('Node: Teaser');
-    $fields['teaser_include'] = t('Node: Show summary in full view');
-  }
-
-  if (module_exists('path') && (user_access('create url aliases') || user_access('administer url aliases'))) {
-    $fields['path'] = t('Path: URL Alias');
-  }
-
-  return $fields;
-}
-
-/**
- * Implementation of hook_migrate_prepare_node().
- */
-function node_migrate_prepare_node(&$node, $tblinfo, $row) {
-  global $user;
-
+  // Do default prep before letting other modules take a shot
   $type_info = node_get_types('type', $node->type);
 
   $errors = array();
 
   // 1. User name and uid.
+  global $user;
   if (isset($node->uid)) {
     $account = user_load(array('uid' => $node->uid));
     $node->name = $account->name;
@@ -255,7 +180,6 @@ function node_migrate_prepare_node(&$node, $tblinfo, $row) {
   // 5. Title.
   if ($type_info->has_title && (!isset($node->title) || empty($node->title))) {
     $node->title = t('{Empty title}');
-//    $errors[] = migrate_messaget('You need to provide a non-empty title.'));
   }
 
   // Strip tags from the title
@@ -284,7 +208,7 @@ function node_migrate_prepare_node(&$node, $tblinfo, $row) {
     }
     // If a teaser and body, and 'show summary in full view' disabled, add in
     // <!--break--> delimiter.
-    if ($node->teaser && $node->body && !$node->teaser_include) {
+    if ($node->teaser && $node->body && (!isset($node->teaser_include) || !$node->teaser_include)) {
       $node->body = "\n<!--break-->\n" . $node->body;
     }
     elseif ($node->teaser && !$node->body) {
@@ -295,5 +219,78 @@ function node_migrate_prepare_node(&$node, $tblinfo, $row) {
       $node->teaser = node_teaser($node->body);
     }
   }
+
+  // Prepare the node for import.
+  $errors = migrate_destination_invoke_all('prepare_node', $node, $tblinfo, $row);
+
+  $success = TRUE;
+  foreach ($errors as $error) {
+    if ($error['level'] != MIGRATE_MESSAGE_INFORMATIONAL) {
+      $success = FALSE;
+      break;
+    }
+  }
+  if ($success) {
+    timer_start('node_save');
+    // node_save() unconditionally sets the changed timestamp to time() - we need
+    // to force the migrated value if present
+    $changed = $node->changed;
+    node_save($node);
+    $node->changed = $changed;
+    drupal_write_record('node', $node, 'nid');
+    timer_stop('node_save');
+    // Call completion hooks, for any processing which needs to be done after node_save
+    timer_start('node completion hooks');
+    $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
+    timer_stop('node completion hooks');
+
+    $sourcekey = $tblinfo->sourcekey;
+    migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $node->nid);
+  }
   return $errors;
+}
+
+/**
+ * Implementation of hook_migrate_xlat_node().
+ */
+function node_migrate_xlat_node($nid) {
+  return "node/$nid";
+}
+
+/**
+ * Implementation of hook_migrate_fields_node().
+ */
+function node_migrate_fields_node($type) {
+  $fields = array();
+  if (user_access('administer nodes')) {
+    $fields = array(
+      'name' => t('Node: Authored by (username)'),
+      'uid' => t('Node: Authored by (uid)'),
+      'date' => t('Node: Authored on'),
+      'changed' => t('Node: Last updated on'),
+      'status' => t('Node: Published'),
+      'moderate' => t('Node: In moderation queue'),
+      'promote' => t('Node: Promoted to front page'),
+      'sticky' => t('Node: Sticky at top of lists'),
+      'revision' => t('Node: Create new revision'),
+      'language' => t('Node: Language (fr, en)'),
+    );
+  }
+
+  $type_info = node_get_types('type', $type);
+
+  if ($type_info->has_title) {
+    $fields['title'] = t('Node: ') . $type_info->title_label;
+  }
+  if ($type_info->has_body) {
+    $fields['body'] = t('Node: ') . $type_info->body_label;
+    $fields['teaser'] = t('Node: Teaser');
+    $fields['teaser_include'] = t('Node: Show summary in full view');
+  }
+
+  if (module_exists('path') && (user_access('create url aliases') || user_access('administer url aliases'))) {
+    $fields['path'] = t('Path: URL Alias');
+  }
+
+  return $fields;
 }

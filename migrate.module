@@ -324,10 +324,22 @@ function migrate_add_mapping($mcsid, $sourceid, $destid) {
   if (!isset($maptables[$mcsid])) {
     $maptables[$mcsid] = migrate_map_table_name($mcsid);
   }
-  $mapping = new stdClass;
-  $mapping->sourceid = $sourceid;
-  $mapping->destid = $destid;
-  drupal_write_record($maptables[$mcsid], $mapping);
+  $needs_update = db_result(db_query('SELECT needs_update
+                                      FROM {' . $maptables[$mcsid] . '}
+                                      WHERE sourceid=%d',
+                                     $sourceid));
+  if ($needs_update == 1) {
+    db_query('UPDATE {' . $maptables[$mcsid] . '}
+              SET needs_update=0
+              WHERE sourceid=%d',
+             $sourceid);
+  }
+  elseif ($needs_update !== 0) {
+    db_query('INSERT INTO {' . $maptables[$mcsid] . "}
+              (sourceid, destid, needs_update)
+              VALUES('%d', '%d', 0)",
+             $sourceid, $destid);
+  }
 }
 
 /**
@@ -493,6 +505,19 @@ function migrate_content_process_clear($mcsid, &$messages = array(), &$options =
  *  Status of the migration process:
  */
 function migrate_content_process_import($mcsid,  &$messages = array(), &$options = array()) {
+  $tblinfo = db_fetch_object(db_query("SELECT *
+                                   FROM {migrate_content_sets}
+                                   WHERE mcsid=%d",
+                                  $mcsid));
+  if ($tblinfo->semaphore) {
+    $messages[] = t('Content set !content_set has an import operation already in progress.',
+      array('!content_set' => $tblinfo->description));
+    return MIGRATE_STATUS_IN_PROGRESS;
+  }
+  else {
+    db_query("UPDATE {migrate_content_sets} SET semaphore=1 WHERE mcsid=%d", $mcsid);
+  }
+
   $itemlimit = $options['itemlimit'];
   $timelimit = $options['timelimit'];
   $idlist = $options['idlist'];
@@ -502,25 +527,14 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     $frequency = $options['feedback']['frequency'];
     $frequency_unit = $options['feedback']['frequency_unit'];
   }
-  $result = db_query("SELECT *
-                      FROM {migrate_content_sets}
-                      WHERE mcsid=%d", $mcsid);
-  $tblinfo = db_fetch_object($result);
+
   $description = $tblinfo->description;
-  if ($tblinfo->semaphore) {
-    $messages[] = t('Content set !content_set has an operation already in progress.',
-      array('!content_set' => $description));
-    return MIGRATE_STATUS_IN_PROGRESS;
-  }
-  else {
-    $tblinfo->semaphore = TRUE;
-    drupal_write_record('migrate_content_sets', $tblinfo, 'mcsid');
-  }
   $desttype = $tblinfo->desttype;
   $view_name = $tblinfo->view_name;
   $view_args = $tblinfo->view_args;
   $contenttype = $tblinfo->contenttype;
   $sourcekey = $tblinfo->sourcekey;
+  $importing = $tblinfo->importing;
 
   $maptable = migrate_map_table_name($mcsid);
   $msgtablename = migrate_message_table_name($mcsid);
@@ -555,11 +569,10 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
       remove the content set using it.', array('!view' => $view_name));
     return MIGRATE_STATUS_FAILURE;
   }
-  
+
   // Identify the content set being processed. Simplifies $view alterations.
   $view->migrate_content_set = $tblinfo;
   $view->is_cacheable = FALSE;
-
 
   if ($view_args) {
     $view->set_arguments(explode('/', $view_args));
@@ -572,7 +585,12 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     $function($view);
   }
 
-  $viewdb = $view->base_database;
+  if (isset($view->base_database)) {
+    $viewdb = $view->base_database;
+  }
+  else {
+    $viewdb = 'default';
+  }
 
   // Add a left join to the map table, and only include rows not in the map
   $join = new views_join;
@@ -585,7 +603,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   if (!strncasecmp($sourcekey, $view->base_table . '_', $baselen + 1)) {
     // So, which case is it? Ask the schema module...
     db_set_active($viewdb);
-    $inspect = schema_invoke('inspect', db_prefix_tables('{'. $view->base_table .'}'));
+    $inspect = schema_invoke('inspect', db_prefix_tables('{' . $view->base_table . '}'));
     db_set_active('default');
     $tableschema = $inspect[$view->base_table];
     $sourcefield = $tableschema['fields'][$sourcekey];
@@ -607,7 +625,12 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   }
   $join->construct($maptable, $view->base_table, $joinkey, 'sourceid');
   $view->query->add_relationship($maptable, $join, $view->base_table);
-  $view->query->add_where(0, "$maptable.sourceid IS NULL", $view->base_table);
+  // We want both unimported and unupdated content
+  $where = "$maptable.sourceid IS NULL OR $maptable.needs_update = 1";
+  // And as long as we have the map table, get the destination ID, the
+  // import hook will need it to identify the existing destination object
+  $view->query->add_field($maptable, 'destid', 'destid');
+  $view->query->add_where(0, $where, $view->base_table);
 
   // Ditto for the errors table
   $join = new views_join;
@@ -648,7 +671,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     db_set_active($viewdb);
   }
 
-  //drupal_set_message($query);
+//  drupal_set_message($query);
   timer_start('execute view query');
   if ($itemlimit) {
     $importlist = db_query_range($query, $args, 0, $itemlimit);
@@ -666,7 +689,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
   timer_start('db_fetch_object');
   while ($row = db_fetch_object($importlist)) {
     timer_stop('db_fetch_object');
-    // Recheck importing flag - permits dynamic interruption of cron jobs
+    // Recheck flag - permits dynamic interruption of cron jobs
     $sql = "SELECT importing,scanning FROM {migrate_content_sets} WHERE mcsid=%d";
     $checkrow = db_fetch_object(db_query($sql, $mcsid));
     $importing = $checkrow->importing;
@@ -896,6 +919,16 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
 }
 
 /**
+ * Prepare a content set for updating of existing items
+ * @param $mcsid
+ *  ID of the content set to update
+ */
+function migrate_content_set_update($mcsid) {
+  $maptable = migrate_map_table_name($mcsid);
+  db_query('UPDATE {' . $maptable . '} SET needs_update=1');
+}
+
+/**
  * Generate a progress message
  * @param $starttime
  *  microtime() when this piece of work began
@@ -1058,7 +1091,7 @@ function migrate_help($page, $arg) {
       return t('Define sets of mappings from imported tables to Drupal content. These are the
         migrations which are later processed.');
     case 'admin/content/migrate/process':
-      return t('View and manage import processes here. Processes that are enabled for processing
+      return t('View and manage import processes here. Content sets that are enabled for processing
         are checked - they can be cancelled by unchecking, or new processes begun by checking,
         then clicking Submit. Any checked process will run in the background (via cron)
         automatically - you may also run them interactively or in drush. A process that is
@@ -1317,6 +1350,13 @@ function _migrate_map_table_schema($sourcefield) {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'needs_update' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => (int)FALSE,
+      ),
     ),
     'primary key' => array('sourceid'),
     'indexes' => array(
@@ -1402,7 +1442,6 @@ function migrate_check_advanced_help() {
  * considered valid.
  */
 function _migrate_valid_date($date) {
-  //TODO: really check whether the date is valid!!
   if (empty($date)) {
     return -1;
   }

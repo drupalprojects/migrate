@@ -179,7 +179,7 @@ function migrate_uninstall() {
 
 /*
  * Refactoring of map and message tables
- */ 
+ */
 function migrate_update_6000() {
   $ret = array();
 
@@ -417,5 +417,24 @@ function migrate_update_6008() {
   db_drop_unique_key($ret, 'migrate_content_sets', 'view_name');
   db_add_index($ret, 'migrate_content_sets', 'view_name',
     array('view_name'));
+  return $ret;
+}
+
+/*
+ * Add support for updating content sets
+ */
+function migrate_update_6009() {
+  $ret = array();
+  // Add needs_update flag to each mapping table
+  $result = db_query('SELECT mcsid FROM {migrate_content_sets}');
+  while ($row = db_fetch_object($result)) {
+    $maptable = migrate_map_table_name($row->mcsid);
+    if (db_table_exists($maptable)) {
+      db_add_field($ret, $maptable, 'needs_update',
+        array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => (int)FALSE));
+    }
+  }
+
   return $ret;
 }

@@ -46,6 +46,7 @@ function migrate_drush_command() {
       'migrate all --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
+  $migration_options['--all'] = 'Process all content sets';
   $items['migrate clear'] = array(
     'description' => 'Clear migrated data for the specified content set',
     'options' => $migration_options,
@@ -182,13 +183,27 @@ function drush_migrate_migrate_clear($content_set) {
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
 
   drush_migrate_set_verbose();
-  if (is_numeric($content_set)) {
-    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                 WHERE mcsid=%d", $content_set));
+  if (drush_get_option('all')) {
+    $all = TRUE;
+    if ($content_set) {
+      drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
+      return;
+    }
   }
   else {
-    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
+    $all = FALSE;
+    if (!$content_set) {
+      drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
+      return;
+    }
+    if (is_numeric($content_set)) {
+      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
+                                   WHERE mcsid=%d", $content_set));
+    }
+    else {
+      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
+                                   WHERE LOWER('%s') = LOWER(description)", $content_set));
+    }
   }
   $messages = array();
   $options = array();
@@ -213,7 +228,18 @@ function drush_migrate_migrate_clear($content_set) {
       return;
     }
   }
-  migrate_content_process_clear($mcsid, $messages, $options);
+  if ($all) {
+    $sql = "SELECT mcsid,description FROM {migrate_content_sets} ORDER BY weight";
+    $result = db_query($sql);
+    while ($row = db_fetch_object($result)) {
+      drush_log(dt("Clearing content set '!description'",
+                   array('!description' => $row->description)));
+      migrate_content_process_clear($row->mcsid, $messages, $options);
+    }
+  }
+  else {
+    migrate_content_process_clear($mcsid, $messages, $options);
+  }
   foreach ($messages as $message) {
     drush_log($message);
   }
@@ -227,13 +253,27 @@ function drush_migrate_migrate_clear($content_set) {
  */
 function drush_migrate_migrate_import($content_set) {
   drush_migrate_set_verbose();
-  if (is_numeric($content_set)) {
-    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                 WHERE mcsid=%d", $content_set));
+  if (drush_get_option('all')) {
+    $all = TRUE;
+    if ($content_set) {
+      drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
+      return;
+    }
   }
   else {
-    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
+    $all = FALSE;
+    if (!$content_set) {
+      drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
+      return;
+    }
+    if (is_numeric($content_set)) {
+      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
+                                   WHERE mcsid=%d", $content_set));
+    }
+    else {
+      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
+                                   WHERE LOWER('%s') = LOWER(description)", $content_set));
+    }
   }
   $messages = array();
   $options = array();
@@ -258,10 +298,25 @@ function drush_migrate_migrate_import($content_set) {
       return;
     }
   }
-  if (drush_get_option('update')) {
-    migrate_content_set_update($mcsid);
+  if ($all) {
+    $sql = "SELECT mcsid,description FROM {migrate_content_sets} ORDER BY weight";
+    $result = db_query($sql);
+    while ($row = db_fetch_object($result)) {
+      $mcsid = $row->mcsid;
+      drush_log(dt("Importing content set '!description'",
+                   array('!description' => $row->description)));
+      if (drush_get_option('update')) {
+        migrate_content_set_update($mcsid);
+      }
+      migrate_content_process_import($mcsid, $messages, $options);
+    }
   }
-  migrate_content_process_import($mcsid, $messages, $options);
+  else {
+    if (drush_get_option('update')) {
+      migrate_content_set_update($mcsid);
+    }
+    migrate_content_process_import($mcsid, $messages, $options);
+  }
   foreach ($messages as $message) {
     drush_log($message);
   }
@@ -289,7 +344,7 @@ function drush_migrate_migrate_wipe() {
     $i++;
     if ($i % 100 == 0) {
       // Only shows for verbose level.
-      drush_log(dt('Memory usage is after deleting @num items is @mem MB', array('@num' => $i, '@mem' => round(memory_get_usage() / 1048576, 2))));
+      drush_log(dt('Memory usage after deleting @num items is @mem MB', array('@num' => $i, '@mem' => round(memory_get_usage() / 1048576, 2))));
     }
   }
 }

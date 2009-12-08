@@ -926,6 +926,8 @@ function migrate_content_process_all(&$messages = array(), &$options = array()) 
 function migrate_content_set_update($mcsid) {
   $maptable = migrate_map_table_name($mcsid);
   db_query('UPDATE {' . $maptable . '} SET needs_update=1');
+  $msgtable = migrate_message_table_name($mcsid);
+  db_query('TRUNCATE TABLE {' . $msgtable . '}');
 }
 
 /**

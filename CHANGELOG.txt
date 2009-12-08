@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #649368 - Add --all option to drush commands
 - #601656 - Support updating migrated content in-place (via Drush only)
 - #631756 - Fixes to clear and wipe commands
 - #649762 - Insert migrate info into views and destination objects

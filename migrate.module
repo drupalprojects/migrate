@@ -325,19 +325,19 @@ function migrate_add_mapping($mcsid, $sourceid, $destid) {
     $maptables[$mcsid] = migrate_map_table_name($mcsid);
   }
   $needs_update = db_result(db_query('SELECT needs_update
-                                      FROM {' . $maptables[$mcsid] . '}
-                                      WHERE sourceid=%d',
+                                      FROM {' . $maptables[$mcsid] . "}
+                                      WHERE sourceid='%s'",
                                      $sourceid));
   if ($needs_update == 1) {
-    db_query('UPDATE {' . $maptables[$mcsid] . '}
+    db_query('UPDATE {' . $maptables[$mcsid] . "}
               SET needs_update=0
-              WHERE sourceid=%d',
+              WHERE sourceid='%s'",
              $sourceid);
   }
   elseif ($needs_update !== 0) {
     db_query('INSERT INTO {' . $maptables[$mcsid] . "}
               (sourceid, destid, needs_update)
-              VALUES('%d', '%d', 0)",
+              VALUES('%s', %d, 0)",
              $sourceid, $destid);
   }
 }
@@ -671,7 +671,7 @@ function migrate_content_process_import($mcsid,  &$messages = array(), &$options
     db_set_active($viewdb);
   }
 
-//  drupal_set_message($query);
+  //drupal_set_message($query);
   timer_start('execute view query');
   if ($itemlimit) {
     $importlist = db_query_range($query, $args, 0, $itemlimit);

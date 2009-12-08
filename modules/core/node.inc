@@ -241,7 +241,7 @@ function node_migrate_import_node($tblinfo, $row) {
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('node completion hooks');
-    $errors = migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
+    $errors += migrate_destination_invoke_all('complete_node', $node, $tblinfo, $row);
     timer_stop('node completion hooks');
 
     $sourcekey = $tblinfo->sourcekey;

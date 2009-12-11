@@ -3,13 +3,6 @@
 <p>These options affect migration processes:</p>
 
 <dl>
-  <dt>Enable cron processing</dt>
-    <dd>When checked, every time cron is run the migrate module will start running any
-        active processes (checked on the Dashboard page), first handling Clear actions
-        in reverse order, then Import and Scan actions in forward order. The processing
-        will be limited by the PHP max_execution_time - processing will automatically
-        stop several seconds before the timeout is reached, to be resume on the next
-        cron run.</dd>
   <dt>Display timers when processing</dt>
     <dd>When developing large, complex migration processes (where you are implementing
         your own hooks), it's important to optimize processing as best you can. To help

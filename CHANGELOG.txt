@@ -2,6 +2,25 @@
 
 Since Beta 3:
 ===========
+- #650472 - Major workflow refactoring, page rearrangement:
+     Content set list and dashboard pages have been combined.
+     UI considerably simplified.
+     Support for stopping active processes/clearing stuck status flags added to
+       drush (drush migrate stop) and dashboard page.
+     Interactive imports now support an update option (previously added to drush with
+       the --update flag).
+     Processing functions now recognize if memory usage is approaching the limit and
+       return cleanly. Interactive runs will automatically start a new batch - drush
+       support for resumption is TBI.
+     Using the dashboard page to define a default workflow has been removed, along
+       with the "drush migrate all" command and cron processing. Using drush, you can
+       define a workflow simply with a sequence of drush commands. Cron processing
+       requires a means of defining what tasks to perform in cron before it can be
+       restored.
+     Tools page (deleting all nodes of a given type) removed. This is supported by
+       the "drush migrate wipe" command - if you really need to do this via a browser,
+       views_bulk_operations is recommended.
+- #648952 - Add drush migrate stop command
 - #649368 - Add --all option to drush commands
 - #601656 - Support updating migrated content in-place (via Drush only)
 - #631756 - Fixes to clear and wipe commands

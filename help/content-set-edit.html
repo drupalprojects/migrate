@@ -14,6 +14,13 @@
         for this content set. This view must contain a single row for each destination
         object to be created (e.g., a single row per user, or per Page node). It also
         must have at least one unique data column.</dd>
+  <dt>View arguments</dt>
+    <dd>It may be that you want to use a single view as the source for multiple content
+        sets - for example, you might have an incoming "content" table which contains
+        both articles and blog entries. In this case, you would add an argument to the
+        view definition to distinguish the cases, and create separate content sets
+        for the different cases. Here you specify the distinct argument used to select
+        rows from the view for this content set.</dd>
   <dt>Destination</dt>
     <dd>The Drupal object which this content set will populate. The migrate module has
         builtin support for the following Drupal objects, and you can also use hooks

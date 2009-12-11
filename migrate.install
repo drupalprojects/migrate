@@ -50,24 +50,6 @@ function migrate_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
-      'clearing' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => (int)FALSE,
-      ),
-      'importing' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => (int)FALSE,
-      ),
-      'scanning' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => (int)FALSE,
-      ),
       'lastimported' => array(
         'type' => 'datetime',
         'not null' => FALSE,
@@ -83,12 +65,12 @@ function migrate_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'semaphore' => array(
+      'status' => array(
         'type' => 'int',
         'size' => 'tiny',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => (int)FALSE,
+        'default' => 0,
       ),
       'multiple_separator' => array(
         'type' => 'char',
@@ -436,5 +418,21 @@ function migrate_update_6009() {
     }
   }
 
+  return $ret;
+}
+
+/*
+ * Refactor workflow
+ */
+function migrate_update_6010() {
+  $ret = array();
+  db_add_field($ret, 'migrate_content_sets', 'status',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => 0));
+  db_drop_field($ret, 'migrate_content_sets', 'importing');
+  db_drop_field($ret, 'migrate_content_sets', 'clearing');
+  db_drop_field($ret, 'migrate_content_sets', 'scanning');
+  db_drop_field($ret, 'migrate_content_sets', 'semaphore');
+  variable_del('migrate_enable_cron');
   return $ret;
 }

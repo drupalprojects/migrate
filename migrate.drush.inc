@@ -11,12 +11,12 @@
  */
 function migrate_drush_help($section) {
   switch ($section) {
-    case 'drush:migrate all':
-      return dt('Run the full migration process');
     case 'drush:migrate clear':
       return dt('Clear a given migration content set');
     case 'drush:migrate import':
       return dt('Import a given migration content set');
+    case 'drush:migrate stop':
+      return dt('Stop an active operation');
     case 'drush:migrate status':
       return dt('List all content sets with current status');
     case 'drush:migrate wipe':
@@ -32,21 +32,11 @@ function migrate_drush_command() {
     '--itemlimit' => 'The maximum number of items to migrate. If unspecified, all are migrated',
     '--feedback' => 'Frequency of progress messages, in seconds or items processed',
     '--idlist' => 'A comma delimited list of ids to import or clear. If unspecified, migrate imports all pending items or clears all items for the content set.',
+    '--all' => 'Process all content sets',
   );
   $items['migrate status'] = array(
     'description' => 'List all content sets with current status.',
   );
-  $items['migrate all'] = array(
-    'description' => 'Run the full migration process.',
-    'options' => $migration_options,
-    'examples' => array(
-      'migrate all' => 'Process all selected content sets completely',
-      'migrate all --itemlimit=50' => 'Process a maximum of 50 items from each selected content set',
-      'migrate all --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
-      'migrate all --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
-    ),
-  );
-  $migration_options['--all'] = 'Process all content sets';
   $items['migrate clear'] = array(
     'description' => 'Clear migrated data for the specified content set',
     'options' => $migration_options,
@@ -81,6 +71,18 @@ function migrate_drush_command() {
       'migrate import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
+  $items['migrate stop'] = array(
+    'description' => 'Stop an active migration operation',
+    'options' => array('--all' => 'Stop all active migration operations'),
+    'arguments' => array(
+      'content_set' => 'Name or mcsid of content set to stop',
+    ),
+    'examples' => array(
+      'migrate stop Articles' => 'Stop any active operation on the Articles content set',
+      'migrate stop --all' => 'Stop all active migration operations',
+    ),
+  );
+
   $items['migrate wipe'] = array(
     'description' => 'Delete all nodes from specified content types.',
     'examples' => array(
@@ -106,14 +108,11 @@ function drush_migrate_migrate_status() {
           ORDER BY weight, contenttype, view_name, view_args";
   $result = db_query($sql);
   while ($row = db_fetch_object($result)) {
-    if ($row->clearing) {
+    if ($row->status == MIGRATE_STATUS_CLEARING) {
       $status = dt('Clearing');
     }
-    elseif ($row->importing) {
+    elseif ($row->status == MIGRATE_STATUS_IMPORTING) {
       $status = dt('Importing');
-    }
-    elseif ($row->scanning) {
-      $status = dt('Scanning');
     }
     else {
       $status = dt('');
@@ -140,38 +139,6 @@ function drush_migrate_migrate_status() {
 }
 
 /**
- * Process all enabled operations
- */
-function drush_migrate_migrate_all() {
-  drush_migrate_set_verbose();
-  $messages = array();
-  $options = array();
-  $itemlimit = drush_get_option('itemlimit');
-  if ($itemlimit) {
-    $options['itemlimit'] = $itemlimit;
-  }
-  $options['feedback'] = array(
-    'function' => 'drush_log',
-  );
-  $feedback = drush_get_option('feedback');
-  if ($feedback) {
-    $parts = explode(' ', $feedback);
-    $options['feedback']['frequency'] = $parts[0];
-    $options['feedback']['frequency_unit'] = drupal_strtolower($parts[1]);
-    if ($options['feedback']['frequency_unit'] != 'seconds' &&
-        $options['feedback']['frequency_unit'] != 'items') {
-      drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
-        array('!unit' => $options['feedback']['frequency_unit'])));
-      return;
-    }
-  }
-  migrate_content_process_all($messages, $options);
-  foreach ($messages as $message) {
-    drush_log($message);
-  }
-}
-
-/**
  * Clear one specified content set
  *
  * @param $content_set
@@ -186,26 +153,28 @@ function drush_migrate_migrate_clear($content_set) {
   if (drush_get_option('all')) {
     $all = TRUE;
     if ($content_set) {
-      drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
+      drush_log(dt('You must specify either a content set or --all, not both'), 'warning');
       return;
     }
   }
   else {
     $all = FALSE;
     if (!$content_set) {
-      drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
+      drush_log(dt('You must specify either a content set or the --all option'), 'warning');
       return;
     }
     if (is_numeric($content_set)) {
-      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                   WHERE mcsid=%d", $content_set));
+      $row = db_fetch_object(db_query("SELECT mcsid,description FROM {migrate_content_sets}
+                                       WHERE mcsid=%d", $content_set));
     }
     else {
-      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                   WHERE LOWER('%s') = LOWER(description)", $content_set));
+      $row = db_fetch_object(db_query("SELECT mcsid,description FROM {migrate_content_sets}
+                                       WHERE LOWER('%s') = LOWER(description)", $content_set));
     }
+    $mcsid = $row->mcsid;
+    $description = $row->description;
   }
-  $messages = array();
+
   $options = array();
   if ($idlist = drush_get_option('idlist', FALSE)) {
     $options['idlist'] = $idlist;
@@ -229,19 +198,35 @@ function drush_migrate_migrate_clear($content_set) {
     }
   }
   if ($all) {
-    $sql = "SELECT mcsid,description FROM {migrate_content_sets} ORDER BY weight";
+    $sql = "SELECT mcsid,description FROM {migrate_content_sets} ORDER BY weight DESC";
     $result = db_query($sql);
     while ($row = db_fetch_object($result)) {
-      drush_log(dt("Clearing content set '!description'",
-                   array('!description' => $row->description)));
-      migrate_content_process_clear($row->mcsid, $messages, $options);
+      _drush_migrate_do_clear($row->mcsid, $row->description, $options);
     }
   }
   else {
-    migrate_content_process_clear($mcsid, $messages, $options);
+    _drush_migrate_do_clear($mcsid, $description, $options);
   }
-  foreach ($messages as $message) {
-    drush_log($message);
+}
+
+function _drush_migrate_do_clear($mcsid, $description, $options) {
+  drush_log(dt("Clearing content set '!description'",
+               array('!description' => $description)));
+  $result = migrate_content_process_clear($mcsid, $options);
+  switch ($result) {
+    case MIGRATE_RESULT_IN_PROGRESS:
+      drush_log(dt('Content set !content_set has an operation already in progress.',
+        array('!content_set' => $description)), 'error');
+      break;
+    case MIGRATE_RESULT_STOPPED:
+      drush_log(dt('Clearing of content set !content_set stopped.',
+                   array('!content_set' => $description)), 'notice');
+      break;
+    case MIGRATE_RESULT_INCOMPLETE:
+      // TODO: continue via backend_invoke
+      break;
+    case MIGRATE_RESULT_COMPLETED:
+      break;
   }
 }
 
@@ -267,15 +252,17 @@ function drush_migrate_migrate_import($content_set) {
       return;
     }
     if (is_numeric($content_set)) {
-      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                   WHERE mcsid=%d", $content_set));
+      $row = db_fetch_object(db_query("SELECT mcsid,description FROM {migrate_content_sets}
+                                 WHERE mcsid=%d", $content_set));
     }
     else {
-      $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                   WHERE LOWER('%s') = LOWER(description)", $content_set));
+      $row = db_fetch_object(db_query("SELECT mcsid,description FROM {migrate_content_sets}
+                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
     }
+    $mcsid = $row->mcsid;
+    $description = $row->description;
   }
-  $messages = array();
+
   $options = array();
   if ($idlist = drush_get_option('idlist', FALSE)) {
     $options['idlist'] = $idlist;
@@ -302,23 +289,90 @@ function drush_migrate_migrate_import($content_set) {
     $sql = "SELECT mcsid,description FROM {migrate_content_sets} ORDER BY weight";
     $result = db_query($sql);
     while ($row = db_fetch_object($result)) {
-      $mcsid = $row->mcsid;
-      drush_log(dt("Importing content set '!description'",
-                   array('!description' => $row->description)));
-      if (drush_get_option('update')) {
-        migrate_content_set_update($mcsid);
-      }
-      migrate_content_process_import($mcsid, $messages, $options);
+      _drush_migrate_do_import($row->mcsid, $row->description, $options);
     }
   }
   else {
-    if (drush_get_option('update')) {
-      migrate_content_set_update($mcsid);
-    }
-    migrate_content_process_import($mcsid, $messages, $options);
+    _drush_migrate_do_import($mcsid, $description, $options);
   }
-  foreach ($messages as $message) {
-    drush_log($message);
+}
+
+function _drush_migrate_do_import($mcsid, $description, $options) {
+  drush_log(dt("Importing content set '!description'",
+               array('!description' => $description)));
+  if (drush_get_option('update')) {
+    migrate_content_set_update($mcsid);
+  }
+  $result = migrate_content_process_import($mcsid, $options);
+  switch ($result) {
+    case MIGRATE_RESULT_IN_PROGRESS:
+      drush_log(dt('Content set !content_set has an operation already in progress.',
+        array('!content_set' => $description)), 'error');
+      break;
+    case MIGRATE_RESULT_STOPPED:
+      drush_log(dt('Importing of content set !content_set stopped.',
+                   array('!content_set' => $description)), 'notice');
+      break;
+    case MIGRATE_RESULT_INCOMPLETE:
+      // TODO: continue via backend_invoke
+      break;
+    case MIGRATE_RESULT_COMPLETED:
+      break;
+  }
+}
+
+/**
+ * Import one specified content set
+ *
+ * @param $content_set
+ *  The mcsid or the name of the content set
+ */
+function drush_migrate_migrate_stop($content_set = NULL) {
+  if (drush_get_option('all')) {
+    $all = TRUE;
+    if (isset($content_set)) {
+      drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
+      return;
+    }
+  }
+  else {
+    $all = FALSE;
+    if (!isset($content_set)) {
+      drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
+      return;
+    }
+    if (is_numeric($content_set)) {
+      $row = db_fetch_object(db_query("SELECT mcsid,description,status FROM {migrate_content_sets}
+                                 WHERE mcsid=%d", $content_set));
+    }
+    else {
+      $row = db_fetch_object(db_query("SELECT mcsid,description,status FROM {migrate_content_sets}
+                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
+    }
+    $mcsid = $row->mcsid;
+    $description = $row->description;
+    $status = $row->status;
+  }
+  if ($all) {
+    $sql = "SELECT mcsid,description,status FROM {migrate_content_sets}
+            WHERE status <> %d";
+    $result = db_query($sql, MIGRATE_STATUS_IDLE);
+    while ($row = db_fetch_object($result)) {
+      drush_log(dt('Stopping !type operation on "!description"',
+                array('!type' => $row->status == MIGRATE_STATUS_CLEARING ? 'clearing' : 'importing',
+                      '!description' => $row->description)));
+      db_query("UPDATE {migrate_content_sets} SET status=%d WHERE mcsid=%d",
+               MIGRATE_STATUS_IDLE, $row->mcsid);
+    }
+  }
+  else {
+    if ($status != MIGRATE_STATUS_IDLE) {
+      drush_log(dt('Stopping !type operation on "!description"',
+                array('!type' => $status == MIGRATE_STATUS_CLEARING ? 'clearing' : 'importing',
+                      '!description' => $description)));
+      db_query("UPDATE {migrate_content_sets} SET status=%d WHERE mcsid=%d",
+               MIGRATE_STATUS_IDLE, $mcsid);
+    }
   }
 }
 

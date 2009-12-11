@@ -47,6 +47,8 @@ function node_migrate_import_node($tblinfo, $row) {
   // Handle the update case
   if ($row->destid) {
     $node->nid = $row->destid;
+    // Need to have the current vid present
+    $node->vid = db_result(db_query("SELECT vid FROM {node} WHERE nid=%d", $row->destid));
   }
 
   // Data which might be useful for node hooks.

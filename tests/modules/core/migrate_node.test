@@ -148,7 +148,6 @@ class MigrateNodeTest extends DrupalWebTestCase {
     $content_set->view_name = $tablename;
     $content_set->sourcekey = 'id';
     $content_set->weight = 2;
-    $content_set->importing = TRUE;
     $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
     cache_clear_all('schema', 'cache');
     if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
@@ -226,7 +225,7 @@ class MigrateNodeTest extends DrupalWebTestCase {
       $mcmid = migrate_save_content_mapping($edit);
       $this->assertTrue($mcmid, t('Setup language mapping'));
 
-      $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
+      $this->drupalPost('admin/content/migrate', array(), t('Run'));
       if (!$this->assertText('3 items imported in', t('Migration completed successfully'))) {
         $result = preg_match('|<div class="messages status">(.*?)</div>|si',
             $this->content, $matches);

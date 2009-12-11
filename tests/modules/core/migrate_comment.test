@@ -144,7 +144,6 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $content_set->desttype = 'story';
     $content_set->description = 'Stories';
     $content_set->weight = 1;
-    $content_set->importing = 1;
     $storymcsid = migrate_save_content_set($content_set, array('base_table' => $this->storytable));
     $storymap = migrate_map_table_name($storymcsid);
     $mapping = new stdClass;
@@ -208,7 +207,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $mapping->destfield = 'comment';
     migrate_save_content_mapping($mapping);
 
-    $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
+    $this->drupalPost('admin/content/migrate', array(), t('Run'));
     if (!$this->assertText('3 items imported') ||
         !$this->assertText('4 items imported') ||
         !$this->assertText("done importing 'Stories'") ||

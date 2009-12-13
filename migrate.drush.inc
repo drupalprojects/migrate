@@ -101,15 +101,14 @@ function migrate_drush_command() {
  * Get the value of all migrate related options. Used when spawning a subshell.
  *
  * @return
- *   An array of options and values. 
+ *   An array of command specific options and their values. 
  */
-
 function drush_migrate_get_options() {
   $options = array();
-  $commands = drush_get_commands();
-  $import = $commands['migrate import'];
-  foreach ($import['options'] as $key => $value) {
-    $key = substr($key, 2);
+  $command = drush_parse_command();
+  foreach ($command['options'] as $key => $value) {
+    // Strip leading --
+    $key = ltrim($key, '-');
     if ($value = drush_get_option($key)) {
       $options[$key] = $value;
     }
@@ -118,8 +117,8 @@ function drush_migrate_get_options() {
 }
 
 /*
- Spawn a subshell which runs the same command we are currently running.
-*/
+ * Spawn a subshell which runs the same command we are currently running.
+ */
 function drush_migrate_backend_invoke() {
   $args = drush_get_arguments();
   $options = drush_migrate_get_options();
@@ -419,17 +418,19 @@ function drush_migrate_migrate_wipe() {
   $placeholders = db_placeholders($types, 'varchar');
   $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";
   $result = db_query($sql, $types);
-  $i=0;
   while ($row = db_fetch_object($result)) {
     node_delete($row->nid);
 
     // Quickly wipe node_load() cache to avoid memory bloat.
     node_load('invalid_condition', NULL, TRUE);
 
-    $i++;
-    if ($i % 100 == 0) {
-      // Only shows for verbose level.
-      drush_log(dt('Memory usage after deleting @num items is @mem MB', array('@num' => $i, '@mem' => round(memory_get_usage() / 1048576, 2))));
+    
+    // Check for closeness to memory limit
+    $usage = memory_get_usage();
+    $pct_memory = $usage/$memory_limit;
+    if ($pct_memory > MIGRATE_MEMORY_THRESHOLD) {
+      // Low on memory. Spawn a subshell.
+      drush_migrate_backend_invoke();
     }
   }
 }

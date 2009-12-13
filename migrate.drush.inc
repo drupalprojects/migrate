@@ -109,7 +109,8 @@ function drush_migrate_get_options() {
   foreach ($command['options'] as $key => $value) {
     // Strip leading --
     $key = ltrim($key, '-');
-    if ($value = drush_get_option($key)) {
+    $value = drush_get_option($key);
+    if (isset($value)) {
       $options[$key] = $value;
     }
   }
@@ -122,6 +123,7 @@ function drush_migrate_get_options() {
 function drush_migrate_backend_invoke() {
   $args = drush_get_arguments();
   $options = drush_migrate_get_options();
+  // @todo: use drush_backend_invoke_args() as per http://drupal.org/node/658420.
   drush_backend_invoke(implode(' ', $args), $options);
 }
 

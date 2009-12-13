@@ -98,6 +98,26 @@ function migrate_drush_command() {
 }
 
 /**
+ * Get the value of all migrate related options. Used when spawning a subshell.
+ *
+ * @return
+ *   An array of options and values. 
+ */
+
+function drush_migrate_get_options() {
+  $options = array();
+  $commands = drush_get_commands();
+  $import = $commands['migrate import'];
+  foreach ($import['options'] as $key => $value) {
+    $key = substr($key, 2);
+    if ($value = drush_get_option($key)) {
+      $options[$key] = $value;
+    }
+  }
+  return $options;
+}
+
+/**
  * A simplified version of the Process (dashboard) page
  */
 function drush_migrate_migrate_status() {
@@ -314,7 +334,10 @@ function _drush_migrate_do_import($mcsid, $description, $options) {
                    array('!content_set' => $description)), 'notice');
       break;
     case MIGRATE_RESULT_INCOMPLETE:
-      // TODO: continue via backend_invoke
+      // Most likely is that we are near the php memory_limit. Spawn a sub shell.
+      $args = drush_get_arguments();
+      $options = drush_migrate_get_options();
+      drush_backend_invoke(implode(' ', $args), $options);
       break;
     case MIGRATE_RESULT_COMPLETED:
       break;
@@ -322,7 +345,7 @@ function _drush_migrate_do_import($mcsid, $description, $options) {
 }
 
 /**
- * Import one specified content set
+ * Stop clearing or importing a given content set.
  *
  * @param $content_set
  *  The mcsid or the name of the content set

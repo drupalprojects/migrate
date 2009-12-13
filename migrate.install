@@ -163,6 +163,7 @@ function migrate_uninstall() {
  * Refactoring of map and message tables
  */
 function migrate_update_6000() {
+  drupal_load('module', 'migrate');
   $ret = array();
 
   // Need to make sure schema inspect support is included
@@ -229,10 +230,11 @@ function migrate_update_6000() {
  *
  */
 function migrate_update_6001() {
+  $ret = array();
   // Clear desttype, except for nodes
   $sql = "UPDATE {migrate_content_sets} SET desttype='' WHERE contenttype <> 'node'";
-  db_query($sql);
-  return array();
+  $ret = update_sql($sql);
+  return $ret;
 }
 
 /**
@@ -322,6 +324,7 @@ function migrate_update_6003() {
  * Refactoring of map and message table names
  */
 function migrate_update_6004() {
+  drupal_load('module', 'migrate');
   $ret = array();
 
   // Need to make sure schema inspect support is included
@@ -406,6 +409,7 @@ function migrate_update_6008() {
  * Add support for updating content sets
  */
 function migrate_update_6009() {
+  drupal_load('module', 'migrate');
   $ret = array();
   // Add needs_update flag to each mapping table
   $result = db_query('SELECT mcsid FROM {migrate_content_sets}');

@@ -117,6 +117,15 @@ function drush_migrate_get_options() {
   return $options;
 }
 
+/*
+ Spawn a subshell which runs the same command we are currently running.
+*/
+function drush_migrate_backend_invoke() {
+  $args = drush_get_arguments();
+  $options = drush_migrate_get_options();
+  drush_backend_invoke(implode(' ', $args), $options);
+}
+
 /**
  * A simplified version of the Process (dashboard) page
  */
@@ -243,7 +252,8 @@ function _drush_migrate_do_clear($mcsid, $description, $options) {
                    array('!content_set' => $description)), 'notice');
       break;
     case MIGRATE_RESULT_INCOMPLETE:
-      // TODO: continue via backend_invoke
+      // Most likely we are near the php memory_limit. Spawn a sub shell.
+      drush_migrate_backend_invoke();
       break;
     case MIGRATE_RESULT_COMPLETED:
       break;
@@ -334,10 +344,8 @@ function _drush_migrate_do_import($mcsid, $description, $options) {
                    array('!content_set' => $description)), 'notice');
       break;
     case MIGRATE_RESULT_INCOMPLETE:
-      // Most likely is that we are near the php memory_limit. Spawn a sub shell.
-      $args = drush_get_arguments();
-      $options = drush_migrate_get_options();
-      drush_backend_invoke(implode(' ', $args), $options);
+      // Most likely we are near the php memory_limit. Spawn a sub shell.
+      drush_migrate_backend_invoke();
       break;
     case MIGRATE_RESULT_COMPLETED:
       break;

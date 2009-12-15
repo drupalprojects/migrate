@@ -201,7 +201,7 @@ function user_migrate_import_role($tblinfo, $row) {
   $role_name = $new_role['name'];
 
   if ($role_name) {
-    if ($new_role['rid']) {
+    if (isset($new_role['rid'])) {
       db_query("UPDATE {role} SET name='%s' WHERE rid=%d", $role_name, $new_role['rid']);
     }
     else {

@@ -368,15 +368,17 @@ function migrate_add_mapping($mcsid, $sourceid, $destid) {
  * @return
  *  Status of the migration process:
  */
-function migrate_content_process_clear($mcsid, &$options = array(), &$messages = array()) {
-  $itemlimit = $options['itemlimit'];
-  $timelimit = $options['timelimit'];
-  $idlist = $options['idlist'];
+function migrate_content_process_clear($mcsid, &$options = array()) {
+  $itemlimit = isset($options['itemlimit']) ? $options['itemlimit'] : NULL;
+  $timelimit = isset($options['timelimit']) ? $options['timelimit'] : NULL;
+  $idlist = isset($options['idlist']) ? $options['idlist'] : NULL;
   $lastfeedback = time();
   if (isset($options['feedback'])) {
     $feedback = $options['feedback']['function'];
-    $frequency = $options['feedback']['frequency'];
-    $frequency_unit = $options['feedback']['frequency_unit'];
+    $frequency = isset($options['feedback']['frequency']) ?
+                 $options['feedback']['frequency'] : NULL;
+    $frequency_unit = isset($options['feedback']['frequency_unit']) ?
+                      $options['feedback']['frequency_unit'] : NULL;
   }
 
   $result = db_query("SELECT *
@@ -438,8 +440,10 @@ function migrate_content_process_clear($mcsid, &$options = array(), &$messages =
     $usage = memory_get_usage();
     $pct_memory = $usage/$memory_limit;
     if ($pct_memory > MIGRATE_MEMORY_THRESHOLD) {
-      $messages[] = t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
-                      array('!pct' => round($pct_memory*100), '!usage' => $usage, '!limit' => $memory_limit));
+      if (isset($feedback)) {
+        $feedback(t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
+                        array('!pct' => round($pct_memory*100), '!usage' => $usage, '!limit' => $memory_limit)));
+      }
       $return = MIGRATE_RESULT_INCOMPLETE;
       break;
     }
@@ -477,9 +481,6 @@ function migrate_content_process_clear($mcsid, &$options = array(), &$messages =
   if (isset($feedback)) {
     $feedback($message);
   }
-  else {
-    $messages[] = $message;
-  }
 
   return $return;
 }
@@ -503,7 +504,7 @@ function migrate_content_process_clear($mcsid, &$options = array(), &$messages =
  * @return
  *  Status of the migration process:
  */
-function migrate_content_process_import($mcsid, &$options = array(), &$messages=array()) {
+function migrate_content_process_import($mcsid, &$options = array()) {
   $tblinfo = db_fetch_object(db_query("SELECT *
                                    FROM {migrate_content_sets}
                                    WHERE mcsid=%d",
@@ -516,14 +517,16 @@ function migrate_content_process_import($mcsid, &$options = array(), &$messages=
              MIGRATE_STATUS_IMPORTING, $mcsid);
   }
 
-  $itemlimit = $options['itemlimit'];
-  $timelimit = $options['timelimit'];
-  $idlist = $options['idlist'];
+  $itemlimit = isset($options['itemlimit']) ? $options['itemlimit'] : NULL;
+  $timelimit = isset($options['timelimit']) ? $options['timelimit'] : NULL;
+  $idlist = isset($options['idlist']) ? $options['idlist'] : NULL;
   $lastfeedback = time();
   if (isset($options['feedback'])) {
     $feedback = $options['feedback']['function'];
-    $frequency = $options['feedback']['frequency'];
-    $frequency_unit = $options['feedback']['frequency_unit'];
+    $frequency = isset($options['feedback']['frequency']) ?
+                 $options['feedback']['frequency'] : NULL;
+    $frequency_unit = isset($options['feedback']['frequency_unit']) ?
+                      $options['feedback']['frequency_unit'] : NULL;
   }
 
   $description = $tblinfo->description;
@@ -704,8 +707,10 @@ function migrate_content_process_import($mcsid, &$options = array(), &$messages=
     $usage = memory_get_usage();
     $pct_memory = $usage/$memory_limit;
     if ($pct_memory > MIGRATE_MEMORY_THRESHOLD) {
-      $messages[] = t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
-                      array('!pct' => round($pct_memory*100), '!usage' => $usage, '!limit' => $memory_limit));
+      if (isset($feedback)) {
+        $feedback(t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
+                        array('!pct' => round($pct_memory*100), '!usage' => $usage, '!limit' => $memory_limit)));
+      }
       $return = MIGRATE_RESULT_INCOMPLETE;
       break;
     }
@@ -757,9 +762,6 @@ function migrate_content_process_import($mcsid, &$options = array(), &$messages=
   }
   if (isset($feedback)) {
     $feedback($message);
-  }
-  else {
-    $messages[] = $message;
   }
 
   watchdog('migrate', $message);
@@ -818,8 +820,13 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
     'itemlimit' => $limit,
     'timelimit' => $starttime + (($maxexectime < 5) ? $maxexectime : ($maxexectime - 5)),
     'idlist' => $idlist,
+    'feedback' => array('function' => '_migrate_process_message'),
   );
-  $messages = array();
+  global $_migrate_messages;
+  if (!isset($_migrate_messages)) {
+    $_migrate_messages = array();
+  }
+
   // Work on the last clearing op (if any)
   if (count($context['sandbox']['clearing'])) {
     $row = db_fetch_object(db_query(
@@ -828,7 +835,7 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
        ORDER BY weight DESC
        LIMIT 1",
       implode(',', $context['sandbox']['clearing'])));
-    $status = migrate_content_process_clear($row->mcsid, $options, $messages);
+    $status = migrate_content_process_clear($row->mcsid, $options);
     if ($status != MIGRATE_RESULT_INCOMPLETE) {
       unset($context['sandbox']['clearing'][$row->mcsid]);
     }
@@ -844,13 +851,18 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
     if (variable_get('migrate_update', 0)) {
       migrate_content_set_update($row->mcsid);
     }
-    $status = migrate_content_process_import($row->mcsid, $options, $messages);
+    $status = migrate_content_process_import($row->mcsid, $options);
     if ($status != MIGRATE_RESULT_INCOMPLETE) {
       unset($context['sandbox']['importing'][$row->mcsid]);
     }
   }
   // If not, nothing to do
   else {
+    $context['finished'] = 1;
+  }
+
+  // Make sure the entire process stops if requested
+  if ($status == MIGRATE_RESULT_STOPPED) {
     $context['finished'] = 1;
   }
 
@@ -861,7 +873,7 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
     $context['finished'] = $context['sandbox']['numopsdone']/$context['sandbox']['numops'];
   }
 
-  foreach ($messages as $message) {
+  foreach ($_migrate_messages as $message) {
     if (!isset($context['sandbox']['message'])) {
       $context['sandbox']['message'] = $message . '<br />';
     }
@@ -869,9 +881,10 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
       $context['sandbox']['message'] .= $message . '<br />';
     }
     $context['message'] = $context['sandbox']['message'];
-    $context['results'][] = $message;
+    $context['results'][] .= $message;
   }
   $context['message'] = $context['sandbox']['message'];
+
   // If requested save timers for eventual display
   if (variable_get('migrate_display_timers', 0)) {
     global $timers;
@@ -889,6 +902,14 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
       }
     }
   }
+}
+
+/**
+ * Capture messages generated during an import or clear process
+ */
+function _migrate_process_message($message) {
+  global $_migrate_messages;
+  $_migrate_messages[] = $message;
 }
 
 /**

@@ -179,7 +179,7 @@ class MigrateNodeTest extends DrupalWebTestCase {
       $edit = new stdClass;
       $edit->mcsid = $mcsid;
       $edit->srcfield = $tablename . '_authoredon';
-      $edit->destfield = 'date';
+      $edit->destfield = 'created';
       $mcmid = migrate_save_content_mapping($edit);
       $this->assertTrue($mcmid, t('Setup created mapping'));
       $edit = new stdClass;

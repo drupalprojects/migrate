@@ -813,6 +813,7 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
     $context['sandbox']['clearing'] = $clearing;
     $context['sandbox']['importing'] = $importing;
     $context['sandbox']['message'] = '';
+    $context['sandbox']['times'] = array();
   }
 
   // For the timelimit, subtract more than enough time to clean up
@@ -890,7 +891,12 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
     global $timers;
     foreach ($timers as $name => $timerec) {
       if (isset($timerec['time'])) {
-        $context['sandbox']['times'][$name] += $timerec['time']/1000;
+        if (isset($context['sandbox']['times'][$name])) {
+          $context['sandbox']['times'][$name] += $timerec['time']/1000;
+        }
+        else {
+          $context['sandbox']['times'][$name] = $timerec['time']/1000;
+        }
       }
     }
     // When all done, display the timers

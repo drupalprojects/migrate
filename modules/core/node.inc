@@ -103,43 +103,20 @@ function node_migrate_import_node($tblinfo, $row) {
   }
 
   // 2. Creation date.
-  if (isset($node->date)) {
+  if (isset($node->created)) {
     // We have a mapped date.
-    if (empty($node->date)) {
-      unset($node->date);
+    if (empty($node->created)) {
+      unset($node->created);
     }
-    elseif (($date = _migrate_valid_date($node->date)) > -1) {
-      $node->date = $date;
+    elseif (($date = _migrate_valid_date($node->created)) > -1) {
+      $node->created = $date;
     }
     else {
       migrate_message(t('The created date %date is not a valid date.',
-        array('%date' => $node->date)));
-      unset($node->date);
+        array('%date' => $node->created)));
+      unset($node->created);
     }
   }
-
-  if (!isset($node->date) && isset($author)) {
-    // We don't have a date yet (not mapped or error above), but we
-    // do have some global options.
-    if ($author['date'] == '') {
-      $node->date = time();
-    }
-    elseif (($date = _migrate_valid_date($author['date'])) > -1) {
-      $node->date = $date;
-    }
-    else {
-      migrate_message(t('The date %date is not a valid date.',
-        array('%date' => $author['date'])));
-    }
-  }
-
-  if (!isset($node->date)) {
-    // We still don't have a date yet, use the current time.
-    $node->date = time();
-  }
-
-  $node->created = $node->date;
-  $node->date = format_date($node->created, 'custom', 'Y-m-d H:i:s O');
 
   // 3. Last updated
   if (isset($node->changed)) {
@@ -155,11 +132,6 @@ function node_migrate_import_node($tblinfo, $row) {
         array('%date' => theme('placeholder', $node->changed))));
       unset($node->changed);
     }
-  }
-
-  if (!isset($node->changed)) {
-    // We still don't have a date yet, use the current time.
-    $node->changed = time();
   }
 
   // 4. Options (published, promoted, sticky, moderated, new revision).
@@ -236,10 +208,14 @@ function node_migrate_import_node($tblinfo, $row) {
     timer_start('node_save');
     // node_save() unconditionally sets the changed timestamp to time() - we need
     // to force the migrated value if present
-    $changed = $node->changed;
+    if (isset($node->changed)) {
+      $changed = $node->changed;
+    }
     node_save($node);
-    $node->changed = $changed;
-    drupal_write_record('node', $node, 'nid');
+    if (isset($changed)) {
+      $node->changed = $changed;
+      drupal_write_record('node', $node, 'nid');
+    }
     timer_stop('node_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('node completion hooks');
@@ -268,7 +244,7 @@ function node_migrate_fields_node($type) {
     $fields = array(
       'name' => t('Node: Authored by (username)'),
       'uid' => t('Node: Authored by (uid)'),
-      'date' => t('Node: Authored on'),
+      'created' => t('Node: Authored on'),
       'changed' => t('Node: Last updated on'),
       'status' => t('Node: Published'),
       'moderate' => t('Node: In moderation queue'),

@@ -440,3 +440,15 @@ function migrate_update_6010() {
   variable_del('migrate_enable_cron');
   return $ret;
 }
+
+/**
+ * Use 'created' instead of 'date' for node import
+ */
+function migrate_update_6011() {
+  $ret = array();
+  db_query("UPDATE {migrate_content_mappings}
+            SET destfield='created'
+            WHERE destfield='date' AND mcsid IN
+              (SELECT mcsid FROM {migrate_content_sets} WHERE contenttype='node')");
+  return $ret;
+}

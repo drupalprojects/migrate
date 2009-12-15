@@ -163,7 +163,6 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $content_set->contenttype = 'user';
     $content_set->description = 'Users';
     $content_set->weight = 2;
-    $content_set->importing = 1;
     $usermcsid = migrate_save_content_set($content_set, array('base_table' => $this->usertable));
     $usermap = migrate_map_table_name($usermcsid);
     $mapping = new stdClass;
@@ -183,7 +182,6 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $content_set->contenttype  = 'comment';
     $content_set->description = 'Comments';
     $content_set->weight = 3;
-    $content_set->importing = 1;
     $commentmcsid = migrate_save_content_set($content_set, array('base_table' => $this->commenttable));
     $commentmap = migrate_map_table_name($commentmcsid);
     $storymapping = new stdClass;
@@ -207,12 +205,15 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $mapping->destfield = 'comment';
     migrate_save_content_mapping($mapping);
 
-    $this->drupalPost('admin/content/migrate', array(), t('Run'));
-    if (!$this->assertText('3 items imported') ||
-        !$this->assertText('4 items imported') ||
-        !$this->assertText("done importing 'Stories'") ||
-        !$this->assertText("done importing 'Users'") ||
-        !$this->assertText("done importing 'Comments")) {
+    $edit = array("importing[$storymcsid]" => $storymcsid,
+                  "importing[$usermcsid]" => $usermcsid,
+                  "importing[$commentmcsid]" => $commentmcsid);
+    $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+    if (!$this->assertText('Imported 3 in') ||
+        !$this->assertText('Imported 4 in') ||
+        !$this->assertText("done with 'Stories'") ||
+        !$this->assertText("done with 'Users'") ||
+        !$this->assertText("done with 'Comments")) {
       $result = preg_match('|<div class="messages status">(.*?)</div>|si',
                            $this->content, $matches);
       $this->error('Actual messages: ' . $matches[1]);
@@ -245,11 +246,10 @@ class MigrateCommentTest extends DrupalWebTestCase {
     }
 
     // Clear the comment content sets
-    db_query("UPDATE {migrate_content_sets} SET clearing=1 WHERE mcsid=%d", $commentmcsid);
-    $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
-    if (!$this->assertText('4 previously-imported items deleted') ||
-        !$this->assertText("done clearing 'Comments") ||
-        !$this->assertNoText("done importing 'Comments'")) {
+    $edit = array("clearing[$commentmcsid]" => $commentmcsid);
+    $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+    if (!$this->assertText('Deleted 4 in') ||
+        !$this->assertText("done with 'Comments")) {
       $result = preg_match('|<div class="messages status">(.*?)</div>|si',
                            $this->content, $matches);
       $this->error('Actual messages: ' . $matches[1]);
@@ -277,10 +277,10 @@ class MigrateCommentTest extends DrupalWebTestCase {
     migrate_save_content_mapping($parentmapping);
 
     // Reimport
-    db_query("UPDATE {migrate_content_sets} SET importing=1 WHERE mcsid=%d", $commentmcsid);
-    $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
-    if (!$this->assertText('4 items imported') ||
-        !$this->assertText("done importing 'Comments")) {
+    $edit = array("importing[$commentmcsid]" => $commentmcsid);
+    $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+    if (!$this->assertText('Imported 4 in') ||
+        !$this->assertText("done with 'Comments")) {
       $result = preg_match('|<div class="messages status">(.*?)</div>|si',
                            $this->content, $matches);
       $this->error('Actual messages: ' . $matches[1]);

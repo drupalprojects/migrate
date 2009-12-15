@@ -112,7 +112,6 @@ class MigrateUserTest extends DrupalWebTestCase {
     $content_set->view_name = $tablename;
     $content_set->sourcekey = 'id';
     $content_set->weight = -2;
-    $content_set->importing = TRUE;
     $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
     cache_clear_all('schema', 'cache');
     if ($this->assertNotNull($mcsid, t('Create simple user content set'))) {
@@ -160,8 +159,9 @@ class MigrateUserTest extends DrupalWebTestCase {
       $mcmid = migrate_save_content_mapping($edit);
       $this->assertTrue($mcmid, t('Setup roles mapping'));
 
-      $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
-      if (!$this->assertText('3 items imported in', t('Migration completed successfully'))) {
+      $edit = array("importing[$mcsid]" => $mcsid);
+      $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+      if (!$this->assertText('Imported 3 in', t('Migration completed successfully'))) {
         $result = preg_match('|<div class="messages status">(.*?)</div>|si',
             $this->content, $matches);
         $this->error('Actual messages: ' . $matches[1]);
@@ -236,11 +236,10 @@ class MigrateUserTest extends DrupalWebTestCase {
                 WHERE id=%d";
         db_query($sql, mktime(8, 25, 48, 12, 4, 2009), '', 394893);
 
-        $content_set->importing = TRUE;
-        migrate_content_set_update($mcsid);
         $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
-        $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
-        if (!$this->assertText('3 items imported in', t('Migration (update) completed successfully'))) {
+        $edit = array("importing[$mcsid]" => $mcsid, 'update' => 1);
+        $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+        if (!$this->assertText('Imported 3 in', t('Migration (update) completed successfully'))) {
           $result = preg_match('|<div class="messages status">(.*?)</div>|si',
               $this->content, $matches);
           $this->error('Actual messages: ' . $matches[1]);
@@ -306,8 +305,9 @@ class MigrateUserTest extends DrupalWebTestCase {
         $content_set->clearing = TRUE;
         $content_set->importing = FALSE;
         $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
-        $this->drupalPost('admin/content/migrate/dashboard', array(), t('Submit'));
-        if (!$this->assertText(t('3 previously-imported items deleted in'), t('Clearing completed successfully'))) {
+        $edit = array("clearing[$mcsid]" => $mcsid);
+        $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+        if (!$this->assertText(t('Deleted 3 in'), t('Clearing completed successfully'))) {
           $result = preg_match('|<div class="messages status">(.*?)</div>|si',
               $this->content, $matches);
           $this->error('Actual messages: ' . $matches[1]);

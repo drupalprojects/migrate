@@ -31,7 +31,7 @@ function filefield_migrate_prepare_node(&$node, $tblinfo, $row) {
 
       $field = content_fields($field_name, $tblinfo->desttype);
       $validators = filefield_widget_upload_validators($field);
-      if (module_exists('imagefield')) {
+      if ($field['widget']['type'] == 'imagefield_widget') {
         $validators = array_merge($validators, imagefield_widget_upload_validators($field));
       }
       $files_path = _migrate_widget_files_directory($field);

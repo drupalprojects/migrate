@@ -29,7 +29,7 @@ function filefield_migrate_prepare_node(&$node, $tblinfo, $row) {
 
       $field_name = preg_replace('/_sourcefile$/', '', $source_key);
 
-      $field = content_fields($field_name, $row->desttype);
+      $field = content_fields($field_name, $tblinfo->desttype);
       $validators = filefield_widget_upload_validators($field);
       if (module_exists('imagefield')) {
         $validators = array_merge($validators, imagefield_widget_upload_validators($field));

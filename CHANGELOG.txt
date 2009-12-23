@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #662058 - Don't force full HTML filter on nodes
 - #665006 - Eliminate notice on unset
 - #640744 - Improved created/changed date handling for nodes.
 - #650472 - Major workflow refactoring, page rearrangement:

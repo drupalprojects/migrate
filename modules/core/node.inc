@@ -75,7 +75,7 @@ function node_migrate_import_node($tblinfo, $row) {
 
   $errors = array();
 
-  // 1. User name and uid.
+  // User name and uid.
   global $user;
   if (isset($node->uid)) {
     $account = user_load(array('uid' => $node->uid));
@@ -102,7 +102,7 @@ function node_migrate_import_node($tblinfo, $row) {
     $node->name = $account->name;
   }
 
-  // 2. Creation date.
+  // Creation date.
   if (isset($node->created)) {
     // We have a mapped date.
     if (empty($node->created)) {
@@ -118,7 +118,7 @@ function node_migrate_import_node($tblinfo, $row) {
     }
   }
 
-  // 3. Last updated
+  // Last updated
   if (isset($node->changed)) {
     // We have a mapped changed date.
     if (empty($node->changed)) {
@@ -134,7 +134,7 @@ function node_migrate_import_node($tblinfo, $row) {
     }
   }
 
-  // 4. Options (published, promoted, sticky, moderated, new revision).
+  // Options (published, promoted, sticky, moderated, new revision).
   if (!isset($options)) {
     $options = variable_get('node_options_'. $node->type, array('status', 'promote'));
   }
@@ -151,7 +151,7 @@ function node_migrate_import_node($tblinfo, $row) {
     }
   }
 
-  // 5. Title.
+  // Title.
   if ($type_info->has_title && (!isset($node->title) || empty($node->title))) {
     $node->title = t('{Empty title}');
   }
@@ -161,11 +161,7 @@ function node_migrate_import_node($tblinfo, $row) {
     $node->title = strip_tags($node->title);
   }
 
-  // 6. Input Format
-  // Default to Full HTML
-  $node->format = 2;
-
-  // 7. Body/teaser
+  // Body/teaser
   if ($type_info->has_body) {
     // If incoming data has a teaser and no body, copy the teaser into the body
     if (isset($node->teaser)) {

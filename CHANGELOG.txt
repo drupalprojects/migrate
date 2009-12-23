@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #665006 - Eliminate notice on unset
 - #640744 - Improved created/changed date handling for nodes.
 - #650472 - Major workflow refactoring, page rearrangement:
      Content set list and dashboard pages have been combined.

@@ -101,7 +101,7 @@ function migrate_drush_command() {
  * Get the value of all migrate related options. Used when spawning a subshell.
  *
  * @return
- *   An array of command specific options and their values. 
+ *   An array of command specific options and their values.
  */
 function drush_migrate_get_options() {
   $options = array();
@@ -426,7 +426,7 @@ function drush_migrate_migrate_wipe() {
     // Quickly wipe node_load() cache to avoid memory bloat.
     node_load('invalid_condition', NULL, TRUE);
 
-    
+
     // Check for closeness to memory limit
     $usage = memory_get_usage();
     $pct_memory = $usage/$memory_limit;

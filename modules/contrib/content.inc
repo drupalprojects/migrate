@@ -167,7 +167,9 @@ function content_migrate_prepare_node(&$node, $tblinfo, $row) {
       }
 
       // Unset the dummy column value.
-      unset($node->$dummy_name);
+      if (isset($node->$dummy_name)) {
+        unset($node->$dummy_name);
+      }
     }
   }
 

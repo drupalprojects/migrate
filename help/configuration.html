@@ -50,4 +50,18 @@ of users in bulk very slow. The patch at
 <a href="http://drupal.org/node/289504">http://drupal.org/node/289504</a> addresses
 this.</p>
 
-<p>Note: These patches have already been incorporated into Drupal 7.
+<p>Note: These patches have already been incorporated into Drupal 7.</p>
+
+<h3>Importing from another database</h3>
+
+<p>Migrate can import data from another database into the default Drupal database.
+To set up a connection to an external database, see the
+<a href="/help/tw/external-tables">Table Wizard help</a>. Make
+sure that both database connections use the same user names and passwords; otherwise,
+MySQL will produce errors on certain queries. If the default database user does not
+have access to the external database, grant the 'select' privilege:</p>
+
+<pre>
+  GRANT SELECT ON `external_db`.* TO 'default_db_user'@'localhost';
+</pre>
+

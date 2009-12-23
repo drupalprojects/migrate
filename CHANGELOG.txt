@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #655298 - Make sure msgs are truncated after a full clear
 - #661844 - Display PHP config values on settings page
 - #661942 - Redirect to dashboard after content set submit
 - #662058 - Don't force full HTML filter on nodes

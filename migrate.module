@@ -473,7 +473,13 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
   $sql = "UPDATE {migrate_content_sets} SET status=%d WHERE mcsid=%d";
   db_query($sql, MIGRATE_STATUS_IDLE, $mcsid);
 
-  if ($return != MIGRATE_RESULT_INCOMPLETE) {
+  // If we've completed a total clear, make sure all messages are gone
+  if ($return == MIGRATE_RESULT_COMPLETED && !$idlist && !$itemlimit) {
+    db_query('TRUNCATE TABLE {' . $msgtablename . '}');
+  }
+  // In other cases (except when we're still in the middle of a process), keep
+  // informationals, which should still be attached to uncleared items
+  else if ($return != MIGRATE_RESULT_INCOMPLETE) {
     // Remove old messages before beginning new import process
     db_query("DELETE FROM {" . $msgtablename . "} WHERE level <> %d", MIGRATE_MESSAGE_INFORMATIONAL);
   }

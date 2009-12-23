@@ -23,13 +23,13 @@ should consider significantly boosting <em>memory_limit</em>:</p>
   php_value memory_limit       256M
 </pre>
 
-<p>When performing a migration process, whether interactively or via drush, the
-Migrate module monitors execution time and exits a few seconds before
-max_execution_time is exhausted, to avoid partial updates. It is recommended
-to set max_execution_time to a few minutes:</p>
+<p>When performing a migration process interactively, the Migrate module monitors
+execution time and exits a few seconds before max_execution_time or max_input_time
+is exhausted, to avoid partial updates. It is recommended to set them to a few minutes:</p>
 
 <pre>
   php_value max_execution_time 240
+  php_value max_input_time 240
 </pre>
 
 <h3>Drupal 6 Core patches</h3>

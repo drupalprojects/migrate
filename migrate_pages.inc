@@ -691,6 +691,43 @@ function migrate_settings() {
  * Form definition for settings page.
  */
 function _migrate_settings_form($form_state) {
+  $max_execution_time = ini_get('max_execution_time');
+  $max_input_time = ini_get('max_input_time');
+  $memory_limit = _migrate_memory_limit();
+  $description = '';
+  if ($max_execution_time < 90 || $max_input_time < 90) {
+    $description .= t(
+      '<p>Each batch of a migration performed interactively will last
+        a few seconds less than the less of <em>max_execution_time</em>
+        and <em>max_input_time</em>. It is recommended that you set these
+        to a higher value (say, 240) in .htaccess.</p>'
+    );
+  }
+  if ($memory_limit < 128*1024*1024) {
+    $description .= t(
+      '<p>Large migration operations can take substantial memory, particularly
+        if there is cached information growing with each iteration. It is
+        recommended that you set <em>memory_limit</em> higher (at least
+        256M if you can).</p>'
+    );
+  }
+  $description .= t('<p>Current PHP configuration options:
+    <table>
+      <tr><td>max_execution_time</td><td>!max_execution_time</td></tr>
+      <tr><td>max_input_time</td><td>!max_input_time</td></tr>
+      <tr><td>memory_limit</td><td>!memory_limit</td></tr>
+    </table>
+    </p>',
+    array('!max_execution_time' => $max_execution_time,
+          '!max_input_time' => $max_input_time,
+          '!memory_limit' => ini_get('memory_limit')
+         )
+  );
+  $form['description'] = array(
+    '#prefix' => '<div>',
+    '#value' => $description,
+    '#suffix' => '</div>',
+  );
   $form['display_timers'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display timers when processing'),
@@ -737,6 +774,7 @@ function _migrate_settings_form($form_state) {
  */
 function theme_migrate_settings($form) {
   $output = '';
+  $output .= drupal_render($form['description']);
   $output .= drupal_render($form['display_timers']);
   $output .= drupal_render($form['cache_counts']);
   $output .= drupal_render($form['refresh_counts']);

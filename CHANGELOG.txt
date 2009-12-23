@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #661844 - Display PHP config values on settings page
 - #661942 - Redirect to dashboard after content set submit
 - #662058 - Don't force full HTML filter on nodes
 - #665006 - Eliminate notice on unset

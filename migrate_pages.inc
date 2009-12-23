@@ -645,7 +645,6 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
   if ($form_state['clicked_button']['#parents'][0] == 'delete') {
     migrate_delete_content_set($mcsid);
     drupal_set_message(t('Content set deleted'));
-    $form_state['redirect'] = 'admin/content/migrate/dashboard';
   }
   else {
     // Get list of current mappings, so we know if any need deletion
@@ -678,6 +677,7 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
     migrate_save_content_set($form_state['values']);
     drupal_set_message('Changes saved');
   }
+  $form_state['redirect'] = 'admin/content/migrate/dashboard';
 }
 
 /**

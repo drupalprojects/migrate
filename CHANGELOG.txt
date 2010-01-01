@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #669358 - Add input format to node fields
 - #648276 - Help on using external tables as sources
 - #655298 - Make sure msgs are truncated after a full clear
 - #661844 - Display PHP config values on settings page

@@ -182,7 +182,7 @@ function drush_migrate_migrate_clear($content_set) {
   drush_migrate_set_verbose();
   if (drush_get_option('all')) {
     $all = TRUE;
-    if ($content_set) {
+    if (isset($content_set)) {
       drush_log(dt('You must specify either a content set or --all, not both'), 'warning');
       return;
     }

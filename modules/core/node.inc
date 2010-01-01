@@ -247,6 +247,7 @@ function node_migrate_fields_node($type) {
       'promote' => t('Node: Promoted to front page'),
       'sticky' => t('Node: Sticky at top of lists'),
       'revision' => t('Node: Create new revision'),
+      'format' => t('Node: Input format'),
       'language' => t('Node: Language (fr, en)'),
     );
   }

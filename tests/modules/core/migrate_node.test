@@ -112,7 +112,11 @@ class MigrateNodeTest extends DrupalWebTestCase {
           'type' => 'varchar',
           'length' => 2,
           'not null' => FALSE,
-        )
+        ),
+        'format' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
       ),
       'primary key' => array('id'),
     );
@@ -124,21 +128,21 @@ class MigrateNodeTest extends DrupalWebTestCase {
 
     $sql = "INSERT INTO {" . $tablename . "}
             (id, title, body, authorname, authoruid, authoredon, changedon,
-             published, moderate, promote, sticky, createrev, language)
+             published, moderate, promote, sticky, createrev, language, format)
             VALUES(%d, '%s', '%s', '%s', %d, %d, '%s',
-                   %d, %d, %d, %d, %d, '%s')";
+                   %d, %d, %d, %d, %d, '%s', %d)";
     db_query($sql,
              893, 'Title 1', 'This is a body', $user1->name, NULL,
               mktime(13, 28, 51, 10, 15, 2009), '2009-10-17 09:03:59',
-             1, 1, 1, 1, 1, 'en');
+             1, 1, 1, 1, 1, 'en', 1);
     db_query($sql,
              1027, 'Title 2', 'This is another body', NULL, $user2->uid,
               mktime(0, 0, 0, 10, 29, 2009), '2009-10-29 00:00:00',
-             0, 0, 0, 0, 0, 'fr');
+             0, 0, 0, 0, 0, 'fr', 2);
     db_query($sql,
              653223, 'Title 3', 'This is yet another body', $user2->name, NULL,
               mktime(23, 59, 59, 11, 10, 2009), '2009-11-11 12:38:10',
-             1, 0, 0, 1, 1, 'en');
+             1, 0, 0, 1, 1, 'en', 1);
 
     // Create content set
     $content_set = new stdClass;
@@ -224,6 +228,12 @@ class MigrateNodeTest extends DrupalWebTestCase {
       $edit->destfield = 'language';
       $mcmid = migrate_save_content_mapping($edit);
       $this->assertTrue($mcmid, t('Setup language mapping'));
+      $edit = new stdClass;
+      $edit->mcsid = $mcsid;
+      $edit->srcfield = $tablename . '_format';
+      $edit->destfield = 'format';
+      $mcmid = migrate_save_content_mapping($edit);
+      $this->assertTrue($mcmid, t('Setup format mapping'));
 
       $edit = array("importing[$mcsid]" => $mcsid);
       $this->drupalPost('admin/content/migrate', $edit, t('Run'));
@@ -268,6 +278,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
         if (!$this->assertEqual($node->language, 'en', t('Validate first node language'))) {
           $this->error('Actual node: ' . print_r($node, TRUE));
         }
+        if (!$this->assertEqual($node->format, 1, t('Validate first node format'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
 
         $node = node_load(array('title' => 'Title 2'));
         $nid2 = $node->nid;
@@ -301,6 +314,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
           $this->error('Actual node: ' . print_r($node, TRUE));
         }
         if (!$this->assertEqual($node->language, 'fr', t('Validate second node language'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
+        if (!$this->assertEqual($node->format, 2, t('Validate second node format'))) {
           $this->error('Actual node: ' . print_r($node, TRUE));
         }
 
@@ -338,6 +354,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
         if (!$this->assertEqual($node->language, 'en', t('Validate third node language'))) {
           $this->error('Actual node: ' . print_r($node, TRUE));
         }
+        if (!$this->assertEqual($node->format, 1, t('Validate third node format'))) {
+          $this->error('Actual node: ' . print_r($node, TRUE));
+        }
 
         // Test updating of the content set
         $sql = "UPDATE {" . $tablename . "}
@@ -350,9 +369,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
                 WHERE id=%d";
         db_query($sql, $user1->uid, mktime(2, 3, 4, 11, 13, 2009), 1, 1, 1027);
         $sql = "UPDATE {" . $tablename . "}
-                SET promote=%d, sticky=%d, createrev=%d, language='%s'
+                SET promote=%d, sticky=%d, createrev=%d, language='%s', format=%d
                 WHERE id=%d";
-        db_query($sql, 1, 0, 0, 'fr', 653223);
+        db_query($sql, 1, 0, 0, 'fr', 2, 653223);
 
         migrate_content_set_update($mcsid);
         $mcsid = migrate_save_content_set($content_set, array('base_table' => $tablename));
@@ -399,6 +418,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
           if (!$this->assertEqual($node->language, 'en', t('Validate first node language'))) {
             $this->error('Actual node: ' . print_r($node, TRUE));
           }
+          if (!$this->assertEqual($node->format, 1, t('Validate first node format'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
 
           $node = node_load(array('title' => 'Title 2'));
           if (!$this->assertEqual($node->body, 'This is another body', t('Validate second node body'))) {
@@ -433,6 +455,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
           if (!$this->assertEqual($node->language, 'fr', t('Validate second node language'))) {
             $this->error('Actual node: ' . print_r($node, TRUE));
           }
+          if (!$this->assertEqual($node->format, 2, t('Validate second node format'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
 
           $node = node_load(array('title' => 'Title 3'));
           if (!$this->assertEqual($node->body, 'This is yet another body', t('Validate third node body'))) {
@@ -465,6 +490,9 @@ class MigrateNodeTest extends DrupalWebTestCase {
             $this->error('Actual node: ' . print_r($node, TRUE));
           }
           if (!$this->assertEqual($node->language, 'fr', t('Validate third node language'))) {
+            $this->error('Actual node: ' . print_r($node, TRUE));
+          }
+          if (!$this->assertEqual($node->format, 2, t('Validate third node format'))) {
             $this->error('Actual node: ' . print_r($node, TRUE));
           }
         }

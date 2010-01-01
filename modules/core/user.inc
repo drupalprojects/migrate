@@ -26,6 +26,7 @@ function user_migrate_fields_user($type) {
     'access' => t('User: Account last accessed'),
     'login' => t('User: Last logged in'),
     'roles' => t('User: Roles'),
+    'status' => t('User: Status'),
   );
 
   return $fields;

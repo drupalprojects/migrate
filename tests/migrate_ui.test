@@ -122,7 +122,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
         $edit = array();
         $edit['srcfield[title]'] = $this->tablename . '_title';
         $edit['srcfield[body]'] = $this->tablename . '_body';
-        $this->drupalPost(NULL, $edit, t('Submit changes'));
+        $this->drupalPost("/admin/content/migrate/$mcsid", $edit, t('Submit changes'));
         if ($this->assertText(t('Changes saved'), t('Create field mappings'))) {
           $sql = "SELECT mcmid FROM {migrate_content_mappings}
                   WHERE mcsid=%d AND destfield='%s'";

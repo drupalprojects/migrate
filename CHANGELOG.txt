@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #661934 - Support for external tables using views/tw dbname.tablename support
 - #670838 - Add status to user fields
 - #669358 - Add input format to node fields
 - #648276 - Help on using external tables as sources

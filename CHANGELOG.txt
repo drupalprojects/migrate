@@ -2,6 +2,7 @@
 
 Since Beta 3:
 ===========
+- #638770 - Add status field to comments
 - #661934 - Support for external tables using views/tw dbname.tablename support
 - #670838 - Add status to user fields
 - #669358 - Add input format to node fields

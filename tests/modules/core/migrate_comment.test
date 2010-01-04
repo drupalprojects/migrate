@@ -111,18 +111,23 @@ class MigrateCommentTest extends DrupalWebTestCase {
           'length' => 255,
           'not null' => TRUE,
         ),
+        'status' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
       ),
       'primary key' => array('id'),
     );
     $this->commenttable = 'migrate_simpletest_comment';
     db_create_table($ret, $this->commenttable, $schema);
     $sql = "INSERT INTO {" . $this->commenttable . "}
-            (id, storyid, userid, parentid, comment_text)
-            VALUES(%d, %d, %d, %d, '%s')";
-    db_query($sql, 52, 893, 51, 0, 'Comment by user1 on Title 1');
-    db_query($sql, 38383, 1027, 831, 0, 'Comment by user2 on Title 2');
-    db_query($sql, 41893, 1027, 51, 38383, 'Reply by user1 to user2 on Title 2');
-    db_query($sql, 123483, 653223, 98374, 0, 'Comment by user3 on Title 3');
+            (id, storyid, userid, parentid, comment_text, status)
+            VALUES(%d, %d, %d, %d, '%s', %d)";
+    db_query($sql, 52, 893, 51, 0, 'Comment by user1 on Title 1', 0);
+    db_query($sql, 38383, 1027, 831, 0, 'Comment by user2 on Title 2', 1);
+    db_query($sql, 41893, 1027, 51, 38383, 'Reply by user1 to user2 on Title 2', 0);
+    db_query($sql, 123483, 653223, 98374, 0, 'Comment by user3 on Title 3', 1);
     tw_add_tables($this->commenttable, TRUE);
   }
 
@@ -204,6 +209,11 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $mapping->srcfield = $this->commenttable . '_comment_text';
     $mapping->destfield = 'comment';
     migrate_save_content_mapping($mapping);
+    $mapping = new stdClass;
+    $mapping->mcsid = $commentmcsid;
+    $mapping->srcfield = $this->commenttable . '_status';
+    $mapping->destfield = 'status';
+    migrate_save_content_mapping($mapping);
 
     $edit = array("importing[$storymcsid]" => $storymcsid,
                   "importing[$usermcsid]" => $usermcsid,
@@ -239,7 +249,8 @@ class MigrateCommentTest extends DrupalWebTestCase {
 
             WHERE s.title=ds.title AND s.body=dsr.body
               AND u.username=du.name AND u.email=du.mail
-              AND c.comment_text=dc.comment AND (c.parentid=0 OR cmap2.destid=dc.pid)";
+              AND c.comment_text=dc.comment AND (c.parentid=0 OR cmap2.destid=dc.pid)
+              AND c.status=dc.status";
     $count = db_result(db_query($sql));
     if (!$this->assertEqual($count, 4, t('4 comments migrated successfully'))) {
       $this->error(t('Actual count: !count', array('!count' => $count)));

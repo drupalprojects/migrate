@@ -530,7 +530,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
       $fieldtable = $field['table'];
       // The field name can be ambiguous (e.g., two map tables in the view), so
       // we can't just do $fields[$fieldname] - we need to iterate and match the
-      // table as weel
+      // table as well
       foreach ($fields as $viewfieldname => $viewfield) {
         if ($viewfield['field'] == $fieldname && $viewfield['table'] == $fieldtable) {
           $srcoptions[$fieldalias] = $viewfield['label'];
@@ -538,7 +538,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
         }
       }
       if (!isset($srcoptions[$fieldalias])) {
-        $srcoptions[$fieldalias] = $fieldname;
+        $srcoptions[$fieldalias] = $fieldtable . '.' . $fieldname;
       }
     }
 

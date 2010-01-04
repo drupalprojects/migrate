@@ -32,6 +32,7 @@ function comment_migrate_fields_comment($type) {
     'homepage' => t("Comment: Author's website"),
     'mail' => t("Comment: Author's email"),
     'hostname' => t("Comment: Author's hostname"),
+    'status' => t('Comment: Status'),
   );
 
   return $fields;

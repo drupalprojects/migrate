@@ -1,6 +1,6 @@
 //$Id$
 
-Since Beta 3:
+Migrate 1.0 Beta 4
 ===========
 Features and enhancements
 - #429306 - Support for content sets designed to update existing objects

@@ -329,6 +329,108 @@ class MigrateUserTest extends DrupalWebTestCase {
           }
         }
 
+        // Test an update content set
+        db_query('TRUNCATE TABLE {' . $tablename . '}');
+        $sql = 'INSERT INTO {' . $tablename . "}
+                (id, username)
+                VALUES(%d, '%s')";
+        db_query($sql, $uid1, 'newusername1');
+        db_query($sql, $uid2, 'newusername2');
+        db_query($sql, $uid3, 'newusername3');
+        $upd_content_set = new stdClass;
+        $upd_content_set->description = 'User update test';
+        $upd_content_set->contenttype = 'user';
+        $upd_content_set->view_name = $tablename;
+        $upd_content_set->sourcekey = 'id';
+        $upd_content_set->weight = 3;
+        $upd_mcsid = migrate_save_content_set($upd_content_set, array('base_table' => $tablename));
+        cache_clear_all('schema', 'cache');
+        if ($this->assertNotNull($upd_mcsid, t('Create update content set'))) {
+          // Add mappings to content set
+          $edit = new stdClass;
+          $edit->mcsid = $upd_mcsid;
+          $edit->srcfield = 'id';
+          $edit->destfield = 'uid';
+          $mcmid = migrate_save_content_mapping($edit);
+          $edit = new stdClass;
+          $edit->mcsid = $upd_mcsid;
+          $edit->srcfield = $tablename . '_username';
+          $edit->destfield = 'name';
+          $mcmid = migrate_save_content_mapping($edit);
+          $edit = array("importing[$upd_mcsid]" => $upd_mcsid);
+          $this->drupalPost('admin/content/migrate', $edit, t('Run'));
+          if (!$this->assertText('Imported 3 in', t('Migration (update) completed successfully'))) {
+            $result = preg_match('|<div class="messages status">(.*?)</div>|si',
+                $this->content, $matches);
+            $this->error('Actual messages: ' . $matches[1]);
+            return;
+          }
+          else {
+            $account = user_load(array('name' => 'newusername1'));
+            $this->assertEqual($account->uid, $uid1, 'User updated, not inserted');
+            if (!$this->assertEqual($account->pass, md5('newpassword1'), t('Validate first user password'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->mail, 'newemail@example.com', t('Validate first user email'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->created, mktime(13, 28, 51, 10, 15, 2009), t('Validate first user created'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->access, mktime(3, 15, 32, 11, 18, 2009), t('Validate first user access'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->login, mktime(1, 8, 21, 11, 18, 2009), t('Validate first user login'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->status, 1, t('Validate first user status'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+
+            $account = user_load(array('name' => 'newusername2'));
+            $this->assertEqual($account->uid, $uid2, 'User updated, not inserted');
+            if (!$this->assertEqual($account->pass, md5('password2'), t('Validate second user password'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->mail, 'user2@google.com', t('Validate second user email'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->created, mktime(5, 6, 7, 10, 11, 1999), t('Validate second user created'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->access, mktime(12, 10, 9, 7, 12, 2008), t('Validate second user access'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->login, mktime(13, 15, 48, 2, 28, 2003), t('Validate second user login'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->status, 0, t('Validate second user status'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+
+            $account = user_load(array('name' => 'newusername3'));
+            $this->assertEqual($account->uid, $uid3, 'User updated, not inserted');
+            if (!$this->assertEqual($account->pass, md5('password3'), t('Validate third user password'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->mail, 'user3@drupal.org', t('Validate third user email'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->created, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user created'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->access, mktime(5, 15, 28, 12, 1, 2009), t('Validate third user access'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->login, mktime(8, 25, 48, 12, 4, 2009), t('Validate third user login'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+            if (!$this->assertEqual($account->status, 0, t('Validate third user status'))) {
+              $this->error('Actual user: ' . print_r($account, TRUE));
+            }
+          }
+        }
+
         // Test clearing of the content set
         $content_set->clearing = TRUE;
         $content_set->importing = FALSE;

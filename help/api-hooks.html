@@ -5,7 +5,7 @@
   or you may be migrating into a destination not already supported by the migrate module.
   To accomplish these things, you will need to implement one or more of the following
   hooks.</p>
-  
+
 <h3>hook_migrate_init()</h3>
 <p>This hook is called by the migrate module the first time it prepares to call any hook.
   The purpose is to allow modules implementing the hooks to do any one-time initialization.
@@ -17,12 +17,12 @@ function example_migrate_init() {
   $path = drupal_get_path('module', 'example') . '/example_migrate.inc';
   include_once($path);
 }</pre>
-  
+
 <h3>hook_migrate_types()</h3>
 <p>Implement this hook to set up custom destinations. It should return an array in which
   each key is to be used to form other hook names, and each value is the user-friendly name
   of the destination. If your module is going to support subtypes (as the node module has
-  various content types), then the key will the the destination name followed by a slash, 
+  various content types), then the key will the the destination name followed by a slash,
   followed by the subtype (e.g., 'node/article').</p>
   <pre>
 function example_migrate_types() {
@@ -37,13 +37,15 @@ function example_migrate_types() {
   the index of the field (usually the database column name from the table where the value
   will ultimately be stored) and the value is a user-friendly name for the field. If the
   destination supports subtypes, the specific subtype is passed as an argument. Note
-  that you can implement this hooks for destinations you are not defining - for example,
+  that you can implement this hook for destinations you are not defining - for example,
   if your module adds fields to nodes, you can implement hook_migrate_fields_node() to
   expose those fields to migration.</p>
+<p>The primary key of the destination should be indicated by enclosing its index
+  in square brackets (see <em>subid</em> below).</p>
   <pre>
 function example_migrate_fields_sub($type) {
   return array(
-    'subid' =&gt; t('Subscription: Unique subscription identifier'),
+    '[subid]' =&gt; t('Subscription: Unique subscription identifier'),
     'userid' =&gt; t('Subscription: User id'),
   );
 }</pre>
@@ -117,7 +119,7 @@ function example_migrate_prepare_node(&amp;$node, $tblinfo, $row) {
 
 
 <h3>hook_migrate_complete_{destination}</h3>
-<p>The complete hook is called after successfully saving the migrated object - 
+<p>The complete hook is called after successfully saving the migrated object -
   this allows other modules to perform operations that require the object to
   already exist (and have an ID), such as save data related to that object.</p>
 <pre>

@@ -62,8 +62,6 @@ function _migrate_dashboard_form($form_state) {
       $msgtablename = migrate_message_table_name($row->mcsid);
       if ($unimported > 0) {
         $messages = '';
-        /* Restore when views integration is fully implemented
-        $unimported = l($unimported, 'admin/content/migrate/audit/'.$row->view_name.'_unimported');*/
         $numerrors = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
                                          FROM {" . $msgtablename . "}
                                          WHERE level=%d",
@@ -554,6 +552,16 @@ function migrate_content_set_mappings($form_state, $mcsid) {
 
     $srcoptions = array_merge(array('' => t('<none>')), $srcoptions);
     foreach ($destfields as $destfield => $destname) {
+      $matches = array();
+      if (preg_match('/^\[([^\]]*)\]$/', $destfield, $matches)) {
+        $primary_key = $matches[1];
+        $destfield = $primary_key;
+        $destfields[$primary_key] = $destname;
+        unset($destfields[$destfield]);
+      }
+      else {
+        $primary_key = '';
+      }
       $sql = "SELECT *
               FROM {migrate_content_mappings}
               WHERE mcsid=%d AND destfield='%s'";
@@ -577,6 +585,11 @@ function migrate_content_set_mappings($form_state, $mcsid) {
     $form['cols'] = array(
       '#type' => 'value',
       '#value' => $cols,
+    );
+
+    $form['primary_key'] = array(
+      '#type' => 'value',
+      '#value' => $primary_key,
     );
 
     $form['submit'] = array(
@@ -666,6 +679,12 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
          FROM {migrate_content_mappings}
          WHERE mcsid=%d AND destfield='%s'",
         $mcsid, $destfield));
+      if ($form_state['values']['primary_key'] == $destfield) {
+        $mapping->primary_key = TRUE;
+      }
+      else {
+        $mapping->primary_key = FALSE;
+      }
       migrate_save_content_mapping($mapping);
       // This mapping is currently valid, so remove from the deletion list
       unset($prevdests[$mapping->destfield]);

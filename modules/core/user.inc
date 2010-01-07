@@ -19,6 +19,7 @@ function user_migrate_types() {
  */
 function user_migrate_fields_user($type) {
   $fields = array(
+    'uid' => t('User: Existing user ID'),
     'name' => t('User: Username'),
     'pass' => t('User: Password'),
     'mail' => t('User: Email address'),
@@ -48,16 +49,22 @@ function user_migrate_import_user($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
   // Begin building user object...
   $newuser = array();
-  // Handle the update case
+
+  // Handle an update operation
   if ($row->destid) {
     $newuser['uid'] = $row->destid;
   }
-
+  // If a uid was provided via mapping, load the existing user
+  else if (isset($tblinfo->fields['uid'])) {
+    $uidname = $tblinfo->fields['uid']['srcfield'];
+    $newuser = (array)user_load($row->$uidname);
+    // The existing md5 password will have another md5 applied to it if
+    // we're not careful - save it here and reset it later if no one else
+    // has set a password
+    $original_password = $newuser['pass'];
+  }
   // Data which might be useful for user hooks.
   $newuser['migrate_tblinfo'] = $tblinfo;
-
-  // Default to enabled
-  $newuser['status'] = 1;
 
   foreach ($tblinfo->fields as $destfield => $values) {
     // Ignore CCK fields - we assume another module such as content_profile will deal with them
@@ -122,9 +129,29 @@ function user_migrate_import_user($tblinfo, $row) {
     if (!isset($newuser['init'])) {
       $newuser['init'] = $newuser['mail'];
     }
+
+    // Default to enabled
+    if (!isset($newuser['status'])) {
+      $newuser['status'] = 1;
+    }
+    
+    // If we loaded an existing (MD5) password and no one overwrote it, we'll
+    // need to set it directly in the DB
+    if (isset($original_password) && ($original_password == $newuser['pass'])) {
+      $reset_password = TRUE;
+    }
+    else {
+      $reset_password = FALSE;
+    }
+
     timer_start('user_save');
     $account = user_save((object)$newuser, $newuser);
     timer_stop('user_save');
+
+    if ($reset_password) {
+      $sql = "UPDATE {users} SET pass='%s' WHERE uid=%d";
+      db_query($sql, $original_password, $account->uid);
+    }
 
     // Call completion hooks, for any processing which needs to be done after user_save
     timer_start('user completion hooks');
@@ -156,7 +183,8 @@ function user_migrate_xlat_user($uid) {
  */
 function user_migrate_fields_role($type) {
   $fields = array(
-    'name' => t('Role name'),
+    '[rid]' => t('Role: Existing role ID'),
+    'name' => t('Role: Name'),
   );
 
   return $fields;
@@ -181,9 +209,16 @@ function user_migrate_delete_role($rid) {
 function user_migrate_import_role($tblinfo, $row) {
   $errors = array();
   $new_role = array();
-  // Handle the update case
+  // Handle an update operation
   if ($row->destid) {
     $new_role['rid'] = $row->destid;
+  }
+  // If a rid was provided via mapping, load the existing role
+  else if (isset($tblinfo->fields['rid'])) {
+    $ridname = $tblinfo->fields['rid']['srcfield'];
+    $new_role['rid'] = $row->$ridname;
+    $sql = "SELECT name FROM {role} WHERE rid=%d";
+    $new_role['name'] = db_result(db_query($sql, $new_role['rid']));
   }
 
   foreach ($tblinfo->fields as $destfield => $values) {

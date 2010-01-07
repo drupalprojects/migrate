@@ -2,17 +2,19 @@
 
 Since Beta 3:
 ===========
+Features and enhancements
+- #429306 - Support for content sets designed to update existing objects
+    Note a slight change to the migrate_fields hook API - the primary key of
+    destination objects should now be [bracketed]. If you have written any code
+    to retrieve fields from the hook, you need to be aware of this and will probably
+    need to strip the brackets.
 - #638770 - Add status field to comments
 - #661934 - Support for external tables using views/tw dbname.tablename support
 - #670838 - Add status to user fields
 - #669358 - Add input format to node fields
 - #648276 - Help on using external tables as sources
-- #655298 - Make sure msgs are truncated after a full clear
 - #661844 - Display PHP config values on settings page
 - #661942 - Redirect to dashboard after content set submit
-- #662058 - Don't force full HTML filter on nodes
-- #665006 - Eliminate notice on unset
-- #640744 - Improved created/changed date handling for nodes.
 - #650472 - Major workflow refactoring, page rearrangement:
      Content set list and dashboard pages have been combined.
      UI considerably simplified.
@@ -34,13 +36,10 @@ Since Beta 3:
 - #648952 - Add drush migrate stop command
 - #649368 - Add --all option to drush commands
 - #601656 - Support updating migrated content in-place (via Drush only)
-- #631756 - Fixes to clear and wipe commands
 - #649762 - Insert migrate info into views and destination objects
 - #630088 - Improved performance of migrate_schema_alter()
 - #551254 - Support 'show summary in full view'
 - #429070 - Allow content sets to share views, using distinct arguments
-- #625006 - Clear sources with string ids
-- #619250 - Continue migrating remaining content sets when one is busy
 - #620418 - Mail and hostname fields for comments
 - #623030 - Language field for nodes
 - #614532 - Hard-coded separator for CCK multiple fields
@@ -50,6 +49,15 @@ Since Beta 3:
 - #589824 - Set multiple separator per content set
 - #526856 - Mark already-used fields when mapping
 - #547772 - Support for taxonomy synonyms
+
+Bug fixes
+- #655298 - Make sure msgs are truncated after a full clear
+- #662058 - Don't force full HTML filter on nodes
+- #665006 - Eliminate notice on unset
+- #640744 - Improved created/changed date handling for nodes.
+- #631756 - Fixes to clear and wipe commands
+- #625006 - Clear sources with string ids
+- #619250 - Continue migrating remaining content sets when one is busy
 - #590768 - Use array_merge instead of += in accumulating errors
 - #560380 - Missing message table affects Views lists
 - #588602 - Typo

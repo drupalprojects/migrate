@@ -44,11 +44,16 @@ function node_migrate_delete_node($nid) {
 function node_migrate_import_node($tblinfo, $row) {
   $node = new stdClass;
   $node->type = $tblinfo->desttype;
-  // Handle the update case
+  // Handle an update operation
   if ($row->destid) {
     $node->nid = $row->destid;
     // Need to have the current vid present
     $node->vid = db_result(db_query("SELECT vid FROM {node} WHERE nid=%d", $row->destid));
+  }
+  // If a nid was provided via mapping, load the existing node
+  else if (isset($tblinfo->fields['nid'])) {
+    $nidname = $tblinfo->fields['nid']['srcfield'];
+    $node = node_load($row->$nidname);
   }
 
   // Data which might be useful for node hooks.
@@ -69,6 +74,8 @@ function node_migrate_import_node($tblinfo, $row) {
       $node->$destfield = $values['default_value'];
     }
   }
+
+
 
   // Do default prep before letting other modules take a shot
   $type_info = node_get_types('type', $node->type);
@@ -178,6 +185,8 @@ function node_migrate_import_node($tblinfo, $row) {
     }
     // If a teaser and body, and 'show summary in full view' disabled, add in
     // <!--break--> delimiter.
+    // TODO: When updating an existing node (nid in incoming content set), the
+    // break is unnecessarily prepended. How to avoid?
     if ($node->teaser && $node->body && (!isset($node->teaser_include) || !$node->teaser_include)) {
       $node->body = "\n<!--break-->\n" . $node->body;
     }
@@ -238,6 +247,7 @@ function node_migrate_fields_node($type) {
   $fields = array();
   if (user_access('administer nodes')) {
     $fields = array(
+      '[nid]' => t('Node: Existing node id'),
       'name' => t('Node: Authored by (username)'),
       'uid' => t('Node: Authored by (uid)'),
       'created' => t('Node: Authored on'),

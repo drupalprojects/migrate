@@ -112,6 +112,13 @@ function migrate_schema() {
         'length' => 255,
         'not null' => FALSE,
       ),
+      'primary_key' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('mcmid'),
     'unique keys' => array(
@@ -450,5 +457,50 @@ function migrate_update_6011() {
             SET destfield='created'
             WHERE destfield='date' AND mcsid IN
               (SELECT mcsid FROM {migrate_content_sets} WHERE contenttype='node')");
+  return $ret;
+}
+
+/*
+ * Add primary_key flag to mappings table
+ */
+function migrate_update_6012() {
+  $ret = array();
+  // Flag indicates the primary key of the destination
+  db_add_field($ret, 'migrate_content_mappings', 'primary_key',
+    array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE,
+          'default' => 0));
+  // Set the flag for known destination PKs
+  $sql = "SELECT mcsid, contenttype
+          FROM {migrate_content_sets}
+          WHERE contenttype IN ('node', 'user', 'comment', 'role', 'term')";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $sql = "UPDATE {migrate_content_mappings}
+            SET primary_key=1
+            WHERE mcsid=%d AND destfield='%s'";
+    switch ($row->contenttype) {
+      case 'node':
+        $destfield = 'nid';
+        break;
+      case 'user':
+        $destfield = 'uid';
+        break;
+      case 'comment':
+        $destfield = 'cid';
+        break;
+      case 'role':
+        $destfield = 'rid';
+        break;
+      case 'term':
+        $destfield = 'tid';
+        break;
+      default:
+        $destfield = '';
+        break;
+    }
+    if ($destfield) {
+      db_query($sql, $row->mcsid, $destfield);
+    }
+  }
   return $ret;
 }

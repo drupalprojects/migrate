@@ -19,6 +19,7 @@ function taxonomy_migrate_types() {
  */
 function taxonomy_migrate_fields_term($type) {
   $fields = array(
+    'tid' => t('Taxonomy: Existing term ID'),
     'vid' => t('Taxonomy: Vocabulary'),
     'name' => t('Taxonomy: Name'),
     'description' => t('Taxonomy: Description'),
@@ -65,7 +66,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   $errors = array();
   // Begin building term array.
   $term = array();
-  
+
   // Data which might be useful for taxonomy hooks.
   $term['migrate_tblinfo'] = $tblinfo;
 
@@ -359,4 +360,3 @@ function _migrate_taxonomy_get_term($vocab, $text, $handler) {
   $missing_terms[$vid][$text] = $tid;
   return $tid;
 }
-

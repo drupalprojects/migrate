@@ -399,6 +399,18 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
   $processstart = microtime(TRUE);
   $memory_limit = _migrate_memory_limit();
 
+  // If this content set is set up to update existing content, we don't
+  // want to delete the content on clear, just the map/message tables
+  $sql = "SELECT srcfield FROM {migrate_content_mappings}
+          WHERE mcsid=%d AND primary_key=1";
+  $srcfield = db_result(db_query($sql, $mcsid));
+  if ($srcfield) {
+    $full_clear = FALSE;
+  }
+  else {
+    $full_clear = TRUE;
+  }
+
   // Assume success until proven otherwise
   $return = MIGRATE_RESULT_COMPLETED;
 
@@ -455,9 +467,11 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
       }
     }
     // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
-    timer_start('delete hooks');
-    migrate_invoke_all("delete_$contenttype", $row->destid);
-    timer_stop('delete hooks');
+    if ($full_clear) {
+      timer_start('delete hooks');
+      migrate_invoke_all("delete_$contenttype", $row->destid);
+      timer_stop('delete hooks');
+    }
     timer_start('clear map/msg');
     db_query("DELETE FROM {" . $maptable . "} WHERE sourceid='%s'", $row->sourceid);
     db_query("DELETE FROM {" . $msgtablename . "} WHERE sourceid='%s' AND level=%d",
@@ -1402,7 +1416,7 @@ function _migrate_valid_date($date) {
 }
 
 /**
- *  Get the row count for a view, possibly filtered by arguments
+ * Get the row count for a view, possibly filtered by arguments
  * @param $view
  *  Name of the view to query
  * @param $args
@@ -1422,7 +1436,14 @@ function _migrate_get_view_count($view, $args = NULL) {
     $view->set_arguments(explode('/', $args));
   }
   $view->execute();
-  return $view->total_rows;
+  $rows = $view->total_rows;
+  // TODO: Now, that's the total rows in the current source. However, it may be
+  // (particularly with a content set that updates existing objects) that
+  // previously-migrated content is no longer in the source, so the stats
+  // (particularly Unimported) may be misleading. So, we would want to add in
+  // anything in the map table not in the source. This is tricky, and may not
+  // really be worth the performance impact, so we'll leave it alone for now.
+  return $rows;
 }
 
 /**

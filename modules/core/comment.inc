@@ -19,6 +19,7 @@ function comment_migrate_types() {
  */
 function comment_migrate_fields_comment($type) {
   $fields = array(
+    'cid' => t('Comment: Existing comment ID'),
     'subject' => t('Comment: Title'),
     'comment' => t('Comment: Body'),
     'timestamp' => t('Comment: Post date'),
@@ -62,11 +63,15 @@ function comment_migrate_delete_comment($cid) {
 function comment_migrate_import_comment($tblinfo, $row) {
   $errors = array();
   $comment = array();
-  // Handle the update case
+  // Handle an update operation
   if ($row->destid) {
     $comment['cid'] = $row->destid;
   }
-
+  // If a cid was provided via mapping, load the existing comment
+  else if (isset($tblinfo->fields['cid'])) {
+    $cidname = $tblinfo->fields['cid']['srcfield'];
+    $comment = _comment_load($row->$cidname);
+  }
   // Data which might be useful for comment hooks.
   $comment['migrate_tblinfo'] = $tblinfo;
 

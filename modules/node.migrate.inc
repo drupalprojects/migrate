@@ -54,6 +54,10 @@ function node_migrate_import_node($tblinfo, $row) {
   else if (isset($tblinfo->fields['nid'])) {
     $nidname = $tblinfo->fields['nid']['srcfield'];
     $node = node_load($row->$nidname);
+    if (!$node) {
+      $node = new stdClass;
+      $node->type = $tblinfo->desttype;
+    }
   }
 
   // Data which might be useful for node hooks.
@@ -74,8 +78,6 @@ function node_migrate_import_node($tblinfo, $row) {
       $node->$destfield = $values['default_value'];
     }
   }
-
-
 
   // Do default prep before letting other modules take a shot
   $type_info = node_get_types('type', $node->type);

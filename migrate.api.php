@@ -7,11 +7,39 @@
  */
 
 /**
+ * Provide information on this module's implementation of the Migrate API
+ */
+function hook_migrate_api() {
+  $api = array(
+    // Required - if it does not match the API version of the migrate
+    // module, your migrate hooks will not be invoked
+    'api' => 1,
+    // Optional path containing migration code - relative to the module directory,
+    // and defaults to the module directory. <mymodule>.migrate.inc will be
+    // included from this directory
+    'path' => 'modules',
+    // Optional - if this module provides migration implementations on behalf of
+    // other modules, list them here and <module>.migrate.inc will be included
+    // from the path above
+    'integration modules' => array(
+      'comment' => array(
+        // Optionally describe the support you're providing, and explicitly set the status
+        'description' => 'integrates with comment module',
+        'status' => TRUE,
+      ),
+      'node',
+      'user',
+    ),
+  );
+  return $api;
+}
+
+
+/**
  * Do one-time initialization, prior to when any migrate hook is called.
  */
 function hook_migrate_init() {
-  // Load in migration code.
-  require_once drupal_get_path('module', 'example') . '/migrate.inc';
+  // For example, load some global data to be used by all hooks
 }
 
 /**
@@ -35,7 +63,7 @@ function hook_migrate_types() {
  */
 function hook_migrate_fields_$contenttype() {
   $fields = array(
-    'name' => t('Role name'),
+    'name' => t('Role: Name'),
   );
   return $fields;
 }

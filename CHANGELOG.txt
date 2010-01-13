@@ -1,5 +1,14 @@
 //$Id$
 
+Since Beta 4
+===========
+Features and enhancements
+- #679216, #678378 - Implement hook_migrate_api(), and move contrib module support
+    to migrate_extras.
+
+Bug fixes
+- None
+
 Migrate 1.0 Beta 4
 ===========
 Features and enhancements

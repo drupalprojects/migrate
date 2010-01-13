@@ -638,7 +638,7 @@ function theme_migrate_content_set_mappings($form) {
   $output .= drupal_render($form);
 
   // Support dynamic visualization of already-picked fields
-  drupal_add_js(drupal_get_path('module', 'migrate') .'/migrate.js');
+  //drupal_add_js(drupal_get_path('module', 'migrate') .'/migrate.js');
 
   return $output;
 }
@@ -780,6 +780,33 @@ function _migrate_settings_form($form_state) {
       '#default_value' => 0,
     );
   }
+  $form['integrations'] = array('#tree' => TRUE);
+  $form['integrations']['description'] = array(
+    '#prefix' => '<hr /><div>',
+    '#value' => t('Modules implementing the Migrate API are listed below. Most modules
+                   other than the Migrate module itself simply support themselves, but
+                   some (notably <a href="http://drupal.org/project/migrate_extras">Migrate Extras</a>)
+                   may provide support on behalf of other modules. Support can be
+                   disabled by unchecking the box for a particular line.'),
+    '#suffix' => '</div>',
+  );
+
+  foreach (migrate_get_module_apis() as $module => $info) {
+    $form['integrations'][$module] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Migration support implemented in the @module module',
+                    array('@module' => $module)),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    foreach ($info['integration modules'] as $intmod => $intmod_details) {
+       $form['integrations'][$module][$intmod] = array(
+         '#type' => 'checkbox',
+         '#title' => t($intmod_details['description']),
+         '#default_value' => $intmod_details['status'],
+       );
+    }
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -795,8 +822,10 @@ function theme_migrate_settings($form) {
   $output = '';
   $output .= drupal_render($form['description']);
   $output .= drupal_render($form['display_timers']);
+  $output .= drupal_render($form['hide_help_message']);
   $output .= drupal_render($form['cache_counts']);
   $output .= drupal_render($form['refresh_counts']);
+  $output .= drupal_render($form['integrations']);
   $output .= drupal_render($form);
 
   return $output;
@@ -811,6 +840,8 @@ function _migrate_settings_form_submit($form, &$form_state) {
   variable_set('migrate_hide_help_message', $values['hide_help_message']);
   $original_cache = variable_get('migrate_cache_counts', 0);
   variable_set('migrate_cache_counts', $values['cache_counts']);
+
+  variable_set('migrate_integration_settings', $values['integrations']);
   if (isset($values['refresh_counts']) || ($values['cache_counts'] && !$original_cache)) {
     $sql = "SELECT mcsid,view_name,view_args FROM {migrate_content_sets}";
     $result = db_query($sql);

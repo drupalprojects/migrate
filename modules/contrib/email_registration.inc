@@ -23,17 +23,18 @@
  *  The username we've already set - returning this prevents
  *  email_registration from overwriting it.
  */
-function migrate_email_registration_name($edit, $account) {
+/*function migrate_email_registration_name($edit, $account) {
   return $edit['name'];
-}
+}*/
 
 /**
  * Implementation of hook_migrate_prepare_user().
  */
-function email_registration_migrate_prepare_user(&$newuser, $tblinfo, $row) {
+/*function email_registration_migrate_prepare_user(&$newuser, $tblinfo, $row) {
   // Generate a random username if none was provided
   if (!$newuser['name']) {
     // There is a tiny risk that the generated name will not be unique
     $newuser['name'] = user_password();
   }
 }
+*/

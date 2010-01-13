@@ -1,6 +1,8 @@
 <?php
 // $Id$
 
+define('MIGRATE_API_VERSION', 1);
+
 define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
 define('MIGRATE_ACCESS_ADVANCED', 'advanced migration tools');
 
@@ -20,6 +22,7 @@ define('MIGRATE_RESULT_FAILED', 4);
 define('MIGRATE_RESULT_IN_PROGRESS', 5);
 
 define('MIGRATE_MEMORY_THRESHOLD', .8);
+
 
 /**
  * @file
@@ -1012,18 +1015,13 @@ function _migrate_progress_message($starttime, $numitems, $description, $import 
 }
 
 /*
- * Implementation of hook_init().
- */
+* Implementation of hook_init().
+*/
 function migrate_init() {
   // Loads the hooks for the supported modules.
   // TODO: Be more lazy - only load when really needed
-  $path = drupal_get_path('module', 'migrate') .'/modules';
-  $files = drupal_system_listing('.*\.inc$', $path, 'name', 0);
-  foreach ($files as $module_name => $file) {
-    if (module_exists($module_name)) {
-      include_once($file->filename);
-    }
-  }
+
+  migrate_module_include();
 
   // Add main CSS functionality.
   drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
@@ -1156,7 +1154,9 @@ function migrate_schema_alter(&$schema) {
         $tabledb = 'default';
       }
       $tablename = $view->base_table;
+
       $sourceschema = _migrate_inspect_schema($tablename, $tabledb);
+
       // If the PK of the content set is defined, make sure we have a mapping table
       $sourcekey = $content_set->sourcekey;
       if ($sourcekey) {
@@ -1462,6 +1462,113 @@ function _migrate_memory_limit() {
   }
 
   return $value;
+}
+
+/*
+ * Implementation of hook_migrate_api().
+ */
+function migrate_migrate_api() {
+  $api = array(
+    'api' => 1,
+    'path' => 'modules',
+    'integration modules' => array(
+      'comment' => array(
+        'description' => t('Core migration support for the comment module'),
+      ),
+      'node' => array(
+        'description' => t('Core migration support for the node module'),
+      ),
+      'profile' => array(
+        'description' => t('Core migration support for the profile module'),
+      ),
+      'taxonomy' => array(
+        'description' => t('Core migration support for the taxonomy module'),
+      ),
+      'user' => array(
+        'description' => t('Core migration support for the user module'),
+      ),
+    ),
+  );
+  return $api;
+}
+
+// ------------------------------------------------------------------
+// Include file helpers - @merlinofchoas: borrowing heavily from views.module
+
+/**
+ * Load views files on behalf of modules.
+ */
+function migrate_module_include() {
+  foreach (migrate_get_module_apis() as $module => $info) {
+    foreach ($info['integration modules'] as $intmod => $intmod_details) {
+      $file = "$info[path]/$intmod.migrate.inc";
+      if (file_exists($file) && $intmod_details['status'] == TRUE) {
+        require_once $file;
+      }
+    }
+  }
+}
+
+/**
+ * Get a list of modules that support the current migrate API.
+ */
+function migrate_get_module_apis($reset = FALSE) {
+  static $cache = NULL;
+  if ($reset) {
+    $cache = NULL;
+  }
+  if (!isset($cache)) {
+    $cache = array();
+    foreach (module_implements('migrate_api') as $module) {
+      $function = $module . '_migrate_api';
+      $info = $function();
+      if (isset($info['api']) && $info['api'] == 1.000) {
+        if (isset($info['path'])) {
+          $info['path'] = drupal_get_path('module', $module) . '/' . $info['path'];
+        }
+        else {
+          $info['path'] = drupal_get_path('module', $module);
+        }
+
+        if (!isset($info['integration modules'])) {
+          $info['integration modules'] = array($module => array());
+        }
+
+        $settings = variable_get('migrate_integration_settings', NULL);
+
+        foreach ($info['integration modules'] as $intmod_name => $intmod_details) {
+          // If the module was just entered as a string without details, we have to fix.
+          if (!is_array($intmod_details)) {
+            unset($info['integration modules'][$intmod_name]);
+            $intmod_name = $intmod_details;
+            $intmod_details = array();
+          }
+
+          $default_details = array(
+            'description' => t('Support for the @intmod module.', array('@intmod' => $intmod_name)),
+            'status' => TRUE,
+          );
+
+          // Allow override of defaults.
+          $info['integration modules'][$intmod_name] = $intmod_details + $default_details;
+
+          // Overwrite default status if set.
+          if (isset($settings[$module][$intmod_name])){
+            $info['integration modules'][$intmod_name]['status'] = $settings[$module][$intmod_name];
+          }
+        }
+        $cache[$module] = $info;
+      }
+      else {
+        drupal_set_message(t('%function supports Migrate API version %modversion,
+           Migrate module API version is %version - migration support not loaded.',
+           array('%function' => $function, '%modversion' => $info['api'],
+                 '%version' => MIGRATE_API_VERSION)));
+      }
+    }
+  }
+
+  return $cache;
 }
 
 /**

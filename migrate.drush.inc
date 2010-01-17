@@ -426,9 +426,9 @@ function drush_migrate_migrate_wipe() {
     // Quickly wipe node_load() cache to avoid memory bloat.
     node_load('invalid_condition', NULL, TRUE);
 
-
     // Check for closeness to memory limit
     $usage = memory_get_usage();
+    $memory_limit = _migrate_memory_limit();
     $pct_memory = $usage/$memory_limit;
     if ($pct_memory > MIGRATE_MEMORY_THRESHOLD) {
       // Low on memory. Spawn a subshell.

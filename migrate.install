@@ -73,8 +73,8 @@ function migrate_schema() {
         'default' => 0,
       ),
       'multiple_separator' => array(
-        'type' => 'char',
-        'length' => 1,
+        'type' => 'varchar',
+        'length' => 8,
         'not null' => TRUE,
         'default' => ',',
       ),
@@ -502,5 +502,19 @@ function migrate_update_6012() {
       db_query($sql, $row->mcsid, $destfield);
     }
   }
+  return $ret;
+}
+
+/*
+ * Allow longer multiple_separator
+ */
+function migrate_update_6013() {
+  $ret = array();
+  db_change_field($ret, 'migrate_content_sets', 'multiple_separator', 'multiple_separator', array(
+    'type' => 'varchar',
+    'length' => 8,
+    'not null' => TRUE,
+    'default' => ',',
+  ));
   return $ret;
 }

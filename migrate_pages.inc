@@ -500,6 +500,8 @@ function migrate_content_set_mappings($form_state, $mcsid) {
     '#type' => 'textfield',
     '#title' => t('Separator'),
     '#description' => t('Separator for fields potentially holding multiple values, e.g. taxonomy terms.'),
+    '#size' => 2,
+    '#maxlength' => 8,
     '#default_value' => $multiple_separator,
   );
 

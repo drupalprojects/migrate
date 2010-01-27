@@ -1,6 +1,6 @@
 //$Id$
 
-Since Beta 4
+Migrate 1.0 RC1
 ===========
 Features and enhancements
 - #679216, #678378 - Implement hook_migrate_api(), and move contrib module support
@@ -8,7 +8,7 @@ Features and enhancements
 - #682762 - Extend separator length
 
 Bug fixes
-- None
+- #685116 - Missing fields for mapping with missing view argument
 
 Migrate 1.0 Beta 4
 ===========

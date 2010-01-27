@@ -522,6 +522,9 @@ function migrate_content_set_mappings($form_state, $mcsid) {
   else {
     // Need to fill in the query, to find out the aliases that will be returned by the
     // query
+    if ($view_args) {
+      $view->set_arguments(explode('/', $view_args));
+    }
     $view->build();
     $fields = $view->get_items('field');
     $srcoptions = array();

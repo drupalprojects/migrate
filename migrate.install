@@ -22,6 +22,7 @@ function migrate_schema() {
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
       'view_args' => array(
         'type' => 'varchar',
@@ -44,11 +45,13 @@ function migrate_schema() {
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
       'description' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
       'lastimported' => array(
         'type' => 'datetime',
@@ -58,6 +61,7 @@ function migrate_schema() {
         'type' => 'int',
         'unsigned' => FALSE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'rowcount' => array(
         'type' => 'int',
@@ -96,21 +100,25 @@ function migrate_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'srcfield' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
       'destfield' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+        'default' => '',
       ),
       'default_value' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
+        'default' => '',
       ),
       'primary_key' => array(
         'type' => 'int',
@@ -516,5 +524,77 @@ function migrate_update_6013() {
     'not null' => TRUE,
     'default' => ',',
   ));
+  return $ret;
+}
+
+/*
+ * Make sure all NOT NULL columns have defaults
+ */
+function migrate_update_6014() {
+  $ret = array();
+  db_change_field($ret, 'migrate_content_sets', 'view_name', 'view_name',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_sets', 'desttype', 'desttype',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_sets', 'description', 'description',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_sets', 'weight', 'weight',
+    array(
+      'type' => 'int',
+      'unsigned' => FALSE,
+      'not null' => TRUE,
+      'default' => 0,
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'mcsid', 'mcsid',
+    array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'srcfield', 'srcfield',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'destfield', 'destfield',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
+  db_change_field($ret, 'migrate_content_mappings', 'default_value', 'default_value',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    )
+  );
   return $ret;
 }

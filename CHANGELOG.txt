@@ -9,6 +9,7 @@ Features and enhancements
 
 Bug fixes
 - #685116 - Missing fields for mapping with missing view argument
+- #683402 - Errors saving non-desttype destinations in strict mode
 
 Migrate 1.0 Beta 4
 ===========

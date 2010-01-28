@@ -82,10 +82,19 @@ function migrate_schema() {
         'not null' => TRUE,
         'default' => ',',
       ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => '',
+      ),
     ),
     'primary key' => array('mcsid'),
     'indexes' => array(
       'view_name' => array('view_name'),
+    ),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
     ),
   );
   $schema['migrate_content_mappings'] = array(
@@ -596,5 +605,25 @@ function migrate_update_6014() {
       'default' => '',
     )
   );
+  return $ret;
+}
+
+/*
+ * Add unique alpha-numeric identifier
+ */
+function migrate_update_6015() {
+  $ret = array();
+  // Add machine_name field - maximum length for generating table names
+  // like migrate_msgs_<machine_name>
+  db_add_field($ret, 'migrate_content_sets', 'machine_name',
+    array('type' => 'varchar', 'length' => 50, 'not null' => TRUE,
+          'default' => ''));
+
+  // Initialize contents to mcsid (known unique)
+  db_query("UPDATE {migrate_content_sets} SET machine_name = mcsid");
+
+  // Now that the contents are unique, add a unique key
+  db_add_unique_key($ret, 'migrate_content_sets', 'machine_name',
+    array('machine_name'));
   return $ret;
 }

@@ -83,6 +83,7 @@ class MigrateUnitTest extends DrupalWebTestCase {
     $content_set->sourcekey = 'id';
     $content_set->contenttype = 'node';
     $content_set->desttype = 'page';
+    $content_set->machine_name = 'node_test';
     $content_set->description = 'Node test';
     $content_set->weight = 3;
     $content_set->lastimported = NULL;

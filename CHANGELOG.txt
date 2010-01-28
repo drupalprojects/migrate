@@ -4,6 +4,7 @@ Migrate 1.0 RC1
 ===========
 Features and enhancements
 - #484404 - Basic content set export feature added
+- #698178 - Add unique alphanumeric ids to content sets
 - #679216, #678378 - Implement hook_migrate_api(), and move contrib module support
     to migrate_extras.
 - #682762 - Extend separator length

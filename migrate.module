@@ -130,9 +130,30 @@ function migrate_save_content_set(&$content_set, $options = array()) {
     $was_array = FALSE;
   }
 
+  $schema_change = FALSE;
+
   // Update or insert the content set record as appropriate
   if (isset($content_set->mcsid)) {
+    // If machine_name changes, need to rename the map/message tables
+    $old_machine_name = db_query("SELECT machine_name FROM {migrate_content_sets}
+                                  WHERE mcsid=%d", $content_set->mcsid);
+    if ($old_machine_name != $content_set->machine_name) {
+      $old_maptablename = migrate_map_table_name($content_set->mcsid);
+      $old_msgtablename = migrate_message_table_name($content_set->mcsid);
+    }
     drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
+    if (isset($old_maptablename) && db_table_exists($old_maptablename)) {
+      $ret = array();
+      $new_maptablename = migrate_map_table_name($content_set->mcsid);
+      db_rename_table($ret, $old_maptablename, $new_maptablename);
+      $schema_change = TRUE;
+    }
+    if (isset($old_msgtablename) && db_table_exists($old_msgtablename)) {
+      $ret = array();
+      $new_msgtablename = migrate_message_table_name($content_set->mcsid);
+      db_rename_table($ret, $old_msgtablename, $new_msgtablename);
+      $schema_change = TRUE;
+    }
   }
   else {
     drupal_write_record('migrate_content_sets', $content_set);
@@ -190,8 +211,6 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       $sourcefield['type'] = 'int';
     }
 
-    $schema_change = FALSE;
-
     if (!db_table_exists($maptablename)) {
       $schema = _migrate_map_table_schema($sourcefield);
       db_create_table($ret, $maptablename, $schema);
@@ -209,7 +228,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
     else {
       // TODO: Deal with varchar->int case where there is existing non-int data
       $desired_schema = _migrate_map_table_schema($sourcefield);
-      $actual_schema = $inspect[$maptablename];
+      $actual_schema = _migrate_inspect_schema($maptablename);
       if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
         $ret = array();
         db_drop_primary_key($ret, $maptablename);
@@ -219,7 +238,7 @@ function migrate_save_content_set(&$content_set, $options = array()) {
         $schema_change = TRUE;
       }
       $desired_schema = _migrate_message_table_schema($sourcefield);
-      $actual_schema = $inspect[$msgtablename];
+      $actual_schema = _migrate_inspect_schema($msgtablename);
       if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
         $ret = array();
         db_drop_index($ret, $msgtablename, 'sourceid');
@@ -1280,7 +1299,9 @@ function migrate_theme() {
  *  The name of the map table
  */
 function migrate_map_table_name($mcsid) {
-  return "migrate_map_$mcsid";
+  $machine_name = db_result(db_query("SELECT machine_name FROM {migrate_content_sets}
+                            WHERE mcsid=%d", $mcsid));
+  return "migrate_map_$machine_name";
 }
 
 /**
@@ -1291,7 +1312,9 @@ function migrate_map_table_name($mcsid) {
  *  The name of the message table
  */
 function migrate_message_table_name($mcsid) {
-  return "migrate_msgs_$mcsid";
+  $machine_name = db_result(db_query("SELECT machine_name FROM {migrate_content_sets}
+                            WHERE mcsid=%d", $mcsid));
+  return "migrate_msgs_$machine_name";
 }
 
 /**

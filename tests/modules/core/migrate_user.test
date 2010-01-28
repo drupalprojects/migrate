@@ -111,6 +111,7 @@ class MigrateUserTest extends DrupalWebTestCase {
 
     // Create content set
     $content_set = new stdClass;
+    $content_set->machine_name = 'user_test';
     $content_set->description = 'User test';
     $content_set->contenttype = 'user';
     $content_set->view_name = $tablename;
@@ -338,6 +339,7 @@ class MigrateUserTest extends DrupalWebTestCase {
         db_query($sql, $uid2, 'newusername2');
         db_query($sql, $uid3, 'newusername3');
         $upd_content_set = new stdClass;
+        $upd_content_set->machine_name = 'user_update_test';
         $upd_content_set->description = 'User update test';
         $upd_content_set->contenttype = 'user';
         $upd_content_set->view_name = $tablename;

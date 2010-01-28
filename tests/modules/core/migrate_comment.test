@@ -147,6 +147,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $content_set->sourcekey = 'id';
     $content_set->contenttype = 'node';
     $content_set->desttype = 'story';
+    $content_set->machine_name = 'stories';
     $content_set->description = 'Stories';
     $content_set->weight = 1;
     $storymcsid = migrate_save_content_set($content_set, array('base_table' => $this->storytable));
@@ -166,6 +167,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $content_set->view_name = $this->usertable;
     $content_set->sourcekey = 'id';
     $content_set->contenttype = 'user';
+    $content_set->machine_name = 'users';
     $content_set->description = 'Users';
     $content_set->weight = 2;
     $usermcsid = migrate_save_content_set($content_set, array('base_table' => $this->usertable));
@@ -185,6 +187,7 @@ class MigrateCommentTest extends DrupalWebTestCase {
     $content_set->view_name = $this->commenttable;
     $content_set->sourcekey = 'id';
     $content_set->contenttype  = 'comment';
+    $content_set->machine_name = 'comments';
     $content_set->description = 'Comments';
     $content_set->weight = 3;
     $commentmcsid = migrate_save_content_set($content_set, array('base_table' => $this->commenttable));

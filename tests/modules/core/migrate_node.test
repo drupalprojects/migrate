@@ -146,6 +146,7 @@ class MigrateNodeTest extends DrupalWebTestCase {
 
     // Create content set
     $content_set = new stdClass;
+    $content_set->machine_name = 'node_test';
     $content_set->description = 'Node test';
     $content_set->contenttype = 'node';
     $content_set->desttype = 'page';
@@ -505,6 +506,7 @@ class MigrateNodeTest extends DrupalWebTestCase {
         db_query($sql, $nid2, 'Updated title 2');
         db_query($sql, $nid3, 'Updated title 3');
         $upd_content_set = new stdClass;
+        $upd_content_set->machine_name = 'node_update_test';
         $upd_content_set->description = 'Node update test';
         $upd_content_set->contenttype = 'node';
         $upd_content_set->desttype = 'page';

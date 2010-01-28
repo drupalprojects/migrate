@@ -90,6 +90,8 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
   function testContentSetsPages() {
     // Create content set - missing description
     $edit = array();
+    // TODO: test validation of machine_name
+    $edit['machine_name'] = 'simple_page_test';
     $edit['contenttype'] = 'node/page';
     $edit['view_name'] = $this->tablename;
     $edit['weight'] = 5;
@@ -101,7 +103,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
       $this->tablename));
     if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
       $path = parse_url($this->getUrl(), PHP_URL_PATH);
-      if ($this->assertEqual($path, "/admin/content/migrate/$mcsid",
+      if ($this->assertEqual($path, "/admin/content/migrate/content_set/$mcsid",
               t('Redirected to content set edit page'))) {
         $edit = array();
         $edit['weight'] = 'abc';
@@ -122,7 +124,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
         $edit = array();
         $edit['srcfield[title]'] = $this->tablename . '_title';
         $edit['srcfield[body]'] = $this->tablename . '_body';
-        $this->drupalPost("/admin/content/migrate/$mcsid", $edit, t('Submit changes'));
+        $this->drupalPost("/admin/content/migrate/content_set/$mcsid", $edit, t('Submit changes'));
         if ($this->assertText(t('Changes saved'), t('Create field mappings'))) {
           $sql = "SELECT mcmid FROM {migrate_content_mappings}
                   WHERE mcsid=%d AND destfield='%s'";

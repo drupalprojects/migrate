@@ -50,7 +50,12 @@ function _migrate_dashboard_form($form_state) {
       $status = t('N/A');
       $maptable = migrate_map_table_name($row->mcsid);
       $sourcekey = $row->sourcekey;
-      $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
+      if (db_table_exists($maptable)) {
+        $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
+      }
+      else {
+        $imported = 0;
+      }
 
       // If not caching counts, override the saved count with a fresh count
       if (!variable_get('migrate_cache_counts', 0)) {
@@ -60,54 +65,60 @@ function _migrate_dashboard_form($form_state) {
       $unimported = $row->rowcount - $imported;
 
       $msgtablename = migrate_message_table_name($row->mcsid);
-      if ($unimported > 0) {
-        $messages = '';
-        $numerrors = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                         FROM {" . $msgtablename . "}
-                                         WHERE level=%d",
-                                        MIGRATE_MESSAGE_ERROR));
-        if ($numerrors > 0) {
-          $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
-            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
-            array('html' => TRUE))
-            . '<br />';
-        }
-        $numwarnings = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
+      if (db_table_exists($msgtablename)) {
+        if ($unimported > 0) {
+          $messages = '';
+          $numerrors = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
                                            FROM {" . $msgtablename . "}
                                            WHERE level=%d",
-                                          MIGRATE_MESSAGE_WARNING));
-        if ($numwarnings > 0) {
-          $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
-            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
-            array('html' => TRUE))
-            . '<br />';
+                                          MIGRATE_MESSAGE_ERROR));
+          if ($numerrors > 0) {
+            $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
+              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
+              array('html' => TRUE))
+              . '<br />';
+          }
+          $numwarnings = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
+                                             FROM {" . $msgtablename . "}
+                                             WHERE level=%d",
+                                            MIGRATE_MESSAGE_WARNING));
+          if ($numwarnings > 0) {
+            $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
+              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
+              array('html' => TRUE))
+              . '<br />';
+          }
+          $numnotices = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
+                                             FROM {" . $msgtablename . "}
+                                             WHERE level=%d",
+                                            MIGRATE_MESSAGE_NOTICE));
+          if ($numnotices > 0) {
+            $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
+              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
+              array('html' => TRUE))
+              . '<br />';
+          }
+          if ($messages) {
+            $unimported = $messages . " $unimported&nbsp;total";
+          }
         }
-        $numnotices = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                           FROM {" . $msgtablename . "}
-                                           WHERE level=%d",
-                                          MIGRATE_MESSAGE_NOTICE));
-        if ($numnotices > 0) {
-          $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
-            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
-            array('html' => TRUE))
-            . '<br />';
-        }
-        if ($messages) {
-          $unimported = $messages . " $unimported&nbsp;total";
+        if ($imported > 0) {
+          $numinformational = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
+                                             FROM {" . $msgtablename . "}
+                                             WHERE level=%d",
+                                            MIGRATE_MESSAGE_INFORMATIONAL));
+          if ($numinformational > 0) {
+            $imported .= '<br />' .
+              l(format_plural($numinformational, '1 informational message', '@count informational messages'),
+              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_INFORMATIONAL,
+              array('html' => TRUE))
+              . '<br />';
+          }
         }
       }
-      if ($imported > 0) {
-        $numinformational = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                           FROM {" . $msgtablename . "}
-                                           WHERE level=%d",
-                                          MIGRATE_MESSAGE_INFORMATIONAL));
-        if ($numinformational > 0) {
-          $imported .= '<br />' .
-            l(format_plural($numinformational, '1 informational message', '@count informational messages'),
-            "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_INFORMATIONAL,
-            array('html' => TRUE))
-            . '<br />';
-        }
+      else {
+        $imported = '';
+        $unimported = '';
       }
     }
     else {
@@ -197,10 +208,21 @@ function _migrate_dashboard_form($form_state) {
     '#collapsed' => $rownum == 0 ? FALSE: TRUE,
   );
 
+  $form['addset']['machine_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Content set name'),
+    '#size' => 24,
+    '#maxlength' => 50,
+    '#description' => t('This is the unique name of the content set. It must contain
+      only alphanumeric characters and underscores; it is used to identify the
+      content set internally and to generate map and message tables related to
+      the content set.'),
+  );
+
   $form['addset']['description'] = array(
     '#type' => 'textfield',
     '#title' => t('Description of the content set'),
-    '#description' => t('A friendly phrase only used for display.'),
+    '#description' => t('User-friendly description of the content set'),
   );
 
   $form['addset']['contenttype'] = array(
@@ -365,6 +387,20 @@ function _migrate_content_process_finish($success, $results, $operations) {
  * Common validation function for content sets
  */
 function _migrate_content_set_validate($form_state) {
+  $machine_name = trim($form_state['values']['machine_name']);
+  if (!$machine_name) {
+    form_set_error('machine_name', t('Content set name is required'));
+  }
+  else {
+    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
+                                 WHERE machine_name='%s'", $machine_name));
+    if ($mcsid) {
+      form_set_error('machine_name', t('The content set name must be unique.'));
+    }
+    else if (preg_match('/[^a-zA-Z0-9_]/', $machine_name)) {
+      form_set_error('machine_name', t('Content set name must be alphanumeric or underscores only.'));
+    }
+  }
   $description = trim($form_state['values']['description']);
   if (!$description) {
     form_set_error('description', t('Content set description is required'));
@@ -408,8 +444,10 @@ function _migrate_content_set_form_validate($form, $form_state) {
  * Implementation of hook_submit().
  */
 function _migrate_content_set_form_submit($form, &$form_state) {
+  $content_set = array();
   $content_set['view_name'] = $form_state['values']['view_name'];
   $content_set['view_args'] = trim($form_state['values']['view_args']);
+  $content_set['machine_name'] = $form_state['values']['machine_name'];
   $content_set['description'] = $form_state['values']['description'];
   $destination = explode('/', $form_state['values']['contenttype']);
   $content_set['contenttype'] = $destination[0];
@@ -433,6 +471,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
   $view_name = $row->view_name;
   $view_args = $row->view_args;
   $sourcekey = $row->sourcekey;
+  $machine_name = $row->machine_name;
   $description = $row->description;
   $contenttype = $row->contenttype;
   $desttype = $row->desttype;
@@ -449,6 +488,19 @@ function migrate_content_set_mappings($form_state, $mcsid) {
     '#type' => 'value',
     '#value' => $mcsid,
   );
+
+  $form['machine_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Content set name'),
+    '#size' => 24,
+    '#maxlength' => 50,
+    '#default_value' => $machine_name,
+    '#description' => t('This is the unique name of the content set. It must contain
+      only alphanumeric characters and underscores; it is used to identify the
+      content set internally and to generate map and message tables related to
+      the content set.'),
+  );
+
   $form['description'] = array(
     '#type' => 'textfield',
     '#title' => t('Description of the content set'),
@@ -616,7 +668,8 @@ function migrate_content_set_mappings($form_state, $mcsid) {
  * Theme function for content set edit page.
  */
 function theme_migrate_content_set_mappings($form) {
-  $output = drupal_render($form['description']);
+  $output = drupal_render($form['machine_name']);
+  $output .= drupal_render($form['description']);
   $output .= drupal_render($form['show_view_name']);
   $output .= drupal_render($form['view_args']);
   $output .= drupal_render($form['show_contenttype']);

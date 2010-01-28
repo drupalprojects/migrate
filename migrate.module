@@ -1088,7 +1088,6 @@ function migrate_menu() {
   $items['admin/content/migrate'] = array(
     'title' => 'Migrate',
     'description' => 'Monitor and control the creation of Drupal content from source data',
-    'weight' => 3,
     'page callback' => 'migrate_dashboard',
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_pages.inc',
@@ -1107,14 +1106,27 @@ function migrate_menu() {
     'file' => 'migrate_pages.inc',
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/content/migrate/%'] = array(
+  $items['admin/content/migrate/content_set/%'] = array(
     'title' => 'Content set',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('migrate_content_set_mappings', 3),
+    'page arguments' => array('migrate_content_set_mappings', 4),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
-    'type' => MENU_CALLBACK,
+//    'type' => MENU_CALLBACK,
     'file' => 'migrate_pages.inc',
   );
+  $items['admin/content/migrate/content_set/%/edit'] = array(
+    'title' => 'Edit',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/content/migrate/content_set/%/export'] = array(
+    'title' => 'Export',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('migrate_export_content_set', 4),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'migrate_pages.inc',
+  );
+
   $items['migrate/xlat/%'] = array(
     'page callback' => 'migrate_xlat',
     'access arguments' => array('access content'),

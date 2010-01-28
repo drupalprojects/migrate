@@ -118,7 +118,7 @@ function _migrate_dashboard_form($form_state) {
     $form['data'][$rownum]['clearing'] = array('#value' => 0);
     $form['data'][$rownum]['importing'] = array('#value' => 0);
     $form['data'][$rownum]['description'] = array('#value' =>
-      l($row->description, 'admin/content/migrate/' . $row->mcsid));
+      l($row->description, 'admin/content/migrate/content_set/' . $row->mcsid));
     $form['data'][$rownum]['importrows'] = array('#value' => check_plain($row->rowcount));
     $form['data'][$rownum]['imported'] = array('#value' => $imported);
     $form['data'][$rownum]['unimported'] = array('#value' => $unimported);
@@ -419,7 +419,7 @@ function _migrate_content_set_form_submit($form, &$form_state) {
   $content_set['weight'] = $form_state['values']['weight'];
   $mcsid = migrate_save_content_set($content_set);
   // Go straight to the mapping form
-  $form_state['redirect'] = "admin/content/migrate/$mcsid";
+  $form_state['redirect'] = "admin/content/migrate/content_set/$mcsid";
 }
 
 /**
@@ -438,6 +438,8 @@ function migrate_content_set_mappings($form_state, $mcsid) {
   $desttype = $row->desttype;
   $weight = $row->weight;
   $multiple_separator = $row->multiple_separator;
+
+  drupal_set_title(check_plain($description));
 
   // Fetch information on available destinations
   $desttypes = migrate_invoke_all('types');
@@ -864,4 +866,53 @@ function _migrate_settings_form_submit($form, &$form_state) {
     }
   }
   drupal_set_message(t('Settings saved'));
+}
+
+/**
+ * Menu callback function.
+ */
+function migrate_export_content_set($form_state, $mcsid) {
+  $row = db_fetch_array(db_query("SELECT * FROM {migrate_content_sets}
+                                   WHERE mcsid=%d",
+                                  $mcsid));
+  drupal_set_title(check_plain($row['description']));
+  // TODO: Generate Table Wizard calls?
+  $code = '  $content_set = new stdClass;' . "\n";
+  unset($row['mcsid']);
+  foreach ($row as $field => $value) {
+    // Yes, we're potentially quoting integer values - it all works out
+    $code .= '  $content_set->' . $field . "= '" . $value . "';\n";
+  }
+  $code .= '  migrate_save_content_set($content_set);' . "\n";
+  $code .= '  $mcsid = $content_set->mcsid;' . "\n\n";
+
+  $sql = "SELECT * FROM {migrate_content_mappings} WHERE mcsid=%d";
+  $result = db_query($sql, $mcsid);
+  while ($row = db_fetch_array($result)) {
+    unset($row['mcmid']);
+    unset($row['mcsid']);
+    $code .= '  $mapping = new stdClass' . "\n";
+    $code .= '  $mapping->mcsid = $mcsid' . "\n";
+    foreach ($row as $field => $value) {
+      $code .= '  $mapping->' . $field . "= '" . $value . "';\n";
+    }
+    $code .= '  migrate_save_content_mapping($mapping);' . "\n\n";
+  }
+  $lines = substr_count($code, "\n");
+
+  $form['description'] = array(
+    '#prefix' => '<div>',
+    '#value' => t('Copy this code to the the clipboard and paste it into an
+      install or update hook. This enables you to maintain content sets
+      programmatically, and to put their definitions under source control.'),
+    '#suffix' => '</div>',
+  );
+
+  $form['export'] = array(
+    '#title' => t('Export data'),
+    '#type' => 'textarea',
+    '#value' => $code,
+    '#rows' => $lines,
+  );
+  return $form;
 }

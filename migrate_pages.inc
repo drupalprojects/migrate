@@ -394,7 +394,7 @@ function _migrate_content_set_validate($form_state) {
   else {
     $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
                                  WHERE machine_name='%s'", $machine_name));
-    if ($mcsid) {
+    if ($mcsid && $mcsid != $form_state['values']['mcsid']) {
       form_set_error('machine_name', t('The content set name must be unique.'));
     }
     else if (preg_match('/[^a-zA-Z0-9_]/', $machine_name)) {

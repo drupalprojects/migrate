@@ -86,7 +86,7 @@ function node_migrate_import_node($tblinfo, $row) {
 
   // User name and uid.
   global $user;
-  if (isset($node->uid)) {
+  if (isset($node->uid) && ($node->uid > 0)) {
     $account = user_load(array('uid' => $node->uid));
     $node->name = $account->name;
   }

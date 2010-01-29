@@ -151,6 +151,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
   function testProcessPage() {
     // Create content set
     $edit = array();
+    $edit['machine_name'] = 'node_test';
     $edit['description'] = 'Node test';
     $edit['contenttype'] = 'node/page';
     $edit['view_name'] = $this->tablename;
@@ -160,7 +161,7 @@ class MigrateFunctionalTest extends DrupalWebTestCase {
       $this->tablename));
     if ($this->assertNotNull($mcsid, t('Create simple page content set'))) {
       $path = parse_url($this->getUrl(), PHP_URL_PATH);
-      if ($this->assertEqual($path, "/admin/content/migrate/$mcsid",
+      if ($this->assertEqual($path, "/admin/content/migrate/content_set/$mcsid",
               t('Redirected to content set edit page'))) {
         // Add mappings to content set
         $edit = array();

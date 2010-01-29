@@ -86,7 +86,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
     }
   }
 
-  if (isset($comment['nodesourceid']) && !isset($comment['nid'])) {
+  if (isset($comment['nodesourceid']) && $comment['nodesourceid'] && !isset($comment['nid'])) {
     $nid = _migrate_xlat_get_new_id('node', $comment['nodesourceid']);
     if ($nid) {
       $comment['nid'] = $nid;
@@ -98,7 +98,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
     }
     unset($comment['nodesourceid']);
   }
-  if (isset($comment['usersourceid']) && !isset($comment['uid'])) {
+  if (isset($comment['usersourceid']) && $comment['usersourceid'] && !isset($comment['uid'])) {
     $uid = _migrate_xlat_get_new_id('user', $comment['usersourceid']);
     if ($uid) {
       $comment['uid'] = $uid;
@@ -110,7 +110,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
     }
     unset($comment['usersourceid']);
   }
-  if (isset($comment['commentsourceid']) && !isset($comment['pid'])) {
+  if (isset($comment['commentsourceid']) && $comment['commentsourceid'] && !isset($comment['pid'])) {
     $pid = _migrate_xlat_get_new_id('comment', $comment['commentsourceid']);
     if ($pid) {
       $comment['pid'] = $pid;

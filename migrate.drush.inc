@@ -11,15 +11,15 @@
  */
 function migrate_drush_help($section) {
   switch ($section) {
-    case 'drush:migrate-clear':
+    case 'drush:migrate clear':
       return dt('Clear a given migration content set');
-    case 'drush:migrate-import':
+    case 'drush:migrate import':
       return dt('Import a given migration content set');
-    case 'drush:migrate-stop':
+    case 'drush:migrate stop':
       return dt('Stop an active operation');
-    case 'drush:migrate-status':
+    case 'drush:migrate status':
       return dt('List all content sets with current status');
-    case 'drush:migrate-wipe':
+    case 'drush:migrate wipe':
       return dt('Delete all nodes from specified content types.');
   }
 }
@@ -34,10 +34,10 @@ function migrate_drush_command() {
     '--idlist' => 'A comma delimited list of ids to import or clear. If unspecified, migrate imports all pending items or clears all items for the content set.',
     '--all' => 'Process all content sets',
   );
-  $items['migrate_status'] = array(
+  $items['migrate status'] = array(
     'description' => 'List all content sets with current status.',
   );
-  $items['migrate-clear'] = array(
+  $items['migrate clear'] = array(
     'description' => 'Clear migrated data for the specified content set',
     'options' => $migration_options,
     // We will bootstrap to login from within the command callback.
@@ -46,47 +46,47 @@ function migrate_drush_command() {
       'content_set' => 'Name or mcsid of content set to clear',
     ),
     'examples' => array(
-      'migrate-clear 4' => 'Clear the content set with mcsid 4',
-      'migrate-clear 4 --idlist=4,9' => 'Clear two items in mcsid 4. The ids refer to the value of the primary key in base table',
-      'migrate-clear Articles --itemlimit=50' =>
+      'migrate clear 4' => 'Clear the content set with mcsid 4',
+      'migrate clear 4 --idlist=4,9' => 'Clear two items in mcsid 4. The ids refer to the value of the primary key in base table',
+      'migrate clear Articles --itemlimit=50' =>
         'Clear up to 50 items from the content set named Articles',
-      'migrate-clear Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
-      'migrate-clear 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
+      'migrate clear Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
+      'migrate clear 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
-  $items['migrate-import'] = array(
+  $items['migrate import'] = array(
     'description' => 'Import a given migration content set',
     'options' => $migration_options,
     'arguments' => array(
       'content_set' => 'Name or mcsid of content set to import',
     ),
     'examples' => array(
-      'migrate-import 4' => 'Import new items in the content set with mcsid 4',
-      'migrate-import 4 --update' => 'Import new items, and also update previously-imported items',
-      'migrate-import 4 --idlist=4,9' => 'Import two items in mcsid 4. The ids refer to the value of the primary key in base table',
-      'migrate-import Articles --itemlimit=50' =>
+      'migrate import 4' => 'Import new items in the content set with mcsid 4',
+      'migrate import 4 --update' => 'Import new items, and also update previously-imported items',
+      'migrate import 4 --idlist=4,9' => 'Import two items in mcsid 4. The ids refer to the value of the primary key in base table',
+      'migrate import Articles --itemlimit=50' =>
         'Import up to 50 items from the content set named Articles',
-      'migrate-import Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
-      'migrate-import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
+      'migrate import Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
+      'migrate import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
-  $items['migrate-stop'] = array(
+  $items['migrate stop'] = array(
     'description' => 'Stop an active migration operation',
     'options' => array('--all' => 'Stop all active migration operations'),
     'arguments' => array(
       'content_set' => 'Name or mcsid of content set to stop',
     ),
     'examples' => array(
-      'migrate-stop Articles' => 'Stop any active operation on the Articles content set',
-      'migrate-stop --all' => 'Stop all active migration operations',
+      'migrate stop Articles' => 'Stop any active operation on the Articles content set',
+      'migrate stop --all' => 'Stop all active migration operations',
     ),
   );
 
-  $items['migrate-wipe'] = array(
+  $items['migrate wipe'] = array(
     'description' => 'Delete all nodes from specified content types.',
     'examples' => array(
-       "migrate-wipe story article" => 'Delete all story and article nodes.',
+       "drush migrate wipe story article" => 'Delete all story and article nodes.',
     ),
     'arguments' => array(
       'type' => 'A space delimited list of content type machine readable Ids.',

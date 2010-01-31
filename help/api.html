@@ -39,9 +39,7 @@ unique identifier of the destination object on the Drupal side and deletes that 
 everything that depends on that object:</p>
 
 <p><pre>function user_migrate_delete_role($rid) {
-  db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
-  db_query('DELETE FROM {permission} WHERE rid = %d', $rid);
-  db_query('DELETE FROM {role} WHERE rid = %d', $rid);
+  user_delete_role($rid);
 }</pre></p></li>
 <li><p>Now, here&#8217;s the major work: implement <strong>hook_migrate_import_&lt;type&gt;</strong> :</p>
 

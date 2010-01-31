@@ -78,9 +78,7 @@ function hook_migrate_fields_$contenttype() {
  *   Unique identifier of the destination object.
  */
 function hook_migrate_delete_$contenttype($id) {
-  db_query('DELETE FROM {users_roles} WHERE rid = %d', $id);
-  db_query('DELETE FROM {permission} WHERE rid = %d', $id);
-  db_query('DELETE FROM {role} WHERE rid = %d', $id);
+  comment_delete($id);
 }
 
 /**

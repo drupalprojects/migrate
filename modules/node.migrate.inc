@@ -26,15 +26,6 @@ function node_migrate_types() {
  * Implementation of hook_migrate_delete_node().
  */
 function node_migrate_delete_node($nid) {
-  // If we've created associations in {upload} between imported nodes
-  // and files directly copied to the Drupal files directory (e.g. using
-  // the auditfiles module), deleting the nodes deletes the files (not
-  // what we typically want when going through clear/import cycles). We
-  // short-circuit this behavior by explicitly deleting the {upload}
-  // table entries for this node, so the upload module leaves the files alone.
-  if (module_exists('upload') && db_table_exists('upload')) {
-    db_query("DELETE FROM {upload} WHERE nid=%d", $nid);
-  }
   node_delete($nid);
 }
 

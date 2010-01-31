@@ -296,11 +296,8 @@ function theme_migrate_dashboard($form) {
   }
 
   $header = $form['header']['#value'];
-  if (empty($rows)) {
-    $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
-  }
 
-  $output .= theme('table', $header, $rows, array('class' => 'migrate-dashboard'));
+  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('class' => 'migrate-dashboard'), 'empty' => t('No data in the table.')));
   $output .= drupal_render($form);
 
   return $output;
@@ -675,7 +672,7 @@ function theme_migrate_content_set_mappings($form) {
     $rows[] = array(array('data' => t('No data in the table.'), 'colspan' => count($header)));
   }
   $output .= t('Map fields in the Source recordset to properties in a Drupal object. More complex fields such as multiple value elements need to be handled in code using the prepare hook.');
-  $output .= theme('table', $header, $rows);
+  $output .= theme('table', array('header' => $header, 'rows' => $rows));
   $output .= drupal_render($form['submit']);
   $output .= drupal_render($form);
 

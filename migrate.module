@@ -1284,17 +1284,17 @@ function _migrate_xlat_get_new_id($contenttype, $oldid) {
  */
 function migrate_theme() {
   return array(
-    'migrate_mapping_table' => array('arguments' => array('form')),
+    'migrate_mapping_table' => array('variables' => array('form')),
     '_migrate_dashboard_form' => array(
-      'arguments' => array('form' => NULL),
+      'variables' => array('form' => NULL),
       'function' => 'theme_migrate_dashboard',
     ),
     '_migrate_settings_form' => array(
-      'arguments' => array('form' => NULL),
+      'variables' => array('form' => NULL),
       'function' => 'theme_migrate_settings',
     ),
     'migrate_content_set_mappings' => array(
-      'arguments' => array('form' => NULL),
+      'variables' => array('form' => NULL),
       'function' => 'theme_migrate_content_set_mappings',
     ),
   );

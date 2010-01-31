@@ -43,18 +43,8 @@ function comment_migrate_fields_comment($type) {
  * Implementation of hook_migrate_delete_comment().
  */
 function comment_migrate_delete_comment($cid) {
-  $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
-  module_load_include('inc', 'comment', 'comment.admin');
-  // Backdoor deletion - query stolen from comment_delete()
-  $form = array();
-  $form_state = array();
-  $form['#comment'] = db_fetch_object(db_query(
-    'SELECT c.*, u.name AS registered_name, u.uid
-     FROM {comments} c
-     INNER JOIN {users} u ON u.uid = c.uid
-     WHERE c.cid = %d',
-    $cid));
-  comment_confirm_delete_submit($form, $form_state);
+  // TODO D7: comment_delete_multiple
+  comment_delete($cid);
 }
 
 /**
@@ -164,13 +154,6 @@ function comment_migrate_import_comment($tblinfo, $row) {
 function comment_migrate_complete_comment(&$comment, $tblinfo, $row) {
   $errors = array();
   if ($comment['cid']) {
-    // comment_save() always saves time() as the timestamp, override if we have a value
-    if ($comment['timestamp']) {
-      db_query("UPDATE {comments}
-                SET timestamp=%d
-                WHERE cid=%d",
-               $comment['timestamp'], $comment['cid']);
-    }
     $sourcekey = $tblinfo->sourcekey;
     migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $comment['cid']);
   }

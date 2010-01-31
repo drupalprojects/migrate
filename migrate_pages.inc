@@ -6,13 +6,6 @@
  */
 
 /**
- * Menu callback for dashboard page
- */
-function migrate_dashboard() {
-  return drupal_get_form('_migrate_dashboard_form');
-}
-
-/**
  * Form definition for dashboard page
  */
 function _migrate_dashboard_form($form_state) {
@@ -36,7 +29,7 @@ function _migrate_dashboard_form($form_state) {
   $clearing = array();
   $importing = array();
   $rownum = 0;
-  while ($row = db_fetch_object($result)) {
+  foreach ($result as $row) {
     $status = '';
     if ($row->mcsid) {
       $view = views_get_view($row->view_name);
@@ -51,7 +44,7 @@ function _migrate_dashboard_form($form_state) {
       $maptable = migrate_map_table_name($row->mcsid);
       $sourcekey = $row->sourcekey;
       if (db_table_exists($maptable)) {
-        $imported = db_result(db_query('SELECT COUNT(*) FROM {' . $maptable . '}'));
+        $imported = db_query('SELECT COUNT(*) FROM {' . $maptable . '}')->fetchField();
       }
       else {
         $imported = 0;
@@ -68,30 +61,24 @@ function _migrate_dashboard_form($form_state) {
       if (db_table_exists($msgtablename)) {
         if ($unimported > 0) {
           $messages = '';
-          $numerrors = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                           FROM {" . $msgtablename . "}
-                                           WHERE level=%d",
-                                          MIGRATE_MESSAGE_ERROR));
+          $numerrors = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_ERROR);
+
           if ($numerrors > 0) {
             $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
               "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
               array('html' => TRUE))
               . '<br />';
           }
-          $numwarnings = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                             FROM {" . $msgtablename . "}
-                                             WHERE level=%d",
-                                            MIGRATE_MESSAGE_WARNING));
+          $numwarnings = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_WARNING);
+                                            
           if ($numwarnings > 0) {
             $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
               "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
               array('html' => TRUE))
               . '<br />';
           }
-          $numnotices = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                             FROM {" . $msgtablename . "}
-                                             WHERE level=%d",
-                                            MIGRATE_MESSAGE_NOTICE));
+
+          $numnotices = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_NOTICE);
           if ($numnotices > 0) {
             $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
               "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
@@ -103,10 +90,7 @@ function _migrate_dashboard_form($form_state) {
           }
         }
         if ($imported > 0) {
-          $numinformational = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
-                                             FROM {" . $msgtablename . "}
-                                             WHERE level=%d",
-                                            MIGRATE_MESSAGE_INFORMATIONAL));
+          $numinformational = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_INFORMATIONAL);
           if ($numinformational > 0) {
             $imported .= '<br />' .
               l(format_plural($numinformational, '1 informational message', '@count informational messages'),
@@ -323,7 +307,7 @@ function theme_migrate_dashboard($form) {
 }
 
 /*
- * Implementation of hook_submit().
+ * FAPI submit handler.
  */
 function _migrate_dashboard_form_run($form, &$form_state) {
   $started = time();
@@ -359,11 +343,12 @@ function _migrate_dashboard_form_run($form, &$form_state) {
 }
 
 /*
- * Implementation of hook_submit().
+ * FAPI submit handler.
  */
 function _migrate_dashboard_form_stop($form, &$form_state) {
-  db_query("UPDATE {migrate_content_sets} SET status=%d",
-           MIGRATE_STATUS_IDLE);
+  db_update('migrate_content_sets')
+    ->fields(array('status' => MIGRATE_STATUS_IDLE))
+    ->execute();
   drupal_set_message(t('All migration tasks have been stopped.'));
 }
 
@@ -392,8 +377,7 @@ function _migrate_content_set_validate($form_state) {
     form_set_error('machine_name', t('Content set name is required'));
   }
   else {
-    $mcsid = db_result(db_query("SELECT mcsid FROM {migrate_content_sets}
-                                 WHERE machine_name='%s'", $machine_name));
+    $mcsid = db_query("SELECT mcsid FROM {migrate_content_sets} WHERE machine_name=:machine_name", array('machine_name' => $machine_name))->fetchField();
     if ($mcsid && $mcsid != $form_state['values']['mcsid']) {
       form_set_error('machine_name', t('The content set name must be unique.'));
     }
@@ -464,9 +448,7 @@ function _migrate_content_set_form_submit($form, &$form_state) {
  * Menu callback function for content set edit page.
  */
 function migrate_content_set_mappings($form_state, $mcsid) {
-  $row = db_fetch_object(db_query("SELECT * FROM {migrate_content_sets}
-                                   WHERE mcsid=%d",
-                                  $mcsid));
+  $row = migrate_content_set_load($mscid);
   $desttype = $row->desttype;
   $view_name = $row->view_name;
   $view_args = $row->view_args;
@@ -704,14 +686,14 @@ function theme_migrate_content_set_mappings($form) {
 }
 
 /**
- * Implementation of hook_validate().
+ * Implementation of FAPI validate handler.
  */
 function migrate_content_set_mappings_validate($form, $form_state) {
   _migrate_content_set_validate($form_state);
 }
 
 /**
- * Implementation of hook_submit().
+ * FAPI submit handler.
  */
 function migrate_content_set_mappings_submit($form, &$form_state) {
   $mcsid = $form_state['values']['mcsid'];
@@ -721,10 +703,9 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
   }
   else {
     // Get list of current mappings, so we know if any need deletion
-    $sql = "SELECT mcmid,destfield FROM {migrate_content_mappings} WHERE mcsid=%d";
-    $result = db_query($sql, $mcsid);
+    $mappings = migrate_content_set_mappings_load($mcsid);
     $prevdests = array();
-    while ($row = db_fetch_object($result)) {
+    foreach ($mappings as $row) {
       $prevdests[$row->destfield] = $row->mcmid;
     }
     $sourcekey = $form_state['values']['sourcekey'];
@@ -734,11 +715,11 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
       $mapping->srcfield = $form_state['values']['srcfield'][$destfield];
       $mapping->destfield = $destfield;
       $mapping->default_value = $form_state['values']['default_value'][$destfield];
-      $mapping->mcmid = db_result(db_query(
+      $mapping->mcmid = db_query(
         "SELECT mcmid
          FROM {migrate_content_mappings}
-         WHERE mcsid=%d AND destfield='%s'",
-        $mcsid, $destfield));
+         WHERE mcsid=:mscid AND destfield=:destfield",
+        array(':mscid' => $mcsid, ':destfield' => $destfield))->fetchField();
       if ($form_state['values']['primary_key'] == $destfield) {
         $mapping->primary_key = TRUE;
       }
@@ -757,13 +738,6 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
     drupal_set_message(t('Changes saved'));
   }
   $form_state['redirect'] = 'admin/content/migrate/dashboard';
-}
-
-/**
- * Menu callback for settings page.
- */
-function migrate_settings() {
-  return drupal_get_form('_migrate_settings_form');
 }
 
 /**
@@ -804,7 +778,7 @@ function _migrate_settings_form($form_state) {
   );
   $form['description'] = array(
     '#prefix' => '<div>',
-    '#value' => $description,
+    '#markup' => $description,
     '#suffix' => '</div>',
   );
   $form['display_timers'] = array(
@@ -843,7 +817,7 @@ function _migrate_settings_form($form_state) {
   $form['integrations'] = array('#tree' => TRUE);
   $form['integrations']['description'] = array(
     '#prefix' => '<hr /><div>',
-    '#value' => t('Modules implementing the Migrate API are listed below. Most modules
+    '#markup' => t('Modules implementing the Migrate API are listed below. Most modules
                    other than the Migrate module itself simply support themselves, but
                    some (notably <a href="http://drupal.org/project/migrate_extras">Migrate Extras</a>)
                    may provide support on behalf of other modules. Support can be
@@ -892,7 +866,7 @@ function theme_migrate_settings($form) {
 }
 
 /*
- * Implementation of hook_submit().
+ * FAPI submit handler().
  */
 function _migrate_settings_form_submit($form, &$form_state) {
   $values = $form_state['values'];
@@ -905,11 +879,12 @@ function _migrate_settings_form_submit($form, &$form_state) {
   if (isset($values['refresh_counts']) || ($values['cache_counts'] && !$original_cache)) {
     $sql = "SELECT mcsid,view_name,view_args FROM {migrate_content_sets}";
     $result = db_query($sql);
-    while ($row = db_fetch_object($result)) {
+    foreach ($result as $row) {
       $rowcount = _migrate_get_view_count($row->view_name, $row->view_args);
-      $sql = "UPDATE {migrate_content_sets}
-              SET rowcount=%d WHERE mcsid=%d";
-      db_query($sql, $rowcount, $row->mcsid);
+      db_update('migrate_content_sets')
+        ->fields(array('rowcount' => $rowcount))
+        ->condition('mscid', $row->mscid)
+        ->execute();
     }
     if ($values['refresh_counts']) {
       drupal_set_message(t('Content set counts refreshed'));
@@ -925,9 +900,7 @@ function _migrate_settings_form_submit($form, &$form_state) {
  * Menu callback function.
  */
 function migrate_export_content_set($form_state, $mcsid) {
-  $row = db_fetch_array(db_query("SELECT * FROM {migrate_content_sets}
-                                   WHERE mcsid=%d",
-                                  $mcsid));
+  $row = (array) migrate_content_set_load($mcsid);
   drupal_set_title($row['description']);
   // TODO: Generate Table Wizard calls?
   $code = '  $content_set = new stdClass;' . "\n";

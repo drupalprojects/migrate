@@ -1085,10 +1085,10 @@ function migrate_action_info() {
 function migrate_permission() {
   return array(
     MIGRATE_ACCESS_BASIC => array(
-      'title' => t('D7 TODO'),
+      'title' => t('Perform migrations.'),
     ),
     MIGRATE_ACCESS_ADVANCED => array(
-      'title' => t('D7 TODO'),
+      'title' => t('Configure migrations.'),
     ),
   );
 }
@@ -1114,7 +1114,8 @@ function migrate_menu() {
   $items['admin/content/migrate'] = array(
     'title' => 'Migrate',
     'description' => 'Monitor and control the creation of Drupal content from source data',
-    'page callback' => 'migrate_dashboard',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_migrate_dashboard_form'),
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_pages.inc',
   );
@@ -1127,7 +1128,8 @@ function migrate_menu() {
     'title' => 'Settings',
     'description' => 'Migrate module settings',
     'weight' => 5,
-    'page callback' => 'migrate_settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_migrate_settings_form'),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_pages.inc',
     'type' => MENU_LOCAL_TASK,
@@ -1646,4 +1648,20 @@ function _migrate_inspect_schema($tablename = '', $tabledb = 'default') {
   }
   // Return the schema for just this table.
   return $inspect[$tabledb][$tablename];
+}
+
+function migrate_msg_count($msgtablename, $level) {
+  return db_query(
+            "SELECT COUNT(DISTINCT sourceid) FROM {" . $msgtablename . "} WHERE level=:level",
+            array(':level' => $level))->fetchField();
+}
+
+function migrate_content_set_mappings_load($mscid) {
+  return db_query('SELECT * FROM {migrate_content_set_mappings} WHERE mscid = :mscid',
+    array(':mscid' => $mscid))
+    ->fetchAllAssoc($key, $fetch);
+}
+
+function migrate_content_set_load($mscid) {
+  return db_query('SELECT * FROM {migrate_content_sets} WHERE mscid = :mscid', array(':mscid' => $mscid))->fetchAssoc();
 }

@@ -44,7 +44,7 @@ function comment_migrate_fields_comment($type) {
  */
 function comment_migrate_delete_comment($cid) {
   $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
-  include_once($path);
+  module_load_include('inc', 'comment', 'comment.admin');
   // Backdoor deletion - query stolen from comment_delete()
   $form = array();
   $form_state = array();

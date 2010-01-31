@@ -107,7 +107,7 @@ function node_migrate_import_node($tblinfo, $row) {
   else {
     // Default to admin user
     $node->uid = 1;
-    $account = user_load(array('name' => $node->uid));
+    $account = user_load(array('uid' => $node->uid));
     $node->name = $account->name;
   }
 

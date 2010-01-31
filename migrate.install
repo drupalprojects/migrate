@@ -11,7 +11,7 @@
  */
 function migrate_schema() {
   $schema['migrate_content_sets'] = array(
-    'description' => t('Sets of content mappings'),
+    'description' => 'Sets of content mappings',
     'fields' => array(
       'mcsid' => array(
         'type' => 'serial',
@@ -98,7 +98,7 @@ function migrate_schema() {
     ),
   );
   $schema['migrate_content_mappings'] = array(
-    'description' => t('Content field mappings'),
+    'description' => 'Content field mappings',
     'fields' => array(
       'mcmid' => array(
         'type' => 'serial',

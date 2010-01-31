@@ -8,6 +8,10 @@
  * the number of uses
  */
 
+(function ($) {
+  // Original JavaScript code.
+})(jQuery);
+
 var migrate_old_selected_dd_val = ''; // to store the previously selected value when user put focus on a dropdown
 
 $('document').ready(function() {

@@ -1080,10 +1080,17 @@ function migrate_action_info() {
  */
 
 /**
- * Implementation of hook_perm().
+ * Implementation of hook_permission().
  */
-function migrate_perm() {
-  return array(MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED);
+function migrate_permission() {
+  return array(
+    MIGRATE_ACCESS_BASIC => array(
+      'title' => t('D7 TODO'),
+    ),
+    MIGRATE_ACCESS_ADVANCED => array(
+      'title' => t('D7 TODO'),
+    ),
+  );
 }
 
 /**

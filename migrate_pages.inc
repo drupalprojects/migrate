@@ -150,7 +150,7 @@ function _migrate_dashboard_form($form_state) {
   if (user_access(MIGRATE_ACCESS_ADVANCED)) {
     // Open the fieldset if we're coming back from a run
     // TODO: Or from a Stop
-    $collapsed = strpos(referer_uri(), 'batch') === FALSE;
+    $collapsed = strpos($_SERVER['HTTP_REFERER'], 'batch') === FALSE;
     $form['interactive'] = array(
       '#type' => 'fieldset',
       '#title' => t('Execute'),
@@ -397,7 +397,7 @@ function _migrate_content_set_validate($form_state) {
     if ($mcsid && $mcsid != $form_state['values']['mcsid']) {
       form_set_error('machine_name', t('The content set name must be unique.'));
     }
-    else if (preg_match('/[^a-zA-Z0-9_]/', $machine_name)) {
+    elseif (preg_match('/[^a-zA-Z0-9_]/', $machine_name)) {
       form_set_error('machine_name', t('Content set name must be alphanumeric or underscores only.'));
     }
   }
@@ -478,7 +478,7 @@ function migrate_content_set_mappings($form_state, $mcsid) {
   $weight = $row->weight;
   $multiple_separator = $row->multiple_separator;
 
-  drupal_set_title(check_plain($description));
+  drupal_set_title($description);
 
   // Fetch information on available destinations
   $desttypes = migrate_invoke_all('types');
@@ -754,7 +754,7 @@ function migrate_content_set_mappings_submit($form, &$form_state) {
       migrate_delete_content_mapping($mcmid);
     }
     migrate_save_content_set($form_state['values']);
-    drupal_set_message('Changes saved');
+    drupal_set_message(t('Changes saved'));
   }
   $form_state['redirect'] = 'admin/content/migrate/dashboard';
 }
@@ -928,7 +928,7 @@ function migrate_export_content_set($form_state, $mcsid) {
   $row = db_fetch_array(db_query("SELECT * FROM {migrate_content_sets}
                                    WHERE mcsid=%d",
                                   $mcsid));
-  drupal_set_title(check_plain($row['description']));
+  drupal_set_title($row['description']);
   // TODO: Generate Table Wizard calls?
   $code = '  $content_set = new stdClass;' . "\n";
   unset($row['mcsid']);

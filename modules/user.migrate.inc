@@ -38,6 +38,7 @@ function user_migrate_fields_user($type) {
  */
 function user_migrate_delete_user($uid) {
   timer_start('user_delete');
+  // TODO D7: Figure out user_cancel().
   user_delete(array(), $uid);
   timer_stop('user_delete');
 }
@@ -55,7 +56,7 @@ function user_migrate_import_user($tblinfo, $row) {
     $newuser['uid'] = $row->destid;
   }
   // If a uid was provided via mapping, load the existing user
-  else if (isset($tblinfo->fields['uid'])) {
+  elseif (isset($tblinfo->fields['uid'])) {
     $uidname = $tblinfo->fields['uid']['srcfield'];
     $newuser = (array)user_load($row->$uidname);
     // The existing md5 password will have another md5 applied to it if
@@ -196,9 +197,8 @@ function user_migrate_fields_role($type) {
 function user_migrate_delete_role($rid) {
   timer_start('role_delete');
 
-  db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);
-  db_query('DELETE FROM {permission} WHERE rid = %d', $rid);
-  db_query('DELETE FROM {role} WHERE rid = %d', $rid);
+  // TODO D7: proper role API now. Remove hooks?
+  user_role_delete($rid);
 
   timer_stop('role_delete');
 }

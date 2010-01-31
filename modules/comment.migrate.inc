@@ -70,7 +70,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
   // If a cid was provided via mapping, load the existing comment
   else if (isset($tblinfo->fields['cid'])) {
     $cidname = $tblinfo->fields['cid']['srcfield'];
-    $comment = _comment_load($row->$cidname);
+    $comment = comment_load($row->$cidname);
   }
   // Data which might be useful for comment hooks.
   $comment['migrate_tblinfo'] = $tblinfo;
@@ -133,7 +133,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
     $errors[] = migrate_message(t('No node found'));
   }
   if (!isset($comment['name'])) {
-    $commentuser = user_load(array('uid' => $comment['uid']));
+    $commentuser = user_load($comment['uid']);
     $comment['name'] = $commentuser->name;
   }
   if (!isset($comment['name'])) {

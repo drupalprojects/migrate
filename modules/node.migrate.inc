@@ -14,7 +14,7 @@ function node_migrate_types() {
 
   if (!isset($nodetypes)) {
     $nodetypes = array();
-    foreach (node_get_types() as $type => $info) {
+    foreach (node_type_get_types() as $type => $info) {
       $nodetypes['node/' . $type] = t('Node: ') . $info->name;
     }
     asort($nodetypes);
@@ -80,22 +80,22 @@ function node_migrate_import_node($tblinfo, $row) {
   }
 
   // Do default prep before letting other modules take a shot
-  $type_info = node_get_types('type', $node->type);
+  $type_info = node_type_get_type($node->type);
 
   $errors = array();
 
   // User name and uid.
   global $user;
   if (isset($node->uid) && ($node->uid > 0)) {
-    $account = user_load(array('uid' => $node->uid));
+    $account = user_load($node->uid);
     $node->name = $account->name;
   }
   elseif (isset($node->name)) {
     // We have a mapped username.
-    if ($account = user_load(array('name' => $node->name))) {
+    if ($account = user_load_by_name($node->name)) {
       $node->uid = $account->uid;
     }
-    elseif ($account = user_load(array('mail' => $node->name))) {
+    elseif ($account = user_load_by_mail($node->name)) {
       $node->uid = $account->uid;
     }
     // If no valid incoming user, the node owner will end up being the current user
@@ -107,7 +107,7 @@ function node_migrate_import_node($tblinfo, $row) {
   else {
     // Default to admin user
     $node->uid = 1;
-    $account = user_load(array('name' => $node->uid));
+    $account = user_load($node->uid);
     $node->name = $account->name;
   }
 
@@ -264,7 +264,7 @@ function node_migrate_fields_node($type) {
     );
   }
 
-  $type_info = node_get_types('type', $type);
+  $type_info = node_type_get_type($type);
 
   if ($type_info->has_title) {
     $fields['title'] = t('Node: ') . $type_info->title_label;

@@ -45,7 +45,7 @@ function taxonomy_migrate_fields_node($type) {
  * Implementation of hook_migrate_delete_term().
  */
 function taxonomy_migrate_delete_term($tid) {
-  taxonomy_del_term($tid);
+  taxonomy_term_delete($tid);
 }
 
 /**
@@ -55,7 +55,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   static $vocabularies = NULL;
   if (!isset($vocabularies)) {
     $vocabularies = array();
-    $sql = "SELECT vid,name FROM {vocabulary}";
+    $sql = "SELECT vid,name FROM {taxonomy_vocabulary}";
     $result = db_query($sql);
     while ($vocabrow = db_fetch_object($result)) {
       $vocabularies[$vocabrow->name] = $vocabrow->vid;
@@ -158,7 +158,7 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   }
   if ($success) {
     timer_start('taxonomy_save');
-    taxonomy_save_term($term);
+    taxonomy_term_save((object)$term);
     timer_stop('taxonomy_save');
     // Call completion hooks, for any processing which needs to be done after node_save
     timer_start('taxonomy completion hooks');
@@ -335,7 +335,7 @@ function _migrate_taxonomy_get_term($vocab, $text, $handler) {
   }
 
   // Try to find a term with a matching tid.
-  if (is_numeric($text) && ($term = taxonomy_get_term($text))) {
+  if (is_numeric($text) && ($term = taxonomy_term_load($text))) {
     $missing_terms[$vid][$text] = $term->tid;
     return $term->tid;
   }
@@ -343,8 +343,8 @@ function _migrate_taxonomy_get_term($vocab, $text, $handler) {
   // If we arrive here, the term does not exist.
   switch ($handler) {
     case 'add':
-      $edit = array('vid' => $vid, 'name' => $text);
-      $status = taxonomy_save_term($edit);
+      $edit = (object)array('vid' => $vid, 'name' => $text);
+      $status = taxonomy_term_save($edit);
       $tid = $edit['tid'];
       drupal_set_message(t('Added %term term to the %name vocabulary.', array('%term' => theme('placeholder', $text), '%name' => theme('placeholder', $vocab->name))));
       break;

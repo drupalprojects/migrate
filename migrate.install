@@ -147,14 +147,6 @@ function migrate_schema() {
 }
 
 /**
- * Implementation of hook_install().
- */
-function migrate_install() {
-  // Create tables
-  drupal_install_schema('migrate');
-}
-
-/**
  * Implementation of hook_uninstall().
  */
 function migrate_uninstall() {

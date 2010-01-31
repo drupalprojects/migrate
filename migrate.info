@@ -2,6 +2,14 @@
 name = "Migrate"
 description = "Import content from external sources"
 package = "Development"
-core = 6.x
-dependencies[] = views
-dependencies[] = tw
+configure = admin/config/development/migrate
+core = 7.x
+files[] = migrate.module
+files[] = migrate.pages.inc
+files[] = migrate.install
+files[] = modules/comment.migrate.inc
+files[] = modules/profile.migrate.inc
+files[] = modules/taxonomy.migrate.inc
+files[] = modules/node.migrate.inc
+files[] = modules/user.migrate.inc
+; TODO: Add test files?

@@ -22,7 +22,8 @@ function comment_migrate_fields_comment($type) {
     'cid' => t('Comment: Existing comment ID'),
     'subject' => t('Comment: Title'),
     'comment' => t('Comment: Body'),
-    'timestamp' => t('Comment: Post date'),
+    'created' => t('Comment: Created date'),
+    'changed' => t('Comment: Changed date'),
     'nodesourceid' => t('Comment: Node by source id'),
     'nid' => t('Comment: Node by Drupal nid'),
     'name' => t('Comment: Author by name'),
@@ -130,11 +131,18 @@ function comment_migrate_import_comment($tblinfo, $row) {
     $errors[] = migrate_message(t('No user id or name found'));
   }
 
-  // Do our best to interpret timestamps
-  if (isset($comment['timestamp'])) {
-    $comment['timestamp'] = _migrate_valid_date($comment['timestamp']);
-    if ($comment['timestamp'] <= 0) {
-      $errors[] = migrate_message(t('Provided timestamp is invalid'));
+  // Do our best to validate timestamps
+  if (isset($comment['created'])) {
+    $comment['created'] = _migrate_valid_date($comment['created']);
+    if ($comment['created'] <= 0) {
+      $errors[] = migrate_message(t('Provided created timestamp is invalid'));
+    }
+  }
+  // Do our best to validate timestamps
+  if (isset($comment['changed'])) {
+    $comment['changed'] = _migrate_valid_date($comment['changed']);
+    if ($comment['changed'] <= 0) {
+      $errors[] = migrate_message(t('Provided changed timestamp is invalid'));
     }
   }
 

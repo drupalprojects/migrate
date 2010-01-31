@@ -8,7 +8,7 @@
 /**
  * Form definition for dashboard page
  */
-function _migrate_dashboard_form($form_state) {
+function _migrate_dashboard_form($form, $form_state) {
   migrate_check_advanced_help();
 
   $header = array(
@@ -444,7 +444,7 @@ function _migrate_content_set_form_submit($form, &$form_state) {
 /**
  * Menu callback function for content set edit page.
  */
-function migrate_content_set_mappings($form_state, $mcsid) {
+function migrate_content_set_mappings($form, $form_state, $mcsid) {
   $row = migrate_content_set_load($mscid);
   $desttype = $row->desttype;
   $view_name = $row->view_name;

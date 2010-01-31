@@ -151,26 +151,9 @@ function migrate_schema() {
  */
 function migrate_uninstall() {
   // Remove dynamically-created mapping and message tables
-  $tw_active = module_exists('tw');
   $sql = "SELECT mcsid FROM {migrate_content_sets}";
   $result = db_query($sql);
-  while ($row = db_fetch_object($result)) {
-    $maptablename = 'migrate_map_' . $row->mcsid;
-    if ($tw_active) {
-      tw_remove_tables($maptablename);
-    }
-    if (db_table_exists($maptablename)) {
-      $sql = "DROP TABLE $maptablename";
-      db_query($sql);
-    }
-    $msgtablename = 'migrate_msgs_' . $row->mcsid;
-    if ($tw_active) {
-      tw_remove_tables($msgtablename);
-    }
-    if (db_table_exists($msgtablename)) {
-      $sql = "DROP TABLE $msgtablename";
-      db_query($sql);
-    }
+  foreach ($result as $row) {
+    // TODO D7: DROP TABLES without tw module.
   }
-  drupal_uninstall_schema('migrate');
 }

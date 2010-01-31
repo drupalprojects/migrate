@@ -1117,7 +1117,7 @@ function migrate_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('_migrate_dashboard_form'),
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
-    'file' => 'migrate_pages.inc',
+    'file' => 'migrate.pages.inc',
   );
   $items['admin/content/migrate/dashboard'] = array(
     'title' => 'Dashboard',
@@ -1131,7 +1131,7 @@ function migrate_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('_migrate_settings_form'),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
-    'file' => 'migrate_pages.inc',
+    'file' => 'migrate.pages.inc',
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/content/migrate/content_set/%'] = array(
@@ -1140,7 +1140,7 @@ function migrate_menu() {
     'page arguments' => array('migrate_content_set_mappings', 4),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
 //    'type' => MENU_CALLBACK,
-    'file' => 'migrate_pages.inc',
+    'file' => 'migrate.pages.inc',
   );
   $items['admin/content/migrate/content_set/%/edit'] = array(
     'title' => 'Edit',
@@ -1152,7 +1152,7 @@ function migrate_menu() {
     'page arguments' => array('migrate_export_content_set', 4),
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'type' => MENU_LOCAL_TASK,
-    'file' => 'migrate_pages.inc',
+    'file' => 'migrate.pages.inc',
   );
 
   $items['migrate/xlat/%'] = array(

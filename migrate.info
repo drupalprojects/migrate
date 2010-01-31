@@ -8,7 +8,6 @@ files[] = migrate.module
 files[] = migrate.pages.inc
 files[] = migrate.install
 files[] = modules/comment.migrate.inc
-files[] = modules/profile.migrate.inc
 files[] = modules/taxonomy.migrate.inc
 files[] = modules/node.migrate.inc
 files[] = modules/user.migrate.inc

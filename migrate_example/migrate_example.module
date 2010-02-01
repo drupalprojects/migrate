@@ -1,0 +1,36 @@
+<?php
+// $Id$
+
+/* TODO
+ * weight is not needed. sets are run in the order sent to the import command
+ * use drush options to save groups of content sets like structure-tables.
+ * all config is in code. no export/import. easy deployment.
+ * no mappings? use prepare hook instead? would get rid of columns callback
+ * Just use machine_name as key. no mscid
+ * added --refresh to status command. thats a signal to refresh counts and create map/msg tables.
+ * Need STOP flag
+ * add back semaphore support for we don't import trample ongoing import.
+ */
+
+function migrate_example_content_set_info() {
+  $sets['beer'] = array(
+    'description' => 'Beers of th world migration.',
+    // A schema API definition
+    'sourcefield' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'beers.id in legacy DB',
+    ),
+    'destination_type' => 'node',
+    'destination_subtype' => 'article',
+    'multiple_separator' => '|',
+    'count callback' => 'migrate_example_count_beer',
+    // 'columns callback' => 'migrate_example_columns_beer', // mapping TBD
+    'fetch callback' => 'migrate_example_fetch_beer',
+    'file' => 'beer.migrate_example.inc',
+
+    // not used
+    // 'file path'
+  );
+  return $sets;
+}

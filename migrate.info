@@ -5,10 +5,10 @@ package = "Development"
 configure = admin/config/development/migrate
 core = 7.x
 files[] = migrate.module
-files[] = migrate.pages.inc
 files[] = migrate.install
-files[] = modules/comment.migrate.inc
-files[] = modules/taxonomy.migrate.inc
-files[] = modules/node.migrate.inc
-files[] = modules/user.migrate.inc
+files[] = migrate.execute.inc
+;files[] = modules/comment.migrate.inc
+;files[] = modules/taxonomy.migrate.inc
+;files[] = modules/node.migrate.inc
+;files[] = modules/user.migrate.inc
 ; TODO: Add test files?

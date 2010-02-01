@@ -1,0 +1,55 @@
+<?php
+
+function migrate_example_schema() {
+  $schema['migrate_example_beer'] = array(
+    'description' => 'Beers of the world.',
+    'fields' => array(
+      'bid'  => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Beer ID.',
+      ),
+      'name'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'manufacturer' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Manufacturer of the beer.',
+      ),
+      'country' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Country of origin',
+      )
+    ),
+    'primary key' => array('bid'),
+  );
+  return $schema;
+}
+
+function migrate_example_install() {
+  // Populate our beers table.
+  $query = db_insert('migrate_example_beer')
+    ->fields(array('name', 'manufacturer', 'country'));
+
+  $data = array(
+    array('heineken', 'heineken', 'netherlands'),
+    array('miller lite', 'miller brewing', 'USA'),
+    array('boddington', 'boddington', 'UK'),
+  );
+  foreach ($data as $row) {
+    $query->values(array(
+      'name' => $row[0],
+      'manufacturer' => $row[1],
+      'country' => $row[2],
+    ));
+  }
+  
+  $query->execute();
+}
+?>

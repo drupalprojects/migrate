@@ -1,0 +1,7 @@
+; $Id$
+name = "Migrate Example"
+description = "Example migration data."
+package = "Development"
+;configure = admin/config/development/migrate
+core = 7.x
+files[] = migrate_example.module

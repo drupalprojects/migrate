@@ -16,11 +16,11 @@ function migrate_example_content_set_info() {
   $sets['beer'] = array(
     'description' => 'Beers of th world migration.',
     // A schema API definition
-    'sourcefield' => array(
+    'sourcefield' => array('bid' => array(
         'type' => 'int',
         'not null' => TRUE,
         'description' => 'beers.id in legacy DB',
-    ),
+    )),
     'destination_type' => 'node',
     'destination_subtype' => 'article',
     'multiple_separator' => '|',

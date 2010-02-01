@@ -65,13 +65,13 @@ function migrate_rehash() {
   foreach ($sets as $set) {
     $name = migrate_map_table_name($set);
     if (!db_table_exists($name)) {
-      $schema = _migrate_map_table_schema($set['sourcefield']);
+      $schema = _migrate_map_table_schema(current($set['sourcefield']));
       // var_dump($schema);die();
       db_create_table($name, $schema);
     }
     $name = migrate_message_table_name($set);
     if (!db_table_exists($name)) {
-      $schema = _migrate_message_table_schema($set['sourcefield']);
+      $schema = _migrate_message_table_schema(current($set['sourcefield']));
       db_create_table($name, $schema);
     }
   }

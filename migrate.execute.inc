@@ -24,6 +24,23 @@ function migrate_execute_add_conditions($query, $set) {
   return $query;
 }
 
+// Query source DB and pass each row to migrate_execute_row().
+function migrate_execute_sql($query, $set) {
+  $machine_name = $set['machine_name'];
+  migrate_execute_add_join_tables($query, $set, 'migrate_source.' . key($set['sourcefield']));
+  migrate_execute_add_conditions($query, $set);
+  timer_start($machine_name . '_fetch');
+  $result = $query->execute();
+  timer_stop($machine_name . '_fetch');
+  foreach ($result as $row) {
+    $status = migrate_execute_row($row, $set);
+    // All fatal statuses are negative.
+    if ($status < 0) {
+      break;
+    }
+  }
+}
+
 function migrate_execute_row($row, $set) {
   timer_start('migrate_execute_row');
   static $imported = 0;

@@ -245,7 +245,9 @@ function _drush_migrate_do_clear($set, $options) {
 
 // Implement drush_hook_COMMAND_validate().
 function drush_migrate_import_validate() {
-  $machine_names = func_get_args();
+  $args = func_get_args();
+  $machine_names = explode(',', $args[0]);
+  
   if (drush_get_option('all')) {
     if (!empty($machine_names)) {
       return drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
@@ -255,10 +257,12 @@ function drush_migrate_import_validate() {
     if (empty($machine_names)) {
       return drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
     }
-    $names = explode(',', $machine_names);
+
     $sets = migrate_content_sets();
-    $missing = array_diff_key($names, array_keys($sets));
-    return drush_set_error(dt('Unrecognized content sets: ') . explode(', ', $missing));
+    
+    if ($missing = array_diff($machine_names, array_keys($sets))) {
+      return drush_set_error(dt('Unrecognized content sets: ') . implode(', ', $missing));
+    }
   }
 
   $feedback = drush_get_option('feedback');
@@ -282,15 +286,18 @@ function drush_migrate_import_validate() {
  *  A comma delimited list of machine names, or the special name 'all'
  */
 function drush_migrate_import() {
-  $machines_names = func_get_args();
-  if (drush_get_option('all')) {
-    $sets = migrate_content_sets();
-  }
-  else {
+  $args = func_get_args();
+  $machine_names = array_shift($args);
+  
+  $allsets = migrate_content_sets();
+  if (!drush_get_option('all')) {
     $names = explode(',', $machine_names);
     foreach ($names as $name) {
-      $sets[$set['machine_name']] = $set;
+      $sets[$name] = $allsets[$name];
     }
+  }
+  else {
+    $sets = $allsets;
   }
   
   foreach ($sets as $set) {

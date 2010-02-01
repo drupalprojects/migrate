@@ -34,7 +34,7 @@ function migrate_drush_command() {
     '--idlist' => 'A comma delimited list of ids to import or clear. If unspecified, migrate imports all pending items or clears all items for the content set.',
     '--all' => 'Process all content sets',
   );
-  $items['migrate_status'] = array(
+  $items['migrate-status'] = array(
     'description' => 'List all content sets with current status.',
   );
   $items['migrate-clear'] = array(

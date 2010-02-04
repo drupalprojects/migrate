@@ -601,7 +601,7 @@ function migrate_update_6014() {
     array(
       'type' => 'varchar',
       'length' => 255,
-      'not null' => TRUE,
+      'not null' => FALSE,
       'default' => '',
     )
   );
@@ -625,5 +625,21 @@ function migrate_update_6015() {
   // Now that the contents are unique, add a unique key
   db_add_unique_key($ret, 'migrate_content_sets', 'machine_name',
     array('machine_name'));
+  return $ret;
+}
+
+/*
+ * Correct mis-updated default_value back to nullable
+ */
+function migrate_update_6016() {
+  $ret = array();
+  db_change_field($ret, 'migrate_content_mappings', 'default_value', 'default_value',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'default' => '',
+    )
+  );
   return $ret;
 }

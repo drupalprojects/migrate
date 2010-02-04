@@ -1,5 +1,10 @@
 //$Id$
 
+Migrate 1.0
+===========
+Bug fixes
+- #704768 - Fix default_value nullability
+
 Migrate 1.0 RC1
 ===========
 Features and enhancements

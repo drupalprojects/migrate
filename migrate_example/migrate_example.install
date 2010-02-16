@@ -35,8 +35,10 @@ function migrate_example_install() {
 
 function migrate_example_uninstall() {
   migrate_example_content_type_delete();
-  $vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_tags'));
-  taxonomy_vocabulary_delete($vids[0]);
+  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_tags'))) {
+    // Grab key of the first returned vocabulary.
+    taxonomy_vocabulary_delete(key($vids));
+  }
 
   if (db_table_exists('migrate_map_beernode')) {
     db_drop_table('migrate_map_beernode');
@@ -280,6 +282,7 @@ function migrate_example_content_type_delete() {
     field_delete_instance($instance);
     field_delete_field($field_name);
   }
+  node_type_delete($bundle);
 
   $bundle = 'user';
   $field_names = array('field_migrate_example_gender');
@@ -291,8 +294,6 @@ function migrate_example_content_type_delete() {
     field_delete_instance($instance);
     field_delete_field($field_name);
   }
-
-  node_type_delete($bundle);
 }
 
 function migrate_example_data_beer() {

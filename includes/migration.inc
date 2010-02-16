@@ -656,11 +656,11 @@ abstract class Migration {
         }
 
         // These mappings run through a prepare function.
-/*        foreach ($this->fieldMappingsCallback as $destination => $args) {
+        foreach ($this->fieldMappingsCallback as $destination => $args) {
           list($method, $arguments, $default) = $args;
           $result = $this->destination->$method($data_row, $arguments, $destination);
           $values->$destination = is_null($result) ? $default : $result;
-        }*/
+        }
 
         // Track the current source key for use by map/message tables
         $this->currSourceKey = array();

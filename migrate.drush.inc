@@ -190,7 +190,7 @@ function drush_migrate_status() {
     }
     drush_print_table($table, TRUE);
     }
-  catch (Exception $e) {
+  catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
   }
@@ -229,7 +229,7 @@ function drush_migrate_fields_destination() {
     }
     drush_print_table($table);
   }
-  catch (Exception $e) {
+  catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
   }
@@ -257,7 +257,7 @@ function drush_migrate_fields_source() {
     }
     drush_print_table($table);
   }
-  catch (Exception $e) {
+  catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
   }
@@ -308,7 +308,7 @@ function drush_migrate_rollback() {
       $migration->rollback($options);
     }
   }
-  catch (Exception $e) {
+  catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
   }
@@ -405,7 +405,7 @@ function drush_migrate_import() {
       $migration->import($options);
     }
   }
-  catch (Exception $e) {
+  catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
   }
@@ -439,7 +439,7 @@ function drush_migrate_stop($content_set = NULL) {
       $migration->endProcess();
     }
   }
-  catch (Exception $e) {
+  catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
   }

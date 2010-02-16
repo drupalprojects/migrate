@@ -8,6 +8,7 @@ files[] = migrate.module
 files[] = migrate.install
 files[] = includes/migration.inc
 files[] = includes/destination.inc
+files[] = includes/exception.inc
 files[] = includes/handler.inc
 files[] = includes/source.inc
 files[] = plugins/destinations/entity.inc

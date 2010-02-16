@@ -1,190 +1,391 @@
 <?php
+// $Id$
 
-define('MIGRATE_API_VERSION', 1);
+/**
+ * @file
+ * API and drush commands to support migration of data from external sources
+ * into a Drupal installation.
+ */
 
-define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
-define('MIGRATE_ACCESS_ADVANCED', 'advanced migration tools');
+// TODO:
+// Continue hook_schema_alter() for map & message tables?
+// Views hooks for map/message tables
+// xlat support?
+// Integration API support?
+// Documentation
+// Tests
 
-define('MIGRATE_MESSAGE_ERROR', 1);
-define('MIGRATE_MESSAGE_WARNING', 2);
-define('MIGRATE_MESSAGE_NOTICE', 3);
-define('MIGRATE_MESSAGE_INFORMATIONAL', 4);
+/**
+ * Retrieve a list of all active migrations, ordered by dependencies. To be
+ * recognized, a class must be non-abstract, derived from Migration, and the
+ * class name must end in "Migration".
+ *
+ * @param $refresh
+ *  The list is statically cached - if TRUE, this forces the list to be rebuilt.
+ *
+ * @return
+ *  Array of migration objects, keyed by the class name.
+ */
+function migrate_migrations($refresh = FALSE) {
+  return _migrate_class_list('%Migration', 'Migration', $refresh);
+}
 
-define('MIGRATE_STATUS_IDLE', 0);
-define('MIGRATE_STATUS_IMPORTING', 1);
-define('MIGRATE_STATUS_CLEARING', 2);
+/**
+ * Invoke any available import handlers attched to a given destination type.
+ * If any handlers have dependencies defined, they will be invoked after
+ * the specified handlers.
+ *
+ * @param $destination
+ *  Destination type ('Node', 'User', etc.) - generally the same string as
+ *  the destination class name without the MigrateDestination prefix.
+ * @param $method
+ *  'prepare' (called at the beginning of an import operation) or 'complete'
+ *  (called at the end of an import operation).
+ * @param $migration
+ *  Controlling Migration object. Most commonly used for recording messages
+ *  ($migration->saveMessage().
+ * @param $object
+ *  Destination object under construction. The handler's job is generally to
+ *  manipulate this object.
+ * @param $row
+ *  Raw data row object from the migration source.
+ */
+function migrate_handler_invoke_all($destination, $method, $migration, $object, $row) {
+  $class_list = _migrate_class_list('%' . $destination . 'Handler', 'MigrateHandler');
+  foreach ($class_list as $class_name => $handler) {
+    if (method_exists($handler, $method)) {
+      $handler->$method($migration, $object, $row);
+    }
+  }
+}
 
-define('MIGRATE_RESULT_COMPLETED', 1);
-define('MIGRATE_RESULT_INCOMPLETE', 2);
-define('MIGRATE_RESULT_STOPPED', 3);
-define('MIGRATE_RESULT_FAILED', 4);
-define('MIGRATE_RESULT_IN_PROGRESS', 5);
+/**
+ * For a given class name pattern and parent class, identify and instantiate singleton
+ * objects for any non-abstract classes with names matching the pattern and derived
+ * from the parent, returning an array of the objects indexed by class name. The
+ * array will be ordered such that any classes with dependencies are listed after
+ * the classes they are dependent on.
+ *
+ * @param $class_pattern
+ *  SQL LIKE pattern for class names to match (e.g., '%Migration').
+ * @param $parent_class
+ *  Name of a class from which results will be derived.
+ * @param $refresh
+ *  The list is statically cached - if TRUE, this forces the list to be rebuilt.
+ * @return
+ *  Array of objects, keyed by the class name.
+ */
+function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
+  static $class_lists = array();
+  if (!isset($class_lists[$parent_class]) || $refresh) {
+    $class_lists[$parent_class] = array();
+    $dependent_classes = array();
+    // Discover matching class names registered with Drupal
+    $result = db_query("SELECT name FROM {registry}
+                        WHERE type='class' AND name LIKE :pattern
+                        ORDER BY name",
+                       array(':pattern' => $class_pattern));
+    foreach ($result as $record) {
+      // Validate it's an implemented subclass of the parent class
+      $class = new ReflectionClass($record->name);
+      if (!$class->isAbstract() && $class->isSubclassOf($parent_class)) {
+        $object = new $record->name;
+        if (count($object->dependencies) > 0) {
+          // Set classes with dependencies aside for reordering
+          $dependent_classes[$record->name] = $object;
+        }
+        else {
+          // No dependencies, just add
+          $class_lists[$parent_class][$record->name] = $object;
+        }
+      }
+    }
 
-define('MIGRATE_MEMORY_THRESHOLD', .8);
-
-
-// Get all content sets.
-function migrate_content_sets($refresh = FALSE) {
-  static $sets = array();
-
-  if (isset($sets) || $refresh) {
-    foreach (module_implements('content_set_info') as $module) {
-      if ($items = module_invoke($module, 'content_set_info')) {
-        foreach ($items as $machine_name => $item) {
-          // Add module element.
-          $item['module'] = $module;
-          $item['machine_name'] = $machine_name;
-          if (isset($item['file'])) {
-            $file_path = isset($item['file path']) ? $item['file path'] : drupal_get_path('module', $module);
-            $item['include file'] = $file_path . '/' . $item['file'];
+    // Scan modules with dependencies - we'll take 20 passes at it before
+    // giving up
+    $iterations = 0;
+    while (count($dependent_classes) > 0) {
+      if ($iterations++ > 20) {
+        $class_names = implode(',', array_keys($dependent_classes));
+        throw new Exception(t('Failure to sort class list - most likely due ' .
+            'to circular dependencies involving !class_names.',
+          array('!class_names' => $class_names)));
+      }
+      foreach ($dependent_classes as $name => $object) {
+        $ready = TRUE;
+        // Scan all the dependencies for this class and make sure they're all
+        // in the final list
+        foreach ($object->dependencies as $dependency) {
+          if (!$class_lists[$parent_class][$dependency]) {
+            $ready = FALSE;
+            break;
           }
         }
-        $sets[$machine_name] = $item;
+        if ($ready) {
+          // Yes they are! Move this class to the final list
+          $class_lists[$parent_class][$name] = $object;
+          unset($dependent_classes[$name]);
+        }
       }
     }
   }
-  return $sets;
+  return $class_lists[$parent_class];
 }
 
-function migrate_load_include($set) {
-  if (isset($set['include file'])) {
-    require_once DRUPAL_ROOT . '/' . $set['include file'];
+// TODO: The functions below are D6 functions of some potential use in D7, that
+// haven't been updated/integrated yet
+
+/**
+ * Implementation of hook_schema_alter().
+ */
+/*
+function migrate_schema_alter(&$schema) {
+  // Check for table existence - at install time, hook_schema_alter() may be called
+  // before our install hook.
+  if (db_table_exists('migrate_content_sets')) {
+    $result = db_query("SELECT * FROM {migrate_content_sets}");
+    while ($content_set = db_fetch_object($result)) {
+      $maptablename = migrate_map_table_name($content_set->mcsid);
+      $msgtablename = migrate_message_table_name($content_set->mcsid);
+
+      // Get the proper field definition for the sourcekey
+      $view = views_get_view($content_set->view_name);
+      if (!$view) {
+        drupal_set_message(t('View !view does not exist - either (re)create this view, or
+          remove the migrate content set using it.', array('!view' => $content_set->view_name)));
+        continue;
+      }
+      // Must do this to load the database
+      $view->init_query();
+
+      // TODO: For now, PK must be in base_table
+      if (isset($view->base_database)) {
+        $tabledb = $view->base_database;
+      }
+      else {
+        $tabledb = 'default';
+      }
+      $tablename = $view->base_table;
+
+      $sourceschema = _migrate_inspect_schema($tablename, $tabledb);
+
+      // If the PK of the content set is defined, make sure we have a mapping table
+      $sourcekey = $content_set->sourcekey;
+      if ($sourcekey) {
+        $sourcefield = $sourceschema['fields'][$sourcekey];
+        if (!$sourcefield) {
+          // strip base table name if views prepended it
+          $baselen = drupal_strlen($tablename);
+          if (!strncasecmp($sourcekey, $tablename . '_', $baselen + 1)) {
+            $sourcekey = drupal_substr($sourcekey, $baselen + 1);
+          }
+          $sourcefield = $sourceschema['fields'][$sourcekey];
+        }
+        // We don't want serial fields to behave serially, so change to int
+        if ($sourcefield['type'] == 'serial') {
+          $sourcefield['type'] = 'int';
+        }
+        $schema[$maptablename] = _migrate_map_table_schema($sourcefield);
+        $schema[$maptablename]['name'] = $maptablename;
+        $schema[$msgtablename] = _migrate_message_table_schema($sourcefield);
+        $schema[$msgtablename]['name'] = $msgtablename;
+      }
+    }
+  }
+}
+*/
+
+/*
+ * Translate URIs from an old site to the new one
+ * Requires adding RewriteRules to .htaccess. For example, if the URLs
+ * for news articles had the form
+ * http://example.com/issues/news/[OldID].html, use this rule:
+ *
+ * RewriteRule ^issues/news/([0-9]+).html$ /migrate/xlat/node/$1 [L]
+ *
+ * @param $contenttype
+ *  Content type to translate (e.g., 'node', 'user', etc.)
+ * @param $oldid
+ *  Primary key from input view
+ */
+function migrate_xlat($contenttype, $oldid) {
+  if ($contenttype && $oldid) {
+    $newid = _migrate_xlat_get_new_id($contenttype, $oldid);
+    if ($newid) {
+      $uri = migrate_invoke_all("xlat_$contenttype", $newid);
+      drupal_goto($uri[0], NULL, NULL, 301);
+    }
   }
 }
 
-function migrate_map_table_name($set) {
-  return 'migrate_map_' . $set['machine_name'];
-}
-
-function migrate_message_table_name($set) {
-  return 'migrate_message_' . $set['machine_name'];
-}
-
-function migrate_rehash() {
-  $sets = migrate_content_sets();
-  foreach ($sets as $set) {
-    $name = migrate_map_table_name($set);
-    if (!db_table_exists($name)) {
-      $schema = _migrate_map_table_schema(current($set['sourcefield']));
-      // var_dump($schema);die();
-      db_create_table($name, $schema);
+/*
+ * Helper function to translate an ID from a source file to the corresponding
+ * Drupal-side ID (nid, uid, etc.)
+ * Note that the result may be ambiguous - for example, if you are importing
+ * nodes from different content sets, they might have overlapping source IDs.
+ *
+ * @param $contenttype
+ *  Content type to translate (e.g., 'node', 'user', etc.)
+ * @param $oldid
+ *  Primary key from input view
+ * @return
+ *  Drupal-side ID of the object
+ */
+function _migrate_xlat_get_new_id($contenttype, $oldid) {
+  $result = db_query("SELECT mcsid
+                      FROM {migrate_content_sets}
+                      WHERE contenttype='%s'",
+                     $contenttype);
+  while ($row = db_fetch_object($result)) {
+    static $maptables = array();
+    if (!isset($maptables[$row->mcsid])) {
+      $maptables[$row->mcsid] = migrate_map_table_name($row->mcsid);
     }
-    $name = migrate_message_table_name($set);
-    if (!db_table_exists($name)) {
-      $schema = _migrate_message_table_schema(current($set['sourcefield']));
-      db_create_table($name, $schema);
+    $sql = "SELECT destid
+            FROM {" . $maptables[$row->mcsid] . "}
+            WHERE sourceid='%s'";
+    $id = db_result(db_query($sql, $oldid));
+    if ($id) {
+      return $id;
     }
   }
+  return NULL;
 }
 
 /**
- * Call a migrate hook. Like module_invoke_all, but gives modules a chance
- * to do one-time initialization before any of their hooks are called, and
- * adds "migrate" to the hook name.
- * @param $hook
- *  Hook to invoke (e.g., 'types', 'fields_node', etc.)
- * @return
- *  Merged array of results.
+ * Check if a date is valid and return the correct
+ * timestamp to use. Returns -1 if the date is not
+ * considered valid.
  */
-function migrate_invoke_all($hook) {
-  // Let modules do any one-time initialization (e.g., including migration support files)
-  global $_migrate_inited;
-  if (!isset($_migrate_inited)) {
-    module_invoke_all('migrate_init');
-    $_migrate_inited = TRUE;
+function _migrate_valid_date($date) {
+  if (empty($date)) {
+    return -1;
   }
 
-  $args = func_get_args();
-  $hookfunc = "migrate" . "_$hook";
-  unset($args[0]);
-  $return = array();
-  $modulelist = module_implements($hookfunc);
-  foreach ($modulelist as $module) {
-    $function = $module . '_' . $hookfunc;
-    $result = call_user_func_array($function, $args);
-    if (isset($result) && is_array($result)) {
-      $return = array_merge_recursive($return, $result);
-    }
-    elseif (isset($result)) {
-      $return[] = $result;
+  if (is_numeric($date) && $date > -1) {
+    return $date;
+  }
+  // strtotime() doesn't recognize dashes as separators, change to slashes
+  $date = str_replace('-', '/', $date);
+
+  $time = strtotime($date);
+  if ($time < 0 || !$time) {
+    // Handles form YYYY-MM-DD HH:MM:SS.garbage
+    if (drupal_strlen($date) > 19) {
+      $time = strtotime(drupal_substr($date, 0, 19));
+      if ($time < 0 || !$time) {
+        return -1;
+      }
     }
   }
-  return $return;
+  return $time;
 }
 
-/**
- * Generate a message table schema record, given the source PK definition
- * @param $sourcefield
- *  Schema definition for the content set source's PK
- * @return
- *  Schema structure for a message table
+define('MIGRATE_API_VERSION', 1);
+
+/*
+ * Implementation of hook_migrate_api().
  */
-function _migrate_message_table_schema($sourcefield) {
-  $schema = array(
-    'description' => t('Import errors'),
-    'fields' => array(
-      'mceid' => array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
+function migrate_migrate_api() {
+  $api = array(
+    'api' => 1,
+    'path' => 'modules',
+    'integration modules' => array(
+      'comment' => array(
+        'description' => t('Core migration support for the comment module'),
       ),
-      'sourceid' => $sourcefield,
-      'level' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-         'default' => 1,
+      'node' => array(
+        'description' => t('Core migration support for the node module'),
       ),
-      'message' => array(
-        'type' => 'text',
-        'size' => 'medium',
-        'not null' => TRUE,
+      'profile' => array(
+        'description' => t('Core migration support for the profile module'),
       ),
-    ),
-    'primary key' => array('mceid'),
-    'indexes' => array(
-      'sourceid' => array('sourceid'),
+      'taxonomy' => array(
+        'description' => t('Core migration support for the taxonomy module'),
+      ),
+      'user' => array(
+        'description' => t('Core migration support for the user module'),
+      ),
     ),
   );
-  return $schema;
+  return $api;
+}
+
+// ------------------------------------------------------------------
+// Include file helpers - @merlinofchoas: borrowing heavily from views.module
+
+/**
+ * Load views files on behalf of modules.
+ */
+function migrate_module_include() {
+  foreach (migrate_get_module_apis() as $module => $info) {
+    foreach ($info['integration modules'] as $intmod => $intmod_details) {
+      $file = "$info[path]/$intmod.migrate.inc";
+      if (file_exists($file) && $intmod_details['status'] == TRUE) {
+        require_once $file;
+      }
+    }
+  }
 }
 
 /**
- * Generate a map table schema record, given the source PK definition
- * @param $sourcefield
- *  Schema definition for the content set source's PK
- * @return
- *  Schema structure for a map table
+ * Get a list of modules that support the current migrate API.
  */
-function _migrate_map_table_schema($sourcefield) {
-  $schema = array(
-    'description' => t('Mappings from source key to destination key'),
-    'fields' => array(
-      'sourceid' => $sourcefield,
-      // @TODO: Assumes destination key is unsigned int
-      'destid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'needs_update' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => (int)FALSE,
-      ),
-    ),
-    'primary key' => array('sourceid'),
-    'indexes' => array(
-      'idkey' => array('destid'),
-    ),
-  );
-  return $schema;
+function migrate_get_module_apis($reset = FALSE) {
+  static $cache = NULL;
+  if ($reset) {
+    $cache = NULL;
+  }
+  if (!isset($cache)) {
+    $cache = array();
+    foreach (module_implements('migrate_api') as $module) {
+      $function = $module . '_migrate_api';
+      $info = $function();
+      if (isset($info['api']) && $info['api'] == 1.000) {
+        if (isset($info['path'])) {
+          $info['path'] = drupal_get_path('module', $module) . '/' . $info['path'];
+        }
+        else {
+          $info['path'] = drupal_get_path('module', $module);
+        }
+
+        if (!isset($info['integration modules'])) {
+          $info['integration modules'] = array($module => array());
+        }
+
+        $settings = variable_get('migrate_integration_settings', NULL);
+
+        foreach ($info['integration modules'] as $intmod_name => $intmod_details) {
+          // If the module was just entered as a string without details, we have to fix.
+          if (!is_array($intmod_details)) {
+            unset($info['integration modules'][$intmod_name]);
+            $intmod_name = $intmod_details;
+            $intmod_details = array();
+          }
+
+          $default_details = array(
+            'description' => t('Support for the @intmod module.', array('@intmod' => $intmod_name)),
+            'status' => TRUE,
+          );
+
+          // Allow override of defaults.
+          $info['integration modules'][$intmod_name] = $intmod_details + $default_details;
+
+          // Overwrite default status if set.
+          if (isset($settings[$module][$intmod_name])) {
+            $info['integration modules'][$intmod_name]['status'] = $settings[$module][$intmod_name];
+          }
+        }
+        $cache[$module] = $info;
+      }
+      else {
+        drupal_set_message(t('%function supports Migrate API version %modversion,
+           Migrate module API version is %version - migration support not loaded.',
+           array('%function' => $function, '%modversion' => $info['api'],
+                 '%version' => MIGRATE_API_VERSION)));
+      }
+    }
+  }
+
+  return $cache;
 }
-
-
-
-
-
-

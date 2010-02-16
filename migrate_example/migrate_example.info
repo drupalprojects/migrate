@@ -2,6 +2,9 @@
 name = "Migrate Example"
 description = "Example migration data."
 package = "Development"
-;configure = admin/config/development/migrate
 core = 7.x
+dependencies[] = taxonomy
+dependencies[] = comment
+dependencies[] = migrate
 files[] = migrate_example.module
+files[] = beer.inc

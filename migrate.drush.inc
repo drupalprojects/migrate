@@ -11,14 +11,18 @@
  */
 function migrate_drush_help($section) {
   switch ($section) {
-    case 'drush:migrate-clear':
-      return dt('Clear a given migration content set');
+    case 'drush:migrate-rollback':
+      return dt('Rollback the destination objects from a given migration');
     case 'drush:migrate-import':
-      return dt('Import a given migration content set');
+      return dt('Perform a given migration');
     case 'drush:migrate-stop':
-      return dt('Stop an active operation');
+      return dt('Stop an active migration');
     case 'drush:migrate-status':
-      return dt('List all content sets with current status');
+      return dt('List all migrations with current status');
+    case 'drush:migrate-fields-destination':
+      return dt('List the fields available for mapping to a destination');
+    case 'drush:migrate-fields-source':
+      return dt('List the fields available for mapping from a source');
     case 'drush:migrate-wipe':
       return dt('Delete all nodes from specified content types.');
   }
@@ -31,57 +35,77 @@ function migrate_drush_command() {
   $migration_options = array(
     '--itemlimit' => 'The maximum number of items to migrate. If unspecified, all are migrated',
     '--feedback' => 'Frequency of progress messages, in seconds or items processed',
-    '--idlist' => 'A comma delimited list of ids to import or clear. If unspecified, migrate imports all pending items or clears all items for the content set.',
-    '--all' => 'Process all content sets',
+    '--idlist' => 'A comma delimited list of ids to import or rollback. If unspecified, migrate imports all pending items or rolls back all items for the content set.',
+    '--all' => 'Process all migrations',
   );
   $items['migrate-status'] = array(
-    'description' => 'List all content sets with current status.',
+    'description' => 'List all migrations with current status.',
     'options' => array(
-      'refresh' => 'Recognize new content sets and update counts',
+      'refresh' => 'Recognize new migrations and update counts',
     )
   );
-  $items['migrate-clear'] = array(
-    'description' => 'Clear migrated data for the specified content set',
+  $items['migrate-fields-destination'] = array(
+    'description' => 'List the fields available for mapping in a destination.',
+    'arguments' => array(
+      'migration' => 'Name of the migration or destination class to query for fields',
+      'bundle' => 'For a destination class, an optional bundle',
+    ),
+    'examples' => array(
+      'migrate-fields-destination MyNode' => 'List fields for the destination in the MyNode migration',
+      'migrate-fields-destination node article' => 'List fields available for migrating into the Article node type',
+    ),
+  );
+  $items['migrate-fields-source'] = array(
+    'description' => 'List the fields available for mapping from a source.',
+    'arguments' => array(
+      'migration' => 'Name of the migration or destination class to query for fields',
+    ),
+    'examples' => array(
+      'migrate-fields-destination MyNode' => 'List fields in the source query for the MyNode migration',
+    ),
+  );
+  $items['migrate-rollback'] = array(
+    'description' => 'Roll back the destination objects from a given migration',
     'options' => $migration_options,
     // We will bootstrap to login from within the command callback.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     'arguments' => array(
-      'content_set' => 'Name or mcsid of content set to clear',
+      'migration' => 'Name of migration to roll back',
     ),
     'examples' => array(
-      'migrate-clear 4' => 'Clear the content set with mcsid 4',
-      'migrate-clear 4 --idlist=4,9' => 'Clear two items in mcsid 4. The ids refer to the value of the primary key in base table',
-      'migrate-clear Articles --itemlimit=50' =>
-        'Clear up to 50 items from the content set named Articles',
-      'migrate-clear Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
-      'migrate-clear 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
+      'migrate-rollback Article' => 'Roll back the article migration',
+      'migrate-rollback Article --idlist=4,9' => 'Roll back two articles. The ids refer to the value of the primary key in base table',
+      'migrate-rollback User --itemlimit=50' =>
+        'Roll back up to 50 items from the migration named User',
+      'migrate-rollback User --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
+      'migrate-rollback Article --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
   $items['migrate-import'] = array(
-    'description' => 'Import a given migration content set',
+    'description' => 'Perform one or more migration processes',
     'options' => $migration_options,
     'arguments' => array(
-      'content_set' => 'Name or mcsid of content set to import',
+      'migration' => 'Name of migration to import',
     ),
     'examples' => array(
-      'migrate-import 4' => 'Import new items in the content set with mcsid 4',
-      'migrate-import 4 --update' => 'Import new items, and also update previously-imported items',
-      'migrate-import 4 --idlist=4,9' => 'Import two items in mcsid 4. The ids refer to the value of the primary key in base table',
-      'migrate-import Articles --itemlimit=50' =>
-        'Import up to 50 items from the content set named Articles',
-      'migrate-import Users --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
-      'migrate-import 2 --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
+      'migrate-import Article' => 'Import new articles',
+      'migrate-import Article --update' => 'Import new items, and also update previously-imported items',
+      'migrate-import Article --idlist=4,9' => 'Import two specific articles. The ids refer to the value of the primary key in base table',
+      'migrate-import Article --itemlimit=50' =>
+        'Import up to 50 items from the migration named Article',
+      'migrate-import User --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
+      'migrate-import User --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
   );
   $items['migrate-stop'] = array(
     'description' => 'Stop an active migration operation',
     'options' => array('--all' => 'Stop all active migration operations'),
     'arguments' => array(
-      'content_set' => 'Name or mcsid of content set to stop',
+      'migration' => 'Name of migration to stop',
     ),
     'examples' => array(
-      'migrate-stop Articles' => 'Stop any active operation on the Articles content set',
+      'migrate-stop Article' => 'Stop any active operation on the Article migration',
       'migrate-stop --all' => 'Stop all active migration operations',
     ),
   );
@@ -98,11 +122,8 @@ function migrate_drush_command() {
   return $items;
 }
 
-// Implement hook_drush_init().
+// Implements hook_drush_init().
 function migrate_drush_init() {
-  // TODO: if this is a migrate command ...
-    require_once dirname(__FILE__) . '/migrate.execute.inc';
-  // }
 }
 
 /**
@@ -139,129 +160,182 @@ function drush_migrate_backend_invoke() {
  * A simplified version of the dashboard page.
  */
 function drush_migrate_status() {
-  
-  $sets = migrate_content_sets();
-  $refresh = drush_get_option('refresh');
-  if ($refresh) {
-    migrate_rehash(); // Update counts and create tables.
-    drush_log(dt('Content sets refreshed'), 'ok');
-  }
+  try {
+    $refresh = drush_get_option('refresh');
 
-  $table[] = array(dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'));
-  foreach ($sets as $machine_name => $set) {
-    $maptable = migrate_map_table_name($set);
-    migrate_load_include($set);
-    $total = call_user_func($set['count callback'], $set, $refresh);
-    $imported = 0; // TODO D7
-    $table[] = array($machine_name, $total, $imported, $total-$imported);
+    $migrations = migrate_migrations($refresh);
+
+    $table[] = array(dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'),
+      dt('Status'), dt('Last imported'));
+    foreach ($migrations as $migration) {
+      $total = $migration->source->count($refresh);
+      $imported = $migration->importedCount();
+      $status = $migration->getStatus();
+      switch ($status) {
+        case Migration::STATUS_IDLE:
+          $status = dt('Idle');
+          break;
+        case Migration::STATUS_IMPORTING:
+          $status = dt('Importing');
+          break;
+        case Migration::STATUS_ROLLING_BACK:
+          $status = dt('Rolling back');
+          break;
+        default:
+          $status = dt('Unknown');
+          break;
+      }
+      $table[] = array($migration->machineName, $total, $imported, $total-$imported, $status,
+        $migration->getLastImported());
+    }
+    drush_print_table($table, TRUE);
+    }
+  catch (Exception $e) {
+    drush_print($e->getMessage());
+    exit;
   }
-  drush_print_table($table, TRUE);
+}
+
+// TODO: Use drush_choice for detailed field info
+function drush_migrate_fields_destination() {
+  try {
+    $args = func_get_args();
+    $machine_name = array_shift($args);
+    // First, see if it matches a migration class
+    $class_name = $machine_name . 'Migration';
+    if (class_exists($class_name)) {
+      $migration = new $class_name;
+      $destination = $migration->destination;
+    }
+    else {
+      // No match, try a destination class
+      // TODO: Client implementations won't follow this naming convention - look
+      // for subclasses of MigrateDestinationEntity and match entityType?
+      $class_name = 'MigrateDestination' . $machine_name;
+      if (class_exists($class_name)) {
+        $bundle = array_shift($args);
+        $destination = new $class_name($bundle);
+      }
+      else {
+        drush_log(dt('No class found matching !machine_name',
+                     array('!machine_name' => $machine_name)),
+                  'error');
+        return;
+      }
+    }
+    $table = array();
+    foreach ($destination->fields() as $machine_name => $description) {
+      $table[] = array($description, $machine_name);
+    }
+    drush_print_table($table);
+  }
+  catch (Exception $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
+}
+
+function drush_migrate_fields_source() {
+  try {
+    $args = func_get_args();
+    $machine_name = array_shift($args);
+    // See if it matches a migration class
+    $class_name = $machine_name . 'Migration';
+    if (class_exists($class_name)) {
+      $migration = new $class_name;
+      $source = $migration->source;
+    }
+    else {
+      drush_log(dt('No class found matching !machine_name',
+                   array('!machine_name' => $machine_name)),
+                'error');
+      return;
+    }
+    $table = array();
+    foreach ($source->fields() as $machine_name => $description) {
+      $table[] = array($description, $machine_name);
+    }
+    drush_print_table($table);
+  }
+  catch (Exception $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
 }
 
 /**
- * TOOD D7: Clear one specified content set
- *
- * @param $content_set
- *  The mcsid or the name of the content set
+ * Roll back one specified migration
  */
-function drush_migrate_clear($machine_name) {
-  // node_delete() has silly perm requirements in d5/d6.
-  // drush_set_option('user', 1);
-  // drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
+function drush_migrate_rollback() {
+  try {
+    $args = func_get_args();
+    $machine_names = array_shift($args);
+    $migrations = array();
 
-  drush_migrate_set_verbose();
-  if (drush_get_option('all')) {
-    $all = TRUE;
-    if (isset($content_set)) {
-      drush_log(dt('You must specify either a content set or --all, not both'), 'warning');
-      return;
+    if (!drush_get_option('all')) {
+      $names = explode(',', $machine_names);
+      foreach ($names as $name) {
+        $class_name = $name . 'Migration';
+        $migrations[$name] = new $class_name;
+      }
     }
-  }
-  else {
-    $all = FALSE;
-    if (!$content_set) {
-      drush_log(dt('You must specify either a content set or the --all option'), 'warning');
-      return;
+    else {
+      $migrations = array_reverse(migrate_migrations());
     }
 
-    if (!$set = migrate_content_set_load($machine_name)) {
-      return drush_set_error('!machine_name not recognized', array('!machine_name' => $machine_name));
+    $options = array();
+    if ($idlist = drush_get_option('idlist', FALSE)) {
+      $options['idlist'] = $idlist;
     }
-  }
+    if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
+      $options['itemlimit'] = $itemlimit;
+    }
+    $feedback = drush_get_option('feedback');
+    if ($feedback) {
+      $parts = explode(' ', $feedback);
+      $options['feedback']['frequency'] = $parts[0];
+      $options['feedback']['frequency_unit'] = $parts[1];
+      if ($options['feedback']['frequency_unit'] != 'seconds' &&
+          $options['feedback']['frequency_unit'] != 'items') {
+        drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
+          array('!unit' => $options['feedback']['frequency_unit'])));
+        return;
+      }
+    }
 
-  $options = array();
-  if ($idlist = drush_get_option('idlist', FALSE)) {
-    $options['idlist'] = $idlist;
-  }
-  if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
-    $options['itemlimit'] = $itemlimit;
-  }
-  
-  $feedback = drush_get_option('feedback');
-  if ($feedback) {
-    $parts = explode(' ', $feedback);
-    $options['feedback']['frequency'] = $parts[0];
-    $options['feedback']['frequency_unit'] = $parts[1];
-    if ($options['feedback']['frequency_unit'] != 'seconds' &&
-        $options['feedback']['frequency_unit'] != 'items') {
-      drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
-        array('!unit' => $options['feedback']['frequency_unit'])));
-      return;
+    foreach ($migrations as $migration) {
+      drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->name)));
+      $migration->rollback($options);
     }
   }
-  if ($all) {
-    $sets = migrate_content_sets();
-    foreach ($sets as $set) {
-      _drush_migrate_do_clear($set, $options);
-    }
-  }
-  else {
-    _drush_migrate_do_clear($set, $options);
-  }
-}
-
-// TODO D7:
-function _drush_migrate_do_clear($set, $options) {
-  drush_log(dt("Clearing content set '!name'",
-               array('!name' => $set['machine_name'])));
-  $result = migrate_clear($set['machine_name'], $options);
-  switch ($result) {
-    case MIGRATE_RESULT_IN_PROGRESS:
-      drush_log(dt('Content set !content_set has an operation already in progress.',
-        array('!content_set' => $description)), 'error');
-      break;
-    case MIGRATE_RESULT_STOPPED:
-      drush_log(dt('Clearing of content set !content_set stopped.',
-                   array('!content_set' => $description)), 'notice');
-      break;
-    case MIGRATE_RESULT_INCOMPLETE:
-      // Most likely we are near the php memory_limit. Spawn a sub shell.
-      drush_migrate_backend_invoke();
-      break;
-    case MIGRATE_RESULT_COMPLETED:
-      break;
+  catch (Exception $e) {
+    drush_print($e->getMessage());
+    exit;
   }
 }
 
 // Implement drush_hook_COMMAND_validate().
 function drush_migrate_import_validate() {
   $args = func_get_args();
-  $machine_names = explode(',', $args[0]);
-  
+
   if (drush_get_option('all')) {
-    if (!empty($machine_names)) {
-      return drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
+    if (!empty($args)) {
+      return drush_set_error(NULL, dt('You must specify either a migration name or --all, not both'));
     }
   }
   else {
-    if (empty($machine_names)) {
-      return drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
+    if (empty($args)) {
+      return drush_set_error(NULL, dt('You must specify either a migration name or the -all option'));
+    }
+    $machine_names = explode(',', strtolower($args[0]));
+
+    $migrations = migrate_migrations();
+    foreach ($migrations as $migration) {
+      $all[] = strtolower($migration->machineName);
     }
 
-    $sets = migrate_content_sets();
-    
-    if ($missing = array_diff($machine_names, array_keys($sets))) {
-      return drush_set_error(dt('Unrecognized content sets: ') . implode(', ', $missing));
+    if ($missing = array_diff($machine_names, $all)) {
+      return drush_set_error(dt('Unrecognized migrations: ') . implode(', ', $missing));
     }
   }
 
@@ -280,112 +354,94 @@ function drush_migrate_import_validate() {
 }
 
 /**
- * Import one specified content set
+ * Import one specified Migration.
  *
  * @param $machine_names
  *  A comma delimited list of machine names, or the special name 'all'
  */
 function drush_migrate_import() {
-  $args = func_get_args();
-  $machine_names = array_shift($args);
-  
-  $allsets = migrate_content_sets();
-  if (!drush_get_option('all')) {
-    $names = explode(',', $machine_names);
-    foreach ($names as $name) {
-      $sets[$name] = $allsets[$name];
+  try {
+    $args = func_get_args();
+    $machine_names = array_shift($args);
+    $migrations = array();
+
+    if (!drush_get_option('all')) {
+      $names = explode(',', $machine_names);
+      foreach ($names as $name) {
+        $class_name = $name . 'Migration';
+        $migrations[$name] = new $class_name;
+      }
+    }
+    else {
+      $migrations = migrate_migrations();
+    }
+
+    $options = array();
+    if ($idlist = drush_get_option('idlist', FALSE)) {
+      $options['idlist'] = $idlist;
+    }
+    if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
+      $options['itemlimit'] = $itemlimit;
+    }
+    $feedback = drush_get_option('feedback');
+    if ($feedback) {
+      $parts = explode(' ', $feedback);
+      $options['feedback']['frequency'] = $parts[0];
+      $options['feedback']['frequency_unit'] = $parts[1];
+      if ($options['feedback']['frequency_unit'] != 'seconds' &&
+          $options['feedback']['frequency_unit'] != 'items') {
+        drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
+          array('!unit' => $options['feedback']['frequency_unit'])));
+        return;
+      }
+    }
+
+    foreach ($migrations as $migration) {
+      drush_log(dt("Importing '!description' migration", array('!description' => $migration->machineName)));
+      if (drush_get_option('update')) {
+        $migration->prepareUpdate();
+      }
+      $migration->import($options);
     }
   }
-  else {
-    $sets = $allsets;
-  }
-  
-  foreach ($sets as $set) {
-    drush_log(dt("Importing content set '!description'", array('!description' => $set['machine_name'])));
-    if (drush_get_option('update')) {
-      // migrate_content_set_update($mcsid);
-    }
-    migrate_load_include($set);
-    call_user_func($set['fetch callback'], $set);
+  catch (Exception $e) {
+    drush_print($e->getMessage());
+    exit;
   }
 }
 
-// TODO D7
-function _drush_migrate_do_import($mcsid, $description, $options) {
-//
-//  $result = migrate_content_process_import($mcsid, $options);
-//  switch ($result) {
-//    case MIGRATE_RESULT_IN_PROGRESS:
-//      drush_log(dt('Content set !content_set has an operation already in progress.',
-//        array('!content_set' => $description)), 'error');
-//      break;
-//    case MIGRATE_RESULT_STOPPED:
-//      drush_log(dt('Importing of content set !content_set stopped.',
-//                   array('!content_set' => $description)), 'notice');
-//      break;
-//    case MIGRATE_RESULT_INCOMPLETE:
-//      // Most likely we are near the php memory_limit. Spawn a sub shell.
-//      drush_migrate_backend_invoke();
-//      break;
-//    case MIGRATE_RESULT_COMPLETED:
-//      break;
-//  }
-}
-
-/// TODO D7
 //**
 // * Stop clearing or importing a given content set.
 // *
 // * @param $content_set
 // *  The mcsid or the name of the content set
 // */
-function drush_migrate_migrate_stop($content_set = NULL) {
-//  if (drush_get_option('all')) {
-//    $all = TRUE;
-//    if (isset($content_set)) {
-//      drush_set_error(NULL, dt('You must specify either a content set or --all, not both'));
-//      return;
-//    }
-//  }
-//  else {
-//    $all = FALSE;
-//    if (!isset($content_set)) {
-//      drush_set_error(NULL, dt('You must specify either a content set or the -all option'));
-//      return;
-//    }
-//    if (is_numeric($content_set)) {
-//      $row = db_fetch_object(db_query("SELECT mcsid,description,status FROM {migrate_content_sets}
-//                                 WHERE mcsid=%d", $content_set));
-//    }
-//    else {
-//      $row = db_fetch_object(db_query("SELECT mcsid,description,status FROM {migrate_content_sets}
-//                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
-//    }
-//    $mcsid = $row->mcsid;
-//    $description = $row->description;
-//    $status = $row->status;
-//  }
-//  if ($all) {
-//    $sql = "SELECT mcsid,description,status FROM {migrate_content_sets}
-//            WHERE status <> %d";
-//    $result = db_query($sql, MIGRATE_STATUS_IDLE);
-//    while ($row = db_fetch_object($result)) {
-//      drush_log(dt('Stopping !type operation on "!description"',
-//                array('!type' => $row->status == MIGRATE_STATUS_CLEARING ? 'clearing' : 'importing',
-//                      '!description' => $row->description)));
-//      db_query("UPDATE {migrate_content_sets} SET status=%d WHERE mcsid=%d",
-//               MIGRATE_STATUS_IDLE, $row->mcsid);
-//    }
-//  }
-//  else {
-//    if ($status != MIGRATE_STATUS_IDLE) {
-//      drush_log(dt('Stopping !type operation on "!description"',
-//                array('!type' => $status == MIGRATE_STATUS_CLEARING ? 'clearing' : 'importing',
-//                      '!description' => $description)));
-//      db_query("UPDATE {migrate_content_sets} SET status=%d WHERE mcsid=%d",
-//               MIGRATE_STATUS_IDLE, $mcsid);
-//    }
-//  }
+function drush_migrate_stop($content_set = NULL) {
+  try {
+    $args = func_get_args();
+    $machine_names = array_shift($args);
+    $migrations = array();
+
+    if (!drush_get_option('all')) {
+      $names = explode(',', $machine_names);
+      foreach ($names as $name) {
+        $class_name = $name . 'Migration';
+        $migrations[$name] = new $class_name;
+      }
+    }
+    else {
+      $migrations = migrate_migrations();
+    }
+
+    foreach ($migrations as $migration) {
+      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->name)));
+      $migration->endProcess();
+    }
+  }
+  catch (Exception $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
 }
 
 /**

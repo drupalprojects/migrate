@@ -1,0 +1,364 @@
+<?php
+
+define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
+define('MIGRATE_ACCESS_ADVANCED', 'advanced migration tools');
+
+/**
+ * Save a new or updated content set
+ *
+ * @param $content_set
+ *  An array or object representing the content set. This is passed by reference (so
+ *  when adding a new content set the ID can be set)
+ * @param $options
+ *  Array of additional options for saving the content set. Currently:
+ *    base_table: The base table of the view - if provided, we don't need
+ *                to load the view.
+ *    base_database: The database of the base table - if base_table is present
+ *                and base_database omitted, it defaults to 'default'
+ * @return
+ *  The ID of the content set that was saved, or NULL if nothing was saved
+ */
+function migrate_save_content_set(&$content_set, $options = array()) {
+  // Deal with objects internally (but remember if we need to put the parameter
+  // back to an array)
+  if (is_array($content_set)) {
+    $was_array = TRUE;
+    $content_set = (object) $content_set;
+  }
+  else {
+    $was_array = FALSE;
+  }
+
+  $schema_change = FALSE;
+
+  // Update or insert the content set record as appropriate
+  if (isset($content_set->mcsid)) {
+    // If machine_name changes, need to rename the map/message tables
+    $old_machine_name = db_query("SELECT machine_name FROM {migrate_content_sets}
+                                  WHERE mcsid=%d", $content_set->mcsid);
+    if ($old_machine_name != $content_set->machine_name) {
+      $old_maptablename = migrate_map_table_name($content_set->mcsid);
+      $old_msgtablename = migrate_message_table_name($content_set->mcsid);
+    }
+    drupal_write_record('migrate_content_sets', $content_set, 'mcsid');
+    if (isset($old_maptablename) && db_table_exists($old_maptablename)) {
+      $ret = array();
+      $new_maptablename = migrate_map_table_name($content_set->mcsid);
+      db_rename_table($ret, $old_maptablename, $new_maptablename);
+      $schema_change = TRUE;
+    }
+    if (isset($old_msgtablename) && db_table_exists($old_msgtablename)) {
+      $ret = array();
+      $new_msgtablename = migrate_message_table_name($content_set->mcsid);
+      db_rename_table($ret, $old_msgtablename, $new_msgtablename);
+      $schema_change = TRUE;
+    }
+  }
+  else {
+    drupal_write_record('migrate_content_sets', $content_set);
+  }
+
+  // Create or modify map and message tables
+  $maptablename = migrate_map_table_name($content_set->mcsid);
+  $msgtablename = migrate_message_table_name($content_set->mcsid);
+
+  // TODO: For now, PK must be in base_table
+
+  // If the caller tells us the base table of the view, we don't need
+  // to load the view (which would not work when called from hook_install())
+  if (isset($options['base_table'])) {
+    $tablename = $options['base_table'];
+    if (isset($options['base_database'])) {
+      $tabledb = $options['base_database'];
+    }
+    else {
+      $tabledb = 'default';
+    }
+  }
+  else {
+    // Get the proper field definition for the sourcekey
+    $view = views_get_view($content_set->view_name);
+    if (!$view) {
+      drupal_set_message(t('View !view does not exist - either (re)create this view, or
+        remove the content set using it.', array('!view' => $content_set->view_name)));
+      return NULL;
+    }
+    // Must do this to load the database
+    $view->init_query();
+
+    if (isset($view->base_database)) {
+      $tabledb = $view->base_database;
+    }
+    else {
+      $tabledb = 'default';
+    }
+    $tablename = $view->base_table;
+  }
+
+  $sourceschema = _migrate_inspect_schema($tablename, $tabledb);
+
+  // If the PK of the content set is defined, make sure we have a mapping table
+  if (isset($content_set->sourcekey) && $content_set->sourcekey) {
+    $sourcefield = $sourceschema['fields'][$content_set->sourcekey];
+    // The field name might be <table>_<column>...
+    if (!$sourcefield) {
+      $sourcekey = drupal_substr($content_set->sourcekey, drupal_strlen($tablename) + 1);
+      $sourcefield = $sourceschema['fields'][$sourcekey];
+    }
+    // But - we don't want serial fields to behave serially, so change to int
+    if ($sourcefield['type'] == 'serial') {
+      $sourcefield['type'] = 'int';
+    }
+
+    if (!db_table_exists($maptablename)) {
+      $schema = _migrate_map_table_schema($sourcefield);
+      db_create_table($ret, $maptablename, $schema);
+      // Expose map table to views
+      tw_add_tables(array($maptablename));
+      tw_add_fk($maptablename, 'destid');
+
+      $schema = _migrate_message_table_schema($sourcefield);
+      db_create_table($ret, $msgtablename, $schema);
+      // Expose messages table to views
+      tw_add_tables(array($msgtablename));
+      tw_add_fk($msgtablename, 'sourceid');
+      $schema_change = TRUE;
+    }
+    else {
+      // TODO: Deal with varchar->int case where there is existing non-int data
+      $desired_schema = _migrate_map_table_schema($sourcefield);
+      $actual_schema = _migrate_inspect_schema($maptablename);
+      if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
+        $ret = array();
+        db_drop_primary_key($ret, $maptablename);
+        db_change_field($ret, $maptablename, 'sourceid', 'sourceid',
+          $sourcefield, array('primary key' => array('sourceid')));
+        tw_perform_analysis($maptablename);
+        $schema_change = TRUE;
+      }
+      $desired_schema = _migrate_message_table_schema($sourcefield);
+      $actual_schema = _migrate_inspect_schema($msgtablename);
+      if ($desired_schema['fields']['sourceid'] != $actual_schema['fields']['sourceid']) {
+        $ret = array();
+        db_drop_index($ret, $msgtablename, 'sourceid');
+        db_change_field($ret, $msgtablename, 'sourceid', 'sourceid',
+          $sourcefield, array('indexes' => array('sourceid' => array('sourceid'))));
+        tw_perform_analysis($maptablename);
+        $schema_change = TRUE;
+      }
+    }
+    // Make sure the schema gets updated to reflect changes
+    if ($schema_change) {
+      cache_clear_all('schema', 'cache');
+    }
+  }
+
+  if ($was_array) {
+    $content_set = (array)$content_set;
+    return $content_set['mcsid'];
+  }
+  else {
+    return $content_set->mcsid;
+  }
+}
+
+/**
+ * Save a new or updated content mapping
+ *
+ * @param $mapping
+ *  An object representing the mapping. This is passed by reference (so
+ *  when adding a new mapping the ID can be set)
+ * @return
+ *  The ID of the mapping that was saved, or NULL if nothing was saved
+ */
+function migrate_save_content_mapping(&$mapping) {
+  if ($mapping->mcmid) {
+    drupal_write_record('migrate_content_mappings', $mapping, 'mcmid');
+  }
+  else {
+    drupal_write_record('migrate_content_mappings', $mapping);
+  }
+  return $mapping->mcmid;
+}
+
+/**
+ * Delete the specified content set, including map and message tables.
+ *
+ * @param $mcsid
+ *  Unique identifier of the content set to delete.
+ */
+function migrate_delete_content_set($mcsid) {
+  // First, remove the map and message tables from the Table Wizard, and drop them
+  $ret = array();
+  $maptable = migrate_map_table_name($mcsid);
+  $msgtable = migrate_message_table_name($mcsid);
+  if (db_table_exists($maptable)) {
+    tw_remove_tables(array($maptable, $msgtable));
+    db_drop_table($ret, $maptable);
+    db_drop_table($ret, $msgtable);
+  }
+
+  // Then, delete the content set data
+  $sql = "DELETE FROM {migrate_content_mappings} WHERE mcsid=%d";
+  db_query($sql, $mcsid);
+  $sql = "DELETE FROM {migrate_content_sets} WHERE mcsid=%d";
+  db_query($sql, $mcsid);
+}
+
+/**
+ * Delete the specified content mapping.
+ *
+ * @param $mcmid
+ *  Unique identifier of the mapping to delete.
+ */
+function migrate_delete_content_mapping($mcmid) {
+  $sql = "DELETE FROM {migrate_content_mappings} WHERE mcmid=%d";
+  db_query($sql, $mcmid);
+}
+
+
+/*
+* Implementation of hook_init().
+*/
+function migrate_init() {
+  // Loads the hooks for the supported modules.
+  // TODO: Be more lazy - only load when really needed
+
+  migrate_module_include();
+
+  // Add main CSS functionality.
+  drupal_add_css(drupal_get_path('module', 'migrate') .'/migrate.css');
+}
+
+
+/**
+ * Implementation of hook_perm().
+ */
+function migrate_perm() {
+  return array(MIGRATE_ACCESS_BASIC, MIGRATE_ACCESS_ADVANCED);
+}
+
+
+/**
+ * Implementation of hook_help().
+ */
+function migrate_help($page, $arg) {
+  switch ($page) {
+    case 'admin/content/migrate':
+      return t('<p>Defined content sets are listed here. New content sets may be added
+        below, and tasks may be executed directly in the browser. A process that is
+        actively running will be <span class="migrate-running">highlighted</span>.</p>');
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function migrate_menu() {
+  $items = array();
+
+  $items['admin/content/migrate'] = array(
+    'title' => 'Migrate',
+    'description' => 'Monitor and control the creation of Drupal content from source data',
+    'page callback' => 'migrate_dashboard',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/dashboard'] = array(
+    'title' => 'Dashboard',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/content/migrate/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Migrate module settings',
+    'weight' => 5,
+    'page callback' => 'migrate_settings',
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+    'file' => 'migrate_pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/content/migrate/content_set/%'] = array(
+    'title' => 'Content set',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('migrate_content_set_mappings', 4),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+//    'type' => MENU_CALLBACK,
+    'file' => 'migrate_pages.inc',
+  );
+  $items['admin/content/migrate/content_set/%/edit'] = array(
+    'title' => 'Edit',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/content/migrate/content_set/%/export'] = array(
+    'title' => 'Export',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('migrate_export_content_set', 4),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'migrate_pages.inc',
+  );
+
+  $items['migrate/xlat/%'] = array(
+    'page callback' => 'migrate_xlat',
+    'access arguments' => array('access content'),
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_theme().
+ */
+function migrate_theme() {
+  return array(
+    'migrate_mapping_table' => array('arguments' => array('form')),
+    '_migrate_dashboard_form' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_dashboard',
+    ),
+    '_migrate_settings_form' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_settings',
+    ),
+    'migrate_content_set_mappings' => array(
+      'arguments' => array('form' => NULL),
+      'function' => 'theme_migrate_content_set_mappings',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function migrate_views_api() {
+  return array('api' => '2.0');
+}
+
+/**
+ * Check to see if the advanced help module is installed, and if not put up
+ * a message.
+ *
+ * Only call this function if the user is already in a position for this to
+ * be useful.
+ */
+function migrate_check_advanced_help() {
+  if (variable_get('migrate_hide_help_message', FALSE)) {
+    return;
+  }
+
+  if (!module_exists('advanced_help')) {
+    $filename = db_result(db_query("SELECT filename FROM {system} WHERE type = 'module' AND name = 'advanced_help'"));
+    if ($filename && file_exists($filename)) {
+      drupal_set_message(t('If you <a href="@modules">enable the advanced help module</a>,
+              Migrate will provide more and better help. <a href="@hide">Hide this message.</a>',
+              array('@modules' => url('admin/build/modules'),
+        '@hide' => url('admin/build/views/tools'))));
+    }
+    else {
+      drupal_set_message(t('If you install the advanced help module from !href, Migrate will provide more and better help. <a href="@hide">Hide this message.</a>', array('!href' => l('http://drupal.org/project/advanced_help', 'http://drupal.org/project/advanced_help'), '@hide' => url('admin/content/migrate/settings'))));
+    }
+  }
+}

@@ -3,71 +3,24 @@
 
 /**
  * @file
- * Implementation of profile destination handling
+ * Migrate module installation
  */
 
-/**
- * Implementation of hook_schema().
- */
 function migrate_schema() {
-  $schema['migrate_content_sets'] = array(
-    'description' => 'Sets of content mappings',
+  $schema = array();
+  $schema['migrate_status'] = migrate_schema_status();
+  return $schema;
+}
+
+function migrate_schema_status() {
+  return array(
+    'description' => 'Status information for migrations',
     'fields' => array(
-      'mcsid' => array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'view_name' => array(
+      'machine_name' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-        'default' => '',
-      ),
-      'view_args' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'sourcekey' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-      ),
-      'contenttype' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => 'node',
-      ),
-      'desttype' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'description' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'lastimported' => array(
-        'type' => 'datetime',
-        'not null' => FALSE,
-      ),
-      'weight' => array(
-        'type' => 'int',
-        'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'rowcount' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
+        'description' => 'Unique machine name for migration',
       ),
       'status' => array(
         'type' => 'int',
@@ -75,85 +28,31 @@ function migrate_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
+        'description' => 'Current status of migration',
       ),
-      'multiple_separator' => array(
-        'type' => 'varchar',
-        'length' => 8,
-        'not null' => TRUE,
-        'default' => ',',
-      ),
-      'machine_name' => array(
-        'type' => 'varchar',
-        'length' => 50,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-    ),
-    'primary key' => array('mcsid'),
-    'indexes' => array(
-      'view_name' => array('view_name'),
-    ),
-    'unique keys' => array(
-      'machine_name' => array('machine_name'),
-    ),
-  );
-  $schema['migrate_content_mappings'] = array(
-    'description' => 'Content field mappings',
-    'fields' => array(
-      'mcmid' => array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'mcsid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'srcfield' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'destfield' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'default_value' => array(
-        'type' => 'varchar',
-        'length' => 255,
+      'lastimported' => array(
+        'type' => 'datetime',
         'not null' => FALSE,
-        'default' => '',
-      ),
-      'primary_key' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
+        'description' => 'Date and time of last completed import',
       ),
     ),
-    'primary key' => array('mcmid'),
-    'unique keys' => array(
-      'colkey' => array('mcsid', 'destfield'),
-    ),
+    'primary key' => array('machine_name'),
   );
-
-  return $schema;
 }
 
 /**
  * Implementation of hook_uninstall().
+ * Drop map/message tables, in case implementing classes did not.
  */
 function migrate_uninstall() {
-  // Remove dynamically-created mapping and message tables
-  $sql = "SELECT mcsid FROM {migrate_content_sets}";
-  $result = db_query($sql);
-  foreach ($result as $row) {
-    // TODO D7: DROP TABLES without tw module.
+  // Note: If a derived Migration class defined its own map or message
+  // table name not fitting this pattern, that class is solely responsible for
+  // cleaning up
+  // TODO: Prefix table names (db_find_tables does not do it)
+  foreach (db_find_tables('migrate_map_%') as $tablename) {
+    db_drop_table($tablename);
+  }
+  foreach (db_find_tables('migrate_message_%') as $tablename) {
+    db_drop_table($tablename);
   }
 }

@@ -290,6 +290,29 @@ abstract class Migration {
   }
 
   /**
+   * Given a (possibly multi-field) source key, return the (possibly multi-field)
+   * destination key it is mapped to.
+   *
+   * @param array $source_id
+   *  Array of source key values.
+   * @return array
+   *  Array of destination key values, or NULL on failure.
+   */
+  public function lookupDestinationID(array $source_id) {
+    $this->ensureTables();
+    $query = db_select($this->mapTableName, 'map');
+    foreach ($this->destinationKeyMap() as $key_name) {
+      $query->addField('map', $key_name);
+    }
+    foreach ($this->sourceKeyMap() as $key_name) {
+      $query = $query->condition("map.$key_name", array_shift($source_id), '=');
+    }
+    $result = $query->execute();
+    $destination_id = $result->fetchAssoc();
+    return $destination_id;
+  }
+
+  /**
    * Called upon successfully import of one record, we record a mapping from
    * the source key to the destination key.
    *

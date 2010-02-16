@@ -163,6 +163,7 @@ class BeerCommentMigration extends Migration {
     $this->addFieldMappingCallback('pid', 'prepareLookup', $arguments);
 
     $this->addFieldMapping('comment_body', 'body');
+    $dest = $this->lookupDestinationID(array(1));
   }
 }
 
@@ -187,6 +188,6 @@ class BeerTermMigration extends Migration {
     $this->destination = new MigrateDestinationTerm('migrate_example_tags');
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('description', 'description');
-    $this->addFieldMapping('parent_name', 'parent_name');
+    $this->addFieldMapping('parent', 'parent_name');
   }
 }

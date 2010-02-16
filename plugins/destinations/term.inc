@@ -114,13 +114,45 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $values->vid = $vocab_map[$values->vocabulary_machine_name];
     }
     // Look up parent name if provided
-    if (isset($values->parent_name)) {
-      // Look for the name in the same vocabulary, of course.
-      // Note that hierarchies may have multiples of the same name...
-      $terms = taxonomy_term_load_multiple(array(),
-        array('name' => trim($values->parent_name), 'vid' => $values->vid));
-      $tids = array_keys($terms);
-      $values->parent = $tids[0];
+    if (isset($values->parent)) {
+      $parent_args = $arguments['parent'];
+      if (isset($parent_args['source_type'])) {
+        $source_type = $parent_args['source_type'];
+      }
+      else {
+        $source_type = 'name';
+      }
+      switch ($source_type) {
+        case 'name':
+          // Look for the name in the same vocabulary.
+          // Note that hierarchies may have multiples of the same name...
+          $terms = taxonomy_term_load_multiple(array(),
+            array('name' => trim($values->parent_name), 'vid' => $values->vid));
+          $tids = array_keys($terms);
+          $values->parent = $tids[0];
+          break;
+        case 'sourceid':
+          // Look up the sourceid in the map table
+          // TODO: Untested
+          if (!is_array($values->parent)) {
+            $values->parent = array($values->parent);
+          }
+          $destination_keys = $migration->lookupDestinationID($values->parent);
+          if ($destination_keys) {
+            $values->parent = $destination_keys[0];
+          }
+          else {
+            unset($values->parent);
+          }
+          break;
+        case 'tid':
+          // Already got a tid! Fall through...
+          break;
+        default:
+          throw new Exception(t('Invalid source_type !type provided for parent term',
+            array('!type' => $source_type)));
+          break;
+      }
     }
     if (!isset($values->format)) {
       $values->format = $this->inputFormat;

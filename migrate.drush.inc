@@ -329,6 +329,7 @@ function drush_migrate_import_validate() {
     }
     $machine_names = explode(',', strtolower($args[0]));
 
+    // TODO: Don't load all migrations, instantiate those passed and catch exceptions
     $migrations = migrate_migrations();
     foreach ($migrations as $migration) {
       $all[] = strtolower($migration->machineName);

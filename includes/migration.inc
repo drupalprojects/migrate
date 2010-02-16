@@ -153,6 +153,14 @@ abstract class Migration {
   protected $memoryLimit;
 
   /**
+   * When performing a bulkRollback(), the maximum number of items to pass in
+   * a single call. Can be overridden in derived class constructor.
+   *
+   * @var int
+   */
+  protected $rollbackBatchSize = 500;
+
+  /**
    * Message types to be passed to saveMessage() and saved in message tables.
    * MESSAGE_INFORMATIONAL represents a condition that did not prevent the operation
    * from succeeding - all others represent different severities of conditions
@@ -533,15 +541,41 @@ abstract class Migration {
              ->execute();
     // Support bulk rollback (only with single-field keys?)
     if ($this->destination->supportsBulkRollback) {
-      // TODO: Batch when big
-      $id_map = $result->fetchAllKeyed();
-      $count = count($id_map);
-      $this->destination->bulkRollback($this, $id_map);
+      // Too many at once can lead to memory issues, so batch 'em up
+      $destids = array();
+      $sourceids = array();
+      $count = $total = 0;
+      foreach ($result as $row) {
+        if ($this->memoryExceeded()) {
+          $return = Migration::RESULT_INCOMPLETE;
+          break;
+        }
+        $destids[] = $row->destid1;
+        $sourceids[] = $row->sourceid1;
+        $count++;
+        $total++;
+        if ($count >= $this->rollbackBatchSize) {
+          $this->destination->bulkRollback($this, $destids);
+          // Keep track in case of interruption
+          db_delete($this->mapTableName)
+            ->condition('sourceid1', $sourceids, 'IN')
+            ->execute();
+          db_delete($this->messageTableName)
+            ->condition('sourceid1', $sourceids, 'IN')
+            ->execute();
+          $destids = array();
+          $sourceids = array();
+          $count = 0;
+        }
+      }
+      if ($count > 0) {
+        $this->destination->bulkRollback($this, $destids);
+      }
       db_truncate($this->mapTableName)->execute();
       db_truncate($this->messageTableName)->execute();
     }
     else {
-      $count = 0;
+      $total = 0;
       // TODO: Can this chunk (shared with import) be factored out?
       foreach ($result as $record) {
         if ($this->memoryExceeded()) {
@@ -553,7 +587,7 @@ abstract class Migration {
               ($frequency_unit == 'items' && $count >= $frequency)) {
             $this->progressMessage($starttime, $count, FALSE, Migration::RESULT_INCOMPLETE);
             $lastfeedback = time();
-            $count = 0;
+            $total = 0;
           }
         }
         if ($this->getStatus() == Migration::STATUS_IDLE) {
@@ -570,10 +604,10 @@ abstract class Migration {
         db_delete($this->messageTableName)
           ->condition('sourceid1', $record->sourceid1)
           ->execute();
-        $count++;
+        $total++;
       }
     }
-    $this->progressMessage($starttime, $count, FALSE, $return);
+    $this->progressMessage($starttime, $total, FALSE, $return);
     $this->endProcess();
   }
 
@@ -599,8 +633,8 @@ abstract class Migration {
       $return = Migration::RESULT_COMPLETED;
       if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
           isset($options['feedback']['frequency_unit'])) {
-        $frequency = isset($options['feedback']['frequency']);
-        $frequency_unit = isset($options['feedback']['frequency_unit']);
+        $frequency = $options['feedback']['frequency'];
+        $frequency_unit = $options['feedback']['frequency_unit'];
         $lastfeedback = time();
       }
       $count = 0;

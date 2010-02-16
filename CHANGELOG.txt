@@ -3,6 +3,7 @@
 Migrate 1.0
 ===========
 Bug fixes
+- #712752 - Fix missing semicolons on export
 - #704768 - Fix default_value nullability
 
 Migrate 1.0 RC1

@@ -944,8 +944,8 @@ function migrate_export_content_set($form_state, $mcsid) {
   while ($row = db_fetch_array($result)) {
     unset($row['mcmid']);
     unset($row['mcsid']);
-    $code .= '  $mapping = new stdClass' . "\n";
-    $code .= '  $mapping->mcsid = $mcsid' . "\n";
+    $code .= '  $mapping = new stdClass;' . "\n";
+    $code .= '  $mapping->mcsid = $mcsid;' . "\n";
     foreach ($row as $field => $value) {
       $code .= '  $mapping->' . $field . "= '" . $value . "';\n";
     }

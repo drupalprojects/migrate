@@ -48,13 +48,13 @@ function migrate_example_uninstall() {
     db_drop_table('migrate_map_beeruser');
     db_drop_table('migrate_message_beeruser');
   }
-  if (db_table_exists('migrate_map_comment')) {
-    db_drop_table('migrate_map_comment');
-    db_drop_table('migrate_message_comment');
+  if (db_table_exists('migrate_map_beercomment')) {
+    db_drop_table('migrate_map_beercomment');
+    db_drop_table('migrate_message_beercomment');
   }
-  if (db_table_exists('migrate_map_term')) {
-    db_drop_table('migrate_map_term');
-    db_drop_table('migrate_message_term');
+  if (db_table_exists('migrate_map_beerterm')) {
+    db_drop_table('migrate_map_beerterm');
+    db_drop_table('migrate_message_beerterm');
   }
 }
 

@@ -46,11 +46,14 @@ class MigrateSourceSQL extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    $fields = $this->query->getFields();
+    $queryFields = $this->query->getFields();
+    $fields = array();
     // Not much we can do in terms of describing the fields without manual intervention
     // TODO: Mechanism for migration developers to document source fields
-    foreach ($fields as $field_name => $field_info) {
-      $fields[$field_name] = $field_info['table'] . '.' . $field_info['field'];
+    foreach ($queryFields as $field_name => $field_info) {
+      // Lower case, because Drupal forces lowercase on fetch
+      $fields[drupal_strtolower($field_name)] = drupal_strtolower(
+        $field_info['table'] . '.' . $field_info['field']);
     }
 
     return $fields;

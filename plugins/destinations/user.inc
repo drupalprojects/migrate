@@ -16,7 +16,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
   /**
    * Basic initialization
    */
-  public function __construct($language = LANGUAGNE_NONE, $input_format = NULL) {
+  public function __construct($language = LANGUAGE_NONE, $input_format = NULL) {
     // PK definition, for use in constructing map/message tables
     $destination_key = array(
       'uid' => array(

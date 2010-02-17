@@ -656,6 +656,35 @@ abstract class Migration {
           break;
         }
 
+        // Track the current source key for use by map/message tables
+        $this->currSourceKey = array();
+        foreach ($this->sourceKeyMap() as $field_name => $map_name) {
+          $this->currSourceKey[$map_name] = $data_row->$field_name;
+        }
+
+        // If the source hasn't already filtered out items based on the map and
+        // message tables, it's up to us
+        if (!$this->source->handlesMapFiltering) {
+          // So, if this source ID is present in the map table or the message table,
+          // skip it - unless its map table entry has needs_update=1
+          $query = db_select($this->mapTableName, 'map');
+          $query->addField('map', 'needs_update');
+          foreach ($this->sourceKeyMap() as $field_name => $map_name) {
+            $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
+          }
+          $result = $query->execute();
+          $needs_update = $result->fetchField();
+          // Needs_update may be NULL (no map table entry), 0 (map entry present
+          // but doesn't need update, or 1 (needs update). The 2nd case is the one
+          // where we skip this entry
+          if ($needs_update === 0) {
+            continue;
+          }
+
+          // TODO: Check message table (entries here indicate failed items, we don't
+          // want to run through them again
+        }
+
         // Apply simple mappings.
         $values = new stdClass;
         $arguments = array();
@@ -696,11 +725,6 @@ abstract class Migration {
           $values->$destination = is_null($result) ? $default : $result;
         }
 
-        // Track the current source key for use by map/message tables
-        $this->currSourceKey = array();
-        foreach ($this->sourceKeyMap() as $field_name => $map_name) {
-          $this->currSourceKey[$map_name] = $data_row->$field_name;
-        }
 
         // If there's a destination ID, the intent is to update an existing object,
         // pass it as the PK

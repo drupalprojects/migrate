@@ -11,6 +11,15 @@
  */
 abstract class MigrateSource {
   /**
+   * A derived source class should set this to TRUE if it is capable of
+   * filtering out already-migrated items in its fetch() method (in particular,
+   * if it can join directly to the map and message tables).
+   *
+   * @var boolean
+   */
+  public $handlesMapFiltering = FALSE;
+
+  /**
    * Schema field definition(s) corresponding to the primary key of the source
    * being implemented. These are used to construct the source key fields
    * of the map and message tables for a migration using this source.

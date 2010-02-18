@@ -35,7 +35,7 @@ class MigrateSourceSQL extends MigrateSource {
   public function __construct(SelectQuery $query, array $key_schema) {
     parent::__construct($key_schema);
     $this->query = $query;
-    $this->$handlesMapFiltering = TRUE;
+    $this->handlesMapFiltering = TRUE;
   }
 
   /**

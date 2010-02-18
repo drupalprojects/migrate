@@ -31,7 +31,7 @@ class BeerNodeMigration extends Migration {
     parent::__construct();
 
     // Human-friendly description of your migration process
-    $this->description = 'Beers of the world migration';
+    $this->description = 'Beers of the world';
 
     // You may optionally declare dependencies for your migration - other migrations
     // which should run first. In this case, terms assigned to our nodes and
@@ -104,7 +104,7 @@ class BeerNodeMigration extends Migration {
 class BeerUserMigration extends Migration {
   public function __construct() {
     parent::__construct();
-    $this->description = 'Beers of the world migration';
+    $this->description = 'Beers Drinkers of the world';
     $query = db_select('migrate_example_account', 'mea')
              ->fields('mea', array('aid', 'status', 'created', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
     $this->source = new MigrateSourceSQL($query,
@@ -170,7 +170,7 @@ class BeerCommentMigration extends Migration {
 class BeerTermMigration extends Migration {
   public function __construct() {
     parent::__construct();
-    $this->description = 'Beers topics';
+    $this->description = 'Beer topics';
     // This sort assures that parents are saved before children.
     $query = db_select('migrate_example_topic', 'met')
              ->fields('met', array('name', 'description', 'parent_name'))

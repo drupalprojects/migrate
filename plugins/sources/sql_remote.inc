@@ -123,7 +123,7 @@ class MigrateSourceSQLRemote extends MigrateSource {
       $sql = str_replace('[limit]', $limit, $sql);
 
       $this->query['sql'] = $sql;
-      $this->result = call_user_func($this->query_method, $this->sql, $this->connection);
+      $this->result = call_user_func($this->query_method, $sql, $this->connection);
     }
 
     return call_user_func($this->fetch_method, $this->result);

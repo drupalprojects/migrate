@@ -677,7 +677,7 @@ abstract class Migration {
           // Needs_update may be NULL (no map table entry), 0 (map entry present
           // but doesn't need update, or 1 (needs update). The 2nd case is the one
           // where we skip this entry
-          if ($needs_update === 0) {
+          if ($needs_update == 0 && is_string($needs_update)) {
             continue;
           }
 

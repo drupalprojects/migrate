@@ -12,7 +12,8 @@ class RemoteNodeMigration extends Migration {
     // These variables are passed in constructor below. The define how to connect
     // and query the remote database server.
     $countQuery = 'SELECT COUNT(*) as count FROM gw.uc_countries';
-    $query = 'SELECT * FROM gw.uc_countries';
+    $query['pattern'] = 'SELECT * FROM gw.uc_countries [where] [limit]';
+    $query['where'] = array();
     $fields = array('country_id' => 'cid', 'country_name' => 'country_name');
     $query_method = 'mysql_query';
     $fetch_method = 'mysql_fetch_object';

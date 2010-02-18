@@ -94,7 +94,10 @@ class MigrateSourceSQLRemote extends MigrateSource {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
       $keys = array();
-      $where = array();
+      $where = isset($this->query['where']) ? $this->query['where'] : array();
+      $limit = '';
+      $sql = $this->query['pattern'];
+
       foreach ($this->keySchema as $field_name => $field_schema) {
         // Allow caller to provide an alias to table containing the primary key.
         // TODO: Alias should be determined automatically
@@ -104,22 +107,23 @@ class MigrateSourceSQLRemote extends MigrateSource {
         $keys[] = $field_name;
       }
       if (isset($options['idlist'])) {
-        // TODO: sanitize. not critical as this is admin supplied data in drush.
-        $where[] = $keys[0] . ' IN (' . explode(',', $options['idlist']) . ')';
+        // TODO: Sanitize. not critical as this is admin supplied data in drush.
+        $where[] = $keys[0] . ' IN (' . $options['idlist'] . ')';
       }
+      if (stripos($sql, '[where]') === FALSE) {
+        // Append [where] if not supplied.
+        $sql .= ' [where]';
+      }
+      $sql = str_replace('[where]', implode(' AND ', $where), $sql);
+
+      // Add range query if specified. Replace token with the right syntax.
       if (isset($options['itemlimit'])) {
-        // TODO
+        $limit = $this->query_method == 'mssql_query' ? 'TOP ' . $options['itemlimit'] : 'LIMIT ' . $options['itemlimit'];
       }
+      $sql = str_replace('[limit]', $limit, $sql);
 
-      $where = implode(' AND ', $where);
-      if ($where && !stripos($this->query, 'WHERE')) {
-        $this->query .= ' WHERE ';
-      }
-      if ($where) {
-        $this->query .= $where;
-      }
-
-      $this->result = call_user_func($this->query_method, $this->query, $this->connection);
+      $this->query['sql'] = $sql;
+      $this->result = call_user_func($this->query_method, $this->sql, $this->connection);
     }
 
     return call_user_func($this->fetch_method, $this->result);

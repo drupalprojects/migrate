@@ -110,10 +110,7 @@ class MigrateSourceSQLRemote extends MigrateSource {
         // TODO: Sanitize. not critical as this is admin supplied data in drush.
         $where[] = $keys[0] . ' IN (' . $options['idlist'] . ')';
       }
-      if (stripos($sql, '[where]') === FALSE) {
-        // Append [where] if not supplied.
-        $sql .= ' [where]';
-      }
+      
       $sql = str_replace('[where]', implode(' AND ', $where), $sql);
 
       // Add range query if specified. Replace token with the right syntax.

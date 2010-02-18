@@ -682,7 +682,7 @@ abstract class Migration {
           }
 
           // TODO: Check message table (entries here indicate failed items, we don't
-          // want to run through them again
+          // want to run through them again)
         }
 
         // Apply simple mappings.

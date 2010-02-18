@@ -276,6 +276,9 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
           case 'taxonomy_term_reference':
             // TODO: Factor out to function like others
             $terms = $object->$machine_name;
+            if (!is_array($terms)) {
+              $terms = array($terms);
+            }
             // Cannot use taxonomy_term_load_multiple() since we have an array of names. It wants singular value.
             // TODO: Restrict to the specific taxonomy
             $tids = db_select('taxonomy_term_data', 'td')

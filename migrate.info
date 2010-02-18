@@ -17,5 +17,6 @@ files[] = plugins/destinations/user.inc
 files[] = plugins/destinations/node.inc
 files[] = plugins/destinations/comment.inc
 files[] = plugins/sources/sql.inc
+files[] = plugins/sources/sql_remote.inc
 files[] = plugins/sources/view.inc
 ; TODO: Add test files?

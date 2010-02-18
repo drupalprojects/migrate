@@ -730,7 +730,7 @@ abstract class Migration {
         // pass it as the PK
         // TODO: Support multi-column keys
         // TODO: 'id' should be the actual destination field name(s) corresponding to the key
-        if ($data_row->migrate_map_destid1) {
+        if (isset($data_row->migrate_map_destid1)) {
           $values['id'] = $data_row->migrate_map_destid1;
         }
 

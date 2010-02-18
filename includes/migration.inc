@@ -322,7 +322,8 @@ abstract class Migration {
 
   /**
    * Called upon successfully import of one record, we record a mapping from
-   * the source key to the destination key.
+   * the source key to the destination key. Also may be called, setting the
+   * third parameter to TRUE, to signal an existing record should be remigrated.
    *
    * @param stdClass $source_row
    *  The raw source data. We use the key map derived from the source object

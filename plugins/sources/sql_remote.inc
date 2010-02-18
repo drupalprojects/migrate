@@ -94,7 +94,7 @@ class MigrateSourceSQLRemote extends MigrateSource {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
       $keys = array();
-      $where = isset($this->query['where']) ? $this->query['where'] : array();
+      $where = isset($this->query['where']) ? $this->query['where'] : array('1=1');
       $limit = '';
       $sql = $this->query['pattern'];
 
@@ -120,6 +120,7 @@ class MigrateSourceSQLRemote extends MigrateSource {
       $sql = str_replace('[limit]', $limit, $sql);
 
       $this->query['sql'] = $sql;
+      drush_log(dt('Executing remote query: !sql', array('!sql' => $sql), 'notice'));
       $this->result = call_user_func($this->query_method, $sql, $this->connection);
     }
 

@@ -42,7 +42,8 @@ function migrate_drush_command() {
     'description' => 'List all migrations with current status.',
     'options' => array(
       'refresh' => 'Recognize new migrations and update counts',
-    )
+    ),
+    'drupal dependencies' => array('migrate'),
   );
   $items['migrate-fields-destination'] = array(
     'description' => 'List the fields available for mapping in a destination.',
@@ -54,6 +55,7 @@ function migrate_drush_command() {
       'migrate-fields-destination MyNode' => 'List fields for the destination in the MyNode migration',
       'migrate-fields-destination node article' => 'List fields available for migrating into the Article node type',
     ),
+    'drupal dependencies' => array('migrate'),
   );
   $items['migrate-fields-source'] = array(
     'description' => 'List the fields available for mapping from a source.',
@@ -63,6 +65,7 @@ function migrate_drush_command() {
     'examples' => array(
       'migrate-fields-destination MyNode' => 'List fields in the source query for the MyNode migration',
     ),
+    'drupal dependencies' => array('migrate'),
   );
   $items['migrate-rollback'] = array(
     'description' => 'Roll back the destination objects from a given migration',
@@ -80,6 +83,7 @@ function migrate_drush_command() {
       'migrate-rollback User --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
       'migrate-rollback Article --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
+    'drupal dependencies' => array('migrate'),
   );
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
   $items['migrate-import'] = array(
@@ -97,6 +101,7 @@ function migrate_drush_command() {
       'migrate-import User --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
       'migrate-import User --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
+    'drupal dependencies' => array('migrate'),
   );
   $items['migrate-stop'] = array(
     'description' => 'Stop an active migration operation',
@@ -108,6 +113,7 @@ function migrate_drush_command() {
       'migrate-stop Article' => 'Stop any active operation on the Article migration',
       'migrate-stop --all' => 'Stop all active migration operations',
     ),
+    'drupal dependencies' => array('migrate'),
   );
 
   $items['migrate-wipe'] = array(
@@ -118,6 +124,7 @@ function migrate_drush_command() {
     'arguments' => array(
       'type' => 'A space delimited list of content type machine readable Ids.',
     ),
+    'drupal dependencies' => array('migrate'),
   );
   return $items;
 }

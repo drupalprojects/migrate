@@ -638,7 +638,7 @@ abstract class Migration {
         $frequency_unit = $options['feedback']['frequency_unit'];
         $lastfeedback = time();
       }
-      $count = 0;
+      $count = $total = 0;
       while ($data_row = $this->source->fetch($this, $options)) {
         if ($this->memoryExceeded()) {
           $return = Migration::RESULT_INCOMPLETE;
@@ -672,7 +672,7 @@ abstract class Migration {
         // message tables, it's up to us
         if (!$this->source->handlesMapFiltering) {
           // Have to enforce itemlimit here
-          if (isset($options['itemlimit']) && $options['itemlimit'] <= $count) {
+          if (isset($options['itemlimit']) && $options['itemlimit'] <= $total) {
             break;
           }
 
@@ -751,6 +751,7 @@ abstract class Migration {
         if ($ids) {
           $this->saveIDMapping($data_row, $ids);
           $count++;
+          $total++;
         }
         else {
           // TODO: Failure to save

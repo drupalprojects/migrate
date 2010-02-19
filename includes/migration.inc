@@ -610,6 +610,7 @@ abstract class Migration {
     }
     $this->progressMessage($starttime, $total, FALSE, $return);
     $this->endProcess();
+    return $return;
   }
 
   /**
@@ -777,6 +778,7 @@ abstract class Migration {
       $this->endProcess(Migration::RESULT_FAILED);
       throw $exception;
     }
+    return $return;
   }
 
   ////////////////////////////////////////////////////////////////////

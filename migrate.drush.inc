@@ -312,7 +312,12 @@ function drush_migrate_rollback() {
 
     foreach ($migrations as $migration) {
       drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->name)));
-      $migration->rollback($options);
+      $return = $migration->rollback($options);
+      // If it couldn't finish (presumably because it was appraoching memory_limit),
+      // continue in a subprocess
+      if ($return == Migration::RESULT_INCOMPLETE) {
+        drush_migrate_backend_invoke();
+      }
     }
   }
   catch (MigrateException $e) {
@@ -409,7 +414,12 @@ function drush_migrate_import() {
       if (drush_get_option('update')) {
         $migration->prepareUpdate();
       }
-      $migration->import($options);
+      $return = $migration->import($options);
+      // If it couldn't finish (presumably because it was appraoching memory_limit),
+      // continue in a subprocess
+      if ($return == Migration::RESULT_INCOMPLETE) {
+        drush_migrate_backend_invoke();
+      }
     }
   }
   catch (MigrateException $e) {

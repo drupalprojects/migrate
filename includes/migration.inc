@@ -652,7 +652,7 @@ abstract class Migration {
             $count = 0;
           }
         }
-        
+
         // Show first row(s) if in debug mode.
         if ($count == 0) {
           drush_log(dt('$data_row is ') . print_r($data_row, TRUE), 'debug');
@@ -671,6 +671,11 @@ abstract class Migration {
         // If the source hasn't already filtered out items based on the map and
         // message tables, it's up to us
         if (!$this->source->handlesMapFiltering) {
+          // Have to enforce itemlimit here
+          if (isset($options['itemlimit']) && $options['itemlimit'] <= $count) {
+            break;
+          }
+
           // So, if this source ID is present in the map table or the message table,
           // skip it - unless its map table entry has needs_update=1
           $query = db_select($this->mapTableName, 'map');

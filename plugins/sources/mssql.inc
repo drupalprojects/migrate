@@ -3,18 +3,18 @@
 
 /**
  * @file
- * Define a MigrateSource for importing from remote database servers. This
+ * Define a MigrateSource for importing from Microsoft SQL Server databases. This
  * plugin has limited capabilities compared to MigrateSourceSQL which can join
  * with the map/message tables and only fetch un-migrated content. This plugin
  * fetched everything unless an idlist or itemlimit are supplied. Note that
  * this is not completely inefficient; already migrated content does not actually
- * get re-imported, it just gets re-fectched.
+ * get re-imported, it just gets re-fetched.
  */
 
 /**
  * Implementation of MigrateSource, to handle imports from remote DB servers.
  */
-class MigrateSourceSQLRemote extends MigrateSource {
+class MigrateSourceMSSQL extends MigrateSource {
   /**
    * The SQL query from which to obtain data. Is a string.
    */
@@ -29,12 +29,10 @@ class MigrateSourceSQLRemote extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct($query, array $key_schema, $query_method, $fetch_method, $connection, $count_query, $fields) {
+  public function __construct($query, array $key_schema, $connection, $count_query, $fields) {
     parent::__construct($key_schema);
     $this->query = $query;
     $this->countQuery = $count_query;
-    $this->query_method = $query_method;
-    $this->fetch_method = $fetch_method;
     $this->connection = $connection;
     $this->fields = $fields;
   }
@@ -94,9 +92,6 @@ class MigrateSourceSQLRemote extends MigrateSource {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
       $keys = array();
-      $where = isset($this->query['where']) ? $this->query['where'] : array('1=1');
-      $limit = '';
-      $sql = $this->query['pattern'];
 
       foreach ($this->keySchema as $field_name => $field_schema) {
         // Allow caller to provide an alias to table containing the primary key.
@@ -110,20 +105,11 @@ class MigrateSourceSQLRemote extends MigrateSource {
         // TODO: Sanitize. not critical as this is admin supplied data in drush.
         $where[] = $keys[0] . ' IN (' . $options['idlist'] . ')';
       }
-      
-      $sql = str_replace('[where]', implode(' AND ', $where), $sql);
 
-      // Add range query if specified. Replace token with the right syntax.
-      if (isset($options['itemlimit'])) {
-        $limit = $this->query_method == 'mssql_query' ? 'TOP ' . $options['itemlimit'] : 'LIMIT ' . $options['itemlimit'];
-      }
-      $sql = str_replace('[limit]', $limit, $sql);
-
-      $this->query['sql'] = $sql;
-      drush_log(dt('Executing remote query: !sql', array('!sql' => $sql), 'notice'));
-      $this->result = call_user_func($this->query_method, $sql, $this->connection);
+      drush_log(dt('Executing remote query: !sql', array('!sql' => $this->query), 'notice'));
+      $this->result = mssql_query($this->query, $this->connection, 100);
     }
 
-    return call_user_func($this->fetch_method, $this->result);
+    return mssql_fetch_object($this->result);
   }
 }

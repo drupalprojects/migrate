@@ -530,8 +530,8 @@ abstract class Migration {
     $return = Migration::RESULT_COMPLETED;
     if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
         isset($options['feedback']['frequency_unit'])) {
-      $frequency = isset($options['feedback']['frequency']);
-      $frequency_unit = isset($options['feedback']['frequency_unit']);
+      $frequency = $options['feedback']['frequency'];
+      $frequency_unit = $options['feedback']['frequency_unit'];
       $lastfeedback = time();
     }
 
@@ -585,8 +585,8 @@ abstract class Migration {
         }
         if (isset($frequency)) {
           if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
-              ($frequency_unit == 'items' && $count >= $frequency)) {
-            $this->progressMessage($starttime, $count, FALSE, Migration::RESULT_INCOMPLETE);
+              ($frequency_unit == 'items' && $total >= $frequency)) {
+            $this->progressMessage($starttime, $total, FALSE, Migration::RESULT_INCOMPLETE);
             $lastfeedback = time();
             $total = 0;
           }

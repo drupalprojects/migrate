@@ -79,7 +79,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     // TODO: the user cancel api is not very friendly to programmatic deletion. See http://drupal.org/node/705306
     // Avoid batch API for now.
     $edit = array();
-    $account = user_load($key[0]);
+    $account = user_load($key[0], TRUE);
     $method = 'user_cancel_delete';
     module_invoke_all('user_cancel', $edit, $account, $method);
     _user_cancel(array(), $account, $method); // Slow. Clears cache.

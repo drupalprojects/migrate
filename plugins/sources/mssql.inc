@@ -27,14 +27,24 @@ class MigrateSourceMSSQL extends MigrateSource {
   protected $result;
 
   /**
+   * By default, mssql_query fetches all results - severe memory problems with
+   * big tables. So, we will fetch a batch at a time.
+   *
+   * @var int
+   */
+  public $batchSize;
+
+  /**
    * Simple initialization.
    */
-  public function __construct($query, array $key_schema, $connection, $count_query, $fields) {
+  public function __construct($query, array $key_schema, $connection, $count_query,
+      $fields, $batch_size = 500) {
     parent::__construct($key_schema);
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->connection = $connection;
     $this->fields = $fields;
+    $this->batchSize = $batch_size;
   }
 
   /**
@@ -107,9 +117,16 @@ class MigrateSourceMSSQL extends MigrateSource {
       }
 
       drush_log(dt('Executing remote query: !sql', array('!sql' => $this->query), 'notice'));
-      $this->result = mssql_query($this->query, $this->connection, 100);
+      $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
     }
 
-    return mssql_fetch_object($this->result);
+    $data_row = mssql_fetch_object($this->result);
+    // Might be totally out of data, or just out of this batch - request another
+    // batch and see
+    if (!$data_row) {
+      mssql_fetch_batch($this->result);
+      $data_row = mssql_fetch_object($this->result);
+    }
+    return $data_row;
   }
 }

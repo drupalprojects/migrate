@@ -76,8 +76,8 @@ class MigrateSourceMSSQL extends MigrateSource {
     $count = cache_get(__METHOD__, 'cache');
     if ($count === FALSE) {
       // Cache miss.
-      $result = call_user_func($this->query_method, $this->countQuery);
-      $count = reset(call_user_func($this->fetch_method, $result));
+      $result = mssql_query($this->countQuery);
+      $count = reset(mssql_fetch_object($result));
       $return = cache_set(__METHOD__, $count, 'cache');
     }
     else {

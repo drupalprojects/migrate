@@ -532,7 +532,7 @@ abstract class Migration {
         isset($options['feedback']['frequency_unit'])) {
       $frequency = $options['feedback']['frequency'];
       $frequency_unit = $options['feedback']['frequency_unit'];
-      $lastfeedback = time();
+      $lastfeedback = $starttime;
     }
 
     // TODO: Support multi-field keys
@@ -586,7 +586,7 @@ abstract class Migration {
         if (isset($frequency)) {
           if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
               ($frequency_unit == 'items' && $total >= $frequency)) {
-            $this->progressMessage($starttime, $total, FALSE, Migration::RESULT_INCOMPLETE);
+            $this->progressMessage($lastfeedback, $total, FALSE, Migration::RESULT_INCOMPLETE);
             $lastfeedback = time();
             $total = 0;
           }
@@ -637,7 +637,7 @@ abstract class Migration {
           isset($options['feedback']['frequency_unit'])) {
         $frequency = $options['feedback']['frequency'];
         $frequency_unit = $options['feedback']['frequency_unit'];
-        $lastfeedback = time();
+        $lastfeedback = $starttime;
       }
       $count = $total = 0;
       while ($data_row = $this->source->fetch($this, $options)) {
@@ -648,7 +648,7 @@ abstract class Migration {
         if (isset($frequency)) {
           if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
               ($frequency_unit == 'items' && $count >= $frequency)) {
-            $this->progressMessage($starttime, $count, TRUE, Migration::RESULT_INCOMPLETE);
+            $this->progressMessage($lastfeedback, $count, TRUE, Migration::RESULT_INCOMPLETE);
             $lastfeedback = time();
             $count = 0;
           }
@@ -736,7 +736,6 @@ abstract class Migration {
           $result = $this->destination->$method($data_row, $arguments, $destination);
           $values->$destination = is_null($result) ? $default : $result;
         }
-
 
         // If there's a destination ID, the intent is to update an existing object,
         // pass it as the PK

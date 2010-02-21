@@ -655,7 +655,7 @@ abstract class Migration {
         }
 
         // Show first row(s) if in debug mode.
-        if ($count == 0) {
+        if ($total == 0) {
           drush_log(dt('$data_row is ') . print_r($data_row, TRUE), 'debug');
         }
         if ($this->getStatus() == Migration::STATUS_IDLE) {

@@ -8,4 +8,3 @@ dependencies[] = comment
 dependencies[] = migrate
 files[] = migrate_example.module
 files[] = beer.inc
-files[] = remote.inc

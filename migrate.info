@@ -2,7 +2,7 @@
 name = "Migrate"
 description = "Import content from external sources"
 package = "Development"
-configure = admin/config/development/migrate
+;configure = admin/config/development/migrate
 core = 7.x
 files[] = migrate.module
 files[] = migrate.install
@@ -16,7 +16,8 @@ files[] = plugins/destinations/term.inc
 files[] = plugins/destinations/user.inc
 files[] = plugins/destinations/node.inc
 files[] = plugins/destinations/comment.inc
+files[] = plugins/destinations/path.inc
 files[] = plugins/sources/sql.inc
 files[] = plugins/sources/mssql.inc
-files[] = plugins/sources/view.inc
+;NYI files[] = plugins/sources/view.inc
 ; TODO: Add test files?

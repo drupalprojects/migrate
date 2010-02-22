@@ -308,6 +308,7 @@ function drush_migrate_annotations() {
     $table[] = array(dt('Destination'), dt('Source'), dt('Default'),
       dt('Annotation'));
     $first = TRUE;
+
     foreach ($annotations as $group => $mappings) {
       if ($first) {
         $first = FALSE;
@@ -315,13 +316,21 @@ function drush_migrate_annotations() {
       else {
         $table[] = array(' ');
       }
-      // Attempt to offset the group header so it stands out
-      $table[] = array('', '     --' . $group . '--');
+      // Attempt to offset and highlight the group header a bit so it stands out
+      $group_header = '  -' . $group . '-';
+      $table[] = array('', $group_header);
       foreach ($mappings as $mapping) {
+        if (is_array($mapping->defaultValue)) {
+          $default = implode(',', $mapping->defaultValue);
+        }
+        else {
+          $default = $mapping->defaultValue;
+        }
         $table[] = array($mapping->destinationField, $mapping->sourceField,
-          $mapping->defaultValue, $mapping->annotationText);
+          $default, $mapping->annotationText);
       }
     }
+
     drush_print_table($table, TRUE);
   }
   catch (MigrateException $e) {

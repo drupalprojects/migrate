@@ -67,11 +67,25 @@ class BeerNodeMigration extends Migration {
     // the names used in these calls, use the drush commands
     // drush migrate-fields-destination beernode
     // drush migrate-fields-source beernode
-    $this->addFieldMapping('title', 'name');
 
-    // We want to preserve old beer id as nid in Drupal.
-    $this->addFieldMapping('nid', 'bid');
-    $this->addFieldMapping('is_new', NULL, TRUE);
+    // Documenting your mappings makes it easier for the whole team to see
+    // exactly what the status is when developing a migration process.
+    $this->addFieldMapping('title', 'name')
+         ->annotation(t('Mapping beer name in source to node title'));
+
+    // You can also document destination fields that are yet to be mapped...
+    $this->addFieldMapping('sticky')
+         ->annotation(t('Somewhere there is a source field we can map here'),
+                      t('ToDo'));
+    // ... or source fields we don't know what to do with
+    $this->addFieldMapping(NULL, 'mysterious_column')
+         ->annotation(t('Talk to client about what this source field means'),
+                      t('Open Issues'));
+
+    $this->addFieldMapping('nid', 'bid')
+         ->annotation(t('Preserve old beer ID as nid in Drupal'));
+    $this->addFieldMapping('is_new')
+         ->defaultValue(TRUE);
 
     // Lookup the uid for a given account id (aid).
     $arguments = array('source_field_name' => 'aid', 'migration' => 'BeerUser');
@@ -79,14 +93,16 @@ class BeerNodeMigration extends Migration {
     $this->addFieldMappingCallback('uid', 'prepareLookup', $arguments, 1);
 
     // The taxonomy terms are a comma-separated list in the query
-    $this->addFieldMapping('taxonomy_migrate_example_tags', 'terms', NULL, ',');
+    $this->addFieldMapping('taxonomy_migrate_example_tags', 'terms')
+         ->separator(',');
 
     // Example of a single value image.
     $arguments = array('source_field_name' => 'image', 'source_path' => drupal_get_path('module', 'migrate_example'));
     $this->addFieldMappingCallback('field_migrate_example_image', 'prepareFile', $arguments);
 
     // Example of delimited field handling. Also example of unformatted multi-value text field.
-    $this->addFieldMapping('field_migrate_example_country', 'countries', NULL, '|');
+    $this->addFieldMapping('field_migrate_example_country', 'countries')
+         ->separator('|');
 
     // Example of a single value textfield with summary. In the Drupal 7 Field API,
     // what used to be a separate "teaser" field is now a "summary" attribute on
@@ -97,7 +113,8 @@ class BeerNodeMigration extends Migration {
     $arguments = array(
       'summary' => array('source_field' => 'excerpt'),
     );
-    $this->addFieldMapping('body', 'body', NULL, NULL, $arguments);
+    $this->addFieldMapping('body', 'body')
+         ->arguments($arguments);
   }
 }
 
@@ -121,13 +138,15 @@ class BeerUserMigration extends Migration {
     $this->addFieldMapping('created', 'created');
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('pass', 'password');
-    $this->addFieldMapping('roles', NULL, drupal_map_assoc(array(3)));
+    $this->addFieldMapping('roles')
+         ->defaultValue(drupal_map_assoc(array(2)));
 
     // Example of a simple 'value' Field. Used for reference fields, list fields, etc.
     $this->addFieldMapping('field_migrate_example_gender', 'sex');
 
     // Need to have node_reference module enabled for this
-    $this->addFieldMapping('field_migrate_example_favbeers', 'beers', NULL, '|');
+    $this->addFieldMapping('field_migrate_example_favbeers', 'beers')
+         ->separator('|');
   }
 }
 
@@ -153,7 +172,9 @@ class BeerCommentMigration extends Migration {
     //$this->addFieldMapping('name', 'name');
     $this->addFieldMapping('subject', 'subject');
     $this->addFieldMapping('mail', 'mail');
-    $this->addFieldMapping('status', NULL, COMMENT_PUBLISHED);
+    $this->addFieldMapping('status')
+         ->defaultValue(COMMENT_PUBLISHED);
+
     // We preserved bid => nid ids during BeerNodeMigration so simple mapping suffices.
     $this->addFieldMapping('nid', 'bid');
 

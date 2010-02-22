@@ -3,6 +3,84 @@
 
 /**
  * @file
+ * The core of migration support
+ */
+
+class MigrateFieldMapping {
+  /**
+   * Destination field name for the mapping. If empty, the mapping is just a
+   * stub for annotating the source field.
+   *
+   * @var string
+   */
+  public $destinationField;
+
+  /**
+   * Source field name for the mapping. If empty, the defaultValue will be
+   * applied.
+   *
+   * @var string
+   */
+  public $sourceField;
+
+  /**
+   * Default value for simple mappings, when there is no source mapping or the
+   * source field is empty. If both this and the sourceField are omitted, the
+   * mapping is just a stub for annotating the destination field.
+   *
+   * @var mixed
+   */
+  public $defaultValue;
+
+  /**
+   * Separator string. If present, the destination field will be set up as an
+   * array of values exploded from the corresponding source field.
+   *
+   * @var string
+   */
+  public $separator;
+
+  /**
+   * Argument overrides. If present this will be an array, keyed by
+   * a field API array key, with one or both of these entries:
+   * 'source_field' - Name of the source field in the incoming row containing the
+   *  value to be assigned
+   * 'default_value' - A constant value to be assigned in the absence of source_field
+   *
+   * @var array
+   */
+  public $arguments;
+
+  public $annotationGroup;
+  public $annotationText;
+
+  public function __construct($destination_field, $source_field) {
+    $this->destinationField = $destination_field;
+    $this->sourceField = $source_field;
+  }
+
+  public function defaultValue($default_value) {
+    $this->defaultValue = $default_value;
+    return $this;
+  }
+
+  public function separator($separator) {
+    $this->separator = $separator;
+    return $this;
+  }
+
+  public function arguments($arguments) {
+    $this->arguments = $arguments;
+    return $this;
+  }
+
+  public function annotation($text, $group = NULL) {
+    $this->annotationGroup = $group;
+    $this->annotationText = $text;
+  }
+}
+
+/**
  * Define the base for the migration controller. This is where most of the smarts
  * of the migrate module resides. Migrations are created by deriving from this
  * class, and in the constructor (after calling parent::__construct()) initializing
@@ -65,34 +143,6 @@ abstract class Migration {
    * @var array
    */
   protected $fieldMappings = array();
-
-  /**
-   * Default values for simple mappings, when there is no source mapping or the
-   * source field is empty - destination fields are the keys, and the
-   * default values are the values in the array.
-   *
-   * @var array
-   */
-  protected $defaultValues = array();
-
-  /**
-   * Separators for simple mappings. Each destination field appearing here will
-   * be set up as an array of values exploded from the corresponding source field.
-   *
-   * @var array
-   */
-  protected $separators = array();
-
-  /**
-   * Argument overrides for simple mappings. Each entry is an array, keyed by
-   * a field API array key, with one or both of these entries:
-   * 'source_field' - Name of the source field in the incoming row containing the
-   *  value to be assigned
-   * 'default_value' - A constant value to be assigned in the absence of source_field
-   *
-   * @var array
-   */
-  protected $arguments = array();
 
   /**
    * Callback mappings for destination fields (keys). Each value is an array:
@@ -382,36 +432,18 @@ abstract class Migration {
   // Processing
 
   /**
-   * Add a simple mapping for a destination field, specifying a source field and/or
+   * Add a mapping for a destination field, specifying a source field and/or
    * a default value.
    *
    * @param string $destinationField
    *  Name of the destination field.
    * @param string $sourceField
    *  Name of the source field (optional).
-   * @param mixed $defaultValue
-   *  A default value, to be applied to the destination if there is no $sourcefield,
-   *  or if the source field in the current row is empty.
-   * @param string $separator
-   *  If present, the source value will be assumed to have multiple values separated
-   *  by $separator, and the mapped destination field will be initialized as an array
-   *  of the exploded values.
-   * @param array $arguments
-   *  Additional arguments to pass to the destination import method for this destination
-   *  (in particular, assignments for Field API value arrays).
    */
-  public function addFieldMapping($destinationField, $sourceField, $defaultValue = NULL,
-                                  $separator = NULL, array $arguments = array()) {
-    $this->fieldMappings[$destinationField] = $sourceField;
-    if (isset($defaultValue)) {
-      $this->defaultValues[$destinationField] = $defaultValue;
-    }
-    if (isset($separator)) {
-      $this->separators[$destinationField] = $separator;
-    }
-    if ($arguments) {
-      $this->arguments[$destinationField] = $arguments;
-    }
+  public function addFieldMapping($destination_field = NULL, $source_field = NULL) {
+    $mapping = new MigrateFieldMapping($destination_field, $source_field);
+    $this->fieldMappings[] = $mapping;
+    return $mapping;
   }
 
   /**
@@ -700,33 +732,36 @@ abstract class Migration {
         // Apply simple mappings.
         $values = new stdClass;
         $arguments = array();
-        foreach ($this->fieldMappings as $destination => $source) {
-          // Make any direct value assignments
-          if (isset($data_row->$source)) {
-            $values->$destination = $data_row->$source;
-          }
-          elseif (isset($this->defaultValues[$destination])) {
-            $values->$destination = $this->defaultValues[$destination];
-          }
+        foreach ($this->fieldMappings as $mapping) {
+          if (isset($mapping->destinationField)) {
+            $destination = $mapping->destinationField;
+            $source = $mapping->sourceField;
+            // Make any direct value assignments
+            if ($source && isset($data_row->$source)) {
+              $values->$destination = $data_row->$source;
+            }
+            elseif (isset($mapping->defaultValue)) {
+              $values->$destination = $mapping->defaultValue;
+            }
 
-          // Assign any arguments
-          $arguments[$destination] = array();
-          if (isset($this->arguments[$destination])) {
-            foreach ($this->arguments[$destination] as $argname => $destarg) {
-              if (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
-                $arguments[$destination][$argname] = $data_row->$destarg['source_field'];
-              }
-              elseif (isset($destarg['default_value'])) {
-                $arguments[$destination][$argname] = $destarg['default_value'];
+            // Assign any arguments
+            $arguments[$destination] = array();
+            if (isset($mapping->arguments)) {
+              foreach ($mapping->arguments as $argname => $destarg) {
+                if (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                  $arguments[$destination][$argname] = $data_row->$destarg['source_field'];
+                }
+                elseif (isset($destarg['default_value'])) {
+                  $arguments[$destination][$argname] = $destarg['default_value'];
+                }
               }
             }
-          }
 
-          // If there's a separator specified for this destination, then it
-          // will be populated as an array exploded from the source value
-          if (isset($this->separators[$destination]) && isset($values->$destination)) {
-            $separator = $this->separators[$destination];
-            $values->$destination = explode($separator, $values->$destination);
+            // If there's a separator specified for this destination, then it
+            // will be populated as an array exploded from the source value
+            if (isset($mapping->separator) && isset($values->$destination)) {
+              $values->$destination = explode($mapping->separator, $values->$destination);
+            }
           }
         }
 

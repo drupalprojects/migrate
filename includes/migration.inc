@@ -115,6 +115,13 @@ abstract class Migration {
   public $description;
 
   /**
+   * More detailed documentation on the migration.
+   *
+   * @var string
+   */
+  public $annotation;
+
+  /**
    * Source object for the migration, derived from MigrateSource.
    *
    * @var MigrateSource

@@ -292,10 +292,8 @@ function drush_migrate_annotations() {
       $migration = new $class_name;
     }
     else {
-      drush_log(dt('No class found matching !machine_name',
-                   array('!machine_name' => $machine_name)),
-                'error');
-      return;
+      return drush_set_error(dt('No class found matching !machine_name',
+                   array('!machine_name' => $machine_name)));
     }
     drush_print($migration->annotation);
     // First group the mappings

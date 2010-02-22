@@ -132,6 +132,93 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
   return $class_lists[$parent_class];
 }
 
+/**
+ * Resource functions modeled on Drupal's timer functions
+ */
+
+/**
+ * Save memory usage with the specified name. If you start and stop the same
+ * memory name multiple times, the measured differences will be accumulated.
+ *
+ * @param name
+ *   The name of the memory measurement.
+ */
+function migrate_memory_start($name) {
+  global $_migrate_memory;
+
+  $_migrate_memory[$name]['start'] = memory_get_usage();
+  $_migrate_memory[$name]['count'] =
+    isset($_migrate_memory[$name]['count']) ? ++$_migrate_memory[$name]['count'] : 1;
+}
+
+/**
+ * Read the current memory value without recording the change.
+ *
+ * @param name
+ *   The name of the memory measurement.
+ * @return
+ *   The change in bytes since the last start.
+ */
+function migrate_memory_read($name) {
+  global $_migrate_memory;
+
+  if (isset($_migrate_memory[$name]['start'])) {
+    $stop = memory_get_usage();
+    $diff = $stop - $_migrate_memory[$name]['start'];
+
+    if (isset($_migrate_memory[$name]['bytes'])) {
+      $diff += $_migrate_memory[$name]['bytes'];
+    }
+    return $diff;
+  }
+  return $_migrate_memory[$name]['bytes'];
+}
+
+/**
+ * Stop the memory counter with the specified name.
+ *
+ * @param name
+ *   The name of the memory measurement.
+ * @return
+ *   A memory array. The array contains the number of times the memory has been
+ *   started and stopped (count) and the accumulated memory difference value in bytes.
+ */
+function migrate_memory_stop($name) {
+  global $_migrate_memory;
+
+  if (isset($_migrate_memory[$name]['bytes'])) {
+    $_migrate_memory[$name]['bytes'] += migrate_memory_read($name);
+  }
+  else {
+    $_migrate_memory[$name]['bytes'] = migrate_memory_read($name);
+  }
+  unset($_migrate_memory[$name]['start']);
+
+  return $_migrate_memory[$name];
+}
+
+/**
+ * Start measuring both memory and time consumption over a section of code.
+ *
+ * @param $name
+ *  The name of the measurement.
+ */
+function migrate_instrument_start($name) {
+  memory_start($name);
+  timer_start($name);
+}
+
+/**
+ * Stop measuring both memory and time consumption over a section of code.
+ *
+ * @param $name
+ *  The name of the measurement.
+ */
+function migrate_instrument_stop($name) {
+  timer_stop($name);
+  memory_start($name);
+}
+
 // TODO: The functions below are D6 functions of some potential use in D7, that
 // haven't been updated/integrated yet
 

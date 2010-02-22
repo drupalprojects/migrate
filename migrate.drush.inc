@@ -426,6 +426,9 @@ function drush_migrate_import() {
     drush_print($e->getMessage());
     exit;
   }
+  /*
+  global $_migrate_memory;
+  drush_print_r($_migrate_memory);*/
 }
 
 //**

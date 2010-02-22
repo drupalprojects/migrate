@@ -116,7 +116,7 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
         // Scan all the dependencies for this class and make sure they're all
         // in the final list
         foreach ($object->dependencies as $dependency) {
-          if (!$class_lists[$parent_class][$dependency]) {
+          if (!isset($class_lists[$parent_class][$dependency])) {
             $ready = FALSE;
             break;
           }

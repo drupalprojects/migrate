@@ -52,11 +52,16 @@ class MigrateFieldMapping {
   public $arguments;
 
   public $annotationGroup;
-  public $annotationText;
+  public $annotationText = '';
 
   public function __construct($destination_field, $source_field) {
+    // Must have one or the other
+    if (!$destination_field && !$source_field) {
+      throw new Exception('Field mappings must have a destination field or a source field');
+    }
     $this->destinationField = $destination_field;
     $this->sourceField = $source_field;
+    $this->annotationGroup = t('Done');
   }
 
   public function defaultValue($default_value) {
@@ -75,6 +80,9 @@ class MigrateFieldMapping {
   }
 
   public function annotation($text, $group = NULL) {
+    if (!$group) {
+      $group = t('Done');
+    }
     $this->annotationGroup = $group;
     $this->annotationText = $text;
   }
@@ -149,7 +157,7 @@ abstract class Migration {
    *
    * @var array
    */
-  protected $fieldMappings = array();
+  public $fieldMappings = array();
 
   /**
    * Callback mappings for destination fields (keys). Each value is an array:
@@ -447,7 +455,7 @@ abstract class Migration {
    * @param string $sourceField
    *  Name of the source field (optional).
    */
-  public function addFieldMapping($destination_field = NULL, $source_field = NULL) {
+  public function addFieldMapping($destination_field, $source_field = NULL) {
     $mapping = new MigrateFieldMapping($destination_field, $source_field);
     $this->fieldMappings[] = $mapping;
     return $mapping;

@@ -315,7 +315,7 @@ function drush_migrate_annotations() {
         $table[] = array(' ');
       }
       // Attempt to offset and highlight the group header a bit so it stands out
-      $group_header = '  -' . $group . '-';
+      $group_header = '--- ' . strtoupper($group) . ' ---';
       $table[] = array('', $group_header);
       foreach ($mappings as $mapping) {
         if (is_array($mapping->defaultValue)) {

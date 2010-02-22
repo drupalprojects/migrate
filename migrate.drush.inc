@@ -484,10 +484,18 @@ function drush_migrate_import() {
         $migration->prepareUpdate();
       }
       $return = $migration->import($options);
-      // If it couldn't finish (presumably because it was appraoching memory_limit),
+      // If it couldn't finish (presumably because it was approaching memory_limit),
       // continue in a subprocess
       if ($return == Migration::RESULT_INCOMPLETE) {
-        drush_migrate_backend_invoke();
+        if (drush_get_context('DRUSH_BACKEND')) {
+          // Already in a subshell. Set return value and finish up.
+          drush_backend_set_result($return);
+          break;
+        }
+        else {
+          // Our first incomplete migration. Just spawn subshell for the rest.
+          drush_migrate_backend_invoke();
+        }
       }
     }
   }

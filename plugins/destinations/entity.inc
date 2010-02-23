@@ -267,6 +267,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   }
 
   public function prepareFields(stdClass $object, array $argumentOverrides = array()) {
+    migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields and handle appropriately
     $field_info_instance = field_info_instances($this->entityType, $this->bundle);
     foreach ($field_info_instance as $machine_name => $instance) {
@@ -324,5 +325,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
         }
       }
     }
+    migrate_instrument_stop('MigrateDestinationEntity->prepareFields');
   }
 }

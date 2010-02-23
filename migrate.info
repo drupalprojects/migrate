@@ -2,7 +2,6 @@
 name = "Migrate"
 description = "Import content from external sources"
 package = "Development"
-;configure = admin/config/development/migrate
 core = 7.x
 files[] = migrate.module
 files[] = migrate.install

@@ -158,8 +158,13 @@ class MigrateSourceSQL extends MigrateSource {
       if (isset($options['itemlimit'])) {
         $this->query->range(0, $options['itemlimit']);
       }
+      migrate_instrument_start('MigrateSourceSQL execute');
       $this->result = $this->query->execute();
+      migrate_instrument_stop('MigrateSourceSQL execute');
     }
-    return $this->result->fetchObject();
+    migrate_instrument_start('MigrateSourceSQL fetch');
+    $object = $this->result->fetchObject();
+    migrate_instrument_stop('MigrateSourceSQL fetch');
+    return $object;
   }
 }

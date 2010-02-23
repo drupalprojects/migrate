@@ -73,7 +73,10 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  Array of fields representing the key (in this case, just tid).
    */
   public function rollback(Migration $migration, array $key) {
-    return (bool) taxonomy_term_delete($key[0]);
+    migrate_instrument_start('taxonomy_term_delete');
+    $result = (bool) taxonomy_term_delete($key[0]);
+    migrate_instrument_stop('taxonomy_term_delete');
+    return $result;
   }
 
   /**
@@ -162,7 +165,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $this->prepareFields($values, $arguments);
 
     migrate_handler_invoke_all('Term', 'prepare', $migration, $values, $row);
+    migrate_instrument_start('taxonomy_term_save');
     $status = taxonomy_term_save($values);
+    migrate_instrument_stop('taxonomy_term_save');
     migrate_handler_invoke_all('Term', 'complete', $migration, $values, $row);
     $return = isset($values->tid) ? array($values->tid) : FALSE;
     return $return;

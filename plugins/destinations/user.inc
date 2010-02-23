@@ -79,10 +79,16 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     // TODO: the user cancel api is not very friendly to programmatic deletion. See http://drupal.org/node/705306
     // Avoid batch API for now.
     $edit = array();
+    migrate_instrument_start('user_load');
     $account = user_load($key[0], TRUE);
+    migrate_instrument_stop('user_load');
     $method = 'user_cancel_delete';
+    migrate_instrument_start('user_cancel hooks');
     module_invoke_all('user_cancel', $edit, $account, $method);
+    migrate_instrument_stop('user_cancel hooks');
+    migrate_instrument_start('_user_cancel');
     _user_cancel(array(), $account, $method); // Slow. Clears cache.
+    migrate_instrument_stop('_user_cancel');
     return (bool) $account->uid;
   }
 
@@ -103,7 +109,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     // Look for Field API fields and handle appropriately
     $this->prepareFields($account, $arguments);
     migrate_handler_invoke_all('User', 'prepare', $migration, $account, $row);
+    migrate_instrument_start('user_save');
     $newaccount = user_save($account, (array)$account);
+    migrate_instrument_stop('user_save');
     migrate_handler_invoke_all('User', 'complete', $migration, $account, $row);
     $return = isset($newaccount->uid) ? array($newaccount->uid) : FALSE;
     return $return;

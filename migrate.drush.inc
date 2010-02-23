@@ -39,6 +39,7 @@ function migrate_drush_command() {
     '--feedback' => 'Frequency of progress messages, in seconds or items processed',
     '--idlist' => 'A comma delimited list of ids to import or rollback. If unspecified, migrate imports all pending items or rolls back all items for the content set.',
     '--all' => 'Process all migrations',
+    '--instrument' => 'Capture performance information (timer, memory, or all)',
   );
   $items['migrate-status'] = array(
     'description' => 'List all migrations with current status.',
@@ -475,6 +476,20 @@ function drush_migrate_import() {
         return;
       }
     }
+    $instrument = drush_get_option('instrument');
+    global $_migrate_track_memory, $_migrate_track_timer;
+    switch ($instrument) {
+      case 'timer':
+        $_migrate_track_timer = TRUE;
+        break;
+      case 'memory':
+        $_migrate_track_memory = TRUE;
+        break;
+      case 'all':
+        $_migrate_track_timer = TRUE;
+        $_migrate_track_memory = TRUE;
+        break;
+    }
 
     foreach ($migrations as $migration) {
       drush_log(dt("Importing '!description' migration", array('!description' => $migration->machineName)));
@@ -501,9 +516,12 @@ function drush_migrate_import() {
     drush_print($e->getMessage());
     exit;
   }
-  /*
-  global $_migrate_memory;
-  drush_print_r($_migrate_memory);*/
+  if ($_migrate_track_memory) {
+    drush_migrate_print_memory();
+  }
+  if ($_migrate_track_timer && !drush_get_context('DEBUG')) {
+    drush_print_timers();
+  }
 }
 
 //**
@@ -567,5 +585,38 @@ function drush_migrate_migrate_wipe() {
       // Low on memory. Spawn a subshell.
       drush_migrate_backend_invoke();
     }
+  }
+}
+
+// Print all timers for the request.
+function drush_migrate_print_memory() {
+  global $_migrate_memory;
+  $temparray = array();
+  foreach ((array)$_migrate_memory as $name => $memoryrec) {
+    // We have to use timer_read() for active timers, and check the record for others
+    if (isset($memoryrec['start'])) {
+      $temparray[$name] = migrate_memory_read($name);
+    }
+    else {
+      $temparray[$name] = $memoryrec['bytes'];
+    }
+  }
+  // Go no farther if there were no timers
+  if (count($temparray) > 0) {
+    // Put the highest cumulative times first
+    arsort($temparray);
+    $table = array();
+    $table[] = array('Name', 'Cum (bytes)', 'Count', 'Avg (bytes)');
+    foreach ($temparray as $name => $memory) {
+      $count = $_migrate_memory[$name]['count'];
+      if ($count > 0) {
+        $avg = round($memory/$count, 0);
+      }
+      else {
+        $avg = 'N/A';
+      }
+      $table[] = array($name, $memory, $count, $avg);
+    }
+    drush_print_table($table, TRUE);
   }
 }

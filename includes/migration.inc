@@ -399,6 +399,7 @@ abstract class Migration {
    *  Value for the needs_update field in the map. Defaults to FALSE.
    */
   public function saveIDMapping(stdClass $source_row, array $dest_ids, $needs_update = FALSE) {
+    migrate_instrument_start('saveIDMapping');
     // Construct the source key
     $keys = array();
     foreach ($this->sourceKeyMap() as $field_name => $key_name) {
@@ -412,6 +413,7 @@ abstract class Migration {
         'needs_update' => (int)$needs_update,
       ))
       ->execute();
+    migrate_instrument_stop('saveIDMapping');
   }
 
   /**
@@ -797,7 +799,9 @@ abstract class Migration {
 
         // TODO: Call prepare and complete hooks here, so destinations don't
         // need to worry about it (and we don't have to pass $data_row to them)?
+        migrate_instrument_start('destination import');
         $ids = $this->destination->import($this, $values, $data_row, $arguments);
+        migrate_instrument_stop('destination import');
         if ($ids) {
           $this->saveIDMapping($data_row, $ids);
           $count++;
@@ -810,6 +814,7 @@ abstract class Migration {
         }
         unset($values);
       }
+
       // TODO: Factor out to endProcess?
       $time = microtime(TRUE) - $starttime;
       if ($time > 0) {

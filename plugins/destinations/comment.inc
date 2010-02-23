@@ -90,7 +90,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  Array of comment IDs to be deleted.
    */
   public function bulkRollback(Migration $migration, array $cids) {
-    return comment_delete_multiple($cids);
+    migrate_instrument_start('comment_delete_multiple');
+    $result = comment_delete_multiple($cids);
+    migrate_instrument_stop('comment_delete_multiple');
+    return $result;
   }
 
   /**
@@ -118,7 +121,9 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $this->prepareFields($comment, $arguments);
 
     migrate_handler_invoke_all('Comment', 'prepare', $migration, $comment, $row);
+    migrate_instrument_start('comment_save');
     comment_save($comment);
+    migrate_instrument_stop('comment_save');
     migrate_handler_invoke_all('Comment', 'complete', $migration, $comment, $row);
     $return = isset($comment->cid) ? array($comment->cid) : FALSE;
     return $return;

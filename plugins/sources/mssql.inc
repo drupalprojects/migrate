@@ -126,15 +126,23 @@ class MigrateSourceMSSQL extends MigrateSource {
       }
 
       drush_log(dt('Executing remote query: !sql', array('!sql' => $this->query), 'notice'));
+      migrate_instrument_start('mssql_query');
       $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
+      migrate_instrument_stop('mssql_query');
     }
 
+    migrate_instrument_start('mssql_fetch_object');
     $data_row = mssql_fetch_object($this->result);
+    migrate_instrument_stop('mssql_fetch_object');
     // Might be totally out of data, or just out of this batch - request another
     // batch and see
     if (!$data_row) {
+      migrate_instrument_start('mssql_fetch_batch');
       mssql_fetch_batch($this->result);
+      migrate_instrument_stop('mssql_fetch_batch');
+      migrate_instrument_start('mssql_fetch_object');
       $data_row = mssql_fetch_object($this->result);
+      migrate_instrument_stop('mssql_fetch_object');
     }
     return $data_row;
   }

@@ -39,6 +39,15 @@ class MigrateSourceSQL extends MigrateSource {
   }
 
   /**
+   * Return a string representing the source query.
+   *
+   * @return string
+   */
+  public function __toString() {
+    return t('Query: %query', array('%query' => $this->query));
+  }
+
+  /**
    * Returns a list of fields available to be mapped from the source query.
    *
    * @return array

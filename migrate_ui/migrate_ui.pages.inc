@@ -12,7 +12,8 @@ function migrate_dashboard($form, $form_state) {
   $form = array();
   $form['description'] = array(
     '#prefix' => '<div>',
-    '#markup' => "This page lists implemented migrations.",
+    '#markup' => t('The current status of each migration defined in this system.
+      Click on a migration name for details on its configuration.'),
     '#suffix' => '</div>',
   );
 
@@ -84,6 +85,65 @@ function migrate_migration_info($form, $form_state, $machine_name) {
     '#suffix' => '</div>',
   );
 
+  // Destination and source field information
+  $destination_description = '<p>' . (string)$migration->destination . '</p>';
+  $form['destination'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Destination'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => $destination_description .
+      t('<p>These are the fields available in the destination of this
+         migration. The machine names listed here are those available to be used
+         as the first parameter to $this->addFieldMapping() in your Migration
+         class constructor.</p>'),
+  );
+  $header = array(t('Machine name'), t('Description'));
+  $rows = array();
+  foreach ($migration->destination->fields() as $machine_name => $description) {
+    $rows[] = array($machine_name, $description);
+  }
+
+  $form['destination']['fields'] = array(
+    '#prefix' => '<div>',
+    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
+    '#suffix' => '</div>',
+  );
+
+  $source_description = '<div>' . (string)$migration->source . '</div>';
+  $form['source'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Source'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => $source_description .
+      t('<p>These are the fields available from the source of this
+         migration. The machine names listed here are those available to be used
+         as the second parameter to $this->addFieldMapping() in your Migration
+         class constructor.</p>'),
+  );
+  $header = array(t('Machine name'), t('Description'));
+  $rows = array();
+  foreach ($migration->source->fields() as $machine_name => $description) {
+    $rows[] = array($machine_name, $description);
+  }
+
+  $form['source']['fields'] = array(
+    '#prefix' => '<div>',
+    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
+    '#suffix' => '</div>',
+  );
+
+  // Information on defined mappings
+  $form['mappings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Field Mappings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#description' => t('These are the mappings currently defined for this Migration.
+      The <strong>Done</strong> group should indicate those which are fully implemented -
+      you can use different group names in field annotations to classify remainng work.'),
+  );
   $header = array(t('Destination'), t('Source'), t('Default'), t('Annotation'));
 
   // First group the mappings
@@ -96,11 +156,11 @@ function migrate_migration_info($form, $form_state, $machine_name) {
   $rows = array();
 
   foreach ($annotations as $group => $mappings) {
-    $form[$group] = array(
+    $form['mappings'][$group] = array(
       '#type' => 'fieldset',
       '#title' => $group,
       '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#collapsed' => $group == t('Done') ? TRUE : FALSE,
     );
     $rows = array();
     foreach ($mappings as $mapping) {
@@ -114,7 +174,7 @@ function migrate_migration_info($form, $form_state, $machine_name) {
         $default, $mapping->annotationText);
       $rows[] = $row;
     }
-    $form[$group]['mappings'] = array(
+    $form['mappings'][$group]['grouping'] = array(
       '#prefix' => '<div>',
       '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
       '#suffix' => '</div>',

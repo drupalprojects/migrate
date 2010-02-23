@@ -8,6 +8,10 @@
 
 /**
  * Abstract base class for source handling.
+ *
+ * Derived classes are expected to define __toString(), returning a string
+ * describing the source and significant options. See
+ * MigrateSourceSQL for an example.
  */
 abstract class MigrateSource {
   /**

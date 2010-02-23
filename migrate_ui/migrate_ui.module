@@ -10,8 +10,6 @@ function migrate_permission() {
     MIGRATE_ACCESS_BASIC => array(
       'title' => t('Basic access to migration information'),
     ),
-/*    MIGRATE_ACCESS_ADVANCED => array(
-    )*/
   );
 }
 

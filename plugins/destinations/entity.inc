@@ -58,6 +58,18 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     }
   }
 
+  public function __toString() {
+    if ($this->entityType == $this->bundle) {
+      $output = t('Type: %type', array('%type' => $this->entityType));
+    }
+    else {
+      $output = t('Type: %type (%bundle)',
+        array('%type' => $this->entityType, '%bundle' => $this->bundle));
+    }
+    // TODO: Non-default language, input format
+    return $output;
+  }
+
   // A FieldMappingCallback. Using specified map table, lookup destid given a sourceID
   // TODO: I think Migration class is the best place for map table lookups
   public function prepareLookup($row, $arguments) {

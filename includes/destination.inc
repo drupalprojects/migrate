@@ -8,6 +8,10 @@
 
 /**
  * Abstract base class for destination handling.
+ *
+ * Derived classes are expected to define __toString(), returning a string
+ * describing the type of destination and significant options. See
+ * MigrateDestinationEntity for an example.
  */
 abstract class MigrateDestination {
   /**

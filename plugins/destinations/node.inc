@@ -65,6 +65,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     }
 
     // Then add any fields attached to this node type (bundle)
+    // TODO: Factor out into entity.inc
+    // TODO: Provide more details (like cardinality)
     $field_instance_info = field_info_instances($this->entityType, $this->bundle);
     foreach ($field_instance_info as $machine_name => $instance) {
       $field_info = field_info_field($machine_name);

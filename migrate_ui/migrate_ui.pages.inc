@@ -8,257 +8,63 @@
 /**
  * Form definition for dashboard page
  */
-function _migrate_dashboard_form($form, $form_state) {
-  migrate_check_advanced_help();
+function migrate_dashboard($form, $form_state) {
+  $form = array();
+  $form['description'] = array(
+    '#prefix' => '<div>',
+    '#markup' => "This page lists implemented migrations.",
+    '#suffix' => '</div>',
+  );
 
   $header = array(
-    array('data' => t('Clear')),
-    array('data' => t('Import')),
-    array('data' => t('Content Set')),
+    array('data' => t('Status')),
+    array('data' => t('Migration')),
     array('data' => t('Total rows')),
     array('data' => t('Imported')),
     array('data' => t('Unimported')),
     array('data' => t('Last imported')),
     );
-  $form['header'] = array('#type' => 'value', '#value' => $header);
-  $sql = "SELECT *
-          FROM {migrate_content_sets}
-          ORDER BY weight, contenttype, view_name, view_args";
-  $result = db_query($sql);
 
-  $clearing = array();
-  $importing = array();
-  $rownum = 0;
-  foreach ($result as $row) {
-    $status = '';
-    if ($row->mcsid) {
-      $view = views_get_view($row->view_name);
-      if (!$view) {
-        drupal_set_message(t('View !view does not exist - either (re)create this view, or
-          remove the content set using it.', array('!view' => $row->view_name)));
-        continue;
-      }
-      $clearing[$row->mcsid] = '';
-      $importing[$row->mcsid] = '';
-      $status = t('N/A');
-      $maptable = migrate_map_table_name($row->mcsid);
-      $sourcekey = $row->sourcekey;
-      if (db_table_exists($maptable)) {
-        $imported = db_query('SELECT COUNT(*) FROM {' . $maptable . '}')->fetchField();
-      }
-      else {
-        $imported = 0;
-      }
+  $migrations = migrate_migrations();
 
-      // If not caching counts, override the saved count with a fresh count
-      if (!variable_get('migrate_cache_counts', 0)) {
-        $row->rowcount = _migrate_get_view_count($view, $row->view_args);
-      }
-
-      $unimported = $row->rowcount - $imported;
-
-      $msgtablename = migrate_message_table_name($row->mcsid);
-      if (db_table_exists($msgtablename)) {
-        if ($unimported > 0) {
-          $messages = '';
-          $numerrors = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_ERROR);
-
-          if ($numerrors > 0) {
-            $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
-              array('html' => TRUE))
-              . '<br />';
-          }
-          $numwarnings = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_WARNING);
-                                            
-          if ($numwarnings > 0) {
-            $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
-              array('html' => TRUE))
-              . '<br />';
-          }
-
-          $numnotices = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_NOTICE);
-          if ($numnotices > 0) {
-            $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
-              array('html' => TRUE))
-              . '<br />';
-          }
-          if ($messages) {
-            $unimported = $messages . " $unimported&nbsp;total";
-          }
-        }
-        if ($imported > 0) {
-          $numinformational = migrate_msg_count($msgtablename, MIGRATE_MESSAGE_INFORMATIONAL);
-          if ($numinformational > 0) {
-            $imported .= '<br />' .
-              l(format_plural($numinformational, '1 informational message', '@count informational messages'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_INFORMATIONAL,
-              array('html' => TRUE))
-              . '<br />';
-          }
-        }
-      }
-      else {
-        $imported = '';
-        $unimported = '';
-      }
+  $rows = array();
+  foreach ($migrations as $migration) {
+    $row = array();
+    $total = $migration->source->count();
+    $imported = $migration->importedCount();
+    $unimported = $total - $imported;
+    $status = $migration->getStatus();
+    switch ($status) {
+      case Migration::STATUS_IDLE:
+        $status = t('Idle');
+        break;
+      case Migration::STATUS_IMPORTING:
+        $status = t('Importing');
+        break;
+      case Migration::STATUS_ROLLING_BACK:
+        $status = t('Rolling back');
+        break;
+      default:
+        $status = t('Unknown');
+        break;
     }
-    else {
-      $imported = '';
-      $unimported = '';
-    }
+    $table[] = array($migration->machineName, $total, $imported, $total-$imported, $status,
+        $migration->getLastImported());
 
-    $form['data'][$rownum]['clearing'] = array('#value' => 0);
-    $form['data'][$rownum]['importing'] = array('#value' => 0);
-    $form['data'][$rownum]['description'] = array('#value' =>
-      l($row->description, 'admin/content/migrate/content_set/' . $row->mcsid));
-    $form['data'][$rownum]['importrows'] = array('#value' => check_plain($row->rowcount));
-    $form['data'][$rownum]['imported'] = array('#value' => $imported);
-    $form['data'][$rownum]['unimported'] = array('#value' => $unimported);
-    $form['data'][$rownum]['lastimported'] = array('#value' => $row->lastimported);
-    $form['data'][$rownum]['mcsid'] = array('#value' => check_plain($row->mcsid));
-    $form['data'][$rownum]['status'] = array('#value' => $row->status);
-    $rownum++;
+    $row['status'] = $status;
+    $row['machinename'] =
+      l($migration->machineName, 'admin/content/migrate/migration/' . $migration->machineName);
+    $row['importrows'] = $total;
+    $row['imported'] = $imported;
+    $row['unimported'] = $unimported;
+    $row['lastimported'] = $migration->getLastImported();
+    $rows[] = $row;
   }
 
-  $form['clearing'] = array(
-    '#type' => 'checkboxes',
-    '#options' => $clearing,
-  );
-  $form['importing'] = array(
-    '#type' => 'checkboxes',
-    '#options' => $importing,
-  );
-  if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-    // Open the fieldset if we're coming back from a run
-    // TODO: Or from a Stop
-    $collapsed = strpos($_SERVER['HTTP_REFERER'], 'batch') === FALSE;
-    $form['interactive'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Execute'),
-      '#collapsible' => TRUE,
-      '#collapsed' => $collapsed,
-      '#description' => t('<p>While large migration tasks are best run via
-        <a href="http://drupal.org/project/drush">drush</a>,
-        you may choose here to execute tasks directly. Check any tasks you want to run,
-        and click the Run button. Note that the settings below will be applied to each
-        task you run.</p>
-        <p>Running tasks may be cleanly stopped by clicking <b>Stop all running tasks</b>.'),
-    );
-    $form['interactive']['update'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Update previously-imported content'),
-      '#description' => t('If unchecked, import operations will only process source
-        data which has not already been imported. If checked, they will also replace
-        previously-imported destination objects with the current source information.'),
-      '#default_value' => variable_get('migrate_update', 0),
-    );
-    $form['interactive']['limit'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Sample size'),
-      '#size' => 4,
-      '#description' => t('Number of records to process. Leave
-        blank to process all records in the content set.'),
-      '#default_value' => variable_get('migrate_limit', ''),
-    );
-    $form['interactive']['idlist'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Source IDs'),
-      '#size' => 30,
-      '#description' => t('Enter a comma-separated list of IDs from the incoming content set, to
-        process only those records.'),
-    );
-    $form['interactive']['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Run'),
-      '#submit' => array('_migrate_dashboard_form_run'),
-    );
-    $form['interactive']['stop'] = array(
-      '#type' => 'submit',
-      '#value' => t('Stop all running tasks'),
-      '#submit' => array('_migrate_dashboard_form_stop'),
-    );
-  }
-
-  // Fetch information on available destinations
-  $desttypes = migrate_invoke_all('types');
-
-  $form['addset'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Add a content set'),
-    '#collapsible' => TRUE,
-    '#collapsed' => $rownum == 0 ? FALSE: TRUE,
-  );
-
-  $form['addset']['machine_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Content set name'),
-    '#size' => 24,
-    '#maxlength' => 50,
-    '#description' => t('This is the unique name of the content set. It must contain
-      only alphanumeric characters and underscores; it is used to identify the
-      content set internally and to generate map and message tables related to
-      the content set.'),
-  );
-
-  $form['addset']['description'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Description of the content set'),
-    '#description' => t('User-friendly description of the content set'),
-  );
-
-  $form['addset']['contenttype'] = array(
-    '#type' => 'select',
-    '#title' => t('Destination'),
-    '#options' => $desttypes,
-    '#description' => t('The type of Drupal content which will store the incoming records.'),
-  );
-
-  $views = array(); // views_get_all_views();
-  foreach ($views as $name => $view) {
-    if ($view->tag) {
-      $options[$name] = $view->tag . ': ' . $name;
-    }
-    else {
-      $options[$name] = $name;
-    }
-    if ($view->description) {
-      if (drupal_strlen($view->description) > 60) {
-        $view->description = drupal_substr($view->description, 0, 57) . '...';
-      }
-      $options[$name] .= " ($view->description)";
-    }
-  }
-  asort($options);
-  $form['addset']['view_name'] = array(
-    '#type' => 'select',
-    '#title' => t('Source view from which to import content'),
-    '#options' => $options,
-    '#description' => t('This View defines the records which are to be migrated.'),
-  );
-
-  $form['addset']['view_args'] = array(
-    '#type' => 'textfield',
-    '#title' => t('View arguments'),
-    '#description' => t('Arguments to apply to the view when processing,
-      separated with a / as though they were a URL path.'),
-    '#maxlength' => 255,
-    '#size' => 30,
-  );
-  $form['addset']['weight'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Weight'),
-    '#required' => TRUE,
-    '#default_value' => 0,
-    '#description' => t('The order in which content sets will be processed and displayed.'),
-  );
-  $form['addset']['add'] = array(
-    '#type' => 'submit',
-    '#value' => t('Add'),
-    '#submit' => array('_migrate_content_set_form_submit'),
-    '#validate' => array('_migrate_content_set_form_validate'),
+  $form['dashboard'] = array(
+    '#prefix' => '<div>',
+    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
+    '#suffix' => '</div>',
   );
   return $form;
 }
@@ -267,31 +73,20 @@ function _migrate_dashboard_form($form, $form_state) {
  * Theme function for dashboard page
  */
 function theme_migrate_dashboard($form) {
-  $output = drupal_render($form['description']);
+  $output = drupal_render($form['machinename']);
   if (isset($form['data']) && is_array($form['data'])) {
     foreach (element_children($form['data']) as $rownum) {
       $row = array();
       foreach (element_children($form['data'][$rownum]) as $colname) {
-        if ($colname == 'clearing' || $colname == 'importing') {
-          $row[] = drupal_render($form[$colname][$form['data'][$rownum]['mcsid']['#value']]);
-          // Throw out the column contents
-          drupal_render($form['data'][$rownum][$colname]);
-          drupal_render($form['data'][$rownum]['mcsid']);
-        }
-        elseif ($colname == 'status' || $colname == 'mcsid') {
-          drupal_render($form['data'][$rownum][$colname]);
-        }
-        else {
-          $row[] = drupal_render($form['data'][$rownum][$colname]);
-        }
+        $row[] = drupal_render($form['data'][$rownum][$colname]);
       }
       // Highlight any process currently running
-      if ($form['data'][$rownum]['status']['#value']) {
+/*      if ($form['data'][$rownum]['status']['#value']) {
         $rows[] = array('data' => $row, 'class' => 'migrate-running');
       }
-      else {
+      else {*/
         $rows[] = $row;
-      }
+      //}
     }
   }
 
@@ -303,148 +98,10 @@ function theme_migrate_dashboard($form) {
   return $output;
 }
 
-/*
- * FAPI submit handler.
- */
-function _migrate_dashboard_form_run($form, &$form_state) {
-  $started = time();
-  $values = $form_state['values'];
-  $clearing = array();
-  $importing = array();
-  foreach ($values['importing'] as $mcsid => $value) {
-    if ($value) {
-      $importing[$mcsid] = $mcsid;
-    }
-    if ($values['clearing'][$mcsid]) {
-      $clearing[$mcsid] = $mcsid;
-    }
-  }
-
-  variable_set('migrate_limit', $values['limit']);
-  variable_set('migrate_update', $values['update']);
-  $batch = array(
-    'operations' => array(
-      array('migrate_content_process_batch',
-            array($clearing,
-                  $importing,
-                  $values['limit'],
-                  trim($values['idlist'])))),
-    'title' => t('Migration processing'),
-    'file' => drupal_get_path('module', 'migrate') . '/migrate_pages.inc',
-    'init_message' => t('Starting migration process'),
-    'progress_message' => t(''),
-    'error_message' => t('An error occurred. Some or all of the migrate processing has failed.'),
-    'finished' => '_migrate_content_process_finish',
-  );
-  batch_set($batch);
-}
-
-/*
- * FAPI submit handler.
- */
-function _migrate_dashboard_form_stop($form, &$form_state) {
-  db_update('migrate_content_sets')
-    ->fields(array('status' => MIGRATE_STATUS_IDLE))
-    ->execute();
-  drupal_set_message(t('All migration tasks have been stopped.'));
-}
-
 /**
- * Batch API finished callback - report results
- *
- * @param $success
- *  Ignored
- * @param $results
- *  List of results from batch processing
- * @param $operations
- *  Ignored
+ * Menu callback function for migration view page.
  */
-function _migrate_content_process_finish($success, $results, $operations) {
-  foreach ($results as $result) {
-    drupal_set_message($result);
-  }
-}
-
-/**
- * Common validation function for content sets
- */
-function _migrate_content_set_validate($form_state) {
-  $machine_name = trim($form_state['values']['machine_name']);
-  if (!$machine_name) {
-    form_set_error('machine_name', t('Content set name is required'));
-  }
-  else {
-    $mcsid = db_query("SELECT mcsid FROM {migrate_content_sets} WHERE machine_name=:machine_name", array('machine_name' => $machine_name))->fetchField();
-    if ($mcsid && $mcsid != $form_state['values']['mcsid']) {
-      form_set_error('machine_name', t('The content set name must be unique.'));
-    }
-    elseif (preg_match('/[^a-zA-Z0-9_]/', $machine_name)) {
-      form_set_error('machine_name', t('Content set name must be alphanumeric or underscores only.'));
-    }
-  }
-  $description = trim($form_state['values']['description']);
-  if (!$description) {
-    form_set_error('description', t('Content set description is required'));
-  }
-  $weight = trim($form_state['values']['weight']);
-  if (!is_numeric($weight) || (((int)$weight) != $weight)) {
-    form_set_error('weight', t('Weight must be an integer value (positive or negative)'));
-  }
-  $view_name = $form_state['values']['view_name'];
-  $view_args = trim($form_state['values']['view_args']);
-  if (isset($form_state['values']['mcsid'])) {
-    $sql = "SELECT mcsid FROM {migrate_content_sets}
-            WHERE view_name='%s' AND view_args='%s' AND mcsid<>%d";
-    $mcsid = db_result(db_query($sql, $view_name, $view_args, $form_state['values']['mcsid']));
-  }
-  else {
-    $sql = "SELECT mcsid FROM {migrate_content_sets}
-            WHERE view_name='%s' AND view_args='%s'";
-    $mcsid = db_result(db_query($sql, $view_name, $view_args));
-  }
-  if ($mcsid) {
-    if ($view_args) {
-      form_set_error('view_name', t('There is already a content set with this
-        combination of source view and view arguments.'));
-    }
-    else {
-      form_set_error('view_name', t('There is already a content set with this
-        source view and no view arguments.'));
-    }
-  }
-}
-
-/**
- * Implementation of hook_validate().
- */
-function _migrate_content_set_form_validate($form, $form_state) {
-  _migrate_content_set_validate($form_state);
-}
-
-/**
- * Implementation of hook_submit().
- */
-function _migrate_content_set_form_submit($form, &$form_state) {
-  $content_set = array();
-  $content_set['view_name'] = $form_state['values']['view_name'];
-  $content_set['view_args'] = trim($form_state['values']['view_args']);
-  $content_set['machine_name'] = $form_state['values']['machine_name'];
-  $content_set['description'] = $form_state['values']['description'];
-  $destination = explode('/', $form_state['values']['contenttype']);
-  $content_set['contenttype'] = $destination[0];
-  if (isset($destination[1])) {
-    $content_set['desttype'] = $destination[1];
-  }
-  $content_set['weight'] = $form_state['values']['weight'];
-  $mcsid = migrate_save_content_set($content_set);
-  // Go straight to the mapping form
-  $form_state['redirect'] = "admin/content/migrate/content_set/$mcsid";
-}
-
-/**
- * Menu callback function for content set edit page.
- */
-function migrate_content_set_mappings($form, $form_state, $mcsid) {
+function migrate_migration_info($form, $form_state, $machine_name) {
   $row = migrate_content_set_load($mscid);
   $desttype = $row->desttype;
   $view_name = $row->view_name;
@@ -682,60 +339,6 @@ function theme_migrate_content_set_mappings($form) {
   return $output;
 }
 
-/**
- * Implementation of FAPI validate handler.
- */
-function migrate_content_set_mappings_validate($form, $form_state) {
-  _migrate_content_set_validate($form_state);
-}
-
-/**
- * FAPI submit handler.
- */
-function migrate_content_set_mappings_submit($form, &$form_state) {
-  $mcsid = $form_state['values']['mcsid'];
-  if ($form_state['clicked_button']['#parents'][0] == 'delete') {
-    migrate_delete_content_set($mcsid);
-    drupal_set_message(t('Content set deleted'));
-  }
-  else {
-    // Get list of current mappings, so we know if any need deletion
-    $mappings = migrate_content_set_mappings_load($mcsid);
-    $prevdests = array();
-    foreach ($mappings as $row) {
-      $prevdests[$row->destfield] = $row->mcmid;
-    }
-    $sourcekey = $form_state['values']['sourcekey'];
-    foreach ($form_state['values']['cols'] as $key => $destfield) {
-      $mapping = new stdClass;
-      $mapping->mcsid = $mcsid;
-      $mapping->srcfield = $form_state['values']['srcfield'][$destfield];
-      $mapping->destfield = $destfield;
-      $mapping->default_value = $form_state['values']['default_value'][$destfield];
-      $mapping->mcmid = db_query(
-        "SELECT mcmid
-         FROM {migrate_content_mappings}
-         WHERE mcsid=:mscid AND destfield=:destfield",
-        array(':mscid' => $mcsid, ':destfield' => $destfield))->fetchField();
-      if ($form_state['values']['primary_key'] == $destfield) {
-        $mapping->primary_key = TRUE;
-      }
-      else {
-        $mapping->primary_key = FALSE;
-      }
-      migrate_save_content_mapping($mapping);
-      // This mapping is currently valid, so remove from the deletion list
-      unset($prevdests[$mapping->destfield]);
-    }
-    // Delete any mappings we didn't save
-    foreach ($prevdests as $mcmid) {
-      migrate_delete_content_mapping($mcmid);
-    }
-    migrate_save_content_set($form_state['values']);
-    drupal_set_message(t('Changes saved'));
-  }
-  $form_state['redirect'] = 'admin/content/migrate/dashboard';
-}
 
 /**
  * Form definition for settings page.

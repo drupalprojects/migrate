@@ -799,7 +799,7 @@ abstract class Migration {
 
         // TODO: Call prepare and complete hooks here, so destinations don't
         // need to worry about it (and we don't have to pass $data_row to them)?
-        migrate_instrument_start('destination import');
+        migrate_instrument_start('destination import', TRUE);
         $ids = $this->destination->import($this, $values, $data_row, $arguments);
         migrate_instrument_stop('destination import');
         if ($ids) {

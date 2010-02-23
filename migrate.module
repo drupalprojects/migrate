@@ -204,14 +204,20 @@ function migrate_memory_stop($name) {
 }
 
 /**
- * Start measuring both memory and time consumption over a section of code.
+ * Start measuring time and (optionally) memory consumption over a section of code.
+ * Note that the memory consumption measurement is generally not useful in
+ * lower areas of the code, where data is being generated that will be freed
+ * by the next call to the same area. For example, measuring the memory
+ * consumption of db_query is not going to be helpful.
  *
  * @param $name
  *  The name of the measurement.
+ * @param $include_memory
+ *  Measure both memory and timers. Defaults to FALSE (timers only).
  */
-function migrate_instrument_start($name) {
+function migrate_instrument_start($name, $include_memory = FALSE) {
   global $_migrate_track_memory, $_migrate_track_timer;
-  if ($_migrate_track_memory) {
+  if ($_migrate_track_memory && $include_memory) {
     migrate_memory_start($name);
   }
   if ($_migrate_track_timer) {

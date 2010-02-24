@@ -114,8 +114,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     }
 
     // To keep node_object_prepare from choking
-    // TODO: Ask why node_object_prepare isn't in node.module... and why it doesn't
-    // check is_new
     if (!isset($node->created)) {
       $node->created = REQUEST_TIME;
     }
@@ -125,7 +123,22 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
     // Apply defaults, allow standard node prepare hooks to fire
     module_load_include('pages.inc', 'node');
+    // node_object_prepare() will blow these away, so save them here and
+    // stuff them in later if need be
+    if (isset($node->changed)) {
+      $changed = $node->changed;
+    }
+    if (isset($node->uid)) {
+      $uid = $node->uid;
+    }
     node_object_prepare($node);
+    if (isset($changed)) {
+      $node->changed = $changed;
+    }
+    if (isset($uid)) {
+      $node->uid = $uid;
+    }
+
     // Look for Field API fields and handle appropriately
     $this->prepareFields($node, $arguments);
     // Invoke migration prepare handlers

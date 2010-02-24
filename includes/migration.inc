@@ -703,10 +703,6 @@ abstract class Migration {
           }
         }
 
-        // Show first row(s) if in debug mode.
-        if ($total == 0) {
-          drush_log(dt('$data_row is ') . print_r($data_row, TRUE), 'debug');
-        }
         if ($this->getStatus() == Migration::STATUS_IDLE) {
           $return = Migration::RESULT_STOPPED;
           break;
@@ -765,7 +761,22 @@ abstract class Migration {
             $arguments[$destination] = array();
             if (isset($mapping->arguments)) {
               foreach ($mapping->arguments as $argname => $destarg) {
-                if (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                if ($argname == 'source_migration') {
+                  // Use the source field to look up a destination ID from another,
+                  // presumably previously-executed, migration
+                  // TODO: Singleton Migrations will make this cleaner
+                  static $migrations = array();
+                  if (!isset($migrations[$destarg])) {
+                    $migrations[$destarg] = new $destarg;
+                  }
+                  $source_migration = $migrations[$destarg];
+                  $destids = $source_migration->
+                    lookupDestinationID(array($values->$destination));
+                  // We are assuming that the desired result is a single value
+                  // (e.g., a uid)
+                  $values->$destination = $destids['destid1'];
+                }
+                elseif (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
                   $arguments[$destination][$argname] = $data_row->$destarg['source_field'];
                 }
                 elseif (isset($destarg['default_value'])) {

@@ -8,6 +8,7 @@
  */
 
 // TODO:
+// Singleton Migration objects (perhaps sources and destinations too)
 // Continue hook_schema_alter() for map & message tables?
 // Views hooks for map/message tables
 // xlat support?
@@ -188,19 +189,21 @@ function migrate_memory_read($name) {
 function migrate_memory_stop($name) {
   global $_migrate_memory;
 
-  if (isset($_migrate_memory[$name]['start'])) {
-    $stop = memory_get_usage();
-    $diff = $stop - $_migrate_memory[$name]['start'];
-    if (isset($_migrate_memory[$name]['bytes'])) {
-      $_migrate_memory[$name]['bytes'] += $diff;
+  if (isset($_migrate_memory[$name])) {
+    if (isset($_migrate_memory[$name]['start'])) {
+      $stop = memory_get_usage();
+      $diff = $stop - $_migrate_memory[$name]['start'];
+      if (isset($_migrate_memory[$name]['bytes'])) {
+        $_migrate_memory[$name]['bytes'] += $diff;
+      }
+      else {
+        $_migrate_memory[$name]['bytes'] = $diff;
+      }
+      unset($_migrate_memory[$name]['start']);
     }
-    else {
-      $_migrate_memory[$name]['bytes'] = $diff;
-    }
-    unset($_migrate_memory[$name]['start']);
-  }
 
-  return $_migrate_memory[$name];
+    return $_migrate_memory[$name];
+  }
 }
 
 /**

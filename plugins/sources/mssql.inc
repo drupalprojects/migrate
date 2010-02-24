@@ -125,7 +125,6 @@ class MigrateSourceMSSQL extends MigrateSource {
         $where[] = $keys[0] . ' IN (' . $options['idlist'] . ')';
       }
 
-      drush_log(dt('Executing remote query: !sql', array('!sql' => $this->query), 'notice'));
       migrate_instrument_start('mssql_query');
       $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
       migrate_instrument_stop('mssql_query');
@@ -140,6 +139,7 @@ class MigrateSourceMSSQL extends MigrateSource {
       migrate_instrument_start('mssql_fetch_batch');
       mssql_fetch_batch($this->result);
       migrate_instrument_stop('mssql_fetch_batch');
+
       migrate_instrument_start('mssql_fetch_object');
       $data_row = mssql_fetch_object($this->result);
       migrate_instrument_stop('mssql_fetch_object');

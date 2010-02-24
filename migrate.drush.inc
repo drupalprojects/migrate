@@ -519,7 +519,7 @@ function drush_migrate_import() {
   if ($_migrate_track_memory) {
     drush_migrate_print_memory();
   }
-  if ($_migrate_track_timer && !drush_get_context('DEBUG')) {
+  if ($_migrate_track_timer && !drush_get_context('d')) {
     drush_print_timers();
   }
 }

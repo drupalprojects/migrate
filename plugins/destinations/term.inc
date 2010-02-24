@@ -165,6 +165,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $this->prepareFields($values, $arguments);
 
     migrate_handler_invoke_all('Term', 'prepare', $migration, $values, $row);
+
     migrate_instrument_start('taxonomy_term_save');
     $status = taxonomy_term_save($values);
     migrate_instrument_stop('taxonomy_term_save');

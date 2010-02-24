@@ -107,6 +107,15 @@ class MigrateFieldMapping {
  */
 abstract class Migration {
   /**
+   * Singleton-lite implementation - callers should call static getInstance() so
+   * only one copy of a given Migration class is instantiated.
+   *
+   * @var array
+   *  List of migration objects keys by class name.
+   */
+  protected static $migrations = array();
+
+  /**
    * The machine name of this Migration object, derived by removing the 'Migration'
    * suffix from the class name. Used to construct default map/message table names,
    * displayed in drush migrate-status, key to migrate_status table...
@@ -282,6 +291,19 @@ abstract class Migration {
           array('!limit' => $limit)));
     }
     $this->memoryLimit = $limit;
+  }
+
+  /**
+   * Return the instance of the given class.
+   */
+  static public function getInstance($class_name) {
+    // Otherwise might miss cache hit on case difference
+    $class_name = strtolower($class_name);
+    $migrations = &self::$migrations;
+    if (!isset($migrations[$class_name])) {
+      $migrations[$class_name] = new $class_name;
+    }
+    return $migrations[$class_name];
   }
 
   ////////////////////////////////////////////////////////////////////
@@ -758,23 +780,25 @@ abstract class Migration {
             }
 
             // Assign any arguments
+            // TODO: Separate things handled by us ourselves from things passed
+            // to the destination. Add MigrateFieldMapping->options for our stuff
             $arguments[$destination] = array();
             if (isset($mapping->arguments)) {
               foreach ($mapping->arguments as $argname => $destarg) {
                 if ($argname == 'source_migration') {
                   // Use the source field to look up a destination ID from another,
                   // presumably previously-executed, migration
-                  // TODO: Singleton Migrations will make this cleaner
-                  static $migrations = array();
-                  if (!isset($migrations[$destarg])) {
-                    $migrations[$destarg] = new $destarg;
-                  }
-                  $source_migration = $migrations[$destarg];
+                  $source_migration = Migration::getInstance($destarg);
                   $destids = $source_migration->
                     lookupDestinationID(array($values->$destination));
-                  // We are assuming that the desired result is a single value
-                  // (e.g., a uid)
-                  $values->$destination = $destids['destid1'];
+                  // Assume that if the destination key is a single value, it
+                  // should be passed as such
+                  if (count($destids) == 1) {
+                    $values->$destination = $destids['destid1'];
+                  }
+                  else {
+                    $values->$destination = $destids;
+                  }
                 }
                 elseif (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
                   $arguments[$destination][$argname] = $data_row->$destarg['source_field'];

@@ -92,7 +92,12 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
       // Validate it's an implemented subclass of the parent class
       $class = new ReflectionClass($record->name);
       if (!$class->isAbstract() && $class->isSubclassOf($parent_class)) {
-        $object = new $record->name;
+        if ($parent_class == 'Migration') {
+          $object = Migration::getInstance($record->name);
+        }
+        else {
+          $object = new $record->name;
+        }
         if (count($object->dependencies) > 0) {
           // Set classes with dependencies aside for reordering
           $dependent_classes[$record->name] = $object;

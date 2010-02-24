@@ -226,7 +226,7 @@ function drush_migrate_fields_destination() {
     // First, see if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = new $class_name;
+      $migration = Migrate::getInstance($class_name);
       $destination = $migration->destination;
     }
     else {
@@ -264,7 +264,7 @@ function drush_migrate_fields_source() {
     // See if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = new $class_name;
+      $migration = Migration::getInstance($class_name);
       $source = $migration->source;
     }
     else {
@@ -292,7 +292,7 @@ function drush_migrate_annotations() {
     // See if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = new $class_name;
+      $migration = Migration::getInstance($class_name);
     }
     else {
       return drush_set_error(dt('No class found matching !machine_name',
@@ -393,7 +393,7 @@ function drush_migrate_get_migrations($args) {
     if (!isset($migration_objects)) {
       foreach (explode(',', $args) as $name) {
         $class_name = $name . 'Migration';
-        $migration_objects[$name] = new $class_name;
+        $migration_objects[$name] = Migration::getInstance($class_name);
       }
     }
   }
@@ -524,7 +524,7 @@ function drush_migrate_import($args = NULL) {
         $return = $migration->import($options);
         $i++;
       }
-      
+
       if (!drush_get_context('DRUSH_BACKEND')) {
         // Subsequent run in the parent process. Spawn subshells ad infinitum.
         while ($return == Migration::RESULT_INCOMPLETE) {

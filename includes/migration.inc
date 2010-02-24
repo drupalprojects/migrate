@@ -963,7 +963,7 @@ abstract class Migration {
     }
     $message = t($basetext,
         array('!numitems' => $numitems, '!time' => $time, '!perminute' => $perminute,
-              '!description' => $this->description));
+              '!description' => $this->machineName));
     $outputFunction = $this->outputFunction;
     $outputFunction($message, $type);
   }

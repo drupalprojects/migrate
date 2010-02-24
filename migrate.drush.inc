@@ -99,6 +99,8 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
   );
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
+  $migration_options['--stop'] = 'Stop specified migration(s) if applicable.';
+  $migration_options['--rollback'] = 'Rollback specified migration(s) if applicable.';
   $items['migrate-import'] = array(
     'description' => 'Perform one or more migration processes',
     'options' => $migration_options,
@@ -109,8 +111,8 @@ function migrate_drush_command() {
       'migrate-import Article' => 'Import new articles',
       'migrate-import Article --update' => 'Import new items, and also update previously-imported items',
       'migrate-import Article --idlist=4,9' => 'Import two specific articles. The ids refer to the value of the primary key in base table',
-      'migrate-import Article --itemlimit=50' =>
-        'Import up to 50 items from the migration named Article',
+      'migrate-import Article --itemlimit=50 --stop --rollback' =>
+        'Import up to 50 items after stopping and rolling back the Article migration.',
       'migrate-import User --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
       'migrate-import User --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
     ),
@@ -341,22 +343,9 @@ function drush_migrate_annotations() {
 /**
  * Roll back one specified migration
  */
-function drush_migrate_rollback() {
+function drush_migrate_rollback($args = NULL) {
   try {
-    $args = func_get_args();
-    $machine_names = array_shift($args);
-    $migrations = array();
-
-    if (!drush_get_option('all')) {
-      $names = explode(',', $machine_names);
-      foreach ($names as $name) {
-        $class_name = $name . 'Migration';
-        $migrations[$name] = new $class_name;
-      }
-    }
-    else {
-      $migrations = array_reverse(migrate_migrations());
-    }
+    $migrations = drush_migrate_get_migrations($args);
 
     $options = array();
     if ($idlist = drush_get_option('idlist', FALSE)) {
@@ -379,7 +368,7 @@ function drush_migrate_rollback() {
     }
 
     foreach ($migrations as $migration) {
-      drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->name)));
+      drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->machineName)));
       $return = $migration->rollback($options);
       // If it couldn't finish (presumably because it was appraoching memory_limit),
       // continue in a subprocess
@@ -394,9 +383,44 @@ function drush_migrate_rollback() {
   }
 }
 
+function drush_migrate_get_migrations($args) {
+  static $migration_objects;
+
+  if (drush_get_option('all')) {
+    return migrate_migrations(); // Already statically cached.
+  }
+  else {
+    if (!isset($migration_objects)) {
+      foreach (explode(',', $args) as $name) {
+        $class_name = $name . 'Migration';
+        $migration_objects[$name] = new $class_name;
+      }
+    }
+  }
+  return $migration_objects;
+}
+
 // Implement drush_hook_COMMAND_validate().
-function drush_migrate_import_validate() {
-  $args = func_get_args();
+function drush_migrate_import_validate($args = NULL) {
+  return drush_migrate_validate_common($args);
+}
+
+// Implement drush_hook_COMMAND_validate().
+function drush_migrate_stop_validate($args = NULL) {
+  return drush_migrate_validate_common($args);
+}
+
+// Implement drush_hook_COMMAND_validate().
+function drush_migrate_rollback_validate($args = NULL) {
+  return drush_migrate_validate_common($args);
+}
+
+function drush_migrate_validate_common($args) {
+  // TODO: Don't load all migrations, instantiate those passed and catch exceptions.
+  $migrations = migrate_migrations();
+  foreach ($migrations as $migration) {
+    $all[] = strtolower($migration->machineName);
+  }
 
   if (drush_get_option('all')) {
     if (!empty($args)) {
@@ -407,13 +431,7 @@ function drush_migrate_import_validate() {
     if (empty($args)) {
       return drush_set_error(NULL, dt('You must specify either a migration name or the -all option'));
     }
-    $machine_names = explode(',', strtolower($args[0]));
-
-    // TODO: Don't load all migrations, instantiate those passed and catch exceptions
-    $migrations = migrate_migrations();
-    foreach ($migrations as $migration) {
-      $all[] = strtolower($migration->machineName);
-    }
+    $machine_names = explode(',', strtolower($args));
 
     if ($missing = array_diff($machine_names, $all)) {
       return drush_set_error(dt('Unrecognized migrations: ') . implode(', ', $missing));
@@ -434,28 +452,28 @@ function drush_migrate_import_validate() {
   }
 }
 
+/*
+ * A 'pre' callback for migrate-import command.
+ * Call migrate-stop and migrate-rollback commands if requested.
+ */
+function drush_migrate_pre_migrate_import($args = NULL) {
+  if (drush_get_option('stop')) {
+    drush_invoke('migrate-stop', $args);
+  }
+  if (drush_get_option('rollback')) {
+    drush_invoke('migrate-rollback', $args);
+  }
+}
+
 /**
  * Import one specified Migration.
  *
  * @param $machine_names
  *  A comma delimited list of machine names, or the special name 'all'
  */
-function drush_migrate_import() {
+function drush_migrate_import($args = NULL) {
   try {
-    $args = func_get_args();
-    $machine_names = array_shift($args);
-    $migrations = array();
-
-    if (!drush_get_option('all')) {
-      $names = explode(',', $machine_names);
-      foreach ($names as $name) {
-        $class_name = $name . 'Migration';
-        $migrations[$name] = new $class_name;
-      }
-    }
-    else {
-      $migrations = migrate_migrations();
-    }
+    $migrations = drush_migrate_get_migrations($args);
 
     $options = array();
     if ($idlist = drush_get_option('idlist', FALSE)) {
@@ -528,27 +546,13 @@ function drush_migrate_import() {
 // * Stop clearing or importing a given content set.
 // *
 // * @param $content_set
-// *  The mcsid or the name of the content set
+// *  The name of the Migration
 // */
-function drush_migrate_stop($content_set = NULL) {
+function drush_migrate_stop($args = NULL) {
   try {
-    $args = func_get_args();
-    $machine_names = array_shift($args);
-    $migrations = array();
-
-    if (!drush_get_option('all')) {
-      $names = explode(',', $machine_names);
-      foreach ($names as $name) {
-        $class_name = $name . 'Migration';
-        $migrations[$name] = new $class_name;
-      }
-    }
-    else {
-      $migrations = migrate_migrations();
-    }
-
+    $migrations = drush_migrate_get_migrations($args);
     foreach ($migrations as $migration) {
-      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->name)));
+      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->machineName)));
       $migration->endProcess();
     }
   }

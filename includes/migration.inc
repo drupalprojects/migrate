@@ -981,7 +981,7 @@ abstract class Migration {
     if ($pct_memory > $this->memoryThreshold) {
       $outputFunction = $this->outputFunction;
       $outputFunction(t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
-        array('!pct' => round($pct_memory*100), '!usage' => memory_get_usage(), '!limit' => $this->memoryLimit)),
+        array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
         'warning');
       return TRUE;
     }

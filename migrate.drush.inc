@@ -144,25 +144,25 @@ function migrate_drush_command() {
   return $items;
 }
 
-// Implements hook_drush_init().
-function migrate_drush_init() {
-}
-
 /**
  * Get the value of all migrate related options. Used when spawning a subshell.
+ * Don't pass along rstop and rollback options.
  *
  * @return
  *   An array of command specific options and their values.
  */
 function drush_migrate_get_options() {
   $options = array();
+  $blacklist = array('stop', 'rollback');
   $command = drush_parse_command();
   foreach ($command['options'] as $key => $value) {
     // Strip leading --
     $key = ltrim($key, '-');
-    $value = drush_get_option($key);
-    if (isset($value)) {
-      $options[$key] = $value;
+    if (!in_array($key, $blacklist)) {
+      $value = drush_get_option($key);
+      if (isset($value)) {
+        $options[$key] = $value;
+      }
     }
   }
   return $options;
@@ -175,7 +175,7 @@ function drush_migrate_backend_invoke() {
   $args = drush_get_arguments();
   $options = drush_migrate_get_options();
   // @todo: use drush_backend_invoke_args() as per http://drupal.org/node/658420.
-  drush_backend_invoke(implode(' ', $args), $options);
+  return drush_backend_invoke(implode(' ', $args), $options);
 }
 
 /**
@@ -509,24 +509,38 @@ function drush_migrate_import($args = NULL) {
         break;
     }
 
-    foreach ($migrations as $migration) {
+    foreach ($migrations as $name => $migration) {
       drush_log(dt("Importing '!description' migration", array('!description' => $migration->machineName)));
       if (drush_get_option('update')) {
         $migration->prepareUpdate();
       }
-      $return = $migration->import($options);
-      // If it couldn't finish (presumably because it was approaching memory_limit),
-      // continue in a subprocess
-      if ($return == Migration::RESULT_INCOMPLETE) {
-        if (drush_get_context('DRUSH_BACKEND')) {
-          // Already in a subshell. Set return value and finish up.
-          drush_backend_set_result($return);
-          break;
+
+      // The goal here is to do one migration in the parent process and then
+      // spawn subshells as needed when memory is depleted. We show feedback
+      // after each subshell depletes itself. Best we can do in PHP.
+      $i = 0;
+      if ($i == 0 && !drush_get_context('DRUSH_BACKEND')) {
+        // Our first pass and in the parent process. Run a migration right here.
+        $return = $migration->import($options);
+        $i++;
+      }
+      
+      if (!drush_get_context('DRUSH_BACKEND')) {
+        // Subsequent run in the parent process. Spawn subshells ad infinitum.
+        while ($return == Migration::RESULT_INCOMPLETE) {
+          $return = drush_migrate_backend_invoke();
+          // 'object' holds the return code we care about.
+          $return = $return['object'];
+          $i++;
         }
-        else {
-          // Our first incomplete migration. Just spawn subshell for the rest.
-          drush_migrate_backend_invoke();
-        }
+      }
+      else {
+        // I'm in a subshell. Import then set return value so parent process can respawn or move on.
+        $return = $migration->import($options);
+        drush_backend_set_result($return);
+      }
+      if ($i > 1) {
+        drush_log(dt('Completed import of !name in !i passes.', array('!name' => $name, '!i' => $i)), 'debug');
       }
     }
   }

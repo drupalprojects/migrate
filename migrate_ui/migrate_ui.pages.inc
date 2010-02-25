@@ -54,7 +54,7 @@ function migrate_dashboard($form, $form_state) {
 
     $row['status'] = $status;
     $row['machinename'] =
-      l($migration->machineName, 'admin/content/migrate/migration/' . $migration->machineName);
+      l($migration->machineName, 'admin/migrate/' . $migration->machineName);
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     $row['unimported'] = $unimported;
@@ -74,10 +74,7 @@ function migrate_dashboard($form, $form_state) {
  * Menu callback function for migration view page.
  * TODO: Display info on source and destination objects
  */
-function migrate_migration_info($form, $form_state, $machine_name) {
-  $class_name = $machine_name . 'Migration';
-  $migration = new $class_name;
-  drupal_set_title($migration->description);
+function migrate_migration_info($form, $form_state, $migration) {
   $form = array();
   $form['annotation'] = array(
     '#prefix' => '<div>',

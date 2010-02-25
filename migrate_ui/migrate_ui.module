@@ -19,7 +19,7 @@ function migrate_permission() {
 function migrate_menu() {
   $items = array();
 
-  $items['admin/content/migrate'] = array(
+  $items['admin/migrate'] = array(
     'title' => 'Migrate',
     'description' => 'Monitor the creation of Drupal content from source data',
     'page callback' => 'drupal_get_form',
@@ -27,12 +27,7 @@ function migrate_menu() {
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui/migrate_ui.pages.inc',
   );
-  $items['admin/content/migrate/dashboard'] = array(
-    'title' => 'Dashboard',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-/*  $items['admin/content/migrate/settings'] = array(
+/*  $items['admin/migrate/settings'] = array(
     'title' => 'Settings',
     'description' => 'Migrate module settings',
     'weight' => 5,
@@ -41,12 +36,23 @@ function migrate_menu() {
     'file' => 'migrate_pages.inc',
     'type' => MENU_LOCAL_TASK,
   );*/
-  $items['admin/content/migrate/migration/%'] = array(
-    'title' => 'Migration',
+  $items['admin/migrate/%migration'] = array(
+    'title callback' => 'migration_title',
+    'title arguments' => array(2),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('migrate_migration_info', 4),
+    'page arguments' => array('migrate_migration_info', 2),
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui/migrate_ui.pages.inc',
   );
   return $items;
+}
+
+// A menu load callback.
+function migration_load($machine_name) {
+  $class_name = $machine_name . 'Migration';
+  return Migration::getInstance($class_name);
+}
+
+function migration_title($migration) {
+  return $migration->description;
 }

@@ -111,11 +111,16 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    */
   public function import(Migration $migration, stdClass $comment, stdClass $row, array $arguments) {
     // Set some default properties.
-    $comment->language = isset($comment->language) ? $comment->language : $this->language;
-    $comment->node_type = isset($comment->node_type) ? $comment->node_type : $this->bundle;
-    $comment->uid = (int) $comment->uid; // NULL here causes DB exception and rollback.
-    // Avoid a notice.
-    $comment->cid = isset($comment->cid) ? $comment->cid : 0;
+    $comment = (array) $comment;
+    $comment += array(
+      'language' => $this->language,
+      'node_type' => $this->bundle,
+      'subject' => '',
+      'uid' => 0,
+      'cid' => 0,
+      'pid' => 0,
+    );
+    $comment = (object) $comment;
 
     // Look for Field API fields and handle appropriately
     $this->prepareFields($comment, $arguments);

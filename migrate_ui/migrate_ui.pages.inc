@@ -93,7 +93,8 @@ function migrate_migration_info($form, $form_state, $migration) {
       t('<p>These are the fields available in the destination of this
          migration. The machine names listed here are those available to be used
          as the first parameter to $this->addFieldMapping() in your Migration
-         class constructor.</p>'),
+         class constructor. <strong>Highlighted fields</strong> are part of the
+         primary key, and correspond to the destination fields in the mapping table.</p>'),
   );
   $destKey = $migration->destination->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -121,7 +122,8 @@ function migrate_migration_info($form, $form_state, $migration) {
       t('<p>These are the fields available from the source of this
          migration. The machine names listed here are those available to be used
          as the second parameter to $this->addFieldMapping() in your Migration
-         class constructor.</p>'),
+         class constructor. <strong>Highlighted fields</strong> are part of the
+         primary key, and correspond to the source fields in the mapping table.</p>'),
   );
   $sourceKey = $migration->source->keySchema;
   $header = array(t('Machine name'), t('Description'));

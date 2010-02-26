@@ -41,6 +41,15 @@ class MigrateFieldMapping {
   public $separator;
 
   /**
+   * Class name of source migration for a field. If present, the value in the
+   * source field is considered to be a source ID in the mapping table of this
+   * migration, and the corresponding destination ID will be retrieved.
+   *
+   * @var string
+   */
+  public $sourceMigration;
+
+  /**
    * Argument overrides. If present this will be an array, keyed by
    * a field API array key, with one or both of these entries:
    * 'source_field' - Name of the source field in the incoming row containing the
@@ -71,6 +80,11 @@ class MigrateFieldMapping {
 
   public function separator($separator) {
     $this->separator = $separator;
+    return $this;
+  }
+
+  public function sourceMigration($source_migration) {
+    $this->sourceMigration = $source_migration;
     return $this;
   }
 
@@ -622,6 +636,10 @@ abstract class Migration {
           $return = Migration::RESULT_INCOMPLETE;
           break;
         }
+        if ($this->getStatus() == Migration::STATUS_IDLE) {
+          $return = Migration::RESULT_STOPPED;
+          break;
+        }
         $destids[] = $row->destid1;
         $sourceids[] = $row->sourceid1;
         $count++;
@@ -642,9 +660,13 @@ abstract class Migration {
       }
       if ($count > 0) {
         $this->destination->bulkRollback($this, $destids);
+        db_delete($this->mapTableName)
+                       ->condition('sourceid1', $sourceids, 'IN')
+                       ->execute();
+        db_delete($this->messageTableName)
+                       ->condition('sourceid1', $sourceids, 'IN')
+                       ->execute();
       }
-      db_truncate($this->mapTableName)->execute();
-      db_truncate($this->messageTableName)->execute();
     }
     else {
       $total = 0;
@@ -779,28 +801,30 @@ abstract class Migration {
               $values->$destination = $mapping->defaultValue;
             }
 
+            // If a source migration is supplied, use the current value for this field
+            // to look up a destination ID from the provided migration
+            if ($mapping->sourceMigration) {
+              $source_migration = Migration::getInstance($mapping->sourceMigration);
+              $destids = $source_migration->
+                lookupDestinationID(array($values->$destination));
+              // Assume that if the destination key is a single value, it
+              // should be passed as such
+              if (count($destids) == 1) {
+                $values->$destination = $destids['destid1'];
+              }
+              else {
+                $values->$destination = $destids;
+              }
+              drush_print("destination=$destination, value=".$values->$destination);
+            }
+
             // Assign any arguments
             // TODO: Separate things handled by us ourselves from things passed
             // to the destination. Add MigrateFieldMapping->options for our stuff
             $arguments[$destination] = array();
             if (isset($mapping->arguments)) {
               foreach ($mapping->arguments as $argname => $destarg) {
-                if ($argname == 'source_migration') {
-                  // Use the source field to look up a destination ID from another,
-                  // presumably previously-executed, migration
-                  $source_migration = Migration::getInstance($destarg);
-                  $destids = $source_migration->
-                    lookupDestinationID(array($values->$destination));
-                  // Assume that if the destination key is a single value, it
-                  // should be passed as such
-                  if (count($destids) == 1) {
-                    $values->$destination = $destids['destid1'];
-                  }
-                  else {
-                    $values->$destination = $destids;
-                  }
-                }
-                elseif (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                if (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
                   $arguments[$destination][$argname] = $data_row->$destarg['source_field'];
                 }
                 elseif (isset($destarg['default_value'])) {

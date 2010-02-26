@@ -580,29 +580,26 @@ function drush_migrate_stop($args = NULL) {
  * TODO: Port to d7.
  * A drush command callback.
  */
-function drush_migrate_migrate_wipe() {
+function drush_migrate_wipe() {
   // node_delete() has silly perm requirements in d5/d6.
   drush_set_option('user', 1);
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
 
   $types = func_get_args();
-  $placeholders = db_placeholders($types, 'varchar');
-  $sql = "SELECT nid FROM {node} WHERE type IN ($placeholders)";
-  $result = db_query($sql, $types);
-  while ($row = db_fetch_object($result)) {
+  $sql = "SELECT nid FROM {node} WHERE type IN (:types)";
+  $result = db_query($sql, array(':types' => $types));
+  // TODO: use node_delete_multiple()
+  foreach ($result as $row) {
     node_delete($row->nid);
 
-    // Quickly wipe node_load() cache to avoid memory bloat.
-    node_load('invalid_condition', NULL, TRUE);
-
-    // Check for closeness to memory limit
-    $usage = memory_get_usage();
+    // TODO: Check for closeness to memory limit
+/*    $usage = memory_get_usage();
     $memory_limit = _migrate_memory_limit();
     $pct_memory = $usage/$memory_limit;
     if ($pct_memory > MIGRATE_MEMORY_THRESHOLD) {
       // Low on memory. Spawn a subshell.
       drush_migrate_backend_invoke();
-    }
+    }*/
   }
 }
 

@@ -347,6 +347,9 @@ function drush_migrate_rollback($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);
 
+    // Rollback in reverse order
+    $migrations = array_reverse($migrations, TRUE);
+
     $options = array();
     if ($idlist = drush_get_option('idlist', FALSE)) {
       $options['idlist'] = $idlist;

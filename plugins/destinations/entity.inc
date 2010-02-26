@@ -107,16 +107,16 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     }
   }
 
-  // A FieldMappingCallback. Return a fid as returned by file_save().
-  // TODO: For now, always save a new file. Needs more logic if we want to re-use files.
-  // TODO: For now, always copies file to destination and renames as needed.
-  // TODO: handle multiple value
   /**
-   * Destination import callback to prepare file data for saving as a Field API file field
+   * Destination import callback to prepare file data for saving as a Field API file field.
+   *
+   * // TODO: handle multiple values.
    *
    * @param mixed $values
    *  Single value, or array of values from the source
    * @param array $arguments
+    *  file_function. file_save, File_move, or file_copy. defaults to file_copy.
+    *  file_replace. Value of $replace in that file function. Does not apply to file_save(). Defaults to FILE_EXISTS_RENAME.
     *  source_field_name (required) - Name of the source field in $row
     *  source_path (optional) - Path to source file?
     *  source_alt_name (optional)
@@ -128,7 +128,12 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *  Field API array suitable for inserting in the destination object.
    */
   public function prepareFieldFile($values, $arguments) {
-    $language = isset($arguments['language']) ? $arguments['language'] : $this->language;
+    // Set some defaults
+    $arguments += array(
+      'language' => $this->language,
+      'file_function' => 'file_copy',
+      'file_replace' => FILE_EXISTS_RENAME,
+    );
     $delta = 0;
 
     if ($source_path = $values) {
@@ -146,8 +151,20 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
         'filemime' => file_get_mimetype($source_path), // TODO: verify that this is right.
         'timestamp' => REQUEST_TIME,
       );
-      // TODO: parameterize file_save() or file_copy() or file_move().
-      if ($file = file_copy($file, $destination)) {
+
+      switch ($arguments['file_function']) {
+        case 'file_copy':
+          $file = file_copy($file, $destination, $arguments['file_replace']);
+          break;
+        case 'file_move':
+          $file = file_move($file, $destination, $arguments['file_replace']);
+          break;
+        case 'file_save':
+          $file = file_save($file);
+          break;
+      }
+
+      if ($file->fid) {
         // Build up a return object.
         $object_field['fid'] = $file->fid;
         $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;
@@ -158,10 +175,10 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
         return $return;
       }
       else {
-        // TODO: record error. Copy unsuccessful.
         // TODO: Maybe prepare callbacks should throw exceptions, Migration can catch them
         // and do saveMessage. Define MigrateException class...
         //$migration->saveMessage(t('...'));
+        throw new Exception(t('Unable to create file record for !path', array('!path' => $source_path)));
       }
     }
   }

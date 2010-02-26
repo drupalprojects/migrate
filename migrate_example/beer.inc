@@ -88,22 +88,13 @@ class BeerNodeMigration extends Migration {
          ->defaultValue(TRUE);
 
     // Lookup the uid for a given account id (aid).
-    $arguments = array('source_field_name' => 'aid', 'migration' => 'BeerUser');
-    // Note: uid is a required property so we use the 4th argument below to set a default.
-    $this->addFieldMappingCallback('uid', 'prepareLookup', $arguments, 1);
+    // Note: uid is a required property so we use the 3rd argument below to set a default.
+    $this->addFieldMapping('uid', 'aid', 1)
+         ->sourceMigration('BeerUserMigration');
 
     // The taxonomy terms are a comma-separated list in the query
     $this->addFieldMapping('taxonomy_migrate_example_tags', 'terms')
          ->separator(',');
-
-    // Example of a single value image.
-    $arguments = array('source_path' => drupal_get_path('module', 'migrate_example'));
-    $this->addFieldMapping('field_migrate_example_image', 'image')
-          ->arguments($arguments);
-
-    // Example of delimited field handling. Also example of unformatted multi-value text field.
-    $this->addFieldMapping('field_migrate_example_country', 'countries')
-         ->separator('|');
 
     // Example of a single value textfield with summary. In the Drupal 7 Field API,
     // what used to be a separate "teaser" field is now a "summary" attribute on
@@ -116,6 +107,15 @@ class BeerNodeMigration extends Migration {
     );
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
+
+    // Example of a single value image.
+    $arguments = array('source_path' => drupal_get_path('module', 'migrate_example'));
+    $this->addFieldMapping('field_migrate_example_image', 'image')
+         ->arguments($arguments);
+
+    // Example of delimited field handling. Also example of unformatted multi-value text field.
+    $this->addFieldMapping('field_migrate_example_country', 'countries')
+         ->separator('|');
   }
 }
 

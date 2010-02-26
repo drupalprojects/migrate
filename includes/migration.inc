@@ -823,11 +823,14 @@ abstract class Migration {
             $arguments[$destination] = array();
             if (isset($mapping->arguments)) {
               foreach ($mapping->arguments as $argname => $destarg) {
-                if (isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
                   $arguments[$destination][$argname] = $data_row->$destarg['source_field'];
                 }
-                elseif (isset($destarg['default_value'])) {
+                elseif (is_array($destarg) && isset($destarg['default_value'])) {
                   $arguments[$destination][$argname] = $destarg['default_value'];
+                }
+                else {
+                  $arguments[$destination][$argname] = $destarg;
                 }
               }
             }
@@ -855,8 +858,6 @@ abstract class Migration {
           $values['id'] = $data_row->migrate_map_destid1;
         }
 
-        // TODO: Call prepare and complete hooks here, so destinations don't
-        // need to worry about it (and we don't have to pass $data_row to them)?
         migrate_instrument_start('destination import', TRUE);
         $ids = $this->destination->import($this, $values, $data_row, $arguments);
         migrate_instrument_stop('destination import');

@@ -815,7 +815,6 @@ abstract class Migration {
               else {
                 $values->$destination = $destids;
               }
-              drush_print("destination=$destination, value=".$values->$destination);
             }
 
             // Assign any arguments

@@ -112,26 +112,26 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   // TODO: For now, always copies file to destination and renames as needed.
   // TODO: handle multiple value
   /**
-   * FieldMappingCallback to prepare input data for saving as a Field API file field
+   * Destination import callback to prepare file data for saving as a Field API file field
    *
-   * @param stdClass $row
-   *  Raw data row from the source
+   * @param mixed $values
+   *  Single value, or array of values from the source
    * @param array $arguments
-   *  source_field_name (required) - Name of the source field in $row
-   *  source_path (optional) - Path to source file?
-   *  source_alt_name (optional)
-   *  title_alt_name (optional)
-   *  description_alt_name (optional)
-   *  display_alt_name (optional)
-   *  language (optional) - Language of the text (defaults to destination language)
+    *  source_field_name (required) - Name of the source field in $row
+    *  source_path (optional) - Path to source file?
+    *  source_alt_name (optional)
+    *  title_alt_name (optional)
+    *  description_alt_name (optional)
+    *  display_alt_name (optional)
+    *  language (optional) - Language of the text (defaults to destination language)
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  public function prepareFile($row, $arguments, $destination_field_name) {
+  public function prepareFieldFile($values, $arguments) {
     $language = isset($arguments['language']) ? $arguments['language'] : $this->language;
     $delta = 0;
 
-    if ($source_path = $row->$arguments['source_field_name']) {
+    if ($source_path = $values) {
       if (strpos(trim($source_path, DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR) === FALSE) {
         $source_path = $arguments['source_path'] . '/' . $source_path;
       }
@@ -146,14 +146,14 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
         'filemime' => file_get_mimetype($source_path), // TODO: verify that this is right.
         'timestamp' => REQUEST_TIME,
       );
-      // TODO: i think REPLACE is whats desired when re-running migrations.
+      // TODO: parameterize file_save() or file_copy() or file_move().
       if ($file = file_copy($file, $destination)) {
         // Build up a return object.
         $object_field['fid'] = $file->fid;
-        $object_field['alt'] = isset($arguments['source_alt_name']) ? $row->$arguments['source_alt_name'] : NULL;
-        $object_field['title'] = isset($arguments['title_alt_name']) ? $row->$arguments['title_alt_name'] : NULL;
-        $object_field['description'] = isset($arguments['description_alt_name']) ? $row->$arguments['description_alt_name'] : NULL;
-        $object_field['display'] = isset($arguments['display_alt_name']) ? $row->$arguments['display_alt_name'] : NULL;
+        $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;
+        $object_field['title'] = isset($arguments['title_alt_name']) ? $values[$arguments['title_alt_name']] : NULL;
+        $object_field['description'] = isset($arguments['description_alt_name']) ? $values[$arguments['description_alt_name']] : NULL;
+        $object_field['display'] = isset($arguments['display_alt_name']) ? $values[$arguments['display_alt_name']] : NULL;
         $return[$language][$delta] = $object_field;
         return $return;
       }
@@ -310,8 +310,10 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
             }
             $object->$machine_name = $result;
             break;
+          case 'file':
           case 'image':
             // TODO: Convert prepareFile callback to a prepareFieldImage method
+            $object->$machine_name = $this->prepareFieldFile($object->$machine_name, $arguments);
             break;
           case 'list':
             $object->$machine_name = $this->prepareFieldValue($object->$machine_name, $arguments);

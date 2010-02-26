@@ -226,7 +226,7 @@ function drush_migrate_fields_destination() {
     // First, see if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = Migrate::getInstance($class_name);
+      $migration = Migration::getInstance($class_name);
       $destination = $migration->destination;
     }
     else {

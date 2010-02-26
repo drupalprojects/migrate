@@ -97,8 +97,9 @@ class BeerNodeMigration extends Migration {
          ->separator(',');
 
     // Example of a single value image.
-    $arguments = array('source_field_name' => 'image', 'source_path' => drupal_get_path('module', 'migrate_example'));
-    $this->addFieldMappingCallback('field_migrate_example_image', 'prepareFile', $arguments);
+    $arguments = array('source_path' => drupal_get_path('module', 'migrate_example'));
+    $this->addFieldMapping('field_migrate_example_image', 'image')
+          ->arguments($arguments);
 
     // Example of delimited field handling. Also example of unformatted multi-value text field.
     $this->addFieldMapping('field_migrate_example_country', 'countries')

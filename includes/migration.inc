@@ -764,7 +764,7 @@ abstract class Migration {
           // want to run through them again)
         }
 
-        // Apply simple mappings.
+        // Apply mappings.
         $values = new stdClass;
         $arguments = array();
         foreach ($this->fieldMappings as $mapping) {

@@ -807,19 +807,22 @@ abstract class Migration {
               $source_migration = Migration::getInstance($mapping->sourceMigration);
               $destids = $source_migration->
                 lookupDestinationID(array($values->$destination));
-              // Assume that if the destination key is a single value, it
-              // should be passed as such
-              if (count($destids) == 1) {
-                $values->$destination = $destids['destid1'];
+              if ($destids) {
+                // Assume that if the destination key is a single value, it
+                // should be passed as such
+                if (count($destids) == 1) {
+                  $values->$destination = $destids['destid1'];
+                }
+                else {
+                  $values->$destination = $destids;
+                }
               }
               else {
-                $values->$destination = $destids;
+                $values->$destination = $mapping->defaultValue;
               }
             }
 
             // Assign any arguments
-            // TODO: Separate things handled by us ourselves from things passed
-            // to the destination. Add MigrateFieldMapping->options for our stuff
             $arguments[$destination] = array();
             if (isset($mapping->arguments)) {
               foreach ($mapping->arguments as $argname => $destarg) {

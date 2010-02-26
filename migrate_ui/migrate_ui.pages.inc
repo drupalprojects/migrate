@@ -63,9 +63,9 @@ function migrate_dashboard($form, $form_state) {
   }
 
   $form['dashboard'] = array(
-    '#prefix' => '<div>',
-    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-    '#suffix' => '</div>',
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
   );
   return $form;
 }
@@ -95,16 +95,20 @@ function migrate_migration_info($form, $form_state, $migration) {
          as the first parameter to $this->addFieldMapping() in your Migration
          class constructor.</p>'),
   );
+  $destKey = $migration->destination->keySchema;
   $header = array(t('Machine name'), t('Description'));
   $rows = array();
   foreach ($migration->destination->fields() as $machine_name => $description) {
+    if (isset($destKey[$machine_name])) {
+      $machine_name = "<strong>$machine_name</strong>";
+    }
     $rows[] = array($machine_name, $description);
   }
 
   $form['destination']['fields'] = array(
-    '#prefix' => '<div>',
-    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-    '#suffix' => '</div>',
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
   );
 
   $source_description = '<div>' . (string)$migration->source . '</div>';
@@ -119,16 +123,20 @@ function migrate_migration_info($form, $form_state, $migration) {
          as the second parameter to $this->addFieldMapping() in your Migration
          class constructor.</p>'),
   );
+  $sourceKey = $migration->source->keySchema;
   $header = array(t('Machine name'), t('Description'));
   $rows = array();
   foreach ($migration->source->fields() as $machine_name => $description) {
+    if (isset($sourceKey[$machine_name])) {
+      $machine_name = "<strong>$machine_name</strong>";
+    }
     $rows[] = array($machine_name, $description);
   }
 
   $form['source']['fields'] = array(
-    '#prefix' => '<div>',
-    '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-    '#suffix' => '</div>',
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
   );
 
   // Information on defined mappings
@@ -172,9 +180,9 @@ function migrate_migration_info($form, $form_state, $migration) {
       $rows[] = $row;
     }
     $form['mappings'][$group]['grouping'] = array(
-      '#prefix' => '<div>',
-      '#markup' => theme('table', array('header' => $header, 'rows' => $rows)),
-      '#suffix' => '</div>',
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
     );
   }
 

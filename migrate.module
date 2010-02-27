@@ -404,6 +404,8 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
                       FROM {migrate_content_sets}
                       WHERE mcsid=%d", $mcsid);
   $tblinfo = db_fetch_object($result);
+  $tblinfo->maptable = $maptable;
+
   $description = $tblinfo->description;
   if ($tblinfo->status != MIGRATE_STATUS_IDLE) {
     return MIGRATE_RESULT_IN_PROGRESS;
@@ -491,7 +493,7 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
     // @TODO: Should return success/failure. Problem: node_delete doesn't return anything...
     if ($full_clear) {
       timer_start('delete hooks');
-      migrate_invoke_all("delete_$contenttype", $row->destid);
+      migrate_invoke_all("delete_$contenttype", $tblinfo, $row->destid);
       timer_stop('delete hooks');
     }
     timer_start('clear map/msg');

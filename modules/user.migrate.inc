@@ -36,7 +36,7 @@ function user_migrate_fields_user($type) {
 /**
  * Implementation of hook_migrate_delete_user().
  */
-function user_migrate_delete_user($uid) {
+function user_migrate_delete_user($tblinfo, $uid) {
   timer_start('user_delete');
   user_delete(array(), $uid);
   timer_stop('user_delete');
@@ -134,7 +134,7 @@ function user_migrate_import_user($tblinfo, $row) {
     if (!isset($newuser['status'])) {
       $newuser['status'] = 1;
     }
-    
+
     // If we loaded an existing (MD5) password and no one overwrote it, we'll
     // need to set it directly in the DB
     if (isset($original_password) && ($original_password == $newuser['pass'])) {
@@ -193,7 +193,7 @@ function user_migrate_fields_role($type) {
 /**
  * Implementation of hook_migrate_delete_role().
  */
-function user_migrate_delete_role($rid) {
+function user_migrate_delete_role($tblinfo, $rid) {
   timer_start('role_delete');
 
   db_query('DELETE FROM {users_roles} WHERE rid = %d', $rid);

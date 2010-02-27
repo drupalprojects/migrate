@@ -25,7 +25,7 @@ function node_migrate_types() {
 /**
  * Implementation of hook_migrate_delete_node().
  */
-function node_migrate_delete_node($nid) {
+function node_migrate_delete_node($tblinfo, $nid) {
   // If we've created associations in {upload} between imported nodes
   // and files directly copied to the Drupal files directory (e.g. using
   // the auditfiles module), deleting the nodes deletes the files (not

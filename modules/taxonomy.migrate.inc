@@ -44,7 +44,7 @@ function taxonomy_migrate_fields_node($type) {
 /**
  * Implementation of hook_migrate_delete_term().
  */
-function taxonomy_migrate_delete_term($tid) {
+function taxonomy_migrate_delete_term($tblinfo, $tid) {
   taxonomy_del_term($tid);
 }
 

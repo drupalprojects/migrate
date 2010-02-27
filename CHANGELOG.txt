@@ -3,6 +3,7 @@
 Migrate 1.1
 ===========
 Features and enhancements
+- #725462 - Add $tblinfo to delete hook.
 - #721432 - Update capability added to terms.
 
 Bug fixes

@@ -42,7 +42,7 @@ function comment_migrate_fields_comment($type) {
 /**
  * Implementation of hook_migrate_delete_comment().
  */
-function comment_migrate_delete_comment($cid) {
+function comment_migrate_delete_comment($tblinfo, $cid) {
   $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
   include_once($path);
   // Backdoor deletion - query stolen from comment_delete()

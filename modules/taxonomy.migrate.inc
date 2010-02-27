@@ -67,6 +67,15 @@ function taxonomy_migrate_import_term($tblinfo, $row) {
   // Begin building term array.
   $term = array();
 
+  // Handle an update operation
+  if ($row->destid) {
+    $term['tid'] = $row->destid;
+  }
+  // If a tid was provided via mapping, load the existing term
+  else if (isset($tblinfo->fields['tid'])) {
+    $term = taxonomy_get_term($tblinfo->fields['tid']);
+  }
+
   // Data which might be useful for taxonomy hooks.
   $term['migrate_tblinfo'] = $tblinfo;
 

@@ -1,7 +1,10 @@
 //$Id$
 
-Migrte 1.1
+Migrate 1.1
 ===========
+Features and enhancements
+- #721432 - Update capability added to terms.
+
 Bug fixes
 - #719262 - Documented restriction on views with exposed filters.
 

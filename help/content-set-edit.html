@@ -13,7 +13,8 @@
     <dd>A <a href="http://drupal.org/project/views">view</a> containing the source data
         for this content set. This view must contain a single row for each destination
         object to be created (e.g., a single row per user, or per Page node). It also
-        must have at least one unique data column.</dd>
+        must have at least one unique data column. Views with exposed filters will not
+        work with migration - they will always return 0 rows.</dd>
   <dt>View arguments</dt>
     <dd>It may be that you want to use a single view as the source for multiple content
         sets - for example, you might have an incoming "content" table which contains

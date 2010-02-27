@@ -584,10 +584,6 @@ function drush_migrate_stop($args = NULL) {
  * A drush command callback.
  */
 function drush_migrate_wipe() {
-  // node_delete() has silly perm requirements in d5/d6.
-  drush_set_option('user', 1);
-  drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
-
   $types = func_get_args();
   $sql = "SELECT nid FROM {node} WHERE type IN (:types)";
   $result = db_query($sql, array(':types' => $types));

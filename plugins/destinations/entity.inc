@@ -124,10 +124,12 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     *  description_alt_name (optional)
     *  display_alt_name (optional)
     *  language (optional) - Language of the text (defaults to destination language)
+   * @param $destination_field_name
+   *   machine_name of the field being migrated.
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  public function prepareFieldFile($values, $arguments) {
+  public function prepareFieldFile($values, $arguments, $destination_field_name) {
     // Set some defaults
     $arguments += array(
       'language' => $this->language,
@@ -330,7 +332,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
           case 'file':
           case 'image':
             // TODO: Convert prepareFile callback to a prepareFieldImage method
-            $object->$machine_name = $this->prepareFieldFile($object->$machine_name, $arguments);
+            $object->$machine_name = $this->prepareFieldFile($object->$machine_name, $arguments, $machine_name);
             break;
           case 'list':
             $object->$machine_name = $this->prepareFieldValue($object->$machine_name, $arguments);

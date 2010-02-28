@@ -611,13 +611,12 @@ abstract class Migration {
     // TODO: Validate dependencies (migrations dependent on us have no imported rows)
 
     // TODO: Shared with import - move to beginProcess and track this stuff as properties?
-    $starttime = microtime(TRUE);
+    $lastfeedback = $starttime = microtime(TRUE);
     $return = Migration::RESULT_COMPLETED;
     if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
         isset($options['feedback']['frequency_unit'])) {
       $frequency = $options['feedback']['frequency'];
       $frequency_unit = $options['feedback']['frequency_unit'];
-      $lastfeedback = $starttime;
     }
 
     // TODO: Support multi-field keys
@@ -701,7 +700,7 @@ abstract class Migration {
         $total++;
       }
     }
-    $this->progressMessage($starttime, $total, FALSE, $return);
+    $this->progressMessage($lastfeedback, $total, FALSE, $return);
     $this->endProcess();
     return $return;
   }
@@ -724,13 +723,12 @@ abstract class Migration {
     $this->beginProcess(Migration::STATUS_IMPORTING);
     try {
       // TODO: Validate dependencies (migrations we depend on have no unimported rows)
-      $starttime = microtime(TRUE);
+      $lastfeedback = $starttime = microtime(TRUE);
       $return = Migration::RESULT_COMPLETED;
       if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
           isset($options['feedback']['frequency_unit'])) {
         $frequency = $options['feedback']['frequency'];
         $frequency_unit = $options['feedback']['frequency_unit'];
-        $lastfeedback = $starttime;
       }
       $count = $total = 0;
       while ($data_row = $this->source->fetch($this, $options)) {
@@ -886,7 +884,7 @@ abstract class Migration {
       else {
         $perminute = '?';
       }
-      $this->progressMessage($starttime, $count, TRUE, $return);
+      $this->progressMessage($lastfeedback, $count, TRUE, $return);
       $this->endProcess($return == Migration::RESULT_COMPLETED);
     }
     catch (Exception $exception) {

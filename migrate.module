@@ -83,6 +83,8 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
   if (!isset($class_lists[$parent_class]) || $refresh) {
     $class_lists[$parent_class] = array();
     $dependent_classes = array();
+    $required_classes = array();
+
     // Discover matching class names registered with Drupal
     $result = db_query("SELECT name FROM {registry}
                         WHERE type='class' AND name LIKE :pattern
@@ -101,11 +103,21 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
         if (count($object->dependencies) > 0) {
           // Set classes with dependencies aside for reordering
           $dependent_classes[$record->name] = $object;
+          $required_classes += $object->dependencies;
         }
         else {
           // No dependencies, just add
           $class_lists[$parent_class][$record->name] = $object;
         }
+      }
+    }
+
+    // Validate that each depended-on class at least exists
+    foreach ($required_classes as $class_name) {
+      if ((!isset($dependent_classes[$class_name])) && !isset($class_lists[$parent_class][$class_name])) {
+        throw new MigrateException(t('Dependency on non-existent class !class - make sure ' .
+            'you have added the file defining !class to the .info file.',
+          array('!class' => $class_name)));
       }
     }
 
@@ -115,7 +127,7 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
     while (count($dependent_classes) > 0) {
       if ($iterations++ > 20) {
         $class_names = implode(',', array_keys($dependent_classes));
-        throw new Exception(t('Failure to sort class list - most likely due ' .
+        throw new MigrateException(t('Failure to sort class list - most likely due ' .
             'to circular dependencies involving !class_names.',
           array('!class_names' => $class_names)));
       }

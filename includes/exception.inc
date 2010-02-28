@@ -9,8 +9,8 @@
 class MigrateException extends Exception {
   public $level;
 
-  public function __construct($message, $level) {
+  public function __construct($message, $level = Migration::MESSAGE_ERROR) {
     $this->level = $level;
-    parent::__construct($message, 0, NULL);
+    parent::__construct($message);
   }
 }

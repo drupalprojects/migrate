@@ -243,7 +243,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     $language = isset($arguments['language']) ? $arguments['language'] : $this->language;
 
     // Normalize to an array.
-    if (is_string($values)) {
+    if (!is_array($values)) {
       $values = array($values);
     }
 

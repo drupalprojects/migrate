@@ -75,6 +75,10 @@ function migrate_dashboard($form, $form_state) {
  * TODO: Display info on source and destination objects
  */
 function migrate_migration_info($form, $form_state, $migration) {
+  if (is_string($migration)) {
+    $migration = migration_load($migration);
+  }
+
   $form = array();
   $form['annotation'] = array(
     '#prefix' => '<div>',

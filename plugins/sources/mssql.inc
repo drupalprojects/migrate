@@ -60,8 +60,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    * Returns a list of fields available to be mapped from the source query.
    *
    * @return array
-   *  Keys: machine names of the fields (to be passed to addFieldMapping and
-   *        addFieldMappingCallback)
+   *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {

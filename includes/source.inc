@@ -37,8 +37,7 @@ abstract class MigrateSource {
    * source fields.
    *
    * @return array
-   *  Keys: machine names of the fields (to be passed to addFieldMapping and
-   *        addFieldMappingCallback)
+   *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
   abstract public function fields();

@@ -20,9 +20,9 @@
  *  $this->destination - An instance of a class derived from MigrateDestination,
  *    this will receive data that originated from the source and has been mapped
  *    by the Migration class, and create Drupal objects.
- *  Mappings - Use $this->addFieldMapping and $this->addFieldMappingCallback
- *    to tell the Migration class what source fields correspond to what destination
- *    fields, and additional information associated with the destination objects.
+ *  Mappings - Use $this->addFieldMapping to tell the Migration class what source
+ *    fields correspond to what destination fields, and additional information
+ *    associated with the destination objects.
  */
 class BeerNodeMigration extends Migration {
   public function __construct() {
@@ -179,10 +179,11 @@ class BeerCommentMigration extends Migration {
     // We preserved bid => nid ids during BeerNodeMigration so simple mapping suffices.
     $this->addFieldMapping('nid', 'bid');
 
-    $arguments = array('source_field_name' => 'aid', 'migration' => 'BeerUser');
-    $this->addFieldMappingCallback('uid', 'prepareLookup', $arguments, 1);
-    $arguments = array('source_field_name' => 'cid_parent', 'cache_size' => 0, 'migration' => 'BeerComment');
-    $this->addFieldMappingCallback('pid', 'prepareLookup', $arguments);
+    $this->addFieldMapping('uid', 'aid', 1)
+         ->sourceMigration('BeerUser');
+    $this->addFieldMapping('pid', 'cid_parent')
+         ->sourceMigration('BeerComment')
+         ->arguments(array('cache_size' => 0));
 
     $this->addFieldMapping('comment_body', 'body');
     $dest = $this->lookupDestinationID(array(1));

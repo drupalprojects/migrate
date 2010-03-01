@@ -107,8 +107,7 @@ class MigrateFieldMapping {
  * of the migrate module resides. Migrations are created by deriving from this
  * class, and in the constructor (after calling parent::__construct()) initializing
  * at a minimum the description, source, and destination properties. The constructor
- * will also usually make several calls to addFieldMapping() and/or
- * addFieldMappingCallback().
+ * will also usually make several calls to addFieldMapping().
  *
  * TODO:
  * Fully support compound keys in sources
@@ -181,16 +180,6 @@ abstract class Migration {
    * @var array
    */
   public $fieldMappings = array();
-
-  /**
-   * Callback mappings for destination fields (keys). Each value is an array:
-   *  [0] => Callback name (method in the destination class)
-   *  [1] => Array of arguments to the particular callback
-   *  [2] (optional) => Default value to use if the source field is empty
-   *
-   * @var array
-   */
-  protected $fieldMappingsCallback = array();
 
   /**
    * The (possibly multi-column) key of the source record currently being imported.
@@ -497,21 +486,6 @@ abstract class Migration {
     $mapping = new MigrateFieldMapping($destination_field, $source_field);
     $this->fieldMappings[] = $mapping;
     return $mapping;
-  }
-
-  /**
-   * Add a callback mapping for a destination field.
-   *
-   * @param string $destinationField
-   *  Name of the destination field.
-   * @param string $callback
-   *  Name of the destination class method to call to obtain the value.
-   * @param array $arguments
-   *  Array of arguments specific to the callback.
-   * @param mixed $default
-   */
-  public function addFieldMappingCallback($destinationField, $callback, array $arguments, $defaultValue = NULL) {
-    $this->fieldMappingsCallback[$destinationField] = array($callback, $arguments, $defaultValue);
   }
 
   /**
@@ -846,13 +820,6 @@ abstract class Migration {
               $values->$destination = explode($mapping->separator, $values->$destination);
             }
           }
-        }
-
-        // These mappings run through a prepare function.
-        foreach ($this->fieldMappingsCallback as $destination => $args) {
-          list($method, $arguments, $default) = $args;
-          $result = $this->destination->$method($data_row, $arguments, $destination);
-          $values->$destination = is_null($result) ? $default : $result;
         }
 
         // If there's a destination ID, the intent is to update an existing object,

@@ -70,43 +70,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     return $output;
   }
 
-  // A FieldMappingCallback. Using specified map table, lookup destid given a sourceID
-  // TODO: I think Migration class is the best place for map table lookups
-  public function prepareLookup($row, $arguments) {
-    static $frequent = array();
-
-    if (!$migration = $arguments['migration']) {
-      throw new Exception("Missing 'migration' argument in a FieldMappingCallback to 'prepareLookup'");
-    }
-    elseif (!isset($frequent[$migration])) {
-      // Initialize if needed.
-      $frequent[$migration] = array();
-    }
-
-    // Check for cached pairs.
-    if (isset($frequent[$migration][$row->$arguments['source_field_name']])) {
-      // Cache hit. Just return.
-      return $frequent[$migration][$row->$arguments['source_field_name']];
-    }
-    else {
-      // Cache miss. Query map table and cache the result.
-      if ($sourceid = $row->$arguments['source_field_name']) {
-        $mapTableName = 'migrate_map_' . drupal_strtolower($migration);
-        if ($destid = db_query("SELECT destid1 FROM $mapTableName WHERE sourceid1 = :sourceid", array('sourceid' => $sourceid))->fetchField()) {
-          // Found the destination value. Optionally cache it and return.
-          $cache_size = isset($arguments['cache_size']) ? $arguments['cache_size'] : 500;
-          // A cache_size of 0 disables the cache for a given migration.
-          if ($cache_size) {
-            $frequent[$migration] = array($sourceid => $destid) + $frequent[$migration];
-            // Keep most recently used (MRU). Size is 500 items, by default.
-            $frequent[$migration] = array_slice($frequent[$migration], 0, $cache_size, TRUE);
-          }
-          return $destid;
-        }
-      }
-    }
-  }
-
   /**
    * Destination import callback to prepare file data for saving as a Field API file field.
    *
@@ -200,11 +163,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   public function prepareFieldText($values, array $arguments) {
     $language = isset($arguments['language']) ? $arguments['language'] : $this->language;
 
-    // Normalize to an array.
-    if (is_string($values)) {
-      $values = array($values);
-    }
-
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
@@ -242,11 +200,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   function prepareFieldValue($values, $arguments) {
     $language = isset($arguments['language']) ? $arguments['language'] : $this->language;
 
-    // Normalize to an array.
-    if (!is_array($values)) {
-      $values = array($values);
-    }
-
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
@@ -271,11 +224,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   function prepareFieldNodeRef($values, $arguments) {
     $language = isset($arguments['language']) ? $arguments['language'] : $this->language;
 
-    // Normalize to an array.
-    if (is_string($values)) {
-      $values = array($values);
-    }
-
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
@@ -291,6 +239,10 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     $field_info_instance = field_info_instances($this->entityType, $this->bundle);
     foreach ($field_info_instance as $machine_name => $instance) {
       if (isset($object->$machine_name)) {
+        // Normalize to an array
+        if (!is_array($object->$machine_name)) {
+          $object->$machine_name = array($object->$machine_name);
+        }
         $field_info = field_info_field($machine_name);
         if (isset($argumentOverrides[$machine_name])) {
           $arguments = $argumentOverrides[$machine_name];
@@ -308,9 +260,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
           case 'taxonomy_term_reference':
             // TODO: Factor out to function like others
             $terms = $object->$machine_name;
-            if (!is_array($terms)) {
-              $terms = array($terms);
-            }
+
             // Cannot use taxonomy_term_load_multiple() since we have an array of names. It wants singular value.
             // TODO: Restrict to the specific taxonomy
             $tids = db_select('taxonomy_term_data', 'td')
@@ -331,7 +281,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
             break;
           case 'file':
           case 'image':
-            // TODO: Convert prepareFile callback to a prepareFieldImage method
             $object->$machine_name = $this->prepareFieldFile($object->$machine_name, $arguments, $machine_name);
             break;
           case 'list':

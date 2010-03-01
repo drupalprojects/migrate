@@ -34,8 +34,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    * Returns a list of fields available to be mapped for this vocabulary (bundle)
    *
    * @return array
-   *  Keys: machine names of the fields (to be passed to addFieldMapping and
-   *        addFieldMappingCallback)
+   *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {

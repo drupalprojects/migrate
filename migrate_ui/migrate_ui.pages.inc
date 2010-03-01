@@ -170,8 +170,23 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   // First group the mappings
   $annotations = array();
+  $source_fields = $migration->source->fields();
+  $destination_fields = $migration->destination->fields();
+
   foreach ($migration->fieldMappings as $mapping) {
     $annotations[$mapping->annotationGroup][] = $mapping;
+    // While we're running through them, warn about any mappings involving sources
+    // or destinations that don't exist (unless marked DNM)
+    $lower_group = drupal_strtolower($mapping->annotationGroup);
+    if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField]) &&
+        $lower_group != 'dnm' && $lower_group != 'do not migrate') {
+      drupal_set_message(t('Field !source_field is mapped, but is not in the source field list.',
+        array('!source_field' => $mapping->sourceField)));
+    }
+    if ($mapping->destinationField && !isset($destination_fields[$mapping->destinationField])) {
+      drupal_set_message(t('Field !dest_field is mapped, but is not in the destination field list.',
+        array('!dest_field' => $mapping->destinationField)));
+    }
   }
 
   // Put out each group header

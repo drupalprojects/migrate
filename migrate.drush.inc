@@ -23,8 +23,8 @@ function migrate_drush_help($section) {
       return dt('List the fields available for mapping to a destination');
     case 'drush:migrate-fields-source':
       return dt('List the fields available for mapping from a source');
-    case 'drush:migrate-annotations':
-      return db('View annotations for a migration and all its mappings');
+    case 'drush:migrate-descriptions':
+      return db('View descriptions for a migration and all its mappings');
     case 'drush:migrate-wipe':
       return dt('Delete all nodes from specified content types.');
   }
@@ -70,13 +70,13 @@ function migrate_drush_command() {
     ),
     'drupal dependencies' => array('migrate'),
   );
-  $items['migrate-annotations'] = array(
-    'description' => 'View annotations for a migration and all its mappings.',
+  $items['migrate-descriptions'] = array(
+    'description' => 'View descriptions for a migration and all its mappings.',
     'arguments' => array(
       'migration' => 'Name of the migration',
     ),
     'examples' => array(
-      'migrate-annotations MyNode' => 'Show annotations for the MyNode migration',
+      'migrate-descriptions MyNode' => 'Show descriptions for the MyNode migration',
     ),
     'drupal dependencies' => array('migrate'),
   );
@@ -285,7 +285,7 @@ function drush_migrate_fields_source() {
   }
 }
 
-function drush_migrate_annotations() {
+function drush_migrate_descriptions() {
   try {
     $args = func_get_args();
     $machine_name = array_shift($args);
@@ -298,19 +298,19 @@ function drush_migrate_annotations() {
       return drush_set_error(dt('No class found matching !machine_name',
                    array('!machine_name' => $machine_name)));
     }
-    drush_print($migration->annotation);
+    drush_print($migration->description);
     // First group the mappings
-    $annotations = array();
+    $descriptions = array();
     foreach ($migration->fieldMappings as $mapping) {
-      $annotations[$mapping->annotationGroup][] = $mapping;
+      $descriptions[$mapping->descriptionGroup][] = $mapping;
     }
     // Put out each group header
     $table = array();
     $table[] = array(dt('Destination'), dt('Source'), dt('Default'),
-      dt('Annotation'));
+      dt('Description'));
     $first = TRUE;
 
-    foreach ($annotations as $group => $mappings) {
+    foreach ($descriptions as $group => $mappings) {
       if ($first) {
         $first = FALSE;
       }
@@ -328,7 +328,7 @@ function drush_migrate_annotations() {
           $default = $mapping->defaultValue;
         }
         $table[] = array($mapping->destinationField, $mapping->sourceField,
-          $default, $mapping->annotationText);
+          $default, $mapping->descriptionText);
       }
     }
 

@@ -79,9 +79,9 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
 
   $form = array();
-  $form['annotation'] = array(
+  $form['description'] = array(
     '#prefix' => '<div>',
-    '#markup' => $migration->annotation,
+    '#markup' => $migration->description,
     '#suffix' => '</div>',
   );
 
@@ -164,20 +164,20 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#collapsed' => FALSE,
     '#description' => t('These are the mappings currently defined for this Migration.
       The <strong>Done</strong> group should indicate those which are fully implemented -
-      you can use different group names in field annotations to classify remainng work.'),
+      you can use different group names in field descriptions to classify remainng work.'),
   );
-  $header = array(t('Destination'), t('Source'), t('Default'), t('Annotation'));
+  $header = array(t('Destination'), t('Source'), t('Default'), t('Description'));
 
   // First group the mappings
-  $annotations = array();
+  $descriptions = array();
   $source_fields = $migration->source->fields();
   $destination_fields = $migration->destination->fields();
 
   foreach ($migration->fieldMappings as $mapping) {
-    $annotations[$mapping->annotationGroup][] = $mapping;
+    $descriptions[$mapping->descriptionGroup][] = $mapping;
     // While we're running through them, warn about any mappings involving sources
     // or destinations that don't exist (unless marked DNM)
-    $lower_group = drupal_strtolower($mapping->annotationGroup);
+    $lower_group = drupal_strtolower($mapping->descriptionGroup);
     if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField]) &&
         $lower_group != 'dnm' && $lower_group != 'do not migrate') {
       drupal_set_message(t('Field !source_field is mapped, but is not in the source field list.',
@@ -192,7 +192,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   // Put out each group header
   $rows = array();
   $count = 0;
-  foreach ($annotations as $group => $mappings) {
+  foreach ($descriptions as $group => $mappings) {
     // Collapse the less interesting cases, and put them last
     $lower_group = drupal_strtolower($group);
     if ($lower_group == 'done' || $lower_group == 'do not migrate' || $lower_group == 'dnm') {
@@ -224,7 +224,7 @@ function migrate_migration_info($form, $form_state, $migration) {
         $default = $mapping->defaultValue;
       }
       $row = array($mapping->destinationField, $mapping->sourceField,
-        $default, $mapping->annotationText);
+        $default, $mapping->descriptionText);
       $rows[] = $row;
     }
     $form['mappings'][$group]['grouping'] = array(

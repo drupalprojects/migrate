@@ -91,5 +91,5 @@ function migration_title($migration) {
   if (is_string($migration)) {
     $migration = migration_load($migration);
   }
-  return $migration->description;
+  return $migration->machineName;
 }

@@ -71,19 +71,19 @@ class BeerNodeMigration extends Migration {
     // Documenting your mappings makes it easier for the whole team to see
     // exactly what the status is when developing a migration process.
     $this->addFieldMapping('title', 'name')
-         ->annotation(t('Mapping beer name in source to node title'));
+         ->description(t('Mapping beer name in source to node title'));
 
     // You can also document destination fields that are yet to be mapped...
     $this->addFieldMapping('sticky')
-         ->annotation(t('Somewhere there is a source field we can map here'),
+         ->description(t('Somewhere there is a source field we can map here'),
                       t('ToDo'));
     // ... or source fields we don't know what to do with
     $this->addFieldMapping(NULL, 'mysterious_column')
-         ->annotation(t('Talk to client about what this source field means'),
+         ->description(t('Talk to client about what this source field means'),
                       t('Open Issues'));
 
     $this->addFieldMapping('nid', 'bid')
-         ->annotation(t('Preserve old beer ID as nid in Drupal'));
+         ->description(t('Preserve old beer ID as nid in Drupal'));
     $this->addFieldMapping('is_new')
          ->defaultValue(TRUE);
 

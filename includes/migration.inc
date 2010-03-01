@@ -60,8 +60,8 @@ class MigrateFieldMapping {
    */
   public $arguments;
 
-  public $annotationGroup;
-  public $annotationText = '';
+  public $description;
+  public $descriptionText = '';
 
   public function __construct($destination_field, $source_field) {
     // Must have one or the other
@@ -70,7 +70,7 @@ class MigrateFieldMapping {
     }
     $this->destinationField = $destination_field;
     $this->sourceField = $source_field;
-    $this->annotationGroup = t('Done');
+    $this->descriptionGroup = t('Done');
   }
 
   public function defaultValue($default_value) {
@@ -93,12 +93,12 @@ class MigrateFieldMapping {
     return $this;
   }
 
-  public function annotation($text, $group = NULL) {
+  public function description($text, $group = NULL) {
     if (!$group) {
       $group = t('Done');
     }
-    $this->annotationGroup = $group;
-    $this->annotationText = $text;
+    $this->descriptionGroup = $group;
+    $this->descriptionText = $text;
   }
 }
 
@@ -106,7 +106,7 @@ class MigrateFieldMapping {
  * Define the base for the migration controller. This is where most of the smarts
  * of the migrate module resides. Migrations are created by deriving from this
  * class, and in the constructor (after calling parent::__construct()) initializing
- * at a minimum the description, source, and destination properties. The constructor
+ * at a minimum the name, description, source, and destination properties. The constructor
  * will also usually make several calls to addFieldMapping().
  *
  * TODO:
@@ -138,18 +138,11 @@ abstract class Migration {
   public $machineName;
 
   /**
-   * Human-friendly description of the migration, used in some messages.
+   * Detailed information describing the migration.
    *
    * @var string
    */
   public $description;
-
-  /**
-   * More detailed documentation on the migration.
-   *
-   * @var string
-   */
-  public $annotation;
 
   /**
    * Source object for the migration, derived from MigrateSource.
@@ -944,19 +937,19 @@ abstract class Migration {
     if ($import) {
       switch ($result) {
         case Migration::RESULT_COMPLETED:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - done with '!description'";
+          $basetext = "Imported !numitems in !time sec (!perminute/min) - done with '!name'";
           $type = 'completed';
           break;
         case Migration::RESULT_FAILED:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - failure with '!description'";
+          $basetext = "Imported !numitems in !time sec (!perminute/min) - failure with '!name'";
           $type = 'failed';
           break;
         case Migration::RESULT_INCOMPLETE:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - continuing with '!description'";
+          $basetext = "Imported !numitems in !time sec (!perminute/min) - continuing with '!name'";
           $type = 'ok';
           break;
         case Migration::RESULT_STOPPED:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - stopped '!description'";
+          $basetext = "Imported !numitems in !time sec (!perminute/min) - stopped '!name'";
           $type = 'warning';
           break;
       }
@@ -983,7 +976,7 @@ abstract class Migration {
     }
     $message = t($basetext,
         array('!numitems' => $numitems, '!time' => $time, '!perminute' => $perminute,
-              '!description' => $this->machineName));
+              '!name' => $this->machineName));
     $outputFunction = $this->outputFunction;
     $outputFunction($message, $type);
   }

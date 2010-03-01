@@ -72,7 +72,6 @@ function migrate_dashboard($form, $form_state) {
 
 /**
  * Menu callback function for migration view page.
- * TODO: Display info on source and destination objects
  */
 function migrate_migration_info($form, $form_state, $migration) {
   if (is_string($migration)) {
@@ -86,6 +85,12 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#suffix' => '</div>',
   );
 
+  // Identify what destination and source fields are mapped
+  foreach ($migration->fieldMappings as $mapping) {
+    $sourceFields[$mapping->sourceField] = $mapping->sourceField;
+    $destinationFields[$mapping->destinationField] = $mapping->destinationField;
+  }
+
   // Destination and source field information
   $destination_description = '<p>' . (string)$migration->destination . '</p>';
   $form['destination'] = array(
@@ -97,8 +102,8 @@ function migrate_migration_info($form, $form_state, $migration) {
       t('<p>These are the fields available in the destination of this
          migration. The machine names listed here are those available to be used
          as the first parameter to $this->addFieldMapping() in your Migration
-         class constructor. <strong>Highlighted fields</strong> are part of the
-         primary key, and correspond to the destination IDs in the mapping table.</p>'),
+         class constructor. <strong>Primary key fields</strong> and
+         <strong><em>unmapped fields</em></strong> are highlighted.</p>'),
   );
   $destKey = $migration->destination->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -106,6 +111,9 @@ function migrate_migration_info($form, $form_state, $migration) {
   foreach ($migration->destination->fields() as $machine_name => $description) {
     if (isset($destKey[$machine_name])) {
       $machine_name = "<strong>$machine_name</strong>";
+    }
+    elseif (!isset($destinationFields[$machine_name])) {
+      $machine_name = "<strong><em>$machine_name</em></strong>";
     }
     $rows[] = array($machine_name, $description);
   }
@@ -126,8 +134,8 @@ function migrate_migration_info($form, $form_state, $migration) {
       t('<p>These are the fields available from the source of this
          migration. The machine names listed here are those available to be used
          as the second parameter to $this->addFieldMapping() in your Migration
-         class constructor. <strong>Highlighted fields</strong> are part of the
-         primary key, and correspond to the source IDs in the mapping table.</p>'),
+         class constructor. <strong>Primary key fields</strong> and
+         <strong><em>unmapped fields</em></strong> are highlighted.</p>'),
   );
   $sourceKey = $migration->source->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -135,6 +143,9 @@ function migrate_migration_info($form, $form_state, $migration) {
   foreach ($migration->source->fields() as $machine_name => $description) {
     if (isset($sourceKey[$machine_name])) {
       $machine_name = "<strong>$machine_name</strong>";
+    }
+    elseif (!isset($sourceFields[$machine_name])) {
+      $machine_name = "<strong><em>$machine_name</em></strong>";
     }
     $rows[] = array($machine_name, $description);
   }

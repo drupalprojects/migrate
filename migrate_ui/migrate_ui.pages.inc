@@ -98,7 +98,7 @@ function migrate_migration_info($form, $form_state, $migration) {
          migration. The machine names listed here are those available to be used
          as the first parameter to $this->addFieldMapping() in your Migration
          class constructor. <strong>Highlighted fields</strong> are part of the
-         primary key, and correspond to the destination fields in the mapping table.</p>'),
+         primary key, and correspond to the destination IDs in the mapping table.</p>'),
   );
   $destKey = $migration->destination->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -127,7 +127,7 @@ function migrate_migration_info($form, $form_state, $migration) {
          migration. The machine names listed here are those available to be used
          as the second parameter to $this->addFieldMapping() in your Migration
          class constructor. <strong>Highlighted fields</strong> are part of the
-         primary key, and correspond to the source fields in the mapping table.</p>'),
+         primary key, and correspond to the source IDs in the mapping table.</p>'),
   );
   $sourceKey = $migration->source->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -165,13 +165,29 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   // Put out each group header
   $rows = array();
-
+  $count = 0;
   foreach ($annotations as $group => $mappings) {
+    // Collapse the less interesting cases, and put them last
+    $lower_group = drupal_strtolower($group);
+    if ($lower_group == 'done' || $lower_group == 'do not migrate' || $lower_group == 'dnm') {
+      $collapsed = TRUE;
+      if ($lower_group == 'done') {
+        $weight = 50;
+      }
+      else {
+        $weight = 51;
+      }
+    }
+    else {
+      $collapsed = FALSE;
+      $weight = $count;
+    }
     $form['mappings'][$group] = array(
       '#type' => 'fieldset',
       '#title' => $group,
       '#collapsible' => TRUE,
-      '#collapsed' => $group == t('Done') ? TRUE : FALSE,
+      '#collapsed' => $collapsed,
+      '#weight' => $weight,
     );
     $rows = array();
     foreach ($mappings as $mapping) {

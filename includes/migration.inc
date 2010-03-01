@@ -620,10 +620,14 @@ abstract class Migration {
     }
 
     // TODO: Support multi-field keys
-    // TODO: Support idlist and itemlimit
-    $result = db_select($this->mapTableName, 'map')
-             ->fields('map', array('sourceid1', 'destid1'))
-             ->execute();
+    // TODO: Support idlist
+    $query = db_select($this->mapTableName, 'map')
+             ->fields('map', array('sourceid1', 'destid1'));
+    if (isset($options['itemlimit'])) {
+      $query = $query->range(0, $options['itemlimit']);
+    }
+    $result = $query->execute();
+
     // Support bulk rollback (only with single-field keys?)
     if ($this->destination->supportsBulkRollback) {
       // Too many at once can lead to memory issues, so batch 'em up

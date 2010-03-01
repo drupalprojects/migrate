@@ -49,11 +49,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     // First the core (comment table) properties
     $fields['cid'] = t('Comment: Existing comment ID');
     $fields['pid'] = t('Comment: Parent (by Drupal ID)');
-    $fields['parent_source'] = t('Comment: Parent (by source ID)');
     $fields['nid'] = t('Comment: Node (by Drupal ID)');
-    $fields['node_source'] = t('Comment: Node (by source ID)');
     $fields['uid'] = t('Comment: User (by Drupal ID)');
-    $fields['user_source'] = t('Comment: User (by source ID');
     $fields['user_name'] = t('Comment: User (by username)');
     $fields['user_email'] = t('Comment: User (by email address');
     $fields['subject'] = t('Comment: Subject');

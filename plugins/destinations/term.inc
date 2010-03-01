@@ -48,7 +48,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     // TODO: Only if vocab has hierarchy
     $fields['parent_name'] = t('Term: Parent (by name)');
     $fields['parent'] = t('Term: Parent (by Drupal ID)');
-    $fields['parent_source'] = t('Term: Parent (by source ID)');
 
     // Then add any fields attached to this vocabulary (bundle)
     $field_instance_info = field_info_instances($this->entityType, $this->bundle);

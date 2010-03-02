@@ -45,9 +45,20 @@ function migrate_menu() {
     'file' => 'migrate_ui/migrate_ui.pages.inc',
   );
 
+  if (FALSE) {
+    // Not working yet
+    migrate_ui_menu_add($items);
+  }
+
+  return $items;
+}
+
+// Not yet correct. Not being called by migrate_ui_menu().
+// It is adding tabs to all content types, not ones with migrations.
+function migrate_ui_menu_add(&$items) {
   $migrations = migrate_migrations();
   $entity_info = entity_get_info();
-  foreach ($migrations as $key => $migration) {
+  foreach (array() as $key => $migration) {
     if ($info = $entity_info[$migration->destination->entityType]) {
       $bundle_info = $info['bundles'][$migration->destination->bundle];
       if (isset($bundle_info['admin'])) {
@@ -76,7 +87,42 @@ function migrate_menu() {
       }
     }
   }
-  return $items;
+}
+
+/*
+ * Implement hook_local_tasks_alter().
+ *
+ * Another incomplete attempt at tabs that link to migration detail pages. Help wanted.
+ */
+function migrate_ui_menu_local_tasks_alter($data, $router_item, $root_path) {
+  // Disabled for now.
+  if (FALSE) {
+    dargs();
+    $migrations = migrate_migrations();
+    $entity_info = entity_get_info();
+    foreach ($migrations as $key => $migration) {
+      if ($info = $entity_info[$migration->destination->entityType]) {
+        $bundle_info = $info['bundles'][$migration->destination->bundle];
+        if (isset($bundle_info['admin'])) {
+          // Extract informations from the bundle description.
+          $path = $bundle_info['admin']['path'];
+          dsm($path);
+          if ($path == $router_item['tab_root']) {
+            $link = array(
+              'title' => 'Migrate',
+              'href' => 'mw', // TODO
+            );
+            $data['tabs'][0]['output'][] = array(
+              '#theme' => 'menu_local_task',
+              '#link' => $link,
+              '#active' => FALSE, // TODO
+            );
+            $data['tabs'][0]['count'] = $data['tabs']['count']++;
+          }
+        }
+      }
+    }
+  }
 }
 
 // A menu load callback.

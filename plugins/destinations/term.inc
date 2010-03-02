@@ -91,6 +91,11 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $values, stdClass $row, array $arguments) {
+    // Handle update case
+    if (isset($row->migrate_map_destid1)) {
+      $values->tid = $row->migrate_map_destid1;
+    }
+
     // Default to bundle if no vocabulary machine name provided
     if (!isset($values->vocabulary_machine_name)) {
       $values->vocabulary_machine_name = $this->bundle;

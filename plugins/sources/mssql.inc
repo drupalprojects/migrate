@@ -64,7 +64,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    // The fields are defined passed in the Contructor for this plugin.
+    // The fields are defined in the Contructor for this plugin.
     return $this->fields;
   }
 
@@ -109,6 +109,16 @@ class MigrateSourceMSSQL extends MigrateSource {
   public function fetch(Migration $migration, array $options = array()) {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
+      // First, if we support syncing of updated source rows, check for rows
+      // that need syncing
+      if ($migration->highwaterField) {
+        // Get highwater from Migration object (migrate_status table)
+        $highwater = $migration->highwater();
+
+        // Plug in to query
+        $this->query = str_replace(':highwater', $highwater, $this->query);
+      }
+
       $keys = array();
 
       foreach ($this->keySchema as $field_name => $field_schema) {

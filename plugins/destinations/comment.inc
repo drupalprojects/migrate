@@ -106,6 +106,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $comment, stdClass $row, array $arguments) {
+    // Handle update case
+    if (isset($row->migrate_map_destid1)) {
+      $comment->cid = $row->migrate_map_destid1;
+    }
+
     // Set some default properties.
     $comment = (array) $comment;
     $comment += array(

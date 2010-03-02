@@ -209,11 +209,11 @@ abstract class Migration {
   /**
    * The fraction of the memory limit at which an operation will be interrupted.
    * Can be overridden by a Migration subclass if one would like to push the
-   * envelope.
+   * envelope. Defaults to 80%.
    *
    * @var float
    */
-  protected $memoryThreshold = 0.8;   // 80%
+  protected $memoryThreshold = 0.8;
 
   /**
    * The PHP memory_limit expressed in bytes.
@@ -229,6 +229,13 @@ abstract class Migration {
    * @var int
    */
   protected $rollbackBatchSize = 500;
+
+  /**
+   * If present, the name of the source field used for tracking highwater marks.
+   *
+   * @var string
+   */
+  public $highwaterField;
 
   /**
    * Message types to be passed to saveMessage() and saved in message tables.
@@ -448,6 +455,13 @@ abstract class Migration {
     $fields['message'] = $message;
     db_insert($this->messageTableName)
     ->fields($fields)
+    ->execute();
+  }
+
+  public function saveHighwater($highwater) {
+    db_update('migrate_status')
+    ->fields(array('highwater' => $highwater))
+    ->condition('machine_name', $this->machineName)
     ->execute();
   }
 
@@ -672,6 +686,13 @@ abstract class Migration {
       }
     }
     $this->progressMessage($lastfeedback, $total, FALSE, $return);
+
+    // If we're using highwater marks, reset at completion of a full rollback
+    // TODO: What about partial rollbacks? Probably little we can do to make
+    // that work cleanly...
+    if ($this->highwaterField) {
+      $this->saveHighwater('');
+    }
     $this->endProcess();
     return $return;
   }
@@ -735,24 +756,31 @@ abstract class Migration {
             break;
           }
 
-          // So, if this source ID is present in the map table or the message table,
-          // skip it - unless its map table entry has needs_update=1
-          $query = db_select($this->mapTableName, 'map');
-          $query->addField('map', 'needs_update');
-          foreach ($this->sourceKeyMap() as $field_name => $map_name) {
-            $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
-          }
-          $result = $query->execute();
-          $needs_update = $result->fetchField();
-          // Needs_update may be NULL (no map table entry), 0 (map entry present
-          // but doesn't need update, or 1 (needs update). The 2nd case is the one
-          // where we skip this entry
-          if ($needs_update == 0 && is_string($needs_update)) {
-            continue;
-          }
+          // But, if it's using highwater marks, don't use the map - the query
+          // has already determined what rows to process.
+          if (!isset($this->highwaterField)) {
+            // So, if this source ID is present in the map table or the message table,
+            // skip it - unless its map table entry has needs_update=1
+            $query = db_select($this->mapTableName, 'map')
+                     ->fields('map', 'needs_update', 'destid1');
+            foreach ($this->sourceKeyMap() as $field_name => $map_name) {
+              $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
+            }
+            $row = $query->execute()->fetchObject();
 
-          // TODO: Check message table (entries here indicate failed items, we don't
-          // want to run through them again)
+            // Needs_update may be NULL (no map table entry), 0 (map entry present
+            // but doesn't need update, or 1 (needs update). The 2nd case is the one
+            // where we skip this entry
+            if ($row && $row->needs_update == 0 && is_string($row->needs_update)) {
+              continue;
+            }
+
+            // TODO: Check message table (entries here indicate failed items, we don't
+            // want to run through them again)
+
+            // Save the dest ID in case of update
+            $data_row->migrate_map_destid1 = $row->destid1;
+          }
         }
 
         // Apply mappings.
@@ -835,6 +863,9 @@ abstract class Migration {
           // TODO: Failure to save
           //$this->saveMesage(...)
           $return = Migration::RESULT_FAILED;
+        }
+        if (isset($this->highwaterField)) {
+          $this->saveHighwater($data_row->{$this->highwaterField});
         }
         unset($values);
       }
@@ -957,19 +988,19 @@ abstract class Migration {
     else {
       switch ($result) {
         case Migration::RESULT_COMPLETED:
-          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - done with '!description'";
+          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - done with '!name'";
           $type = 'completed';
           break;
         case Migration::RESULT_FAILED:
-          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - failure with '!description'";
+          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - failure with '!name'";
           $type = 'failed';
           break;
         case Migration::RESULT_INCOMPLETE:
-          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - continuing with '!description'";
+          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - continuing with '!name'";
           $type = 'ok';
           break;
         case Migration::RESULT_STOPPED:
-          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - stopped '!description'";
+          $basetext = "Rolled back !numitems in !time sec (!perminute/min) - stopped '!name'";
           $type = 'warning';
           break;
       }
@@ -1001,5 +1032,19 @@ abstract class Migration {
     else {
       return FALSE;
     }
+  }
+
+  /**
+   * Fetch the current highwater mark for updated content.
+   *
+   * @return string
+   *  The highwater mark.
+   */
+  public function highwater() {
+    $highwater = db_query("SELECT highwater FROM {migrate_status}
+                           WHERE machine_name=:machine_name",
+                          array(':machine_name' => $this->machineName))
+                ->fetchField();
+    return $highwater;
   }
 }

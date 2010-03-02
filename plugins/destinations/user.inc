@@ -105,6 +105,11 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $account, stdClass $row, array $arguments) {
+    // Handle update case
+    if (isset($row->migrate_map_destid1)) {
+      $account->uid = $row->migrate_map_destid1;
+    }
+
     // Look for Field API fields and handle appropriately
     $this->prepareFields($account, $arguments);
     migrate_handler_invoke_all('User', 'prepare', $migration, $account, $row);

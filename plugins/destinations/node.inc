@@ -107,6 +107,11 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $node, stdClass $row, array $arguments) {
+    // Handle update case
+    if (isset($row->migrate_map_destid1)) {
+      $node->nid = $row->migrate_map_destid1;
+    }
+
     // Set some required properties.
     if (!isset($node->language)) {
       $node->language = $this->language;

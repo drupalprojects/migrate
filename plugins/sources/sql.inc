@@ -109,6 +109,8 @@ class MigrateSourceSQL extends MigrateSource {
   public function fetch(Migration $migration, array $options = array()) {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
+      // TODO: Support highwater marks
+
       // Build the joins to the map and message tables. Because the source key
       // could have multiple fields, we need to build things up.
       // The logic is that we want to include all source rows which have no

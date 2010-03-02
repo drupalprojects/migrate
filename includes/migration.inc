@@ -60,7 +60,7 @@ class MigrateFieldMapping {
    */
   public $arguments;
 
-  public $description;
+  public $descriptionGroup;
   public $descriptionText = '';
 
   public function __construct($destination_field, $source_field) {

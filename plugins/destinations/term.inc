@@ -155,6 +155,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
           break;
       }
     }
+    else {
+      $values->parent = array(0);
+    }
     if (!isset($values->format)) {
       $values->format = $this->inputFormat;
     }

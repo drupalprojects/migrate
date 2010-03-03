@@ -762,7 +762,7 @@ abstract class Migration {
             // So, if this source ID is present in the map table or the message table,
             // skip it - unless its map table entry has needs_update=1
             $query = db_select($this->mapTableName, 'map')
-                     ->fields('map', 'needs_update', 'destid1');
+                     ->fields('map', array('needs_update', 'destid1'));
             foreach ($this->sourceKeyMap() as $field_name => $map_name) {
               $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
             }

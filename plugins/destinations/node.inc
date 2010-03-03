@@ -49,7 +49,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields['nid'] = t('Node: Existing node ID');
     $fields['name'] = t('Node: Authored by (username)');
     $fields['uid'] = t('Node: Authored by (uid)');
-    $fields['authorid'] = t('Node: Authored by (source ID)');
     $fields['created'] = t('Node: Created timestamp');
     $fields['changed'] = t('Node: Modified timestamp');
     $fields['status'] = t('Node: Published');

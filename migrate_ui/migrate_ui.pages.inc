@@ -17,6 +17,12 @@ function migrate_dashboard($form, $form_state) {
     '#suffix' => '</div>',
   );
 
+  $form['overview'] = array(
+    '#prefix' => '<div>',
+    '#markup' => migrate_overview(),
+    '#suffix' => '</div>',
+  );
+
   $header = array(
     array('data' => t('Status')),
     array('data' => t('Migration')),

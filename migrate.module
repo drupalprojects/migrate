@@ -261,6 +261,18 @@ function migrate_instrument_stop($name) {
   }
 }
 
+/**
+ * Call hook_migrate_overview for overall documentation on implemented migrations.
+ */
+function migrate_overview() {
+  $overview = '';
+  $results = module_invoke_all('migrate_overview');
+  foreach ($results as $result) {
+    $overview .= $result . ' ';
+  }
+  return $overview;
+}
+
 // TODO: The functions below are D6 functions of some potential use in D7, that
 // haven't been updated/integrated yet
 

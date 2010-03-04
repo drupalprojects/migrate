@@ -135,7 +135,10 @@ class MigrateSourceMSSQL extends MigrateSource {
       }
 
       migrate_instrument_start('mssql_query');
-      $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
+      if (!$this->result = mssql_query($this->query, $this->connection, $this->batchSize)) {
+        migrate_instrument_stop('mssql_query');
+        throw Exception('MSSQL fetch query failed: ' . $this->query);
+      }
       migrate_instrument_stop('mssql_query');
     }
 

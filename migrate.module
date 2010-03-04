@@ -32,7 +32,7 @@ function migrate_migrations($refresh = FALSE) {
 }
 
 /**
- * Invoke any available import handlers attched to a given destination type.
+ * Invoke any available handlers attched to a given destination type.
  * If any handlers have dependencies defined, they will be invoked after
  * the specified handlers.
  *
@@ -40,26 +40,31 @@ function migrate_migrations($refresh = FALSE) {
  *  Destination type ('Node', 'User', etc.) - generally the same string as
  *  the destination class name without the MigrateDestination prefix.
  * @param $method
- *  'prepare' (called at the beginning of an import operation) or 'complete'
- *  (called at the end of an import operation).
- * @param $migration
- *  Controlling Migration object. Most commonly used for recording messages
- *  ($migration->saveMessage().
- * @param $object
- *  Destination object under construction. The handler's job is generally to
- *  manipulate this object.
- * @param $row
- *  Raw data row object from the migration source.
+ *  Method name such as 'prepare' (called at the beginning of an import operation)
+ *  or 'complete' (called at the end of an import operation).
+ * @param ...
+ *  Parameters to be passed to the handler.
  */
-function migrate_handler_invoke_all($destination, $method, $migration, $object, $row) {
+function migrate_handler_invoke_all($destination, $method) {
+  $args = func_get_args();
+  array_shift($args);
+  array_shift($args);
+  $return = array();
   $class_list = _migrate_class_list('%' . $destination . 'Handler', 'MigrateHandler');
   foreach ($class_list as $class_name => $handler) {
     if (method_exists($handler, $method)) {
       migrate_instrument_start($class_name . '->' . $method);
-      $handler->$method($migration, $object, $row);
+      $result = call_user_func_array(array($handler, $method), $args);
       migrate_instrument_stop($class_name . '->' . $method);
+      if (isset($result) && is_array($result)) {
+        $return = array_merge_recursive($return, $result);
+      }
+      elseif (isset($result)) {
+        $return[] = $result;
+      }
     }
   }
+  return $return;
 }
 
 /**
@@ -68,6 +73,10 @@ function migrate_handler_invoke_all($destination, $method, $migration, $object, 
  * from the parent, returning an array of the objects indexed by class name. The
  * array will be ordered such that any classes with dependencies are listed after
  * the classes they are dependent on.
+ *
+ * TODO: Is there a way to do this without depending on naming conventions and searching
+ * the registry? I.e., find all subclasses of a given class including potential
+ * autoloads?
  *
  * @param $class_pattern
  *  SQL LIKE pattern for class names to match (e.g., '%Migration').

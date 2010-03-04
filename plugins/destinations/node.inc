@@ -73,7 +73,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         ' (' . $field_info['type'] . ')';
     }
 
-    // TODO: Then add in anything provided by handlers
+    // Then add in anything provided by handlers
+    $fields += migrate_handler_invoke_all('Node', 'fields');
 
     return $fields;
   }

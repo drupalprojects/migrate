@@ -57,7 +57,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $fields[$machine_name] = t('Term:') . ' ' . $instance['label'] .
         ' (' . $field_info['type'] . ')';
     }
-    // TODO: Then add in anything provided by handlers
+
+    // Then add in anything provided by handlers
+    $fields += migrate_handler_invoke_all('Term', 'fields');
 
     return $fields;
   }

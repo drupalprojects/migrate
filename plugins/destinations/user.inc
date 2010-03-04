@@ -62,7 +62,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       $fields[$machine_name] = t('User:') . ' ' . $instance['label'] .
         ' (' . $field_info['type'] . ')';
     }
-    // TODO: Then add in anything provided by handlers
+
+    // Then add in anything provided by handlers
+    $fields += migrate_handler_invoke_all('User', 'fields');
 
     return $fields;
   }

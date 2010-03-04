@@ -72,7 +72,9 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       $fields[$machine_name] = t('Comment:') . ' ' . $instance['label'] .
         ' (' . $field_info['type'] . ')';
     }
-    // TODO: Then add in anything provided by handlers
+
+    // Then add in anything provided by handlers
+    $fields += migrate_handler_invoke_all('Comment', 'fields');
 
     return $fields;
   }

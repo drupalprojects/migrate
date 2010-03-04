@@ -8,7 +8,7 @@
 
 /**
  * Abstract base class for destination handlers. Handler objects are expected
- * to implement prepare and/or complete methods.
+ * to implement appropriate methods (e.g., prepare, complete, or fields).
  */
 abstract class MigrateHandler {
   /**
@@ -24,14 +24,10 @@ abstract class MigrateHandler {
    */
   // abstract public function prepare(Migration $migration, stdClass $object, stdClass $row);
   // abstract public function complete(Migration $migration, stdClass $object, stdClass $row);
+  // abstract public function fields();
 
   /**
-   * Make sure one of the required methods is implemented
+   * Base constructor
    */
-  public function __construct() {
-    if (!method_exists($this, 'prepare') && !method_exists($this, 'complete')) {
-      throw new Exception(t('!class_name must implement a prepare or complete method',
-        array('!class_name' => get_class($this))));
-    }
-  }
+  public function __construct() {}
 }

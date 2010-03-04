@@ -16,6 +16,23 @@
  */
 class MigrateSourceMSSQL extends MigrateSource {
   /**
+   * Array containing information for connecting to SQL Server:
+   *  servername - Hostname of the SQL Server
+   *  username - Username to connect as
+   *  password - Password for logging in
+   *  database (optional) - Database to select after connecting
+   *
+   * @var array
+   */
+  protected $configuration;
+
+  /**
+   * The active MS SQL Server connection for this source.
+   *
+   * @var resource
+   */
+  protected $connection;
+  /**
    * The SQL query from which to obtain data. Is a string.
    */
   protected $query;
@@ -37,12 +54,12 @@ class MigrateSourceMSSQL extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct($query, array $key_schema, $connection, $count_query,
-      $fields, $batch_size = 500) {
+  public function __construct(array $configuration, $query, $count_query,
+      array $key_schema, array $fields, $batch_size = 500) {
     parent::__construct($key_schema);
     $this->query = $query;
     $this->countQuery = $count_query;
-    $this->connection = $connection;
+    $this->configuration = $configuration;
     $this->fields = $fields;
     $this->batchSize = $batch_size;
   }
@@ -54,6 +71,22 @@ class MigrateSourceMSSQL extends MigrateSource {
    */
   public function __toString() {
     return t('Query: %query', array('%query' => $this->query));
+  }
+
+  /**
+   * Connect lazily to the DB server.
+   */
+  protected function connect() {
+    if (!isset($this->connection)) {
+      $this->connection = mssql_connect(
+        $this->configuration['servername'],
+        $this->configuration['username'],
+        $this->configuration['password'],
+        TRUE);
+      if (isset($this->configuration['database'])) {
+        mssql_select_db($this->configuration['database'], $this->connection);
+      }
+    }
   }
 
   /**
@@ -84,6 +117,7 @@ class MigrateSourceMSSQL extends MigrateSource {
     $count = cache_get(__METHOD__, 'cache');
     if ($count === FALSE) {
       // Cache miss.
+      $this->connect();
       $result = mssql_query($this->countQuery);
       $count = reset(mssql_fetch_object($result));
       $return = cache_set(__METHOD__, $count, 'cache');
@@ -135,6 +169,7 @@ class MigrateSourceMSSQL extends MigrateSource {
       }
 
       migrate_instrument_start('mssql_query');
+      $this->connect();
       if (!$this->result = mssql_query($this->query, $this->connection, $this->batchSize)) {
         migrate_instrument_stop('mssql_query');
         throw Exception('MSSQL fetch query failed: ' . $this->query);

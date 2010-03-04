@@ -180,9 +180,9 @@ class BeerCommentMigration extends Migration {
     $this->addFieldMapping('nid', 'bid');
 
     $this->addFieldMapping('uid', 'aid', 1)
-         ->sourceMigration('BeerUser');
+         ->sourceMigration('BeerUserMigration');
     $this->addFieldMapping('pid', 'cid_parent')
-         ->sourceMigration('BeerComment')
+         ->sourceMigration('BeerCommentMigration')
          ->arguments(array('cache_size' => 0));
 
     $this->addFieldMapping('comment_body', 'body');

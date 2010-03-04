@@ -102,7 +102,8 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     );
     $delta = 0;
 
-    if ($source_path = $values) {
+    if ($source_path = $values[$delta]) {
+      // Prefix with any source_path that was passed as argument.
       if (strpos(trim($source_path, DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR) === FALSE) {
         $source_path = $arguments['source_path'] . '/' . $source_path;
       }

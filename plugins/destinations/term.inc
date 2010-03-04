@@ -72,9 +72,18 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    */
   public function rollback(Migration $migration, array $key) {
     migrate_instrument_start('taxonomy_term_delete');
-    $result = (bool) taxonomy_term_delete($key[0]);
+    $tid = $key[0];
+
+    /*
+     * This load() happens soon delete() anyway. We load here in order to
+     * avoid notices when term has already been deleted. That is easily possible
+     * considering how deleting a term parent also deletes children in same call.
+     */
+    if (taxonomy_term_load($tid)) {
+      $result = (bool) taxonomy_term_delete($tid);
+      return $result;
+    }
     migrate_instrument_stop('taxonomy_term_delete');
-    return $result;
   }
 
   /**

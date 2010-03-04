@@ -212,11 +212,13 @@ class BeerCommentMigration extends Migration {
     // We preserved bid => nid ids during BeerNodeMigration so simple mapping suffices.
     $this->addFieldMapping('nid', 'bid');
 
-    $this->addFieldMapping('uid', 'aid', 1)
-         ->sourceMigration('BeerUserMigration');
+    $this->addFieldMapping('uid', 'aid')
+         ->sourceMigration('BeerUserMigration')
+         ->defaultValue(0);
     $this->addFieldMapping('pid', 'cid_parent')
          ->sourceMigration('BeerCommentMigration')
-         ->arguments(array('cache_size' => 0));
+         ->arguments(array('cache_size' => 0))
+         ->defaultValue(0);
 
     $this->addFieldMapping('comment_body', 'body');
     $dest = $this->lookupDestinationID(array(1));

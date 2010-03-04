@@ -802,8 +802,11 @@ abstract class Migration {
             // to look up a destination ID from the provided migration
             if ($mapping->sourceMigration && isset($values->$destination)) {
               $source_migration = Migration::getInstance($mapping->sourceMigration);
-              $destids = $source_migration->
-                lookupDestinationID(array($values->$destination));
+              // We can only lookup if source supplies a value.
+              if (isset($values->$destination)) {
+                $destids = $source_migration->
+                  lookupDestinationID(array($values->$destination));
+              }
               if ($destids) {
                 // Assume that if the destination key is a single value, it
                 // should be passed as such

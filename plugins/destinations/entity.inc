@@ -138,7 +138,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
         $object_field['title'] = isset($arguments['title_alt_name']) ? $values[$arguments['title_alt_name']] : NULL;
         $object_field['description'] = isset($arguments['description_alt_name']) ? $values[$arguments['description_alt_name']] : NULL;
         $object_field['display'] = isset($arguments['display_alt_name']) ? $values[$arguments['display_alt_name']] : NULL;
-        $return[$language][$delta] = $object_field;
+        $return[$arguments['language']][$delta] = $object_field;
         return $return;
       }
       else {

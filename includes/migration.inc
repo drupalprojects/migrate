@@ -564,7 +564,7 @@ abstract class Migration {
   public function endProcess($setTime = FALSE) {
     $fields = array('status' => Migration::STATUS_IDLE);
     if ($setTime) {
-      $fields['lastimported'] = date('Y-m-d H:i:s');
+      $fields['lastimported'] = gmdate('Y-m-d H:i:s');
     }
     db_merge('migrate_status')
       ->key(array('machine_name' => $this->machineName))

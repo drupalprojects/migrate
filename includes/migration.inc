@@ -800,7 +800,7 @@ abstract class Migration {
 
             // If a source migration is supplied, use the current value for this field
             // to look up a destination ID from the provided migration
-            if ($mapping->sourceMigration) {
+            if ($mapping->sourceMigration && isset($values->$destination)) {
               $source_migration = Migration::getInstance($mapping->sourceMigration);
               $destids = $source_migration->
                 lookupDestinationID(array($values->$destination));

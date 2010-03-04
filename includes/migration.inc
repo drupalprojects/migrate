@@ -257,6 +257,7 @@ abstract class Migration {
   const RESULT_STOPPED = 3;     // The process was stopped externally (e.g., via
                                 // drush migrate-stop)
   const RESULT_FAILED = 4;      // The process had a fatal error
+  const RESULT_SKIPPED = 5;     // Dependencies are unfulfilled - skip the process
 
   /**
    * Codes representing the current status of a migration, and stored in the
@@ -525,6 +526,31 @@ abstract class Migration {
   }
 
   /**
+   * Reports whether this migration process is complete (i.e., all available
+   * source rows have been processed).
+   */
+  public function isComplete() {
+    $total = $this->source->count(TRUE);
+    $imported = $this->importedCount();
+    $errors = $this->errorCount();
+    return $total == ($imported + $errors);
+  }
+
+  /**
+   * Reports whether all dependencies have completed migration
+   * TODO: Support rollback (reverse dependencies)
+   */
+  public function dependenciesComplete() {
+    foreach ($this->dependencies as $dependency) {
+      $migration = Migration::getInstance($dependency);
+      if (!$migration->isComplete()) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
    * Begin a rollback or import process, ensuring only one process can be active
    * at once on a given migration.
    *
@@ -712,9 +738,15 @@ abstract class Migration {
    *    after 'frequency' seconds have passed.
    */
   public function import(array $options = array()) {
+    // TODO: Validate dependencies (migrations we depend on have no unimported rows)
+    if (!isset($options['force'])) {
+      if (!$this->dependenciesComplete()) {
+        return Migration::RESULT_SKIPPED;
+      }
+    }
+
     $this->beginProcess(Migration::STATUS_IMPORTING);
     try {
-      // TODO: Validate dependencies (migrations we depend on have no unimported rows)
       $lastfeedback = $starttime = microtime(TRUE);
       $return = Migration::RESULT_COMPLETED;
       if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
@@ -891,7 +923,7 @@ abstract class Migration {
     }
     catch (Exception $exception) {
       // If something bad happened, make sure we clear the semaphore
-      $this->endProcess(Migration::RESULT_FAILED);
+      $this->endProcess();
       throw $exception;
     }
     return $return;
@@ -908,6 +940,22 @@ abstract class Migration {
   public function importedCount() {
     $this->ensureTables();
     $query = db_select($this->mapTableName);
+    $query->addExpression('COUNT(*)', 'count');
+    $count = $query->execute()->fetchField();
+    return $count;
+  }
+
+  /**
+   * Get the number of source records which failed to import.
+   * TODO: Doesn't yet account for informationals, or multiple errors for
+   * a source record.
+   *
+   * @return int
+   *  Number of records errored out.
+   */
+  public function errorCount() {
+    $this->ensureTables();
+    $query = db_select($this->messageTableName);
     $query->addExpression('COUNT(*)', 'count');
     $count = $query->execute()->fetchField();
     return $count;

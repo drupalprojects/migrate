@@ -40,6 +40,7 @@ function migrate_drush_command() {
     '--idlist' => 'A comma delimited list of ids to import or rollback. If unspecified, migrate imports all pending items or rolls back all items for the content set.',
     '--all' => 'Process all migrations',
     '--instrument' => 'Capture performance information (timer, memory, or all)',
+    '--force' => 'Force an operation to run, even if all dependencies are not satisfied',
   );
   $items['migrate-status'] = array(
     'description' => 'List all migrations with current status.',
@@ -146,7 +147,7 @@ function migrate_drush_command() {
 
 /**
  * Get the value of all migrate related options. Used when spawning a subshell.
- * Don't pass along rstop and rollback options.
+ * Don't pass along stop and rollback options.
  *
  * @return
  *   An array of command specific options and their values.
@@ -485,6 +486,9 @@ function drush_migrate_import($args = NULL) {
     if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
       $options['itemlimit'] = $itemlimit;
     }
+    if (drush_get_option('force', FALSE) == 1) {
+      $options['force'] = TRUE;
+    }
     $feedback = drush_get_option('feedback');
     if ($feedback) {
       $parts = explode(' ', $feedback);
@@ -525,6 +529,10 @@ function drush_migrate_import($args = NULL) {
       if ($i == 0 && !drush_get_context('DRUSH_BACKEND')) {
         // Our first pass and in the parent process. Run a migration right here.
         $return = $migration->import($options);
+        if ($return == Migration::RESULT_SKIPPED) {
+          drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
+            array('!name' => $migration->machineName)), 'warning');
+        }
         $i++;
       }
 
@@ -534,6 +542,10 @@ function drush_migrate_import($args = NULL) {
           $return = drush_migrate_backend_invoke();
           // 'object' holds the return code we care about.
           $return = $return['object'];
+          if ($return == Migration::RESULT_SKIPPED) {
+            drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
+              array('!name' => $migration->machineName)), 'warning');
+          }
           $i++;
         }
       }

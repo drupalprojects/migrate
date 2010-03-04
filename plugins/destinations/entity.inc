@@ -286,6 +286,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
             $object->$machine_name = $this->prepareFieldFile($object->$machine_name, $arguments, $machine_name);
             break;
           case 'list':
+          case 'list_number':
             $object->$machine_name = $this->prepareFieldValue($object->$machine_name, $arguments);
             break;
           // TODO: Should really be in migrate_extras

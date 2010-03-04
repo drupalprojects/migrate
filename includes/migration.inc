@@ -868,6 +868,10 @@ abstract class Migration {
           $this->saveHighwater($data_row->{$this->highwaterField});
         }
         unset($values);
+        // TODO: Temporary. Remove when http://drupal.org/node/375494 is committed.
+        if (!empty($this->destination->entityType)) {
+          entity_get_controller($this->destination->entityType)->resetCache();
+        }
       }
 
       // TODO: Factor out to endProcess?

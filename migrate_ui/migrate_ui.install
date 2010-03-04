@@ -10,6 +10,7 @@
 /**
  * Implementation of hook_requirements().
  * Checks installation requirements and do status reporting.
+ * TODO: Share code with migrate_migration_info
  * @param phase 'install': ignored (no installation requirements)
  *              'runtime': status reporting for migrations
  * @return A keyed array of requirements

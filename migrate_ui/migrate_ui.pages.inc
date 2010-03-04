@@ -130,6 +130,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#rows' => $rows,
   );
 
+  // TODO: Get source_fields from arguments
   $source_description = '<div>' . (string)$migration->source . '</div>';
   $form['source'] = array(
     '#type' => 'fieldset',

@@ -11,7 +11,7 @@
  * kind of Drupal object (for example, a specific node type), you define
  * a class derived from Migration. You must define a constructor to initialize
  * your migration object. The name of the class must end in "Migration", and the
- * portion of the name before "Migration" will be the machine name of your migration -
+ * portion of the name before "Migration" will be the "machine name" of your migration -
  * this is the name you will use in drush commands.
  *
  * There are three essential components to set up in your constructor:
@@ -30,7 +30,8 @@ class BeerNodeMigration extends Migration {
     // initialization.
     parent::__construct();
 
-    // Human-friendly description of your migration process
+    // Human-friendly description of your migration process. Be as detailed as you
+    // like.
     $this->description = 'Beers of the world';
 
     // You may optionally declare dependencies for your migration - other migrations
@@ -69,53 +70,85 @@ class BeerNodeMigration extends Migration {
     // drush migrate-fields-source beernode
 
     // Documenting your mappings makes it easier for the whole team to see
-    // exactly what the status is when developing a migration process.
+    // exactly what the status is when developing a migration process. The
+    // mapping descriptions have an optional group (defaulting to 'Done'), which
+    // groups them on the Migration info page.
     $this->addFieldMapping('title', 'name')
          ->description(t('Mapping beer name in source to node title'));
 
     // You can also document destination fields that are yet to be mapped...
     $this->addFieldMapping('sticky')
          ->description(t('Somewhere there is a source field we can map here'),
-                      t('ToDo'));
+                      t('To do'));
     // ... or source fields we don't know what to do with
     $this->addFieldMapping(NULL, 'mysterious_column')
          ->description(t('Talk to client about what this source field means'),
-                      t('Open Issues'));
+                      t('Client questions'));
 
+    // We can use the 'DNM' or 'Do not migrate' group to silence warnings about
+    // unmapped source or destination fields
+    $this->addFieldMapping('name')
+         ->description('', t('DNM'));
+    $this->addFieldMapping('authorid')
+         ->description('', t('DNM'));
+    $this->addFieldMapping('created')
+         ->description('', t('DNM'));
+    $this->addFieldMapping('changed')
+         ->description('', t('DNM'));
+    $this->addFieldMapping('status')
+         ->description('', t('DNM'));
+    $this->addFieldMapping('promote')
+         ->description('', t('DNM'));
+    $this->addFieldMapping('revision')
+         ->description('', t('DNM'));
+
+    // To maintain node identities between the old and new systems (i.e., have
+    // the same unique IDs), map the ID column from the old system to nid and
+    // set is_new to TRUE.
     $this->addFieldMapping('nid', 'bid')
          ->description(t('Preserve old beer ID as nid in Drupal'));
     $this->addFieldMapping('is_new')
          ->defaultValue(TRUE);
 
-    // Lookup the uid for a given account id (aid).
-    // Note: uid is a required property so we use the 3rd argument below to set a default.
-    $this->addFieldMapping('uid', 'aid', 1)
+    // References to related objects (such as the author of the content) are
+    // most likely going to be identifiers from the source data, not Drupal
+    // identifiers (such as uids). You can use the mapping from the relevant
+    // migration to translate from the old ID to the Drupal identifier.
+    // Note that we also provide a default value of 1 - if the lookup fails to
+    // find a corresponding uid for the aid, the owner will be the administrative
+    // account.
+    $this->addFieldMapping('uid', 'aid')
+         ->defaultValue(1)
          ->sourceMigration('BeerUserMigration');
 
-    // The taxonomy terms are a comma-separated list in the query
+    // If an incoming field contains multiple values separated by a delimitor,
+    // simple specify the delimitor and it will be broken out into an array
+    // of values in the destination object.
+
+    // This is a multi-value text field
+    $this->addFieldMapping('field_migrate_example_country', 'countries')
+         ->separator('|');
+
+    // Taxonomy terms are now implemented as fields.
     $this->addFieldMapping('taxonomy_migrate_example_tags', 'terms')
          ->separator(',');
 
-    // Example of a single value textfield with summary. In the Drupal 7 Field API,
-    // what used to be a separate "teaser" field is now a "summary" attribute on
-    // the body field.
-
-    // This tells the Migration class that the body's summary attribute will come
-    // from the excerpt field in the source.
+    // Drupal 7 fields can have attributes such as input formats, or summaries
+    // (equivalent to teasers in previous Drupal versions). These can be
+    // passed in an arguments array.
     $arguments = array(
+      // An argument's value can be a constant...
+      'format' => filter_fallback_format(),
+      // ...or it can come from another field in the source query.
       'summary' => array('source_field' => 'excerpt'),
     );
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
 
-    // Example of a single value image.
+    // Different field types support different arguments.
     $arguments = array('source_path' => drupal_get_path('module', 'migrate_example'));
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);
-
-    // Example of delimited field handling. Also example of unformatted multi-value text field.
-    $this->addFieldMapping('field_migrate_example_country', 'countries')
-         ->separator('|');
   }
 }
 

@@ -241,6 +241,10 @@ function migrate_migration_info($form, $form_state, $migration) {
       $class = '';
       if (isset($mapping->issuePriority)) {
         $priority = MigrateFieldMapping::$priorities[$mapping->issuePriority];
+        if (isset($migration->issuePattern) && isset($mapping->issueNumber)) {
+          $priority .= ' (' . l('#' . $mapping->issueNumber, str_replace(':id:', $mapping->issueNumber,
+            $migration->issuePattern)) . ')';
+        }
         if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
           $class = 'migrate-error';
         }

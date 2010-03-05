@@ -282,6 +282,14 @@ abstract class Migration {
   public $implementors = array();
 
   /**
+   * If provided, an URL for an issue tracking system containing :id: where
+   * the issue number will go (e.g., 'http://example.com/project/ticket/:id:').
+   *
+   * @var string
+   */
+  public $issuePattern;
+
+  /**
    * Message types to be passed to saveMessage() and saved in message tables.
    * MESSAGE_INFORMATIONAL represents a condition that did not prevent the operation
    * from succeeding - all others represent different severities of conditions

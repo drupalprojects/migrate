@@ -181,6 +181,14 @@ abstract class Migration {
   protected $currSourceKey = array();
 
   /**
+   * Indicate whether we are processing a rollback or import - used to avoid
+   * excess writes in endProcess()
+   *
+   * @var boolean
+   */
+  protected $processing = FALSE;
+
+  /**
    * Mappings from field names in the source and destination objects, to the
    * corresponding field names (e.g., sourceid2, destid1, etc.) in the map and
    * message tables.
@@ -305,6 +313,9 @@ abstract class Migration {
           array('!limit' => $limit)));
     }
     $this->memoryLimit = $limit;
+
+    // Make sure we clear our semaphores in case of abrupt exit
+    register_shutdown_function(array($this, 'endProcess'));
   }
 
   /**
@@ -570,6 +581,7 @@ abstract class Migration {
   protected function beginProcess($newStatus) {
     // Try to make the semaphore handling atomic (depends on DB support)
     $transaction = db_transaction();
+    $this->processing = TRUE;
 
     // Check to make sure there's no process already running for this migration
     $status = db_query("SELECT status FROM {migrate_status}
@@ -598,14 +610,17 @@ abstract class Migration {
    *  at final completion of an import process).
    */
   public function endProcess($setTime = FALSE) {
-    $fields = array('status' => Migration::STATUS_IDLE);
-    if ($setTime) {
-      $fields['lastimported'] = gmdate('Y-m-d H:i:s');
+    if ($this->processing) {
+      $fields = array('status' => Migration::STATUS_IDLE);
+      if ($setTime) {
+        $fields['lastimported'] = gmdate('Y-m-d H:i:s');
+      }
+      db_merge('migrate_status')
+        ->key(array('machine_name' => $this->machineName))
+        ->fields($fields)
+        ->execute();
+      $this->processing = FALSE;
     }
-    db_merge('migrate_status')
-      ->key(array('machine_name' => $this->machineName))
-      ->fields($fields)
-      ->execute();
   }
 
   /**

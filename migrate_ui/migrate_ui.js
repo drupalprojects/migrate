@@ -32,7 +32,11 @@ Drupal.behaviors.migrateUISummary = {
       $total = $('tr', context).length - 2;
       $unmapped = $('td.migrate-error', context).length / 2;
       $mapped = $total - $unmapped;
-      return '<span class="error">' + Drupal.formatPlural($unmapped, '1 unmapped', '@count unmapped') + '</span>' + '. ' + Drupal.formatPlural($mapped, '1 mapping.', '@count mapped.');
+      $msg = Drupal.formatPlural($mapped, '1 mapping.', '@count mapped.');
+      if ($unmapped) {
+        $msg = '<span class="error">' + Drupal.formatPlural($unmapped, '1 unmapped', '@count unmapped') + '</span>' + '. ' + $msg;
+      }
+      return $msg;
     });
 
     $('fieldset.migrate-mapping').each(function ($context) {

@@ -605,12 +605,15 @@ abstract class Migration {
   /**
    * End a rollback or import process, releasing the semaphore.
    *
+   * @param boolean $force
+   *  If TRUE, clear the semaphore even if processing isn't set to false (used
+   *    for the migrate-stop drush command)
    * @param boolean $setTime
    *  If TRUE, record the current time as lastimported (should be set to TRUE only
    *  at final completion of an import process).
    */
-  public function endProcess($setTime = FALSE) {
-    if ($this->processing) {
+  public function endProcess($force = FALSE, $setTime = FALSE) {
+    if ($this->processing || $force) {
       $fields = array('status' => Migration::STATUS_IDLE);
       if ($setTime) {
         $fields['lastimported'] = gmdate('Y-m-d H:i:s');
@@ -976,7 +979,7 @@ abstract class Migration {
         $perminute = '?';
       }
       $this->progressMessage($lastfeedback, $count, TRUE, $return);
-      $this->endProcess($return == Migration::RESULT_COMPLETED);
+      $this->endProcess(TRUE, $return == Migration::RESULT_COMPLETED);
     }
     catch (Exception $exception) {
       // If something bad happened, make sure we clear the semaphore

@@ -623,111 +623,137 @@ abstract class Migration {
    *    after 'frequency' seconds have passed.
    */
   public function rollback(array $options = array()) {
+    // TODO: Validate dependencies (migrations depending on us have no imported rows)
+/*    if (!isset($options['force'])) {
+      if (!$this->dependenciesComplete()) {
+        return Migration::RESULT_SKIPPED;
+      }
+    }*/
     $this->beginProcess(Migration::STATUS_ROLLING_BACK);
+    try {
+      // TODO: Validate dependencies (migrations dependent on us have no imported rows)
 
-    // TODO: Validate dependencies (migrations dependent on us have no imported rows)
-
-    // TODO: Shared with import - move to beginProcess and track this stuff as properties?
-    $lastfeedback = $starttime = microtime(TRUE);
-    $return = Migration::RESULT_COMPLETED;
-    if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
-        isset($options['feedback']['frequency_unit'])) {
-      $frequency = $options['feedback']['frequency'];
-      $frequency_unit = $options['feedback']['frequency_unit'];
-    }
-
-    // TODO: Support multi-field keys
-    // TODO: Support idlist
-    $query = db_select($this->mapTableName, 'map')
-             ->fields('map', array('sourceid1', 'destid1'));
-    if (isset($options['itemlimit'])) {
-      $query = $query->range(0, $options['itemlimit']);
-    }
-    $result = $query->execute();
-
-    // Support bulk rollback (only with single-field keys?)
-    if ($this->destination->supportsBulkRollback) {
-      // Too many at once can lead to memory issues, so batch 'em up
-      $destids = array();
-      $sourceids = array();
-      $count = $total = 0;
-      foreach ($result as $row) {
-        if ($this->memoryExceeded()) {
-          $return = Migration::RESULT_INCOMPLETE;
-          break;
-        }
-        if ($this->getStatus() == Migration::STATUS_IDLE) {
-          $return = Migration::RESULT_STOPPED;
-          break;
-        }
-        $destids[] = $row->destid1;
-        $sourceids[] = $row->sourceid1;
-        $count++;
-        $total++;
-        if ($count >= $this->rollbackBatchSize) {
-          $this->destination->bulkRollback($this, $destids);
-          // Keep track in case of interruption
-          db_delete($this->mapTableName)
-            ->condition('sourceid1', $sourceids, 'IN')
-            ->execute();
-          db_delete($this->messageTableName)
-            ->condition('sourceid1', $sourceids, 'IN')
-            ->execute();
-          $destids = array();
-          $sourceids = array();
-          $count = 0;
-        }
+      // TODO: Shared with import - move to beginProcess and track this stuff as properties?
+      $lastfeedback = $starttime = microtime(TRUE);
+      $return = Migration::RESULT_COMPLETED;
+      if (isset($options['feedback']) && isset($options['feedback']['frequency']) &&
+          isset($options['feedback']['frequency_unit'])) {
+        $frequency = $options['feedback']['frequency'];
+        $frequency_unit = $options['feedback']['frequency_unit'];
       }
-      if ($count > 0) {
-        $this->destination->bulkRollback($this, $destids);
-        db_delete($this->mapTableName)
-                       ->condition('sourceid1', $sourceids, 'IN')
-                       ->execute();
-        db_delete($this->messageTableName)
-                       ->condition('sourceid1', $sourceids, 'IN')
-                       ->execute();
+
+      // TODO: Support multi-field keys
+      // TODO: Support idlist
+      $query = db_select($this->mapTableName, 'map')
+               ->fields('map', array('sourceid1', 'destid1'));
+      if (isset($options['itemlimit'])) {
+        $query = $query->range(0, $options['itemlimit']);
       }
-    }
-    else {
-      $total = 0;
-      // TODO: Can this chunk (shared with import) be factored out?
-      foreach ($result as $record) {
-        if ($this->memoryExceeded()) {
-          $return = Migration::RESULT_INCOMPLETE;
-          break;
-        }
-        if (isset($frequency)) {
-          if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
-              ($frequency_unit == 'items' && $total >= $frequency)) {
-            $this->progressMessage($lastfeedback, $total, FALSE, Migration::RESULT_INCOMPLETE);
-            $lastfeedback = time();
-            $total = 0;
+      $result = $query->execute();
+
+      // Support bulk rollback (only with single-field keys?)
+      if ($this->destination->supportsBulkRollback) {
+        // Too many at once can lead to memory issues, so batch 'em up
+        $destids = array();
+        $sourceids = array();
+        $count = $total = 0;
+        foreach ($result as $row) {
+          if ($this->memoryExceeded()) {
+            $return = Migration::RESULT_INCOMPLETE;
+            break;
+          }
+          if ($this->getStatus() == Migration::STATUS_IDLE) {
+            $return = Migration::RESULT_STOPPED;
+            break;
+          }
+          $destids[] = $row->destid1;
+          $sourceids[] = $row->sourceid1;
+          $count++;
+          $total++;
+          if ($count >= $this->rollbackBatchSize) {
+            try {
+              $this->destination->bulkRollback($this, $destids);
+              // Keep track in case of interruption
+              db_delete($this->mapTableName)
+                ->condition('sourceid1', $sourceids, 'IN')
+                ->execute();
+              db_delete($this->messageTableName)
+                ->condition('sourceid1', $sourceids, 'IN')
+                ->execute();
+            }
+            catch (Exception $e) {
+              continue;
+            }
+            $destids = array();
+            $sourceids = array();
+            $count = 0;
           }
         }
-        if ($this->getStatus() == Migration::STATUS_IDLE) {
-          $return = Migration::RESULT_STOPPED;
-          break;
+        if ($count > 0) {
+          $this->destination->bulkRollback($this, $destids);
+          db_delete($this->mapTableName)
+                         ->condition('sourceid1', $sourceids, 'IN')
+                         ->execute();
+          db_delete($this->messageTableName)
+                         ->condition('sourceid1', $sourceids, 'IN')
+                         ->execute();
         }
+      }
+      else {
+        $total = 0;
+        // TODO: Can this chunk (shared with import) be factored out?
+        foreach ($result as $record) {
+          if ($this->memoryExceeded()) {
+            $return = Migration::RESULT_INCOMPLETE;
+            break;
+          }
+          if (isset($frequency)) {
+            if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
+                ($frequency_unit == 'items' && $total >= $frequency)) {
+              $this->progressMessage($lastfeedback, $total, FALSE, Migration::RESULT_INCOMPLETE);
+              $lastfeedback = time();
+              $total = 0;
+            }
+          }
+          if ($this->getStatus() == Migration::STATUS_IDLE) {
+            $return = Migration::RESULT_STOPPED;
+            break;
+          }
 
-        // Rollback one record
-        $this->destination->rollback($this, array($record->destid1));
+          // Rollback one record
+          try {
+            $this->destination->rollback($this, array($record->destid1));
 
-        db_delete($this->mapTableName)
-          ->condition('sourceid1', $record->sourceid1)
-          ->execute();
-        db_delete($this->messageTableName)
-          ->condition('sourceid1', $record->sourceid1)
-          ->execute();
-        $total++;
+            db_delete($this->mapTableName)
+              ->condition('sourceid1', $record->sourceid1)
+              ->execute();
+            db_delete($this->messageTableName)
+              ->condition('sourceid1', $record->sourceid1)
+              ->execute();
+            $total++;
+          }
+          catch (Exception $e) {
+            // TODO: At least count failures
+            continue;
+          }
+        }
+      }
+      // Clear message table
+      db_delete($this->messageTableName)
+        ->execute();
+      $this->progressMessage($lastfeedback, $total, FALSE, $return);
+
+      // If we're using highwater marks, reset at completion of a full rollback
+      // TODO: What about partial rollbacks? Probably little we can do to make
+      // that work cleanly...
+      if ($this->highwaterField) {
+        $this->saveHighwater('');
       }
     }
-    $this->progressMessage($lastfeedback, $total, FALSE, $return);
-
-    // If we're using highwater marks, reset at completion of a full rollback
-    // TODO: What about partial rollbacks? Probably little we can do to make
-    // that work cleanly...
-    if ($this->highwaterField) {
-      $this->saveHighwater('');
+    catch (Exception $exception) {
+      // If something bad happened, make sure we clear the semaphore
+      $this->endProcess();
+      throw $exception;
     }
     $this->endProcess();
     return $return;
@@ -748,7 +774,6 @@ abstract class Migration {
    *    after 'frequency' seconds have passed.
    */
   public function import(array $options = array()) {
-    // TODO: Validate dependencies (migrations we depend on have no unimported rows)
     if (!isset($options['force'])) {
       if (!$this->dependenciesComplete()) {
         return Migration::RESULT_SKIPPED;
@@ -898,18 +923,23 @@ abstract class Migration {
           $values['id'] = $data_row->migrate_map_destid1;
         }
 
-        migrate_instrument_start('destination import', TRUE);
-        $ids = $this->destination->import($this, $values, $data_row, $arguments);
-        migrate_instrument_stop('destination import');
-        if ($ids) {
-          $this->saveIDMapping($data_row, $ids);
-          $count++;
-          $total++;
+        try {
+          migrate_instrument_start('destination import', TRUE);
+          $ids = $this->destination->import($this, $values, $data_row, $arguments);
+          migrate_instrument_stop('destination import');
+          if ($ids) {
+            $this->saveIDMapping($data_row, $ids);
+            $count++;
+            $total++;
+          }
+          else {
+            // TODO: Failure to save
+            $this->saveMessage(t('New object was not saved, no error provided'));
+            $return = Migration::RESULT_FAILED;
+          }
         }
-        else {
-          // TODO: Failure to save
-          //$this->saveMesage(...)
-          $return = Migration::RESULT_FAILED;
+        catch (Exception $e) {
+          $this->saveMessage($e->getMessage());
         }
         if (isset($this->highwaterField)) {
           $this->saveHighwater($data_row->{$this->highwaterField});

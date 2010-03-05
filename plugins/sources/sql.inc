@@ -44,7 +44,7 @@ class MigrateSourceSQL extends MigrateSource {
    * @return string
    */
   public function __toString() {
-    return t('Query: %query', array('%query' => $this->query));
+    return (string) $this->query;
   }
 
   /**

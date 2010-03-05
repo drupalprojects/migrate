@@ -61,10 +61,10 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   public function __toString() {
     // TODO: Link to configuration page
     if ($this->entityType == $this->bundle) {
-      $output = t('Type: %type', array('%type' => $this->entityType));
+      $output = t('%type', array('%type' => $this->entityType));
     }
     else {
-      $output = t('Type: %type (%bundle)',
+      $output = t('%type (%bundle)',
         array('%type' => $this->entityType, '%bundle' => $this->bundle));
     }
     // TODO: Non-default language, input format

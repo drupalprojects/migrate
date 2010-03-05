@@ -131,18 +131,21 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#items' => $implementors,
   );
 
-  // Destination and source field information
-  $destination_description = '<p>' . (string)$migration->destination . '</p>';
+  // Destination field information
   $form['detail']['destination'] = array(
     '#type' => 'fieldset',
     '#title' => t('Destination'),
     '#group' => 'detail',
-    '#description' => $destination_description .
+    '#description' =>
       t('<p>These are the fields available in the destination of this
          migration. The machine names listed here are those available to be used
          as the first parameter to $this->addFieldMapping() in your Migration
-         class constructor. <strong>Primary key fields</strong> and
-         <strong><em>unmapped fields</em></strong> are highlighted.</p>'),
+         class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
+  );
+  $form['detail']['destination']['type'] = array(
+    '#type' => 'item',
+    '#title' => t('Type'),
+    '#markup' => (string)$migration->destination,
   );
   $destKey = $migration->destination->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -164,20 +167,24 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
+    '#empty' => t('No fields'),
   );
 
   // TODO: Get source_fields from arguments
-  $source_description = '<div>' . (string)$migration->source . '</div>';
   $form['detail']['source'] = array(
     '#type' => 'fieldset',
     '#title' => t('Source'),
     '#group' => 'detail',
-    '#description' => $source_description .
+    '#description' =>
       t('<p>These are the fields available from the source of this
          migration. The machine names listed here are those available to be used
          as the second parameter to $this->addFieldMapping() in your Migration
-         class constructor. <strong>Primary key fields</strong> and
-         <strong><em>unmapped fields</em></strong> are highlighted.</p>'),
+         class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
+  );
+  $form['detail']['source']['query'] = array(
+    '#type' => 'item',
+    '#title' => t('Query'),
+    '#markup' => $migration->source,
   );
   $sourceKey = $migration->source->keySchema;
   $header = array(t('Machine name'), t('Description'));
@@ -199,6 +206,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
+    '#empty' => t('No fields'),
   );
 
   $header = array(t('Destination'), t('Source'), t('Default'), t('Description'));

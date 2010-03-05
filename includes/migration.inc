@@ -62,6 +62,15 @@ class MigrateFieldMapping {
 
   public $descriptionGroup;
   public $descriptionText = '';
+  public $issueNumber;
+  public $issuePriority;
+
+  const ISSUE_PRIORITY_OK = 1;
+  const ISSUE_PRIORITY_LOW = 2;
+  const ISSUE_PRIORITY_MEDIUM = 3;
+  const ISSUE_PRIORITY_BLOCKER = 4;
+
+  public static $priorities = array();
 
   public function __construct($destination_field, $source_field) {
     // Must have one or the other
@@ -71,6 +80,12 @@ class MigrateFieldMapping {
     $this->destinationField = $destination_field;
     $this->sourceField = $source_field;
     $this->descriptionGroup = t('Done');
+    if (count(self::$priorities) == 0) {
+      self::$priorities[self::ISSUE_PRIORITY_OK] = t('OK');
+      self::$priorities[self::ISSUE_PRIORITY_LOW] = t('Low');
+      self::$priorities[self::ISSUE_PRIORITY_MEDIUM] = t('Medium');
+      self::$priorities[self::ISSUE_PRIORITY_BLOCKER] = t('Blocker');
+    }
   }
 
   public function defaultValue($default_value) {
@@ -99,6 +114,17 @@ class MigrateFieldMapping {
     }
     $this->descriptionGroup = $group;
     $this->descriptionText = $text;
+    return $this;
+  }
+
+  public function issueNumber($number) {
+    $this->issueNumber = $number;
+    return $this;
+  }
+
+  public function issuePriority($priority) {
+    $this->issuePriority = $priority;
+    return $this;
   }
 }
 

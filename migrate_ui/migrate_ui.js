@@ -41,7 +41,12 @@ Drupal.behaviors.migrateUISummary = {
 
     $('fieldset.migrate-mapping').each(function ($context) {
       $total = $(this).find('tr').length - 2;
-      $(this).setSummary(Drupal.formatPlural($total, '1 mapping.', '@count mappings.'));
+      $issues = $('td.migrate-error', context).length / 2;
+      $msg = Drupal.formatPlural($total, '1 mapping.', '@count mapped.');
+      /*if ($issues) {
+        $msg = '<span class="error">' + Drupal.formatPlural($issues, '1 open issue', '@count open issues') + '</span>' + '. ' + $msg;
+      }(*/
+      $(this).setSummary($msg);
     });
   }
 };

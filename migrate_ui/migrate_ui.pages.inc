@@ -209,7 +209,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#empty' => t('No fields'),
   );
 
-  $header = array(t('Destination'), t('Source'), t('Default'), t('Description'));
+  $header = array(t('Destination'), t('Source'), t('Default'), t('Description'), t('Priority'));
 
   // First group the mappings
   $descriptions = array();
@@ -238,8 +238,23 @@ function migrate_migration_info($form, $form_state, $migration) {
       else {
         $default = $mapping->defaultValue;
       }
-      $row = array($mapping->destinationField, $mapping->sourceField,
-        $default, $mapping->descriptionText);
+      $class = '';
+      if (isset($mapping->issuePriority)) {
+        $priority = MigrateFieldMapping::$priorities[$mapping->issuePriority];
+        if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
+          $class = 'migrate-error';
+        }
+      }
+      else {
+        $priority = t('OK');
+      }
+      $row = array(
+        array('data' => $mapping->destinationField, 'class' => array($class)),
+        array('data' => $mapping->sourceField, 'class' => array($class)),
+        array('data' => $default, 'class' => array($class)),
+        array('data' => $mapping->descriptionText,  'class' => array($class)),
+        array('data' => $priority, 'class' => array($class)),
+        );
       $rows[] = $row;
     }
     $form['detail'][$group]['table'] = array(

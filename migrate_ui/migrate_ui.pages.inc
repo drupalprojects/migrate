@@ -85,6 +85,23 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
 
   $form = array();
+
+  $rows = array();
+  foreach ($migration->owners as $member) {
+    $row = array(t('Owner:'), $member->name,
+      l($member->emailAddress, 'mailto:' . $member->emailAddress));
+    $rows[] = $row;
+  }
+  foreach ($migration->implementors as $member) {
+    $row = array(t('Implementor:'), $member->name,
+      l($member->emailAddress, 'mailto:' . $member->emailAddress));
+    $rows[] = $row;
+  }
+  $form['members'] = array(
+    '#theme' => 'table',
+    '#rows' => $rows,
+  );
+
   $form['description'] = array(
     '#prefix' => '<div>',
     '#markup' => $migration->description,

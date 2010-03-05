@@ -238,6 +238,16 @@ abstract class Migration {
   public $highwaterField;
 
   /**
+   * MigrateTeamMember objects representing owners (responsible for defining
+   * and approving migration processes) and implementors (repsponsible for
+   * implementing migration processes).
+   *
+   * @var array
+   */
+  public $owners = array();
+  public $implementors = array();
+
+  /**
    * Message types to be passed to saveMessage() and saved in message tables.
    * MESSAGE_INFORMATIONAL represents a condition that did not prevent the operation
    * from succeeding - all others represent different severities of conditions

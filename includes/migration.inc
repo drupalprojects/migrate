@@ -821,7 +821,9 @@ abstract class Migration {
             // want to run through them again)
 
             // Save the dest ID in case of update
-            $data_row->migrate_map_destid1 = $row->destid1;
+            if ($row) {
+              $data_row->migrate_map_destid1 = $row->destid1;
+            }
           }
         }
 

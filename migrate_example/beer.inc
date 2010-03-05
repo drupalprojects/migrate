@@ -34,6 +34,10 @@ class BeerNodeMigration extends Migration {
     // like.
     $this->description = 'Beers of the world';
 
+    // These names are currently only used for display on migration detail pages.
+    $this->owners = array(new MigrateTeamMember('Drinker Liz', 'drinker@example.com'));
+    $this->implementors = array(new MigrateTeamMember('Brewer Larry', 'brewer@example.com'));
+
     // You may optionally declare dependencies for your migration - other migrations
     // which should run first. In this case, terms assigned to our nodes and
     // the authors of the nodes should be migrated before the nodes themselves.

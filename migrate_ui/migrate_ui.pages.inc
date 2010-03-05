@@ -72,6 +72,9 @@ function migrate_dashboard($form, $form_state) {
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
+    '#attached' => array(
+      'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
+    ),
   );
   return $form;
 }
@@ -86,41 +89,54 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   $form = array();
 
-  $rows = array();
-  foreach ($migration->owners as $member) {
-    $row = array(t('Owner:'), $member->name,
-      l($member->emailAddress, 'mailto:' . $member->emailAddress));
-    $rows[] = $row;
-  }
-  foreach ($migration->implementors as $member) {
-    $row = array(t('Implementor:'), $member->name,
-      l($member->emailAddress, 'mailto:' . $member->emailAddress));
-    $rows[] = $row;
-  }
-  $form['members'] = array(
-    '#theme' => 'table',
-    '#rows' => $rows,
-  );
-
-  $form['description'] = array(
-    '#prefix' => '<div>',
-    '#markup' => $migration->description,
-    '#suffix' => '</div>',
-  );
-
   // Identify what destination and source fields are mapped
   foreach ($migration->fieldMappings as $mapping) {
     $sourceFields[$mapping->sourceField] = $mapping->sourceField;
     $destinationFields[$mapping->destinationField] = $mapping->destinationField;
   }
 
+  $form['detail'] = array(
+    '#type' => 'vertical_tabs',
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.js'),
+      'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
+    ),
+  );
+
+  $form['detail']['overview'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Overview'),
+    '#group' => 'detail',
+  );
+  $form['detail']['overview']['description'] = array(
+    '#prefix' => '<div>',
+    '#markup' => $migration->description,
+    '#suffix' => '</div>',
+  );
+  foreach ($migration->owners as $member) {
+    $owners[] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
+  }
+  $form['detail']['overview']['client'] = array(
+    '#theme' => 'item_list',
+    '#title' => t('Client Owner'),
+    '#attributes' => array('id' => 'owner'),
+    '#items' => $owners,
+  );
+  foreach ($migration->implementors as $member) {
+    $implementors[] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
+  }
+  $form['detail']['overview']['implementor'] = array(
+    '#theme' => 'item_list',
+    '#title' => t('Implementor'),
+    '#items' => $implementors,
+  );
+
   // Destination and source field information
   $destination_description = '<p>' . (string)$migration->destination . '</p>';
-  $form['destination'] = array(
+  $form['detail']['destination'] = array(
     '#type' => 'fieldset',
     '#title' => t('Destination'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#group' => 'detail',
     '#description' => $destination_description .
       t('<p>These are the fields available in the destination of this
          migration. The machine names listed here are those available to be used
@@ -132,16 +148,19 @@ function migrate_migration_info($form, $form_state, $migration) {
   $header = array(t('Machine name'), t('Description'));
   $rows = array();
   foreach ($migration->destination->fields() as $machine_name => $description) {
+    $class = '';
     if (isset($destKey[$machine_name])) {
-      $machine_name = "<strong>$machine_name</strong>";
+      // Identify primary key
+      $machine_name .= t(' (PK)');
     }
-    elseif (!isset($destinationFields[$machine_name])) {
-      $machine_name = "<strong><em>$machine_name</em></strong>";
+    else {
+      // Add class for mapped/unmapped. Used in summary.
+      $class = !isset($destinationFields[$machine_name]) ? 'migrate-error' : '';
     }
-    $rows[] = array($machine_name, $description);
+    $rows[] = array(array('data' => $machine_name, 'class' => array($class)), array('data' => $description, 'class' => array($class)));
   }
 
-  $form['destination']['fields'] = array(
+  $form['detail']['destination']['fields'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
@@ -149,11 +168,10 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   // TODO: Get source_fields from arguments
   $source_description = '<div>' . (string)$migration->source . '</div>';
-  $form['source'] = array(
+  $form['detail']['source'] = array(
     '#type' => 'fieldset',
     '#title' => t('Source'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#group' => 'detail',
     '#description' => $source_description .
       t('<p>These are the fields available from the source of this
          migration. The machine names listed here are those available to be used
@@ -165,31 +183,24 @@ function migrate_migration_info($form, $form_state, $migration) {
   $header = array(t('Machine name'), t('Description'));
   $rows = array();
   foreach ($migration->source->fields() as $machine_name => $description) {
+    $class = '';
     if (isset($sourceKey[$machine_name])) {
-      $machine_name = "<strong>$machine_name</strong>";
+      // Identify primary key
+      $machine_name .= t(' (PK)');
     }
-    elseif (!isset($sourceFields[$machine_name])) {
-      $machine_name = "<strong><em>$machine_name</em></strong>";
+    else {
+      // Add class for mapped/unmapped. Used in summary.
+      $class = !isset($sourceFields[$machine_name]) ? 'migrate-error' : '';
     }
-    $rows[] = array($machine_name, $description);
+    $rows[] = array(array('data' => $machine_name, 'class' => array($class)), array('data' => $description, 'class' => array($class)));
   }
 
-  $form['source']['fields'] = array(
+  $form['detail']['source']['fields'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
   );
 
-  // Information on defined mappings
-  $form['mappings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Field Mappings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-    '#description' => t('These are the mappings currently defined for this Migration.
-      The <strong>Done</strong> group should indicate those which are fully implemented -
-      you can use different group names in field descriptions to classify remainng work.'),
-  );
   $header = array(t('Destination'), t('Source'), t('Default'), t('Description'));
 
   // First group the mappings
@@ -199,45 +210,17 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   foreach ($migration->fieldMappings as $mapping) {
     $descriptions[$mapping->descriptionGroup][] = $mapping;
-    // While we're running through them, warn about any mappings involving sources
-    // or destinations that don't exist (unless marked DNM)
-    $lower_group = drupal_strtolower($mapping->descriptionGroup);
-    if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField]) &&
-        $lower_group != 'dnm' && $lower_group != 'do not migrate') {
-      drupal_set_message(t('Field !source_field is mapped, but is not in the source field list.',
-        array('!source_field' => $mapping->sourceField)));
-    }
-    if ($mapping->destinationField && !isset($destination_fields[$mapping->destinationField])) {
-      drupal_set_message(t('Field !dest_field is mapped, but is not in the destination field list.',
-        array('!dest_field' => $mapping->destinationField)));
-    }
   }
 
   // Put out each group header
   $rows = array();
   $count = 0;
   foreach ($descriptions as $group => $mappings) {
-    // Collapse the less interesting cases, and put them last
-    $lower_group = drupal_strtolower($group);
-    if ($lower_group == 'done' || $lower_group == 'do not migrate' || $lower_group == 'dnm') {
-      $collapsed = TRUE;
-      if ($lower_group == 'done') {
-        $weight = 50;
-      }
-      else {
-        $weight = 51;
-      }
-    }
-    else {
-      $collapsed = FALSE;
-      $weight = $count;
-    }
-    $form['mappings'][$group] = array(
+    $form['detail'][$group] = array(
       '#type' => 'fieldset',
-      '#title' => $group,
-      '#collapsible' => TRUE,
-      '#collapsed' => $collapsed,
-      '#weight' => $weight,
+      '#title' => t('Mapping: ') . $group,
+      '#group' => 'detail',
+      '#attributes' => array('class' => 'migrate-mapping'),
     );
     $rows = array();
     foreach ($mappings as $mapping) {
@@ -251,14 +234,12 @@ function migrate_migration_info($form, $form_state, $migration) {
         $default, $mapping->descriptionText);
       $rows[] = $row;
     }
-    $form['mappings'][$group]['grouping'] = array(
+    $form['detail'][$group]['table'] = array(
       '#theme' => 'table',
       '#header' => $header,
       '#rows' => $rows,
     );
   }
-
-
   return $form;
 }
 

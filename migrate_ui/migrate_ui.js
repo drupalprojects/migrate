@@ -19,24 +19,24 @@ Drupal.behaviors.migrateUISummary = {
       }
     });
     $('fieldset#edit-destination', context).setSummary(function (context) {
-      $total = $('tr', context).length - 2;
-      $unmapped = $('td.migrate-error', context).length / 2;
-      $mapped = $total - $unmapped;
-      $msg = Drupal.formatPlural($mapped, '1 mapping.', '@count mapped.');
-      if ($unmapped) {
-        $msg = '<span class="error">' + Drupal.formatPlural($unmapped, '1 unmapped', '@count unmapped') + '</span>' + '. ' + $msg;
+      total = $('tr', context).length - 2;
+      unmapped = $('td.migrate-error', context).length / 2;
+      mapped = total - unmapped;
+      msg = Drupal.formatPlural(mapped, '1 mapping.', '@count mapped.');
+      if (unmapped) {
+        msg = '<span class="error">' + Drupal.formatPlural(unmapped, '1 unmapped', '@count unmapped') + '</span>' + '. ' + msg;
       }
-      return $msg;
+      return msg;
     });
     $('fieldset#edit-source', context).setSummary(function (context) {
-      $total = $('tr', context).length - 2;
-      $unmapped = $('td.migrate-error', context).length / 2;
-      $mapped = $total - $unmapped;
-      $msg = Drupal.formatPlural($mapped, '1 mapping.', '@count mapped.');
-      if ($unmapped) {
-        $msg = '<span class="error">' + Drupal.formatPlural($unmapped, '1 unmapped', '@count unmapped') + '</span>' + '. ' + $msg;
+      total = $('tr', context).length - 2;
+      unmapped = $('td.migrate-error', context).length / 2;
+      mapped = total - unmapped;
+      msg = Drupal.formatPlural(mapped, '1 mapping.', '@count mapped.');
+      if (unmapped) {
+        msg = '<span class="error">' + Drupal.formatPlural(unmapped, '1 unmapped', '@count unmapped') + '</span>' + '. ' + msg;
       }
-      return $msg;
+      return msg;
     });
 
     $('fieldset.migrate-mapping').each(function ($context) {

@@ -218,6 +218,17 @@ function migrate_migration_info($form, $form_state, $migration) {
   $destination_fields = $migration->destination->fields();
 
   foreach ($migration->fieldMappings as $mapping) {
+    // Validate source and destination fields actually exist
+    if (!is_null($mapping->sourceField) && !isset($source_fields[$mapping->sourceField])) {
+      drupal_set_message(t('!source used as source field in mapping but not in
+        list of source fields', array('!source' => $mapping->sourceField)),
+      'warning');
+    }
+    if (!is_null($mapping->destinationField) && !isset($destination_fields[$mapping->destinationField])) {
+      drupal_set_message(t('!destination used as destination field in mapping but not in
+        list of destination fields', array('!destination' => $mapping->destinationField)),
+      'warning');
+    }
     $descriptions[$mapping->descriptionGroup][] = $mapping;
   }
 

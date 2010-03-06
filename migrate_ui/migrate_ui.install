@@ -30,13 +30,11 @@ function migrate_ui_requirements($phase) {
       $source_fields = $migration->source->fields();
       $destination_fields = $migration->destination->fields();
       foreach ($migration->fieldMappings as $mapping) {
-        $group = drupal_strtolower($mapping->descriptionGroup);
-        if ($group != 'done' && $group != 'dnm' && $group != 'do not mapping') {
+        if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
           $open++;
           $severity = REQUIREMENT_WARNING;
         }
-        if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField]) &&
-            $group != 'dnm' && $group != 'do not migrate') {
+        if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField])) {
           $nofield++;
           $severity = REQUIREMENT_WARNING;
         }

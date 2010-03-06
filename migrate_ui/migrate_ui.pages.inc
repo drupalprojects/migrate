@@ -151,17 +151,18 @@ function migrate_migration_info($form, $form_state, $migration) {
   $header = array(t('Machine name'), t('Description'));
   $rows = array();
   foreach ($migration->destination->fields() as $machine_name => $description) {
-    $class = '';
+    $classes = array();
     if (isset($destKey[$machine_name])) {
       // Identify primary key
       $machine_name .= t(' (PK)');
     }
     else {
       // Add class for mapped/unmapped. Used in summary.
-      $class = !isset($destinationFields[$machine_name]) ? 'migrate-error' : '';
+      $classes[] = !isset($destinationFields[$machine_name]) ? 'migrate-error' : '';
     }
-    $rows[] = array(array('data' => $machine_name, 'class' => array($class)), array('data' => $description, 'class' => array($class)));
+    $rows[] = array(array('data' => $machine_name, 'class' => $classes), array('data' => $description, 'class' => $classes));
   }
+  $classes = array();
 
   $form['detail']['destination']['fields'] = array(
     '#theme' => 'table',
@@ -190,17 +191,17 @@ function migrate_migration_info($form, $form_state, $migration) {
   $header = array(t('Machine name'), t('Description'));
   $rows = array();
   foreach ($migration->source->fields() as $machine_name => $description) {
-    $class = '';
     if (isset($sourceKey[$machine_name])) {
       // Identify primary key
       $machine_name .= t(' (PK)');
     }
     else {
       // Add class for mapped/unmapped. Used in summary.
-      $class = !isset($sourceFields[$machine_name]) ? 'migrate-error' : '';
+      $classes = !isset($sourceFields[$machine_name]) ? 'migrate-error' : '';
     }
-    $rows[] = array(array('data' => $machine_name, 'class' => array($class)), array('data' => $description, 'class' => array($class)));
+    $rows[] = array(array('data' => $machine_name, 'class' => $classes), array('data' => $description, 'class' => $classes));
   }
+  $classes = array();
 
   $form['detail']['source']['fields'] = array(
     '#theme' => 'table',
@@ -238,28 +239,30 @@ function migrate_migration_info($form, $form_state, $migration) {
       else {
         $default = $mapping->defaultValue;
       }
-      $class = '';
       if (isset($mapping->issuePriority)) {
+        $classes[] = 'migrate-priority-' . $mapping->issuePriority;
         $priority = MigrateFieldMapping::$priorities[$mapping->issuePriority];
         if (isset($migration->issuePattern) && isset($mapping->issueNumber)) {
           $priority .= ' (' . l('#' . $mapping->issueNumber, str_replace(':id:', $mapping->issueNumber,
             $migration->issuePattern)) . ')';
         }
         if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
-          $class = 'migrate-error';
+          $classes[] = 'migrate-error';
         }
       }
       else {
         $priority = t('OK');
+        $classes[] = 'migrate-priority-' . 1;
       }
       $row = array(
-        array('data' => $mapping->destinationField, 'class' => array($class)),
-        array('data' => $mapping->sourceField, 'class' => array($class)),
-        array('data' => $default, 'class' => array($class)),
-        array('data' => $mapping->descriptionText,  'class' => array($class)),
-        array('data' => $priority, 'class' => array($class)),
-        );
+        array('data' => $mapping->destinationField, 'class' => $classes),
+        array('data' => $mapping->sourceField, 'class' => $classes),
+        array('data' => $default, 'class' => $classes),
+        array('data' => $mapping->descriptionText,  'class' => $classes),
+        array('data' => $priority, 'class' => $classes),
+      );
       $rows[] = $row;
+      $classes = array();
     }
     $form['detail'][$group]['table'] = array(
       '#theme' => 'table',

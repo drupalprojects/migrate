@@ -40,15 +40,21 @@ Drupal.behaviors.migrateUISummary = {
     });
 
     $('fieldset.migrate-mapping').each(function ($context) {
-      $total = $(this).find('tr').length - 2;
-      $issues = $('td.migrate-error', context).length / 2;
-      $msg = Drupal.formatPlural($total, '1 mapping.', '@count mapped.');
-      /*if ($issues) {
-        $msg = '<span class="error">' + Drupal.formatPlural($issues, '1 open issue', '@count open issues') + '</span>' + '. ' + $msg;
-      }(*/
-      $(this).setSummary($msg);
-    });
-  }
-};
+      msg = Drupal.t('By priority: ');
+      var levels= {1:'OK',2:'Low',3:'Medium',4:'High'};
+      for (level in levels) {
+        txt = '';
+        if (count = $(this).find('td.migrate-priority-' + level).length / 5) {
+          txt = count + ' ' + levels[level];
+          if (level > 1) {
+            txt = '<span class="error">' + txt  + '</span>';
+          }
+          msg = msg + txt + '. ';
+        }
+      }
+      $(this).setSummary(msg);
+    }
+  )}
+}
 
 })(jQuery);

@@ -270,7 +270,6 @@ abstract class Migration {
         $mapkey = 'destid' . $count++;
         $fields[$mapkey] = $field_schema;
       }
-      $index = $this->destinationKeyMap();
       $fields['needs_update'] = array(
         'type' => 'int',
         'size' => 'tiny',
@@ -283,7 +282,6 @@ abstract class Migration {
         'description' => t('Mappings from source key to destination key'),
         'fields' => $fields,
         'primary key' => $pks,
-        'unique keys' => array('destkey' => $index),
       );
       db_create_table($this->mapTableName, $schema);
 

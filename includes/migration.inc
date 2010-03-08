@@ -16,9 +16,7 @@
  * TODO:
  * Fully support compound keys in sources
  * Fully support compound keys in destinations
- * Support updating (set needs_update=1) - needs http://drupal.org/node/705384
  * Rollback/import hooks (still useful?)
- * Timers
  * number_integer, node ref
  * Better cardinality handling.
  */
@@ -868,6 +866,8 @@ abstract class Migration {
         }
         catch (Exception $e) {
           $this->saveMessage($e->getMessage());
+          $outputFunction = $this->outputFunction;
+          $outputFunction($e->get_message());
         }
         if (isset($this->highwaterField)) {
           $this->saveHighwater($data_row->{$this->highwaterField});

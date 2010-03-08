@@ -254,6 +254,6 @@ class BeerTermMigration extends Migration {
     $this->destination = new MigrateDestinationTerm('migrate_example_tags');
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('description', 'description');
-    $this->addFieldMapping('parent', 'parent_name');
+    $this->addFieldMapping('parent_name', 'parent_name');
   }
 }

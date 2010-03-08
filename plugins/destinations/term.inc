@@ -135,9 +135,10 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       // Look for the name in the same vocabulary.
       // Note that hierarchies may have multiples of the same name...
       $terms = taxonomy_term_load_multiple(array(),
-        array('name' => trim($values->parent), 'vid' => $values->vid));
+        array('name' => trim($values->parent_name), 'vid' => $values->vid));
       $tids = array_keys($terms);
       $values->parent = $tids[0];
+      unset($values->parent_name);
     }
     if (!isset($values->parent)) {
       $values->parent = array(0);

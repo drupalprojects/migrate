@@ -185,7 +185,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   $form['detail']['source']['query'] = array(
     '#type' => 'item',
     '#title' => t('Query'),
-    '#markup' => $migration->source,
+    '#markup' => '<pre>' . $migration->source . '</pre>',
   );
   $sourceKey = $migration->source->keySchema;
   $header = array(t('Machine name'), t('Description'));

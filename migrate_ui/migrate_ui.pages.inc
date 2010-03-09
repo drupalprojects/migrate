@@ -108,11 +108,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#title' => t('Overview'),
     '#group' => 'detail',
   );
-  $form['detail']['overview']['description'] = array(
-    '#prefix' => '<div>',
-    '#markup' => $migration->description,
-    '#suffix' => '</div>',
-  );
+
   foreach ($migration->owners as $member) {
     $owners[] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
   }
@@ -129,6 +125,21 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#theme' => 'item_list',
     '#title' => t('Implementor'),
     '#items' => $implementors,
+  );
+
+  if (count($migration->dependencies) > 0) {
+    $form['detail']['overview']['dependencies'] = array(
+      '#prefix' => '<div>',
+      '#markup' => '<strong>' . t('Dependencies: ') . '</strong>' .
+         implode(', ', $migration->dependencies),
+      '#suffix' => '</div>',
+    );
+  }
+
+  $form['detail']['overview']['description'] = array(
+    '#prefix' => '<div>',
+    '#markup' => $migration->description,
+    '#suffix' => '</div>',
   );
 
   // Destination field information

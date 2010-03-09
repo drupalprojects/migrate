@@ -41,7 +41,7 @@ Drupal.behaviors.migrateUISummary = {
 
     $('fieldset.migrate-mapping').each(function ($context) {
       msg = Drupal.t('By priority: ');
-      var levels= {1:'OK',2:'Low',3:'Medium',4:'High'};
+      var levels= {1:'OK',2:'Low',3:'Medium',4:'Blocker'};
       for (level in levels) {
         txt = '';
         if (count = $(this).find('td.migrate-priority-' + level).length / 5) {

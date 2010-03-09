@@ -17,7 +17,7 @@
  * Fully support compound keys in sources
  * Fully support compound keys in destinations
  * Rollback/import hooks (still useful?)
- * number_integer, node ref
+ * number_integer
  * Better cardinality handling.
  */
 abstract class Migration {

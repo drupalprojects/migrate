@@ -117,7 +117,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $node->language = $this->language;
     }
 
-    // To keep node_object_prepare from choking
+    // To keep node_object_prepare from choking.
     if (!isset($node->created)) {
       $node->created = REQUEST_TIME;
     }
@@ -125,10 +125,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Set type before invoking prepare handlers - they may take type-dependent actions.
     $node->type = $this->bundle;
 
-    // Apply defaults, allow standard node prepare hooks to fire
-    module_load_include('pages.inc', 'node');
+    // Apply defaults, allow standard node prepare hooks to fire.
     // node_object_prepare() will blow these away, so save them here and
-    // stuff them in later if need be
+    // stuff them in later if need be.
     if (isset($node->changed)) {
       $changed = $node->changed;
     }

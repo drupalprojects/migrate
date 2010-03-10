@@ -489,7 +489,6 @@ abstract class Migration {
   protected function beginProcess($newStatus) {
     // Try to make the semaphore handling atomic (depends on DB support)
     $transaction = db_transaction();
-    $this->processing = TRUE;
 
     // Check to make sure there's no process already running for this migration
     $status = db_query("SELECT status FROM {migrate_status}
@@ -497,10 +496,11 @@ abstract class Migration {
                        array(':machine_name' => $this->machineName))
                 ->fetchField();
     if ($status != Migration::STATUS_IDLE) {
-      throw new Exception(t('There is already an active process on !machine_name',
+      throw new MigrateException(t('There is already an active process on !machine_name',
         array('!machine_name' => $this->machineName)));
     }
 
+    $this->processing = TRUE;
     db_merge('migrate_status')
       ->key(array('machine_name' => $this->machineName))
       ->fields(array('status' => $newStatus))
@@ -749,18 +749,21 @@ abstract class Migration {
             break;
           }
 
-          // But, if it's using highwater marks, don't use the map - the query
-          // has already determined what rows to process.
-          if (!isset($this->highwaterField)) {
-            // So, if this source ID is present in the map table or the message table,
-            // skip it - unless its map table entry has needs_update=1
-            $query = db_select($this->mapTableName, 'map')
-                     ->fields('map', array('needs_update', 'destid1'));
-            foreach ($this->sourceKeyMap() as $field_name => $map_name) {
-              $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
-            }
-            $row = $query->execute()->fetchObject();
+          // We still need to check the map, in case we're updating an existing item
+          $query = db_select($this->mapTableName, 'map')
+                   ->fields('map', array('needs_update', 'destid1'));
+          foreach ($this->sourceKeyMap() as $field_name => $map_name) {
+            $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
+          }
+          $row = $query->execute()->fetchObject();
+          // Save the dest ID in case of update
+          if ($row) {
+            $data_row->migrate_map_destid1 = $row->destid1;
+          }
 
+          // If we're not using highwater marks, we need to check the map to determine
+          // whether this needs migration
+          if (!isset($this->highwaterField)) {
             // Needs_update may be NULL (no map table entry), 0 (map entry present
             // but doesn't need update, or 1 (needs update). The 2nd case is the one
             // where we skip this entry
@@ -771,10 +774,6 @@ abstract class Migration {
             // TODO: Check message table (entries here indicate failed items, we don't
             // want to run through them again)
 
-            // Save the dest ID in case of update
-            if ($row) {
-              $data_row->migrate_map_destid1 = $row->destid1;
-            }
           }
         }
 
@@ -846,7 +845,7 @@ abstract class Migration {
         // TODO: Support multi-column keys
         // TODO: 'id' should be the actual destination field name(s) corresponding to the key
         if (isset($data_row->migrate_map_destid1)) {
-          $values['id'] = $data_row->migrate_map_destid1;
+          //$values['id'] = $data_row->migrate_map_destid1;
         }
 
         try {

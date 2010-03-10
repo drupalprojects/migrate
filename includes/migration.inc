@@ -557,8 +557,6 @@ abstract class Migration {
     }*/
     $this->beginProcess(Migration::STATUS_ROLLING_BACK);
     try {
-      // TODO: Validate dependencies (migrations dependent on us have no imported rows)
-
       // TODO: Shared with import - move to beginProcess and track this stuff as properties?
       $lastfeedback = $starttime = microtime(TRUE);
       $return = Migration::RESULT_COMPLETED;
@@ -570,12 +568,14 @@ abstract class Migration {
 
       // TODO: Support multi-field keys
       // TODO: Support idlist
+      migrate_instrument_start('rollback map query');
       $query = db_select($this->mapTableName, 'map')
                ->fields('map', array('sourceid1', 'destid1'));
       if (isset($options['itemlimit'])) {
         $query = $query->range(0, $options['itemlimit']);
       }
       $result = $query->execute();
+      migrate_instrument_stop('rollback map query');
 
       // Support bulk rollback (only with single-field keys?)
       if ($this->destination->supportsBulkRollback) {
@@ -598,16 +598,22 @@ abstract class Migration {
           $total++;
           if ($count >= $this->rollbackBatchSize) {
             try {
+              migrate_instrument_start('destination bulkRollback');
               $this->destination->bulkRollback($this, $destids);
+              migrate_instrument_stop('destination bulkRollback');
               // Keep track in case of interruption
+              migrate_instrument_start('rollback map/message update');
               db_delete($this->mapTableName)
                 ->condition('sourceid1', $sourceids, 'IN')
                 ->execute();
               db_delete($this->messageTableName)
                 ->condition('sourceid1', $sourceids, 'IN')
                 ->execute();
+              migrate_instrument_stop('rollback map/message update');
             }
             catch (Exception $e) {
+              migrate_instrument_stop('bulkRollback');
+              migrate_instrument_stop('rollback map/message update');
               continue;
             }
             $destids = array();
@@ -616,13 +622,17 @@ abstract class Migration {
           }
         }
         if ($count > 0) {
+          migrate_instrument_start('destination bulkRollback');
           $this->destination->bulkRollback($this, $destids);
+          migrate_instrument_stop('destination bulkRollback');
+          migrate_instrument_start('rollback map/message update');
           db_delete($this->mapTableName)
                          ->condition('sourceid1', $sourceids, 'IN')
                          ->execute();
           db_delete($this->messageTableName)
                          ->condition('sourceid1', $sourceids, 'IN')
                          ->execute();
+          migrate_instrument_stop('rollback map/message update');
         }
       }
       else {
@@ -648,14 +658,18 @@ abstract class Migration {
 
           // Rollback one record
           try {
+            migrate_instrument_start('destination rollback');
             $this->destination->rollback($this, array($record->destid1));
+            migrate_instrument_stop('destination rollback');
 
+            migrate_instrument_start('rollback map/message update');
             db_delete($this->mapTableName)
               ->condition('sourceid1', $record->sourceid1)
               ->execute();
             db_delete($this->messageTableName)
               ->condition('sourceid1', $record->sourceid1)
               ->execute();
+            migrate_instrument_stop('rollback map/message update');
             $total++;
           }
           catch (Exception $e) {
@@ -665,8 +679,10 @@ abstract class Migration {
         }
       }
       // Clear message table
+      migrate_instrument_start('rollback map/message update');
       db_delete($this->messageTableName)
         ->execute();
+      migrate_instrument_stop('rollback map/message update');
       $this->progressMessage($lastfeedback, $total, FALSE, $return);
 
       // If we're using highwater marks, reset at completion of a full rollback

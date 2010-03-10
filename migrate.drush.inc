@@ -379,6 +379,21 @@ function drush_migrate_rollback($args = NULL) {
       }
     }
 
+    $instrument = drush_get_option('instrument');
+    global $_migrate_track_memory, $_migrate_track_timer;
+    switch ($instrument) {
+      case 'timer':
+        $_migrate_track_timer = TRUE;
+        break;
+      case 'memory':
+        $_migrate_track_memory = TRUE;
+        break;
+      case 'all':
+        $_migrate_track_timer = TRUE;
+        $_migrate_track_memory = TRUE;
+        break;
+    }
+
     foreach ($migrations as $migration) {
       drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->machineName)));
       $return = $migration->rollback($options);
@@ -392,6 +407,12 @@ function drush_migrate_rollback($args = NULL) {
   catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;
+  }
+  if ($_migrate_track_memory) {
+    drush_migrate_print_memory();
+  }
+  if ($_migrate_track_timer && !drush_get_context('DRUSH_DEBUG')) {
+    drush_print_timers();
   }
 }
 

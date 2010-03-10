@@ -1048,10 +1048,26 @@ abstract class Migration {
     $pct_memory = $usage/$this->memoryLimit;
     if ($pct_memory > $this->memoryThreshold) {
       $outputFunction = $this->outputFunction;
-      $outputFunction(t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
+      $outputFunction(t('Memory usage is !usage (!pct% of limit !limit), resetting statics',
         array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
-        'warning');
-      return TRUE;
+          'warning');
+      drupal_static_reset();
+      $usage = memory_get_usage();
+      $pct_memory = $usage/$this->memoryLimit;
+      // Use a lower threshold - we don't want to be in a situation where we keep
+      // coming back here and trimming a tiny amount
+      if ($pct_memory > (.75 * $this->memoryThreshold)) {
+        $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
+          array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
+            'warning');
+        return TRUE;
+      }
+      else {
+        $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), reclaimed enough, continuing',
+          array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
+            'warning');
+        return FALSE;
+      }
     }
     else {
       return FALSE;

@@ -119,7 +119,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     migrate_instrument_start('user_save');
     $newaccount = user_save($account, (array)$account);
     migrate_instrument_stop('user_save');
-    migrate_handler_invoke_all('User', 'complete', $migration, $account, $row);
+    migrate_handler_invoke_all('User', 'complete', $migration, $newaccount, $row);
     $return = isset($newaccount->uid) ? array($newaccount->uid) : FALSE;
     return $return;
   }

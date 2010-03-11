@@ -1072,7 +1072,7 @@ abstract class Migration {
       $pct_memory = $usage/$this->memoryLimit;
       // Use a lower threshold - we don't want to be in a situation where we keep
       // coming back here and trimming a tiny amount
-      if ($pct_memory > (.75 * $this->memoryThreshold)) {
+      if ($pct_memory > (.85 * $this->memoryThreshold)) {
         $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
           array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
             'warning');

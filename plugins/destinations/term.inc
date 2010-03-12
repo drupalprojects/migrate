@@ -114,9 +114,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $values->tid = $row->migrate_map_destid1;
     }
 
-    drush_print_r($row);
-    drush_print_r($values);
-
     // Default to bundle if no vocabulary machine name provided
     if (!isset($values->vocabulary_machine_name)) {
       $values->vocabulary_machine_name = $this->bundle;
@@ -159,7 +156,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
 
     // Look for Field API fields and handle appropriately
     $this->prepareFields($values, $arguments);
-drush_print_r($values);
     migrate_handler_invoke_all('Term', 'prepare', $migration, $values, $row);
 
     migrate_instrument_start('taxonomy_term_save');

@@ -559,7 +559,8 @@ function drush_migrate_import($args = NULL) {
         // Our first pass and in the parent process. Run a migration right here.
         $return = $migration->import($options);
         if ($return == Migration::RESULT_SKIPPED) {
-          drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
+          drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
+              use the --force option to run it anyway',
             array('!name' => $migration->machineName)), 'warning');
         }
         $i++;

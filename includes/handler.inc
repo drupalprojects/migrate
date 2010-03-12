@@ -19,14 +19,6 @@ abstract class MigrateHandler {
   public $dependencies = array();
 
   /**
-   * Signatures of methods to implement - cannot be declared here, because
-   * a derived class only needs to define one of them.
-   */
-  // abstract public function prepare(Migration $migration, stdClass $object, stdClass $row);
-  // abstract public function complete(Migration $migration, stdClass $object, stdClass $row);
-  // abstract public function fields();
-
-  /**
    * Base constructor
    */
   public function __construct() {}

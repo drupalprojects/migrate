@@ -212,6 +212,42 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   }
 
   /**
+   * Destination import callback to prepare input data for saving as a Field API
+   * term reference field.
+   *
+   * @param mixed $terms
+   *  Single value, or array of values from the source
+   * @param array $arguments
+   * @return array
+   *  Field API array suitable for inserting in the destination object.
+   */
+  function prepareFieldTermRef($terms, $arguments) {
+    if (isset($arguments['source_type']) && $arguments['source_type'] == 'tid') {
+      $condition_field = 'td.tid';
+    }
+    else {
+      $condition_field = 'td.name';
+    }
+    // Cannot use taxonomy_term_load_multiple() since we have an array of names.
+    // It wants singular value.
+    // TODO: Restrict to the specific taxonomy
+    $tids = db_select('taxonomy_term_data', 'td')
+      ->fields('td', array('tid'))
+      ->condition($condition_field, $terms, 'IN')
+      ->execute()
+      ->fetchAllKeyed(0, 0);
+    $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
+    $result = array();
+    $i = 0;
+    foreach ($tids as $tid) {
+      $result[$language][$i] = array();
+      $result[$language][$i]['tid'] = $tid;
+      $i++;
+    }
+    return $result;
+  }
+
+  /**
    * Destination import callback to prepare input data for saving as a Field API text field
    *
    * @param mixed $values
@@ -260,42 +296,25 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
             $object->$machine_name = $this->prepareFieldText($object->$machine_name, $arguments);
             break;
           case 'taxonomy_term_reference':
-            // TODO: Factor out to function like others
-            $terms = $object->$machine_name;
-
-            // Cannot use taxonomy_term_load_multiple() since we have an array of names. It wants singular value.
-            // TODO: Restrict to the specific taxonomy
-            $tids = db_select('taxonomy_term_data', 'td')
-                      ->fields('td', array('tid'))
-                      ->condition('td.name', $terms, 'IN')
-                      ->execute()
-                      ->fetchAllKeyed(0, 0);
-            $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
-            $result = array();
-            $i = 0;
-            foreach ($tids as $tid) {
-              // TODO: Example taxonomy hard-coded
-              $result[$language][$i] = array();
-              $result[$language][$i]['tid'] = $tid;
-              $i++;
-            }
-            $object->$machine_name = $result;
+            $object->$machine_name = $this->prepareFieldTermRef($object->$machine_name, $arguments);
             break;
           case 'file':
           case 'image':
             $object->$machine_name = $this->prepareFieldFile($object->$machine_name, $arguments, $machine_name);
             break;
           case 'list':
+          case 'list_boolean':
           case 'list_number':
           case 'list_text':
+          case 'number_integer':
+          case 'number_decimal':
+          case 'number_float':
             $object->$machine_name = $this->prepareFieldValue($object->$machine_name, $arguments);
             break;
           // TODO: Should really be in migrate_extras
           case 'node_reference':
             $object->$machine_name = $this->prepareFieldNodeRef($object->$machine_name, $arguments);
             break;
-
-          // TODO: Other core field types?
         }
       }
     }

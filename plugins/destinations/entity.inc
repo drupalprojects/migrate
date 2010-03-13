@@ -320,4 +320,40 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     }
     migrate_instrument_stop('MigrateDestinationEntity->prepareFields');
   }
+
+  /**
+   * Give handlers a shot at modifying the object before saving it.
+   *
+   * @param $migration
+   *  Controlling migration object. Passed through to prepare handlers.
+   * @param $entity
+   *  Entity object to build. Prefilled with any fields mapped in the Migration.
+   * @param $source_row
+   *  Raw source data object - passed through to prepare handlers.
+   */
+  function prepare(Migration $migration, stdClass $entity, stdClass $source_row) {
+    // Call any general entity handlers (in particular, the builtin field handler)
+    migrate_handler_invoke_all('Entity', 'prepare', $migration, $entity, $source_row);
+    // Then call any entity-specific handlers
+    migrate_handler_invoke_all($this->entityType, 'prepare', $migration, $entity, $source_row);
+  }
+
+  /**
+   * Give handlers a shot at modifying the object (or taking additional action)
+   * after saving it.
+   *
+   * @param $migration
+   *  Controlling migration object. Passed through to complete handlers.
+   * @param $object
+   *  Entity object to build. This is the complete object after saving.
+   * @param $source_row
+   *  Raw source data object - passed through to complete handlers.
+   */
+  function complete(Migration $migration, stdClass $entity, stdClass $source_row) {
+    // Call any general entity handlers (in particular, the builtin field handler)
+    migrate_handler_invoke_all('Entity', 'complete', $migration, $entity, $source_row);
+    // Then call any entity-specific handlers
+    migrate_handler_invoke_all($this->entityType, 'complete', $migration, $entity, $source_row);
+  }
+
 }

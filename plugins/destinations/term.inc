@@ -156,12 +156,12 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
 
     // Look for Field API fields and handle appropriately
     $this->prepareFields($values, $arguments);
-    migrate_handler_invoke_all('Term', 'prepare', $migration, $values, $row);
+    $this->prepare($migration, $values, $row);
 
     migrate_instrument_start('taxonomy_term_save');
     $status = taxonomy_term_save($values);
     migrate_instrument_stop('taxonomy_term_save');
-    migrate_handler_invoke_all('Term', 'complete', $migration, $values, $row);
+    $this->complete($migration, $values, $row);
     $return = isset($values->tid) ? array($values->tid) : FALSE;
     return $return;
   }

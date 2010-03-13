@@ -128,11 +128,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     // Look for Field API fields and handle appropriately
     $this->prepareFields($comment, $arguments);
 
-    migrate_handler_invoke_all('Comment', 'prepare', $migration, $comment, $row);
+    $this->prepare($migration, $comment, $row);
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');
-    migrate_handler_invoke_all('Comment', 'complete', $migration, $comment, $row);
+    $this->complete($migration, $comment, $row);
     $return = isset($comment->cid) ? array($comment->cid) : FALSE;
     return $return;
   }

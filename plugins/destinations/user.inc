@@ -115,12 +115,12 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
 
     // Look for Field API fields and handle appropriately
     $this->prepareFields($account, $arguments);
-    migrate_handler_invoke_all('User', 'prepare', $migration, $account, $row);
+    $this->prepare($migration, $account, $row);
     migrate_instrument_start('user_save');
     $newaccount = user_save($account, (array)$account);
     migrate_instrument_stop('user_save');
     if ($newaccount) {
-      migrate_handler_invoke_all('User', 'complete', $migration, $newaccount, $row);
+      $this->complete($migration, $newaccount, $row);
       $return = isset($newaccount->uid) ? array($newaccount->uid) : FALSE;
     }
     else {

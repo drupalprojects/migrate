@@ -145,12 +145,12 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Look for Field API fields and handle appropriately
     $this->prepareFields($node, $arguments);
     // Invoke migration prepare handlers
-    migrate_handler_invoke_all('Node', 'prepare', $migration, $node, $row);
+    $this->prepare($migration, $node, $row);
     $node->revision = 0; // Always create a new revision.
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');
-    migrate_handler_invoke_all('Node', 'complete', $migration, $node, $row);
+    $this->complete($migration, $node, $row);
     $return = isset($node->nid) ? array($node->nid) : FALSE;
     return $return;
   }

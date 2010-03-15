@@ -68,11 +68,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $field_instance_info = field_info_instances($this->entityType, $this->bundle);
     foreach ($field_instance_info as $machine_name => $instance) {
       $field_info = field_info_field($machine_name);
-if (!isset($first)) {
-  drush_print_r($instance);
-  drush_print_r($field_info);
-  $first = TRUE;
-}
       $fields[$machine_name] = t('Node:') . ' ' . $instance['label'] .
         ' (' . $field_info['type'] . ')';
     }

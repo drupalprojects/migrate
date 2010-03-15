@@ -853,11 +853,11 @@ abstract class Migration {
 
             // Assign any arguments
             if (isset($values->$destination)) {
-              $values->{$destination}['arguments'] = array();
               if (isset($mapping->arguments)) {
                 if (!is_array($values->$destination)) {
                   $values->$destination = array($values->$destination);
                 }
+                $values->{$destination}['arguments'] = array();
                 foreach ($mapping->arguments as $argname => $destarg) {
                   if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
                     $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];

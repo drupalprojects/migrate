@@ -18,6 +18,7 @@ files[] = plugins/destinations/user.inc
 files[] = plugins/destinations/node.inc
 files[] = plugins/destinations/comment.inc
 files[] = plugins/destinations/path.inc
+files[] = plugins/destinations/fields.inc
 files[] = plugins/sources/sql.inc
 files[] = plugins/sources/mssql.inc
 ;NYI files[] = plugins/sources/view.inc

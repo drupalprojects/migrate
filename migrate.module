@@ -32,7 +32,7 @@ function migrate_migrations($refresh = FALSE) {
 }
 
 /**
- * Invoke any available handlers attched to a given destination type.
+ * Invoke any available handlers attached to a given destination type.
  * If any handlers have dependencies defined, they will be invoked after
  * the specified handlers.
  *
@@ -56,6 +56,42 @@ function migrate_handler_invoke_all($destination, $method) {
       migrate_instrument_start($class_name . '->' . $method);
       $result = call_user_func_array(array($handler, $method), $args);
       migrate_instrument_stop($class_name . '->' . $method);
+      if (isset($result) && is_array($result)) {
+        $return = array_merge_recursive($return, $result);
+      }
+      elseif (isset($result)) {
+        $return[] = $result;
+      }
+    }
+  }
+  return $return;
+}
+
+/**
+ * Invoke any available handlers attached to a given field type.
+ * If any handlers have dependencies defined, they will be invoked after
+ * the specified handlers.
+ *
+ * @param $field_info
+ *  Array of info on the field, from field_info_field().
+ * @param $instance
+ *  Array of info in the field instance, from field_info_instances().
+ * @param $values
+ *  Array of incoming values, to be transformed into the appropriate structure
+ *  for the field type.
+ */
+function migrate_field_handler_invoke_all(array $field_info, array $instance,
+    array $values) {
+  $return = array();
+  $type = str_replace('_', '', $field_info['type']);
+  $class_list = _migrate_class_list('%' . $type . 'FieldHandler',
+    'MigrateFieldHandler');
+  foreach ($class_list as $class_name => $handler) {
+    if (method_exists($handler, 'prepare')) {
+      migrate_instrument_start($class_name . '->prepare');
+      $result = call_user_func_array(array($handler, 'prepare'),
+        array($field_info, $instance, $values));
+      migrate_instrument_stop($class_name . '->prepare');
       if (isset($result) && is_array($result)) {
         $return = array_merge_recursive($return, $result);
       }

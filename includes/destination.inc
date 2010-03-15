@@ -58,7 +58,7 @@ abstract class MigrateDestination {
    * using field mappings in the Migration). It is expected to call prepare and
    * complete handlers, passing them $row (the raw data from the source).
    */
-  abstract public function import(Migration $migration, stdClass $object, stdClass $row, array $arguments);
+  abstract public function import(Migration $migration, stdClass $object, stdClass $row);
 
   /**
    * Simply save the key schema.

@@ -107,14 +107,12 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    *  Array of key fields (uid only in this case) of the user that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $account, stdClass $row, array $arguments) {
+  public function import(Migration $migration, stdClass $account, stdClass $row) {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
       $account->uid = $row->migrate_map_destid1;
     }
 
-    // Look for Field API fields and handle appropriately
-    $this->prepareFields($account, $arguments);
     $this->prepare($migration, $account, $row);
     migrate_instrument_start('user_save');
     $newaccount = user_save($account, (array)$account);

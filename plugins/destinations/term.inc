@@ -39,7 +39,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    */
   public function fields() {
     $fields = array();
-    // First the core (term_data table) properties
+    // First the core (taxonomy_term_data table) properties
     $fields['tid'] = t('Term: Existing term ID');
     $fields['name'] = t('Term: Name');
     $fields['description'] = t('Term: Description');
@@ -47,7 +47,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $fields['weight'] = t('Term: Weight');
     // TODO: Only if vocab has hierarchy
     $fields['parent_name'] = t('Term: Parent (by name)');
-    $fields['parent'] = t('Term: Parent (by Drupal ID)');
+    $fields['parent'] = t('Term: Parent (by Drupal term ID)');
 
     // Then add any fields attached to this vocabulary (bundle)
     $field_instance_info = field_info_instances($this->entityType, $this->bundle);
@@ -108,7 +108,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  Array of key fields (tid only in this case) of the term that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $values, stdClass $row, array $arguments) {
+  public function import(Migration $migration, stdClass $values, stdClass $row) {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
       $values->tid = $row->migrate_map_destid1;
@@ -154,8 +154,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $values->format = $this->inputFormat;
     }
 
-    // Look for Field API fields and handle appropriately
-    $this->prepareFields($values, $arguments);
     $this->prepare($migration, $values, $row);
 
     migrate_instrument_start('taxonomy_term_save');

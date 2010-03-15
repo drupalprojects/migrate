@@ -795,7 +795,6 @@ abstract class Migration {
 
         // Apply mappings.
         $values = new stdClass;
-        $arguments = array();
         foreach ($this->fieldMappings as $mapping) {
           if (isset($mapping->destinationField)) {
             $destination = $mapping->destinationField;
@@ -832,26 +831,29 @@ abstract class Migration {
               }
             }
 
-            // Assign any arguments
-            $arguments[$destination] = array();
-            if (isset($mapping->arguments)) {
-              foreach ($mapping->arguments as $argname => $destarg) {
-                if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
-                  $arguments[$destination][$argname] = $data_row->$destarg['source_field'];
-                }
-                elseif (is_array($destarg) && isset($destarg['default_value'])) {
-                  $arguments[$destination][$argname] = $destarg['default_value'];
-                }
-                else {
-                  $arguments[$destination][$argname] = $destarg;
-                }
-              }
-            }
-
             // If there's a separator specified for this destination, then it
             // will be populated as an array exploded from the source value
             if (isset($mapping->separator) && isset($values->$destination)) {
               $values->$destination = explode($mapping->separator, $values->$destination);
+            }
+
+            // Assign any arguments
+            $values->$destination['arguments'] = array();
+            if (isset($mapping->arguments)) {
+              if (!is_array($values->$destination)) {
+                $values->$destination = array($values->$destination);
+              }
+              foreach ($mapping->arguments as $argname => $destarg) {
+                if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                  $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
+                }
+                elseif (is_array($destarg) && isset($destarg['default_value'])) {
+                  $values->{$destination}['arguments'][$argname] = $destarg['default_value'];
+                }
+                else {
+                  $values->{$destination}['arguments'][$argname] = $destarg;
+                }
+              }
             }
           }
         }
@@ -866,7 +868,7 @@ abstract class Migration {
 
         try {
           migrate_instrument_start('destination import', TRUE);
-          $ids = $this->destination->import($this, $values, $data_row, $arguments);
+          $ids = $this->destination->import($this, $values, $data_row);
           migrate_instrument_stop('destination import');
           if ($ids) {
             $this->saveIDMapping($data_row, $ids);
@@ -882,7 +884,7 @@ abstract class Migration {
         catch (Exception $e) {
           $this->saveMessage($e->getMessage());
           $outputFunction = $this->outputFunction;
-          $outputFunction($e->get_message());
+          $outputFunction($e->getMessage());
         }
         if (isset($this->highwaterField)) {
           $this->saveHighwater($data_row->{$this->highwaterField});

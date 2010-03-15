@@ -68,7 +68,11 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $field_instance_info = field_info_instances($this->entityType, $this->bundle);
     foreach ($field_instance_info as $machine_name => $instance) {
       $field_info = field_info_field($machine_name);
-
+if (!isset($first)) {
+  drush_print_r($instance);
+  drush_print_r($field_info);
+  $first = TRUE;
+}
       $fields[$machine_name] = t('Node:') . ' ' . $instance['label'] .
         ' (' . $field_info['type'] . ')';
     }
@@ -106,7 +110,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    *  Array of key fields (nid only in this case) of the node that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $node, stdClass $row, array $arguments) {
+  public function import(Migration $migration, stdClass $node, stdClass $row) {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
       $node->nid = $row->migrate_map_destid1;
@@ -142,8 +146,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $node->uid = $uid;
     }
 
-    // Look for Field API fields and handle appropriately
-    $this->prepareFields($node, $arguments);
     // Invoke migration prepare handlers
     $this->prepare($migration, $node, $row);
     $node->revision = 0; // Always create a new revision.

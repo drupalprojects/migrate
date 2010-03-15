@@ -144,12 +144,8 @@ class BeerNodeMigration extends Migration {
     // Drupal 7 fields can have attributes such as input formats, or summaries
     // (equivalent to teasers in previous Drupal versions). These can be
     // passed in an arguments array.
-    $arguments = array(
-      // An argument's value can be a constant...
-      'format' => filter_fallback_format(),
-      // ...or it can come from another field in the source query.
-      'summary' => array('source_field' => 'excerpt'),
-    );
+    $arguments = MigrateTextFieldHandler::arguments(
+      array('source_field' => 'excerpt'), filter_fallback_format());
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
 
@@ -229,7 +225,6 @@ class BeerCommentMigration extends Migration {
          ->defaultValue(0);
 
     $this->addFieldMapping('comment_body', 'body');
-    $dest = $this->lookupDestinationID(array(1));
   }
 }
 

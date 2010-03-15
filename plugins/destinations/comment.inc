@@ -107,7 +107,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  Array of key fields (cid only in this case) of the comment that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $comment, stdClass $row, array $arguments) {
+  public function import(Migration $migration, stdClass $comment, stdClass $row) {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
       $comment->cid = $row->migrate_map_destid1;
@@ -124,9 +124,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       'pid' => 0,
     );
     $comment = (object) $comment;
-
-    // Look for Field API fields and handle appropriately
-    $this->prepareFields($comment, $arguments);
 
     $this->prepare($migration, $comment, $row);
     migrate_instrument_start('comment_save');

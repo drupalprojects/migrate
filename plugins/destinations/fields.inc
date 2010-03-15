@@ -20,12 +20,6 @@ class MigrateFieldsEntityHandler extends MigrateHandler {
           $entity->$machine_name = array($entity->$machine_name);
         }
         $field_info = field_info_field($machine_name);
-        if (isset($argumentOverrides[$machine_name])) {
-          $arguments = $argumentOverrides[$machine_name];
-        }
-        else {
-          $arguments = array();
-        }
         $entity->$machine_name = migrate_field_handler_invoke_all($field_info,
           $instance, $entity->$machine_name);
       }
@@ -123,8 +117,13 @@ class MigrateNumberFloatFieldHandler extends MigrateValueFieldHandler {
 
 class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
   function prepare(array $field_info, array $instance, array $values) {
-    $arguments = $values['arguments'];
-    unset($values['arguments']);
+    if (isset($values['arguments'])) {
+      $arguments = $values['arguments'];
+      unset($values['arguments']);
+    }
+    else {
+      $arguments = array();
+    }
     if (isset($arguments['source_type']) && $arguments['source_type'] == 'tid') {
       $condition_field = 'td.tid';
     }

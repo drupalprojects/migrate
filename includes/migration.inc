@@ -61,6 +61,14 @@ abstract class Migration {
   public $destination;
 
   /**
+   * If the purpose of this migration is primarily to update existing content,
+   * rather than to import new content, set this to TRUE.
+   *
+   * @var boolean
+   */
+  public $updateDestination = FALSE;
+
+  /**
    * Names of tables created for tracking the migration. By default they are
    * constructed from machineName, but a derived Migration class may set them
    * as it wishes.
@@ -598,9 +606,11 @@ abstract class Migration {
           $total++;
           if ($count >= $this->rollbackBatchSize) {
             try {
-              migrate_instrument_start('destination bulkRollback');
-              $this->destination->bulkRollback($this, $destids);
-              migrate_instrument_stop('destination bulkRollback');
+              if (!$this->updateDestination) {
+                migrate_instrument_start('destination bulkRollback');
+                $this->destination->bulkRollback($this, $destids);
+                migrate_instrument_stop('destination bulkRollback');
+              }
               // Keep track in case of interruption
               migrate_instrument_start('rollback map/message update');
               db_delete($this->mapTableName)
@@ -622,9 +632,11 @@ abstract class Migration {
           }
         }
         if ($count > 0) {
-          migrate_instrument_start('destination bulkRollback');
-          $this->destination->bulkRollback($this, $destids);
-          migrate_instrument_stop('destination bulkRollback');
+          if (!$this->updateDestination) {
+            migrate_instrument_start('destination bulkRollback');
+            $this->destination->bulkRollback($this, $destids);
+            migrate_instrument_stop('destination bulkRollback');
+          }
           migrate_instrument_start('rollback map/message update');
           db_delete($this->mapTableName)
                          ->condition('sourceid1', $sourceids, 'IN')
@@ -658,9 +670,11 @@ abstract class Migration {
 
           // Rollback one record
           try {
-            migrate_instrument_start('destination rollback');
-            $this->destination->rollback($this, array($record->destid1));
-            migrate_instrument_stop('destination rollback');
+            if (!$this->updateDestination) {
+              migrate_instrument_start('destination rollback');
+              $this->destination->rollback($this, array($record->destid1));
+              migrate_instrument_stop('destination rollback');
+            }
 
             migrate_instrument_start('rollback map/message update');
             db_delete($this->mapTableName)
@@ -803,7 +817,7 @@ abstract class Migration {
             if ($source && isset($data_row->$source)) {
               $values->$destination = $data_row->$source;
             }
-            elseif (isset($mapping->defaultValue)) {
+            elseif (!is_null($mapping->defaultValue)) {
               $values->$destination = $mapping->defaultValue;
             }
 
@@ -838,20 +852,22 @@ abstract class Migration {
             }
 
             // Assign any arguments
-            $values->$destination['arguments'] = array();
-            if (isset($mapping->arguments)) {
-              if (!is_array($values->$destination)) {
-                $values->$destination = array($values->$destination);
-              }
-              foreach ($mapping->arguments as $argname => $destarg) {
-                if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
-                  $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
+            if (isset($values->$destination)) {
+              $values->{$destination}['arguments'] = array();
+              if (isset($mapping->arguments)) {
+                if (!is_array($values->$destination)) {
+                  $values->$destination = array($values->$destination);
                 }
-                elseif (is_array($destarg) && isset($destarg['default_value'])) {
-                  $values->{$destination}['arguments'][$argname] = $destarg['default_value'];
-                }
-                else {
-                  $values->{$destination}['arguments'][$argname] = $destarg;
+                foreach ($mapping->arguments as $argname => $destarg) {
+                  if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                    $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
+                  }
+                  elseif (is_array($destarg) && isset($destarg['default_value'])) {
+                    $values->{$destination}['arguments'][$argname] = $destarg['default_value'];
+                  }
+                  else {
+                    $values->{$destination}['arguments'][$argname] = $destarg;
+                  }
                 }
               }
             }

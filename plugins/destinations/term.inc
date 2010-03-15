@@ -100,7 +100,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *
    * @param $migration
    *  Controlling migration object. Passed through to prepare/complete handlers.
-   * @param $values
+   * @param $term
    *  Term object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
    *  Raw source data object - passed through to prepare/complete handlers.
@@ -108,59 +108,72 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  Array of key fields (tid only in this case) of the term that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $values, stdClass $row) {
+  public function import(Migration $migration, stdClass $term, stdClass $row) {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
-      $values->tid = $row->migrate_map_destid1;
+      $term->tid = $row->migrate_map_destid1;
+    }
+
+    // Trying to update an existing term
+    if (isset($term->tid)) {
+      $existing_term = taxonomy_term_load($term->tid);
+      if ($existing_term) {
+        // Incoming data overrides existing data, so only copy non-existent fields
+        foreach ($existing_term as $field => $value) {
+          if (!isset($term->$field)) {
+            $term->$field = $existing_term->$field;
+          }
+        }
+      }
     }
 
     // Default to bundle if no vocabulary machine name provided
-    if (!isset($values->vocabulary_machine_name)) {
-      $values->vocabulary_machine_name = $this->bundle;
+    if (!isset($term->vocabulary_machine_name)) {
+      $term->vocabulary_machine_name = $this->bundle;
     }
     // vid is required
-    if (empty($values->vid)) {
+    if (empty($term->vid)) {
       static $vocab_map = array();
-      if (!isset($vocab_map[$values->vocabulary_machine_name])) {
+      if (!isset($vocab_map[$term->vocabulary_machine_name])) {
         // The keys of the returned array are vids
         $vocabs = taxonomy_vocabulary_load_multiple(array(),
-          array('machine_name' => $values->vocabulary_machine_name));
+          array('machine_name' => $term->vocabulary_machine_name));
         $vids = array_keys($vocabs);
         if (isset($vids[0])) {
-          $vocab_map[$values->vocabulary_machine_name] = $vids[0];
+          $vocab_map[$term->vocabulary_machine_name] = $vids[0];
         }
         else {
           $migration->saveMessage(t('No vocabulary found with machine_name !name',
-            array('!name' => $values->vocabulary_machine_name)));
+            array('!name' => $term->vocabulary_machine_name)));
           return FALSE;
         }
       }
-      $values->vid = $vocab_map[$values->vocabulary_machine_name];
+      $term->vid = $vocab_map[$term->vocabulary_machine_name];
     }
     // Look up parent name if provided
-    if (isset($values->parent_name)) {
+    if (isset($term->parent_name)) {
       // Look for the name in the same vocabulary.
       // Note that hierarchies may have multiples of the same name...
       $terms = taxonomy_term_load_multiple(array(),
-        array('name' => trim($values->parent_name), 'vid' => $values->vid));
+        array('name' => trim($term->parent_name), 'vid' => $term->vid));
       $tids = array_keys($terms);
-      $values->parent = $tids[0];
-      unset($values->parent_name);
+      $term->parent = $tids[0];
+      unset($term->parent_name);
     }
-    if (!isset($values->parent)) {
-      $values->parent = array(0);
+    if (!isset($term->parent)) {
+      $term->parent = array(0);
     }
-    if (!isset($values->format)) {
-      $values->format = $this->inputFormat;
+    if (!isset($term->format)) {
+      $term->format = $this->inputFormat;
     }
 
-    $this->prepare($migration, $values, $row);
+    $this->prepare($migration, $term, $row);
 
     migrate_instrument_start('taxonomy_term_save');
-    $status = taxonomy_term_save($values);
+    $status = taxonomy_term_save($term);
     migrate_instrument_stop('taxonomy_term_save');
-    $this->complete($migration, $values, $row);
-    $return = isset($values->tid) ? array($values->tid) : FALSE;
+    $this->complete($migration, $term, $row);
+    $return = isset($term->tid) ? array($term->tid) : FALSE;
     return $return;
   }
 }

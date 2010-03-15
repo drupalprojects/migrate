@@ -109,23 +109,19 @@ function migrate_migration_info($form, $form_state, $migration) {
     '#group' => 'detail',
   );
 
-  foreach ($migration->owners as $member) {
-    $owners[] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
+  $team = array();
+  foreach ($migration->team as $member) {
+    $team[$member->group][] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
   }
-  $form['detail']['overview']['client'] = array(
-    '#theme' => 'item_list',
-    '#title' => t('Client Owner'),
-    '#attributes' => array('id' => 'owner'),
-    '#items' => $owners,
-  );
-  foreach ($migration->implementors as $member) {
-    $implementors[] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
+
+  foreach ($team as $group => $list) {
+    $form['detail']['overview'][$group] = array(
+      '#theme' => 'item_list',
+      '#title' => $group,
+      '#attributes' => array('id' => 'team'),
+      '#items' => $list,
+    );
   }
-  $form['detail']['overview']['implementor'] = array(
-    '#theme' => 'item_list',
-    '#title' => t('Implementor'),
-    '#items' => $implementors,
-  );
 
   if (count($migration->dependencies) > 0) {
     $form['detail']['overview']['dependencies'] = array(

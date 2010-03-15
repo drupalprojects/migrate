@@ -156,14 +156,12 @@ abstract class Migration {
   public $highwaterField;
 
   /**
-   * MigrateTeamMember objects representing owners (responsible for defining
-   * and approving migration processes) and implementors (repsponsible for
-   * implementing migration processes).
+   * MigrateTeamMember objects representing people involved with this
+   * migration.
    *
    * @var array
    */
-  public $owners = array();
-  public $implementors = array();
+  public $team = array();
 
   /**
    * If provided, an URL for an issue tracking system containing :id: where

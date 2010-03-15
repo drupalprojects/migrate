@@ -82,33 +82,33 @@ class BeerNodeMigration extends Migration {
 
     // You can also document destination fields that are yet to be mapped...
     $this->addFieldMapping('sticky')
-         ->description(t('Where is a source field we can map here'),
-                      t('Client questions'))
-          ->issueNumber(256)
-          ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_LOW);
+         ->description(t('Where is a source field we can map here'))
+         ->issueGroup(t('Client questions'))
+         ->issueNumber(256)
+         ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_LOW);
     // ... or source fields we don't know what to do with
     $this->addFieldMapping(NULL, 'mysterious_column')
-         ->description(t('Talk to client about what this source field means'),
-                      t('Client questions'))
-          ->issueNumber(255)
-          ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_MEDIUM);
+         ->description(t('Talk to client about what this source field means'))
+         ->issueGroup(t('Client questions'))
+         ->issueNumber(255)
+         ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_MEDIUM);
 
     // We can use the 'DNM' or 'Do not migrate' group to silence warnings about
     // unmapped source or destination fields
     $this->addFieldMapping('name')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('authorid')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('created')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('changed')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('status')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('promote')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('revision')
-         ->description('', t('DNM'));
+         ->issueGroup(t('DNM'));
 
     // To maintain node identities between the old and new systems (i.e., have
     // the same unique IDs), map the ID column from the old system to nid and

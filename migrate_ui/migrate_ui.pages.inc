@@ -240,7 +240,7 @@ function migrate_migration_info($form, $form_state, $migration) {
         list of destination fields', array('!destination' => $mapping->destinationField)),
       'warning');
     }
-    $descriptions[$mapping->descriptionGroup][] = $mapping;
+    $descriptions[$mapping->issueGroup][] = $mapping;
   }
 
   // Put out each group header

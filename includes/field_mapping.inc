@@ -61,8 +61,8 @@ class MigrateFieldMapping {
    */
   public $arguments;
 
-  public $descriptionGroup;
   public $descriptionText = '';
+  public $issueGroup;
   public $issueNumber;
   public $issuePriority = self::ISSUE_PRIORITY_OK;
 
@@ -80,7 +80,7 @@ class MigrateFieldMapping {
     }
     $this->destinationField = $destination_field;
     $this->sourceField = $source_field;
-    $this->descriptionGroup = t('Done');
+    $this->issueGroup = t('Done');
     if (count(self::$priorities) == 0) {
       self::$priorities[self::ISSUE_PRIORITY_OK] = t('OK');
       self::$priorities[self::ISSUE_PRIORITY_LOW] = t('Low');
@@ -109,12 +109,16 @@ class MigrateFieldMapping {
     return $this;
   }
 
-  public function description($text, $group = NULL) {
+  public function description($text) {
+    $this->descriptionText = $text;
+    return $this;
+  }
+
+  public function issueGroup($group) {
     if (!$group) {
       $group = t('Done');
     }
-    $this->descriptionGroup = $group;
-    $this->descriptionText = $text;
+    $this->issueGroup = $group;
     return $this;
   }
 

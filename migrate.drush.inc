@@ -311,7 +311,7 @@ function drush_migrate_descriptions() {
     // First group the mappings
     $descriptions = array();
     foreach ($migration->fieldMappings as $mapping) {
-      $descriptions[$mapping->descriptionGroup][] = $mapping;
+      $descriptions[$mapping->issueGroup][] = $mapping;
     }
     // Put out each group header
     $table = array();

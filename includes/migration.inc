@@ -888,14 +888,16 @@ abstract class Migration {
           migrate_instrument_stop('destination import');
           if ($ids) {
             $this->saveIDMapping($data_row, $ids);
-            $count++;
-            $total++;
           }
           else {
             // TODO: Failure to save
-            $this->saveMessage(t('New object was not saved, no error provided'));
-            $return = Migration::RESULT_FAILED;
+            $message = t('New object was not saved, no error provided');
+            $this->saveMessage($message);
+            $outputFunction = $this->outputFunction;
+            $outputFunction($message);
           }
+          $count++;
+          $total++;
         }
         catch (Exception $e) {
           $this->saveMessage($e->getMessage());

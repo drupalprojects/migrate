@@ -27,6 +27,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       ),
     );
     parent::__construct($destination_key, 'user', 'user', $language, $input_format);
+    $this->supportsBulkRollback = TRUE;
   }
 
   /**
@@ -70,28 +71,17 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
   }
 
   /**
-   * Delete a migrated user
+   * Delete a batch of users at once.
    *
    * @param $migration
    *  Controlling migration object. Unused here.
-   * @param $key
-   *  Array of fields representing the key (in this case, just uid).
+   * @param $uids
+   *  Array of user IDs to be deleted.
    */
-  public function rollback(Migration $migration, array $key) {
-    // TODO: the user cancel api is not very friendly to programmatic deletion. See http://drupal.org/node/705306
-    // Avoid batch API for now.
-    $edit = array();
-    migrate_instrument_start('user_load');
-    $account = user_load($key[0], TRUE);
-    migrate_instrument_stop('user_load');
-    $method = 'user_cancel_delete';
-    migrate_instrument_start('user_cancel hooks');
-    module_invoke_all('user_cancel', $edit, $account, $method);
-    migrate_instrument_stop('user_cancel hooks');
-    migrate_instrument_start('_user_cancel');
-    _user_cancel(array(), $account, $method); // Slow. Clears cache.
-    migrate_instrument_stop('_user_cancel');
-    return (bool) $account->uid;
+  public function bulkRollback(Migration $migration, array $uids) {
+    migrate_instrument_start('user_delete_multiple');
+    user_delete_multiple($uids);
+    migrate_instrument_stop('user_delete_multiple');
   }
 
   /**

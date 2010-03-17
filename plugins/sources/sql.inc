@@ -19,7 +19,7 @@ class MigrateSourceSQL extends MigrateSource {
    *
    * @var SelectQuery
    */
-  protected $query, $countQuery;
+  public $query, $countQuery;
 
   /**
    * The result object from executing the query - traversed to process the

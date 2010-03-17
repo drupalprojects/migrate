@@ -66,6 +66,10 @@ class BeerNodeMigration extends Migration {
                                       'alias' => 'b',
                                     )
                                   ));
+    // By default, MigrateSourceSQL derives a count query from the main query -
+    // but we can override it
+    $this->source->countQuery = db_select('migrate_example_beer', 'b');
+    $this->source->countQuery->addExpression('COUNT(bid)', 'cnt');
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');

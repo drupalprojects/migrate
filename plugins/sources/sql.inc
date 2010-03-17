@@ -15,11 +15,11 @@
  */
 class MigrateSourceSQL extends MigrateSource {
   /**
-   * The SQL query object from which to obtain data.
+   * The SQL query objects from which to obtain data, and counts of data
    *
    * @var SelectQuery
    */
-  protected $query;
+  protected $query, $countQuery;
 
   /**
    * The result object from executing the query - traversed to process the
@@ -35,6 +35,7 @@ class MigrateSourceSQL extends MigrateSource {
   public function __construct(SelectQuery $query, array $key_schema) {
     parent::__construct($key_schema);
     $this->query = $query;
+    $this->countQuery = clone $query->countQuery();
     $this->handlesMapFiltering = TRUE;
   }
 
@@ -75,21 +76,11 @@ class MigrateSourceSQL extends MigrateSource {
    *  If TRUE, or if there is no cached count, perform a SQL COUNT query to
    *  retrieve and cache the number of rows in the query. Otherwise, return
    *  the last cached value.
+   *
+   *  TODO: Remove refresh parameter, let Migration class do the caching
    */
   public function count($refresh = FALSE) {
-    if ($refresh) {
-      cache_clear_all(__METHOD__, 'cache');
-    }
-
-    $count = cache_get(__METHOD__, 'cache');
-    if ($count === FALSE) {
-      // Cache miss.
-      $count = $this->query->countQuery()->execute()->fetchField();
-      $return = cache_set(__METHOD__, $count, 'cache');
-    }
-    else {
-      $count = $count->data;
-    }
+    $count = $this->countQuery->execute()->fetchField();
     return $count;
   }
 

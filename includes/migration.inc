@@ -333,6 +333,7 @@ abstract class Migration {
    *  Array of destination key values, or NULL on failure.
    */
   public function lookupDestinationID(array $source_id) {
+    migrate_instrument_start('lookupDestinationID');
     $this->ensureTables();
     $query = db_select($this->mapTableName, 'map');
     foreach ($this->destinationKeyMap() as $key_name) {
@@ -343,6 +344,7 @@ abstract class Migration {
     }
     $result = $query->execute();
     $destination_id = $result->fetchAssoc();
+    migrate_instrument_stop('lookupDestinationID');
     return $destination_id;
   }
 

@@ -20,7 +20,7 @@ class MigrateFieldsEntityHandler extends MigrateHandler {
           $entity->$machine_name = array($entity->$machine_name);
         }
         $field_info = field_info_field($machine_name);
-        $entity->$machine_name = migrate_field_handler_invoke_all($field_info,
+        $entity->$machine_name = migrate_field_handler_invoke_all($migration, $entity, $field_info,
           $instance, $entity->$machine_name);
       }
     }
@@ -30,7 +30,7 @@ class MigrateFieldsEntityHandler extends MigrateHandler {
 
 abstract class MigrateFieldHandler extends MigrateHandler {
   // abstract function arguments(...)
-  abstract function prepare(array $field_info, array $instance, array $values);
+  abstract function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values);
 }
 
 class MigrateTextFieldHandler extends MigrateFieldHandler {
@@ -48,7 +48,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     return $arguments;
   }
 
-  function prepare(array $field_info, array $instance, array $values) {
+  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
     }
@@ -87,7 +87,7 @@ class MigrateTextWithSummaryFieldHandler extends MigrateTextFieldHandler {
 }
 
 abstract class MigrateValueFieldHandler extends MigrateFieldHandler {
-  function prepare(array $field_info, array $instance, array $values) {
+  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
 
     // Setup the standard Field API array for saving.
@@ -116,7 +116,7 @@ class MigrateNumberFloatFieldHandler extends MigrateValueFieldHandler {
 }
 
 class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
-  function prepare(array $field_info, array $instance, array $values) {
+  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -160,7 +160,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  function prepare(array $field_info, array $instance, array $values) {
+  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     $arguments = $values['arguments'];
     unset($values['arguments']);
     $delta = 0;
@@ -172,12 +172,17 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $full_path = $values[$delta];
     }
 
+    if (!file_exists($full_path)) {
+      $migration->saveMessage(t('File does not exist: !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
+      return;
+    }
+
     // We must use full_path including directory part in order to guarantee a unique destination.
     $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
 
     $file = (object) array(
       'uri' => $full_path,
-      'uid' => isset($entity->uid) ? isset($entity->uid) : 1, // TODO: http://drupal.org/node/745298
+      'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
       'filename' => basename($full_path),
       'filemime' => file_get_mimetype($full_path),
       'timestamp' => REQUEST_TIME,
@@ -208,10 +213,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       return $return;
     }
     else {
-      // TODO: Maybe prepare callbacks should throw exceptions, Migration can catch them
-      // and do saveMessage. Define MigrateException class...
-      //$migration->saveMessage(t('...'));
-      throw new Exception(t('Unable to create file record for !path', array('!path' => $full_path)));
+      $migration->saveMessage(t('Unable to create file record for !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
     }
   }
 
@@ -241,7 +243,7 @@ class MigrateImageFieldHandler extends MigrateFileFieldHandler {
 }
 
 class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
-  function prepare(array $field_info, array $instance, array $values) {
+  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
 
     // Setup the standard Field API array for saving.

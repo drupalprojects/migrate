@@ -163,53 +163,52 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
   function prepare(array $field_info, array $instance, array $values) {
     $arguments = $values['arguments'];
     unset($values['arguments']);
-
     $delta = 0;
 
-    if ($source_path = $values[$delta]) {
-      // Prefix with any source_path that was passed as argument.
-      if (strpos(trim($source_path, DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR) === FALSE) {
-        $source_path = $arguments['source_path'] . '/' . $source_path;
-      }
+    if ($arguments['source_path']) {
+      $full_path = rtrim($arguments['source_path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . ltrim($values[$delta], DIRECTORY_SEPARATOR);
+    }
+    else {
+      $full_path = $values[$delta];
+    }
 
-      $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . basename($source_path);
+    $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . basename($full_path);
 
-      $file = (object) array(
-        'uri' => $source_path,
-        'uid' => isset($entity->uid) ? isset($entity->uid) : 1, // TODO: http://drupal.org/node/745298
-        'filename' => basename($source_path),
-        'filemime' => file_get_mimetype($source_path),
-        'timestamp' => REQUEST_TIME,
-      );
+    $file = (object) array(
+      'uri' => $full_path,
+      'uid' => isset($entity->uid) ? isset($entity->uid) : 1, // TODO: http://drupal.org/node/745298
+      'filename' => basename($full_path),
+      'filemime' => file_get_mimetype($full_path),
+      'timestamp' => REQUEST_TIME,
+    );
 
-      switch ($arguments['file_function']) {
-        case 'file_copy':
-          $file = file_copy($file, $destination, $arguments['file_replace']);
-          break;
-        case 'file_move':
-          $file = file_move($file, $destination, $arguments['file_replace']);
-          break;
-        case 'file_save':
-          $file = file_save($file);
-          break;
-      }
+    switch ($arguments['file_function']) {
+      case 'file_copy':
+        $file = file_copy($file, $destination, $arguments['file_replace']);
+        break;
+      case 'file_move':
+        $file = file_move($file, $destination, $arguments['file_replace']);
+        break;
+      case 'file_save':
+        $file = file_save($file);
+        break;
+    }
 
-      if ($file->fid) {
-        // Build up a return object.
-        $object_field['fid'] = $file->fid;
-        $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;
-        $object_field['title'] = isset($arguments['source_title_name']) ? $values[$arguments['source_title_name']] : NULL;
-        $object_field['description'] = isset($arguments['source_description_name']) ? $values[$arguments['source_description_name']] : NULL;
-        $object_field['display'] = isset($arguments['source_display_name']) ? $values[$arguments['source_display_name']] : NULL;
-        $return[$arguments['language']][$delta] = $object_field;
-        return $return;
-      }
-      else {
-        // TODO: Maybe prepare callbacks should throw exceptions, Migration can catch them
-        // and do saveMessage. Define MigrateException class...
-        //$migration->saveMessage(t('...'));
-        throw new Exception(t('Unable to create file record for !path', array('!path' => $source_path)));
-      }
+    if ($file->fid) {
+      // Build up a return object.
+      $object_field['fid'] = $file->fid;
+      $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;
+      $object_field['title'] = isset($arguments['source_title_name']) ? $values[$arguments['source_title_name']] : NULL;
+      $object_field['description'] = isset($arguments['source_description_name']) ? $values[$arguments['source_description_name']] : NULL;
+      $object_field['display'] = isset($arguments['source_display_name']) ? $values[$arguments['source_display_name']] : NULL;
+      $return[$arguments['language']][$delta] = $object_field;
+      return $return;
+    }
+    else {
+      // TODO: Maybe prepare callbacks should throw exceptions, Migration can catch them
+      // and do saveMessage. Define MigrateException class...
+      //$migration->saveMessage(t('...'));
+      throw new Exception(t('Unable to create file record for !path', array('!path' => $full_path)));
     }
   }
 

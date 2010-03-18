@@ -1117,4 +1117,20 @@ abstract class Migration {
                 ->fetchField();
     return $highwater;
   }
+  
+  /**
+   * Get human readable name for a message constant.
+   *
+   * @return string
+   *  Name.
+   */
+  public function getMessageLevelName($constant) {
+    $map = array(
+      Migration::MESSAGE_ERROR => 'Error',
+      Migration::MESSAGE_WARNING => 'Warning',
+      Migration::MESSAGE_NOTICE => 'Notice',
+      Migration::MESSAGE_INFORMATIONAL => 'Informational',
+    );
+    return $map[$constant];
+  }
 }

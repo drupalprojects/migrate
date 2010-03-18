@@ -2,10 +2,17 @@
 
 define('MIGRATE_ACCESS_BASIC', 'migration information');
 
+function migrate_ui_help($path, $arg) {
+  switch ($path) {
+    case 'admin/migrate':
+      return t('The current status of each migration defined in this system. Click on a migration name for details on its configuration.');
+  }
+}
+
 /**
  * Implementation of hook_permission().
  */
-function migrate_permission() {
+function migrate_ui_permission() {
   return array(
     MIGRATE_ACCESS_BASIC => array(
       'title' => t('Basic access to migration information'),
@@ -22,8 +29,16 @@ function migrate_menu() {
   $items['admin/migrate'] = array(
     'title' => 'Migrate',
     'description' => 'Monitor the creation of Drupal content from source data',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('migrate_dashboard'),
+    'page callback' => 'migrate_ui_dashboard',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_ui/migrate_ui.pages.inc',
+  );
+  $items['admin/migrate/messages/%migration'] = array(
+    'title callback' => 'migration_title',
+    'title arguments' => array(3),
+    'description' => 'View messages from a migration',
+    'page callback' => 'migrate_ui_messages',
+    'page arguments' => array(3),
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui/migrate_ui.pages.inc',
   );

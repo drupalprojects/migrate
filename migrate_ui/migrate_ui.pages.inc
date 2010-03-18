@@ -6,18 +6,12 @@
  */
 
 /**
- * Form definition for dashboard page
+ * Menu callback for dashboard page
  */
-function migrate_dashboard($form, $form_state) {
-  $form = array();
-  $form['description'] = array(
-    '#prefix' => '<div>',
-    '#markup' => t('The current status of each migration defined in this system.
-      Click on a migration name for details on its configuration.'),
-    '#suffix' => '</div>',
-  );
-
-  $form['overview'] = array(
+function migrate_ui_dashboard() {
+  $build = array();
+  
+  $build['overview'] = array(
     '#prefix' => '<div>',
     '#markup' => migrate_overview(),
     '#suffix' => '</div>',
@@ -29,6 +23,7 @@ function migrate_dashboard($form, $form_state) {
     array('data' => t('Total rows')),
     array('data' => t('Imported')),
     array('data' => t('Unimported')),
+    array('data' => t('Messages')),
     array('data' => t('Last imported')),
     );
 
@@ -64,11 +59,15 @@ function migrate_dashboard($form, $form_state) {
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     $row['unimported'] = $unimported;
+    $query = db_select($migration->messageTableName, 'cnt');
+    $query->addExpression('COUNT(*)', 'cnt');
+    $num_messages = $query->execute()->fetchField();
+    $row['messages'] = l($num_messages, 'admin/migrate/messages/' . $migration->machineName);
     $row['lastimported'] = $migration->getLastImported();
     $rows[] = $row;
   }
 
-  $form['dashboard'] = array(
+  $build['dashboard'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
@@ -76,7 +75,43 @@ function migrate_dashboard($form, $form_state) {
       'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
     ),
   );
-  return $form;
+  return $build;
+}
+
+/**
+ * Menu callback for messages page
+ */
+function migrate_ui_messages($migration) {
+  $build = $rows = array();
+
+  $header = array(t('Source ID'), t('Level'), t('Message'));
+
+  if (is_string($migration)) {
+    $migration = migration_load($migration);
+  }
+
+  $messages = db_select($migration->messageTableName, 'msg')->fields('msg')->execute();
+
+  foreach ($messages as $message) {
+    $classes[] = $message->level <= Migration::MESSAGE_WARNING ? 'migrate-error' : '';
+    $rows[] = array(
+      array('data' => $message->sourceid1, 'class' => $classes), // TODO: deal with compound keys
+      array('data' => $migration->getMessageLevelName($message->level), 'class' => $classes),
+      array('data' => $message->message, 'class' => $classes),
+    );
+    unset($classes);
+  }
+
+  $build['dashboard'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('No messages'),
+    '#attached' => array(
+      'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
+    ),
+  );
+  return $build;
 }
 
 /**

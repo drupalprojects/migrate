@@ -335,10 +335,8 @@ abstract class Migration {
   public function lookupDestinationID(array $source_id) {
     migrate_instrument_start('lookupDestinationID');
     $this->ensureTables();
-    $query = db_select($this->mapTableName, 'map');
-    foreach ($this->destinationKeyMap() as $key_name) {
-      $query->addField('map', $key_name);
-    }
+    $query = db_select($this->mapTableName, 'map')
+                      ->fields('map', $this->destinationKeyMap());
     foreach ($this->sourceKeyMap() as $key_name) {
       $query = $query->condition("map.$key_name", array_shift($source_id), '=');
     }
@@ -825,11 +823,7 @@ abstract class Migration {
             // to look up a destination ID from the provided migration
             if ($mapping->sourceMigration && isset($values->$destination)) {
               $source_migration = Migration::getInstance($mapping->sourceMigration);
-              // We can only lookup if source supplies a value.
-              if (isset($values->$destination)) {
-                $destids = $source_migration->
-                  lookupDestinationID(array($values->$destination));
-              }
+              $destids = $source_migration->lookupDestinationID(array($values->$destination));
               if ($destids) {
                 // Assume that if the destination key is a single value, it
                 // should be passed as such

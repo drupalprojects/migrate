@@ -153,24 +153,10 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
 class MigrateFileFieldHandler extends MigrateFieldHandler {
 
   /**
-   * Destination import callback to prepare file data for saving as a Field API file field.
+   * Prepare file data for saving as a Field API file field.
    *
    * // TODO: handle multiple values.
    *
-   * @param mixed $values
-   *  Single value, or array of values from the source
-   * @param array $arguments
-    *  file_function. file_save, File_move, or file_copy. defaults to file_copy.
-    *  file_replace. Value of $replace in that file function. Does not apply to file_save(). Defaults to FILE_EXISTS_RENAME.
-    *  source_field_name (required) - Name of the source field in $row
-    *  source_path (optional) - Path to source file?
-    *  source_alt_name (optional)
-    *  title_alt_name (optional)
-    *  description_alt_name (optional)
-    *  display_alt_name (optional)
-    *  language (optional) - Language of the text (defaults to destination language)
-   * @param $destination_field_name
-   *   machine_name of the field being migrated.
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
@@ -178,12 +164,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     $arguments = $values['arguments'];
     unset($values['arguments']);
 
-    // Set some defaults
-    $arguments += array(
-      'language' => LANGUAGE_NONE,
-      'file_function' => 'file_copy',
-      'file_replace' => FILE_EXISTS_RENAME,
-    );
     $delta = 0;
 
     if ($source_path = $values[$delta]) {
@@ -192,14 +172,13 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         $source_path = $arguments['source_path'] . '/' . $source_path;
       }
 
-      $field = field_info_field($destination_field_name);
-      $instance = field_info_instance($this->entityType, $destination_field_name, $this->bundle);
-      $destination = $field['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . basename($source_path);
+      $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . basename($source_path);
+
       $file = (object) array(
         'uri' => $source_path,
-        'uid' => 1, // TODO: get this from the data or from the migration definition.
+        'uid' => isset($entity->uid) ? isset($entity->uid) : 1, // TODO: http://drupal.org/node/745298
         'filename' => basename($source_path),
-        'filemime' => file_get_mimetype($source_path), // TODO: verify that this is right.
+        'filemime' => file_get_mimetype($source_path),
         'timestamp' => REQUEST_TIME,
       );
 
@@ -219,9 +198,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         // Build up a return object.
         $object_field['fid'] = $file->fid;
         $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;
-        $object_field['title'] = isset($arguments['title_alt_name']) ? $values[$arguments['title_alt_name']] : NULL;
-        $object_field['description'] = isset($arguments['description_alt_name']) ? $values[$arguments['description_alt_name']] : NULL;
-        $object_field['display'] = isset($arguments['display_alt_name']) ? $values[$arguments['display_alt_name']] : NULL;
+        $object_field['title'] = isset($arguments['source_title_name']) ? $values[$arguments['source_title_name']] : NULL;
+        $object_field['description'] = isset($arguments['source_description_name']) ? $values[$arguments['source_description_name']] : NULL;
+        $object_field['display'] = isset($arguments['source_display_name']) ? $values[$arguments['source_display_name']] : NULL;
         $return[$arguments['language']][$delta] = $object_field;
         return $return;
       }
@@ -232,6 +211,27 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         throw new Exception(t('Unable to create file record for !path', array('!path' => $source_path)));
       }
     }
+  }
+
+  /*
+   * Arguments for a file_field migration.
+   *
+   * @param source_path
+   *   Path to source file.
+   * @param file_function
+   *   file_save, file_move, or file_copy.
+   * @param file_replace
+   *   Value of $replace in that file function. Does not apply to file_save(). Defaults to FILE_EXISTS_RENAME.
+   * @param language
+   *   Language of the text (defaults to destination language)
+   * @param source_alt_name
+   * @param source_title_name
+   * @param source_description_name
+   * @param source_display_name
+   *
+   */
+  function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = LANGUAGE_NONE, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL) {
+    return get_defined_vars();
   }
 }
 

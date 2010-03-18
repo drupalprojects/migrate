@@ -156,7 +156,7 @@ class BeerNodeMigration extends Migration {
          ->arguments($arguments);
 
     // Different field types support different arguments.
-    $arguments = array('source_path' => drupal_get_path('module', 'migrate_example'));
+    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'));
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);
   }
@@ -208,7 +208,6 @@ class BeerCommentMigration extends Migration {
                                     'cid' => array(
                                       'type' => 'int',
                                       'not null' => TRUE,
-                                      'description' => 'Account ID.',
                                     )
                                   ));
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_beer');
@@ -225,10 +224,12 @@ class BeerCommentMigration extends Migration {
     $this->addFieldMapping('uid', 'aid')
          ->sourceMigration('BeerUserMigration')
          ->defaultValue(0);
-    $this->addFieldMapping('pid', 'cid_parent')
+    $this->addFieldMapping('pid', NULL) // 'cid_parent'
          ->sourceMigration('BeerCommentMigration')
-         ->arguments(array('cache_size' => 0))
-         ->defaultValue(0);
+         ->arguments(array('cache_size' => 0)) // No longer have a lookup cache.
+         ->description('Parent comment. TODO: not working, so commented cid_parent')
+         ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_MEDIUM)
+         ->issueGroup('Implementor issues');
 
     $this->addFieldMapping('comment_body', 'body');
   }

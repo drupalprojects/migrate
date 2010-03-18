@@ -10,7 +10,7 @@
  */
 function migrate_ui_dashboard() {
   $build = array();
-  
+
   $build['overview'] = array(
     '#prefix' => '<div>',
     '#markup' => migrate_overview(),
@@ -62,7 +62,7 @@ function migrate_ui_dashboard() {
     $query = db_select($migration->messageTableName, 'cnt');
     $query->addExpression('COUNT(*)', 'cnt');
     $num_messages = $query->execute()->fetchField();
-    $row['messages'] = l($num_messages, 'admin/migrate/messages/' . $migration->machineName);
+    $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $migration->machineName) : 0;
     $row['lastimported'] = $migration->getLastImported();
     $rows[] = $row;
   }

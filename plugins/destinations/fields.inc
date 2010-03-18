@@ -183,6 +183,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       'timestamp' => REQUEST_TIME,
     );
 
+    migrate_instrument_start('MigrateFileFieldHandler file_function');
     switch ($arguments['file_function']) {
       case 'file_copy':
         $file = file_copy($file, $destination, $arguments['file_replace']);
@@ -194,6 +195,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         $file = file_save($file);
         break;
     }
+    migrate_instrument_stop('MigrateFileFieldHandler file_function');
 
     if ($file) {
       // Build up a return object.

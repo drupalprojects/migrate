@@ -172,7 +172,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $full_path = $values[$delta];
     }
 
-    $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . basename($full_path);
+    // We must use full_path including directory part in order to guarantee a unique destination.
+    $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
 
     $file = (object) array(
       'uri' => $full_path,

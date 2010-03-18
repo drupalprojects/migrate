@@ -195,7 +195,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         break;
     }
 
-    if ($file->fid) {
+    if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;
       $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;

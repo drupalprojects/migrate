@@ -76,7 +76,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       $delta++;
     }
 
-    return $return;
+    return isset($return) ? $return : NULL;
   }
 }
 

@@ -244,8 +244,13 @@ class MigrateImageFieldHandler extends MigrateFileFieldHandler {
 
 class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
   function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
-    $arguments = $values['arguments'];
-    unset($values['arguments']);
+    if (isset($values['arguments'])) {
+      $arguments = $values['arguments'];
+      unset($values['arguments']);
+    }
+    else {
+      $arguments = array();
+    }
     $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
 
     // Setup the standard Field API array for saving.

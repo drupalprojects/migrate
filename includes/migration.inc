@@ -69,6 +69,14 @@ abstract class Migration {
   public $updateDestination = FALSE;
 
   /**
+   * Specify value of needs_update for current map row. Usually set by
+   * MigrateFieldHandler implementations.
+   *
+   * @var boolean
+   */
+  public $needsUpdate = FALSE;
+
+  /**
    * Names of tables created for tracking the migration. By default they are
    * constructed from machineName, but a derived Migration class may set them
    * as it wishes.
@@ -332,7 +340,7 @@ abstract class Migration {
    * @return array
    *  Array of destination key values, or NULL on failure.
    */
-  public function lookupDestinationID(array $source_id) {
+  public function lookupDestinationID(array $source_id, Migration $destination_migration) {
     migrate_instrument_start('lookupDestinationID');
     $this->ensureTables();
     $query = db_select($this->mapTableName, 'map')
@@ -342,6 +350,22 @@ abstract class Migration {
     }
     $result = $query->execute();
     $destination_id = $result->fetchAssoc();
+
+    /*
+     * Handle self references like articles that have 'related articles' and
+     * users that have 'friends'. Sometimes we can't save these references because
+     * the referenced item is not yet migrated. In that case, just mark this row
+     * in map table as needs_update. The entity will be fully saved in a
+     * subsequent import.
+     */
+    if ($destination_id === FALSE) {
+      // We have a lookup miss.
+      if ($this->machineName == $destination_migration->machineName) {
+        // We have an entity thats referencing own migration.
+        $destination_migration->needsUpdate = TRUE;
+      }
+    }
+
     migrate_instrument_stop('lookupDestinationID');
     return $destination_id;
   }
@@ -823,7 +847,7 @@ abstract class Migration {
             // to look up a destination ID from the provided migration
             if ($mapping->sourceMigration && isset($values->$destination)) {
               $source_migration = Migration::getInstance($mapping->sourceMigration);
-              $destids = $source_migration->lookupDestinationID(array($values->$destination));
+              $destids = $source_migration->lookupDestinationID(array($values->$destination), $this);
               if ($destids) {
                 // Assume that if the destination key is a single value, it
                 // should be passed as such
@@ -881,7 +905,7 @@ abstract class Migration {
           $ids = $this->destination->import($this, $values, $data_row);
           migrate_instrument_stop('destination import');
           if ($ids) {
-            $this->saveIDMapping($data_row, $ids);
+            $this->saveIDMapping($data_row, $ids, $this->needsUpdate);
           }
           else {
             // TODO: Failure to save
@@ -901,7 +925,11 @@ abstract class Migration {
         if (isset($this->highwaterField)) {
           $this->saveHighwater($data_row->{$this->highwaterField});
         }
+
+        // Reset row properties.
         unset($values);
+        $this->needsUpdate = FALSE;
+
         // TODO: Temporary. Remove when http://drupal.org/node/375494 is committed.
         if (!empty($this->destination->entityType)) {
           entity_get_controller($this->destination->entityType)->resetCache();
@@ -1117,7 +1145,7 @@ abstract class Migration {
                 ->fetchField();
     return $highwater;
   }
-  
+
   /**
    * Get human readable name for a message constant.
    *

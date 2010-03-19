@@ -226,7 +226,7 @@ class BeerCommentMigration extends Migration {
          ->defaultValue(0);
     $this->addFieldMapping('pid', NULL) // 'cid_parent'
          ->sourceMigration('BeerCommentMigration')
-         ->arguments(array('cache_size' => 0)) // No longer have a lookup cache.
+         ->arguments(array('cache_size' => 0)) // TODO: No longer have a lookup cache.
          ->description('Parent comment. TODO: not working, so commented cid_parent')
          ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_MEDIUM)
          ->issueGroup('Implementor issues');

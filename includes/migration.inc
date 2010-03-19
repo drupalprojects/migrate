@@ -492,7 +492,7 @@ abstract class Migration {
     $total = $this->source->count(TRUE);
     $imported = $this->importedCount();
     $errors = $this->errorCount();
-    return $total == ($imported + $errors);
+    return $total <= ($imported + $errors);
   }
 
   /**

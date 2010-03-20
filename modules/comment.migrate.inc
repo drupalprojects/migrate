@@ -78,7 +78,7 @@ function comment_migrate_import_comment($tblinfo, $row) {
   $sourcekey = $tblinfo->sourcekey;
 
   foreach ($tblinfo->fields as $destfield => $values) {
-    if (isset($values['srcfield']) && $row->$values['srcfield']) {
+    if (isset($values['srcfield']) && $values['srcfield'] && $row->$values['srcfield']) {
       $comment[$destfield] = $row->$values['srcfield'];
     }
     else {

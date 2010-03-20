@@ -81,3 +81,22 @@ function migrate_update_7001() {
   $ret[] = t('Added highwater field to migrate_status table');
   return $ret;
 }
+
+/**
+ * Add last_imported field to all map tables
+ */
+function migrate_update_7002() {
+  $ret = array();
+  foreach (db_find_tables('migrate_map_%') as $tablename) {
+    if (!db_column_exists($tablename, 'last_imported')) {
+      db_add_field($tablename, 'last_imported', array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'UNIX timestamp of the last time this row was imported',
+      ));
+    }
+  }
+  $ret[] = t('Added last_imported field to all map tables');
+  return $ret;
+}

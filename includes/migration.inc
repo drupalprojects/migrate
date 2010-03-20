@@ -290,6 +290,12 @@ abstract class Migration {
         'default' => (int) FALSE,
         'description' => 'Flags existing mapped data to be updated',
       );
+      $fields['last_imported'] = array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'UNIX timestamp of the last time this row was imported',
+      );
       $schema = array(
         'description' => t('Mappings from source key to destination key'),
         'fields' => $fields,
@@ -396,6 +402,7 @@ abstract class Migration {
       ->fields(array(
         'destid1' => $dest_ids[0],
         'needs_update' => (int)$needs_update,
+        'last_imported' => time(),
       ))
       ->execute();
     migrate_instrument_stop('saveIDMapping');

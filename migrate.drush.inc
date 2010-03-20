@@ -130,7 +130,7 @@ function drush_migrate_backend_invoke() {
 /**
  * A simplified version of the Process (dashboard) page
  */
-function drush_migrate_migrate_status() {
+function drush_migrate_status() {
   $table = array();
   $table[] = array(dt('Status'), dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'));
   $sql = "SELECT *
@@ -174,7 +174,7 @@ function drush_migrate_migrate_status() {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_migrate_clear($content_set) {
+function drush_migrate_clear($content_set) {
   // node_delete() has silly perm requirements in d5/d6.
   drush_set_option('user', 1);
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
@@ -267,7 +267,7 @@ function _drush_migrate_do_clear($mcsid, $description, $options) {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_migrate_import($content_set) {
+function drush_migrate_import($content_set) {
   drush_migrate_set_verbose();
   if (drush_get_option('all')) {
     $all = TRUE;
@@ -359,7 +359,7 @@ function _drush_migrate_do_import($mcsid, $description, $options) {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_migrate_stop($content_set = NULL) {
+function drush_migrate_stop($content_set = NULL) {
   if (drush_get_option('all')) {
     $all = TRUE;
     if (isset($content_set)) {
@@ -411,7 +411,7 @@ function drush_migrate_migrate_stop($content_set = NULL) {
 /**
  * A drush command callback.
  */
-function drush_migrate_migrate_wipe() {
+function drush_migrate_wipe() {
   // node_delete() has silly perm requirements in d5/d6.
   drush_set_option('user', 1);
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);

@@ -8,6 +8,7 @@ Features and enhancements
 
 Bug fixes
 - #719262 - Documented restriction on views with exposed filters.
+- #694020 - Update drush command hook naming
 
 Migrate 1.0
 ===========

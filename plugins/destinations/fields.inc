@@ -96,6 +96,9 @@ abstract class MigrateValueFieldHandler extends MigrateFieldHandler {
       $return[$language][$delta]['value'] = $value;
       $delta++;
     }
+    if (!isset($return)) {
+      $return = NULL;
+    }
     return $return;
   }
 }

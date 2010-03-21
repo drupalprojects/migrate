@@ -367,7 +367,7 @@ abstract class Migration {
     if ($destination_id === FALSE) {
       // We have a lookup miss.
       if ($this->machineName == $destination_migration->machineName) {
-        // We have an entity thats referencing own migration.
+        // We have an entity that's referencing own migration.
         $destination_migration->needsUpdate = TRUE;
       }
     }

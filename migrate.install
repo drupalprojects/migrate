@@ -30,10 +30,12 @@ function migrate_schema_status() {
         'default' => 0,
         'description' => 'Current status of migration',
       ),
-      'lastimported' => array(
-        'type' => 'datetime',
-        'not null' => FALSE,
-        'description' => 'Date and time of last completed import',
+      'last_imported' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'UNIX timestamp of the last time this row was imported',
       ),
       'highwater' => array(
         'type' => 'varchar',
@@ -93,6 +95,7 @@ function migrate_update_7002() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
         'description' => 'UNIX timestamp of the last time this row was imported',
       ));
     }

@@ -302,6 +302,7 @@ abstract class Migration {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
         'description' => 'UNIX timestamp of the last time this row was imported',
       );
       $schema = array(
@@ -455,8 +456,9 @@ abstract class Migration {
       $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
     }
     // Simply ignore strict and deprecated errors
-    elseif (!($error_level == E_STRICT || $error_level == E_DEPRECATED ||
-              $error_level == E_USER_DEPRECATED)) {
+    // Note DEPRECATED constants introduced in PHP 5.3
+    elseif (!($error_level == E_STRICT || $error_level == 8192 ||
+              $error_level == 16384)) {
       throw new MigrateException($message, Migration::MESSAGE_ERROR);
     }
   }
@@ -464,7 +466,7 @@ abstract class Migration {
   public function loggingCallback($type, $message, $variables = array(),
           $severity = WATCHDOG_NOTICE, $link = NULL) {
     if ($severity == WATCHDOG_NOTICE || $severity == WATCHDOG_INFO ||
-        $serverity == WATCHDOG_DEBUG) {
+        $severity == WATCHDOG_DEBUG) {
       $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
     }
     else {
@@ -600,7 +602,7 @@ abstract class Migration {
 
     // And capture anything the DB tries to log to the watchdog
     // TODO: Enable when http://drupal.org/node/748982 is committed
-//    Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
+    //Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
   }
 
 

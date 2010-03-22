@@ -32,7 +32,7 @@ function migrate_schema_status() {
       ),
       'lastimported' => array(
         'type' => 'datetime',
-        'not null' => TRUE,
+        'not null' => FALSE,
         'description' => 'Date and time of last completed import',
       ),
       'highwater' => array(

@@ -183,7 +183,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     // We must use full_path including directory part in order to guarantee a unique destination.
     $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
 
-    $file = (object) array(
+    $source = (object) array(
       'uri' => $full_path,
       'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
       'filename' => basename($full_path),
@@ -194,13 +194,14 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     migrate_instrument_start('MigrateFileFieldHandler file_function');
     switch ($arguments['file_function']) {
       case 'file_copy':
-        $file = file_copy($file, $destination, $arguments['file_replace']);
+        $file = file_copy($source, $destination, $arguments['file_replace']);
         break;
       case 'file_move':
-        $file = file_move($file, $destination, $arguments['file_replace']);
+        $file = file_move($source, $destination, $arguments['file_replace']);
         break;
       case 'file_save':
-        $file = file_save($file);
+        $source->uri = $destination;
+        $file = file_save($source);
         break;
     }
     migrate_instrument_stop('MigrateFileFieldHandler file_function');

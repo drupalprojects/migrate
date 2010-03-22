@@ -155,8 +155,8 @@ class BeerNodeMigration extends Migration {
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
 
-    // Different field types support different arguments.
-    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'));
+    // Copy an image file, write DB record to files table, and save in Field storage.
+    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);
   }

@@ -448,12 +448,26 @@ abstract class Migration {
    *   An array that points to the active symbol table at the point the error occurred.
    */
   function errorHandler($error_level, $message, $filename, $line, $context) {
-    if ($error_level == E_NOTICE) {
-      drush_print("Got notice $message");
+    $message .= "\n" . t('File !file, line !line',
+      array('!line' => $line, '!file' => $filename));
+    // Record notices and continue
+    if ($error_level == E_NOTICE || $error_level == E_USER_NOTICE) {
+      $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
+    }
+    // Simply ignore strict and deprecated errors
+    elseif (!($error_level == E_STRICT || $error_level == E_DEPRECATED ||
+              $error_level == E_USER_DEPRECATED)) {
+      throw new MigrateException($message, Migration::MESSAGE_ERROR);
+    }
+  }
+
+  public function loggingCallback($type, $message, $variables = array(),
+          $severity = WATCHDOG_NOTICE, $link = NULL) {
+    if ($severity == WATCHDOG_NOTICE || $severity == WATCHDOG_INFO ||
+        $serverity == WATCHDOG_DEBUG) {
       $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
     }
     else {
-      drush_print("Throwing error $message");
       throw new MigrateException($message, Migration::MESSAGE_ERROR);
     }
   }
@@ -585,16 +599,11 @@ abstract class Migration {
     }
 
     // And capture anything the DB tries to log to the watchdog
-    // TODO: Try to get a core patch in to make the logging callback a proper
-    // PHP callback, so we can call a member function
-//    Database::setLoggingCallback('Migration::loggingCallback', WATCHDOG_NOTICE, WATCHDOG_ERROR);
+    // TODO: Enable when http://drupal.org/node/748982 is committed
+//    Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
   }
-/*
-  public function loggingCallback($type, $message, $variables = array(),
-          $severity = WATCHDOG_NOTICE, $link = NULL) {
 
-  }
-*/
+
   /**
    * End a rollback or import process, releasing the semaphore.
    *

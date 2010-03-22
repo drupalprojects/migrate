@@ -180,6 +180,14 @@ abstract class Migration {
   public $issuePattern;
 
   /**
+   * If we set an error handler (during import), remember the previous one so
+   * it can be restored.
+   *
+   * @var callback
+   */
+  protected $previousErrorHandler = NULL;
+
+  /**
    * Message types to be passed to saveMessage() and saved in message tables.
    * MESSAGE_INFORMATIONAL represents a condition that did not prevent the operation
    * from succeeding - all others represent different severities of conditions
@@ -425,6 +433,31 @@ abstract class Migration {
     ->execute();
   }
 
+  /**
+   * Custom PHP error handler.
+   *
+   * @param $error_level
+   *   The level of the error raised.
+   * @param $message
+   *   The error message.
+   * @param $filename
+   *   The filename that the error was raised in.
+   * @param $line
+   *   The line number the error was raised at.
+   * @param $context
+   *   An array that points to the active symbol table at the point the error occurred.
+   */
+  function errorHandler($error_level, $message, $filename, $line, $context) {
+    if ($error_level == E_NOTICE) {
+      drush_print("Got notice $message");
+      $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
+    }
+    else {
+      drush_print("Throwing error $message");
+      throw new MigrateException($message, Migration::MESSAGE_ERROR);
+    }
+  }
+
   public function saveHighwater($highwater) {
     db_update('migrate_status')
     ->fields(array('highwater' => $highwater))
@@ -545,8 +578,23 @@ abstract class Migration {
 
     // Make sure the map and message tables are present
     $this->ensureTables();
-  }
 
+    // Set an error handler for imports
+    if ($newStatus == Migration::STATUS_IMPORTING) {
+      $this->previousErrorHandler = set_error_handler(array($this, 'errorHandler'));
+    }
+
+    // And capture anything the DB tries to log to the watchdog
+    // TODO: Try to get a core patch in to make the logging callback a proper
+    // PHP callback, so we can call a member function
+//    Database::setLoggingCallback('Migration::loggingCallback', WATCHDOG_NOTICE, WATCHDOG_ERROR);
+  }
+/*
+  public function loggingCallback($type, $message, $variables = array(),
+          $severity = WATCHDOG_NOTICE, $link = NULL) {
+
+  }
+*/
   /**
    * End a rollback or import process, releasing the semaphore.
    *
@@ -558,6 +606,10 @@ abstract class Migration {
    *  at final completion of an import process).
    */
   public function endProcess($force = FALSE, $setTime = FALSE) {
+    if ($this->previousErrorHandler) {
+      set_error_handler($this->previousErrorHandler);
+      $this->previousErrorHandler = NULL;
+    }
     if ($this->processing || $force) {
       $fields = array('status' => Migration::STATUS_IDLE);
       if ($setTime) {
@@ -923,6 +975,11 @@ abstract class Migration {
           }
           $count++;
           $total++;
+        }
+        catch (MigrateException $e) {
+          $this->saveMessage($e->getMessage(), $e->level);
+          $outputFunction = $this->outputFunction;
+          $outputFunction($e->getMessage());
         }
         catch (Exception $e) {
           $this->saveMessage($e->getMessage());

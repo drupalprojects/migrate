@@ -30,12 +30,10 @@ function migrate_schema_status() {
         'default' => 0,
         'description' => 'Current status of migration',
       ),
-      'last_imported' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
+      'lastimported' => array(
+        'type' => 'datetime',
         'not null' => TRUE,
-        'default' => 0,
-        'description' => 'UNIX timestamp of the last time this row was imported',
+        'description' => 'Date and time of last completed import',
       ),
       'highwater' => array(
         'type' => 'varchar',

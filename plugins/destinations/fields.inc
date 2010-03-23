@@ -34,7 +34,7 @@ abstract class MigrateFieldHandler extends MigrateHandler {
 }
 
 class MigrateTextFieldHandler extends MigrateFieldHandler {
-  function arguments($summary = NULL, $format = NULL, $language = NULL) {
+  static function arguments($summary = NULL, $format = NULL, $language = NULL) {
     $arguments = array();
     if (!is_null($summary)) {
       $arguments['summary'] = $summary;
@@ -181,7 +181,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     }
 
     // We must use full_path including directory part in order to guarantee a unique destination.
-    $destination = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'] . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
+    $destination_dir = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'];
 
     $source = (object) array(
       'uri' => $full_path,
@@ -194,14 +194,18 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     migrate_instrument_start('MigrateFileFieldHandler file_function');
     switch ($arguments['file_function']) {
       case 'file_copy':
-        $file = file_copy($source, $destination, $arguments['file_replace']);
+        $file = file_copy($source, $destination_dir, $arguments['file_replace']);
         break;
       case 'file_move':
-        $file = file_move($source, $destination, $arguments['file_replace']);
+        $file = file_move($source, $destination_dir, $arguments['file_replace']);
         break;
       case 'file_save':
-        $source->uri = $destination;
+        $source->uri = $destination_dir . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
+        // Suppress inevitable warning for missing file: stat(): stat failed.
+        // Comes from DrupalLocalStreamWrapper::url_stat
+        $old = error_reporting(E_ERROR);
         $file = file_save($source);
+        error_reporting($old);
         break;
     }
     migrate_instrument_stop('MigrateFileFieldHandler file_function');
@@ -238,7 +242,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param source_display_name
    *
    */
-  function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = LANGUAGE_NONE, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL) {
+ static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = LANGUAGE_NONE, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL) {
     return get_defined_vars();
   }
 }

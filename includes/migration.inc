@@ -449,17 +449,19 @@ abstract class Migration {
    *   An array that points to the active symbol table at the point the error occurred.
    */
   function errorHandler($error_level, $message, $filename, $line, $context) {
-    $message .= "\n" . t('File !file, line !line',
-      array('!line' => $line, '!file' => $filename));
-    // Record notices and continue
-    if ($error_level == E_NOTICE || $error_level == E_USER_NOTICE) {
-      $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
-    }
-    // Simply ignore strict and deprecated errors
-    // Note DEPRECATED constants introduced in PHP 5.3
-    elseif (!($error_level == E_STRICT || $error_level == 8192 ||
-              $error_level == 16384)) {
-      throw new MigrateException($message, Migration::MESSAGE_ERROR);
+    if ($error_level & error_reporting()) {
+      $message .= "\n" . t('File !file, line !line',
+        array('!line' => $line, '!file' => $filename));
+      // Record notices and continue
+      if ($error_level == E_NOTICE || $error_level == E_USER_NOTICE) {
+        $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
+      }
+      // Simply ignore strict and deprecated errors
+      // Note DEPRECATED constants introduced in PHP 5.3
+      elseif (!($error_level == E_STRICT || $error_level == 8192 ||
+                $error_level == 16384)) {
+        throw new MigrateException($message, Migration::MESSAGE_ERROR);
+      }
     }
   }
 

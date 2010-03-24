@@ -176,7 +176,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     }
 
     if (!file_exists($full_path)) {
-      $migration->saveMessage(t('File does not exist: !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
+      $migration->saveMessage(t('Source file does not exist: !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
       return;
     }
 

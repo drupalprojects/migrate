@@ -164,7 +164,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *  Field API array suitable for inserting in the destination object.
    */
   function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
-    static $i = 0;
+    static $fid;
 
     $arguments = $values['arguments'];
     unset($values['arguments']);
@@ -201,16 +201,23 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       case 'file_move':
         $file = file_move($source, $destination_dir, $arguments['file_replace']);
         break;
-      case 'file_save':
-        // We're just gonna fake a URI here because we didn't write any file
-        // $destination_dir . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
-        $source->uri = $destination_dir . '/' . REQUEST_TIME . '_' . $i . '.jpg';
-        $i++;
-        // Suppress inevitable warning for missing file: stat(): stat failed.
-        // Comes from DrupalLocalStreamWrapper::url_stat
-        $old = error_reporting(E_ERROR);
-        $file = file_save($source);
-        error_reporting($old);
+      case 'file_fast':
+        // Just keep re-using an existing file. We still benefit from the file_exists() check above.
+        if (!isset($fid)) {
+          $full_path = DRUPAL_ROOT . '/misc/druplicon.png';
+          $source = (object) array(
+            'uri' => $full_path,
+            'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
+            'filename' => basename($full_path),
+            'filemime' => file_get_mimetype($full_path),
+            'timestamp' => REQUEST_TIME,
+          );
+          $file = file_copy($source, $destination_dir, FILE_EXISTS_RENAME);
+          $fid = $file->fid;
+        }
+        else {
+          $file->fid = $fid;
+        }
         break;
     }
     migrate_instrument_stop('MigrateFileFieldHandler file_function');
@@ -236,7 +243,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param source_path
    *   Path to source file.
    * @param file_function
-   *   file_save, file_move, or file_copy.
+   *   file_fast, file_move, or file_copy.
    * @param file_replace
    *   Value of $replace in that file function. Does not apply to file_save(). Defaults to FILE_EXISTS_RENAME.
    * @param language

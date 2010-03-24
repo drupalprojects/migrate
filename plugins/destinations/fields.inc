@@ -164,6 +164,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *  Field API array suitable for inserting in the destination object.
    */
   function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+    static $i = 0;
+
     $arguments = $values['arguments'];
     unset($values['arguments']);
     $delta = 0;
@@ -200,7 +202,10 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         $file = file_move($source, $destination_dir, $arguments['file_replace']);
         break;
       case 'file_save':
-        $source->uri = $destination_dir . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
+        // We're just gonna fake a URI here because we didn't write any file
+        // $destination_dir . '/' . str_replace(DIRECTORY_SEPARATOR, '__', $full_path);
+        $source->uri = $destination_dir . '/' . REQUEST_TIME . '_' . $i . '.jpg';
+        $i++;
         // Suppress inevitable warning for missing file: stat(): stat failed.
         // Comes from DrupalLocalStreamWrapper::url_stat
         $old = error_reporting(E_ERROR);

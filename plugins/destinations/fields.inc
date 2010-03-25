@@ -202,7 +202,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         $file = file_move($source, $destination_dir, $arguments['file_replace']);
         break;
       case 'file_fast':
-        // Just keep re-using an existing file. We still benefit from the file_exists() check above.
+        // Keep re-using an existing file. We still benefit from the file_exists() check above.
         if (!isset($fid)) {
           $full_path = DRUPAL_ROOT . '/misc/druplicon.png';
           $source = (object) array(

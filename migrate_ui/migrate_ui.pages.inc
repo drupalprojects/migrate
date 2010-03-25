@@ -90,7 +90,11 @@ function migrate_ui_messages($migration) {
     $migration = migration_load($migration);
   }
 
-  $messages = db_select($migration->messageTableName, 'msg')->fields('msg')->execute();
+  $messages = db_select($migration->messageTableName, 'msg')
+              ->extend('PagerDefault')
+              ->limit(500)
+              ->fields('msg')
+              ->execute();
 
   foreach ($messages as $message) {
     $classes[] = $message->level <= Migration::MESSAGE_WARNING ? 'migrate-error' : '';
@@ -102,7 +106,7 @@ function migrate_ui_messages($migration) {
     unset($classes);
   }
 
-  $build['dashboard'] = array(
+  $build['messages'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
@@ -111,6 +115,7 @@ function migrate_ui_messages($migration) {
       'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
     ),
   );
+  $build['migrate_ui_pager'] = array('#theme' => 'pager');
   return $build;
 }
 

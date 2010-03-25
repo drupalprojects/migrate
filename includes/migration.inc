@@ -604,7 +604,7 @@ abstract class Migration {
 
     // And capture anything the DB tries to log to the watchdog
     // TODO: Enable when http://drupal.org/node/748982 is committed
-    //Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
+    Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
   }
 
 
@@ -915,30 +915,47 @@ abstract class Migration {
               $values->$destination = $mapping->defaultValue;
             }
 
-            // If a source migration is supplied, use the current value for this field
-            // to look up a destination ID from the provided migration
-            if ($mapping->sourceMigration && isset($values->$destination)) {
-              $source_migration = Migration::getInstance($mapping->sourceMigration);
-              $destids = $source_migration->lookupDestinationID(array($values->$destination), $this);
-              if ($destids) {
-                // Assume that if the destination key is a single value, it
-                // should be passed as such
-                if (count($destids) == 1) {
-                  $values->$destination = $destids['destid1'];
-                }
-                else {
-                  $values->$destination = $destids;
-                }
-              }
-              else {
-                $values->$destination = $mapping->defaultValue;
-              }
-            }
 
             // If there's a separator specified for this destination, then it
             // will be populated as an array exploded from the source value
             if (isset($mapping->separator) && isset($values->$destination)) {
               $values->$destination = explode($mapping->separator, $values->$destination);
+            }
+
+            // If a source migration is supplied, use the current value for this field
+            // to look up a destination ID from the provided migration
+            if ($mapping->sourceMigration && isset($values->$destination)) {
+              $source_migration = Migration::getInstance($mapping->sourceMigration);
+              // Might be an array, after separator processing
+              if (is_array($values->$destination)) {
+                $source_keys = $values->$destination;
+              }
+              else {
+                $source_keys = array($values->$destination);
+              }
+              $results = array();
+              foreach ($source_keys as $source_key) {
+                $destids = $source_migration->lookupDestinationID(array($source_key), $this);
+                if ($destids) {
+                  // Assume that if the destination key is a single value, it
+                  // should be passed as such
+                  if (count($destids) == 1) {
+                    $results[] = $destids['destid1'];
+                  }
+                  else {
+                    $results[] = $destids;
+                  }
+                }
+                else {
+                  $results[] = $mapping->defaultValue;
+                }
+              }
+              if (is_array($values->$destination) || count($results) > 1) {
+                $values->$destination = $results;
+              }
+              else {
+                $values->$destination = $results[0];
+              }
             }
 
             // Assign any arguments

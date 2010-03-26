@@ -21,7 +21,7 @@
  *    this will receive data that originated from the source and has been mapped
  *    by the Migration class, and create Drupal objects.
  *  Mappings - Use $this->addFieldMapping to tell the Migration class what source
- *    fields correspond to what destination fields, and additional information
+ *    columns correspond to what destination Fields, and additional information
  *    associated with the destination objects.
  */
 class BeerNodeMigration extends Migration {

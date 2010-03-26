@@ -84,7 +84,7 @@ class MigrateSourceMSSQL extends MigrateSource {
         $this->configuration['password'],
         TRUE);
       if (isset($this->configuration['database'])) {
-        mssql_select_db($this->configuration['database'], $this->connection);
+        return mssql_select_db($this->configuration['database'], $this->connection);
       }
     }
   }
@@ -117,10 +117,15 @@ class MigrateSourceMSSQL extends MigrateSource {
     $count = cache_get(__METHOD__, 'cache');
     if ($count === FALSE) {
       // Cache miss.
-      $this->connect();
-      $result = mssql_query($this->countQuery);
-      $count = reset(mssql_fetch_object($result));
-      $return = cache_set(__METHOD__, $count, 'cache');
+      if ($this->connect()) {
+        $result = mssql_query($this->countQuery);
+        $count = reset(mssql_fetch_object($result));
+        $return = cache_set(__METHOD__, $count, 'cache');
+      }
+      else {
+        // Do something else?
+        return FALSE;
+      }
     }
     else {
       $count = $count->data;

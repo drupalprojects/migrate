@@ -39,23 +39,6 @@ function migrate_example_uninstall() {
     // Grab key of the first returned vocabulary.
     taxonomy_vocabulary_delete(key($vids));
   }
-
-  if (db_table_exists('migrate_map_beernode')) {
-    db_drop_table('migrate_map_beernode');
-    db_drop_table('migrate_message_beernode');
-  }
-  if (db_table_exists('migrate_map_beeruser')) {
-    db_drop_table('migrate_map_beeruser');
-    db_drop_table('migrate_message_beeruser');
-  }
-  if (db_table_exists('migrate_map_beercomment')) {
-    db_drop_table('migrate_map_beercomment');
-    db_drop_table('migrate_message_beercomment');
-  }
-  if (db_table_exists('migrate_map_beerterm')) {
-    db_drop_table('migrate_map_beerterm');
-    db_drop_table('migrate_message_beerterm');
-  }
 }
 
 function migrate_example_content_type() {

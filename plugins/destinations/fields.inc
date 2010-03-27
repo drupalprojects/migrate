@@ -216,6 +216,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
           $fid = $file->fid;
         }
         else {
+          $file = new stdClass;
           $file->fid = $fid;
         }
         break;

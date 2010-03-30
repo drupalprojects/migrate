@@ -296,13 +296,13 @@ function migrate_example_data_beer() {
 }
 
 function migrate_example_data_account() {
-  $fields = array('status', 'created', 'name', 'nickname', 'password', 'mail', 'sex', 'beers');
+  $fields = array('status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers');
   $query = db_insert('migrate_example_account')
     ->fields($fields);
   $data = array(
-    array(1, 7233245, 'alice', 'alice hot pants', 'alicepass', 'alice@example.com', '1', '99999999|99999998|99999997'),
-    array(0, 123434, 'bob', 'rebob', 'bobpass', 'bob@example.com', '1', '99999999|99999997'),
-    array(1, 2324345, 'charlie', 'charlie chocolate', 'mykids', 'charlie@example.com', '0', '99999999|99999998'),
+    array(1, '2010-03-30 10:31:05', 'alice', 'alice hot pants', 'alicepass', 'alice@example.com', '1', '99999999|99999998|99999997'),
+    array(0, '2007-03-15 10:31:05', 'bob', 'rebob', 'bobpass', 'bob@example.com', '1', '99999999|99999997'),
+    array(1, '2004-02-29 10:31:05', 'charlie', 'charlie chocolate', 'mykids', 'charlie@example.com', '0', '99999999|99999998'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));
@@ -520,11 +520,11 @@ function migrate_example_schema_account() {
         'not null' => TRUE,
         'description' => 'Blocked_Allowed',
       ),
-      'created' => array(
-        'type' => 'int',
-        'length' => 11,
+      'posted' => array(
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
-        'description' => 'Create date of the account',
+        'description' => 'Registration date',
       ),
       'name' => array(
         'type' => 'varchar',

@@ -167,7 +167,7 @@ class BeerUserMigration extends Migration {
     parent::__construct();
     $this->description = 'Beers Drinkers of the world';
     $query = db_select('migrate_example_account', 'mea')
-             ->fields('mea', array('aid', 'status', 'created', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
+             ->fields('mea', array('aid', 'status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
     $this->source = new MigrateSourceSQL($query,
                                   array(
                                     'aid' => array(
@@ -179,7 +179,8 @@ class BeerUserMigration extends Migration {
     $this->destination = new MigrateDestinationUser();
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('status', 'status');
-    $this->addFieldMapping('created', 'created');
+    $this->addFieldMapping('created')
+         ->description('See prepare method');
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('pass', 'password');
     $this->addFieldMapping('roles')
@@ -191,6 +192,14 @@ class BeerUserMigration extends Migration {
     // Need to have node_reference module enabled for this
     $this->addFieldMapping('field_migrate_example_favbeers', 'beers')
          ->separator('|');
+  }
+
+  // A prepare handler. Alter the entity as needed before save.
+  public function prepare(Migration $migration, stdClass $node, stdClass $row) {
+    // Source dates are in ISO format and Denver timezone.
+    // Convert to unix timestamp.
+    date_default_timezone_set('US/Mountain');
+    $node->created = strtotime($row->posted);
   }
 }
 

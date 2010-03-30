@@ -168,9 +168,14 @@ class MigrateSourceMSSQL extends MigrateSource {
         }
         $keys[] = $field_name;
       }
+
       if (isset($options['idlist'])) {
         // TODO: Sanitize. not critical as this is admin supplied data in drush.
-        $where[] = $keys[0] . ' IN (' . $options['idlist'] . ')';
+        $this->query = str_replace(':idlist', $keys[0] . ' IN (' . $options['idlist'] . ')', $this->query);
+      }
+      else {
+        // No idlist specified. Replace :idlost placeholder with harmless WHERE clause.
+        $this->query = str_replace(':idlist', '1=1', $this->query);
       }
 
       migrate_instrument_start('mssql_query');

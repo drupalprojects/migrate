@@ -1234,7 +1234,7 @@ abstract class Migration {
       foreach ($this->counts['lookup_cache'] as $name => $tallies) {
         $tallies += array('hit' => 0, 'miss' => 0); // Set defaults to avoid NOTICE.
         $sum = $tallies['hit']+$tallies['miss'];
-        $outputFunction(t('Lookup cache !mn SM=!name !rate hits (!total total).', array('!mn' => $this->machineName, '!name' => $name, '!rate' => round($tallies['hit']/$sum) . '%', '!total' => $sum)), 'debug');
+        $outputFunction(t('Lookup cache !mn SM=!name !rate hits (!total total).', array('!mn' => $this->machineName, '!name' => $name, '!rate' => round((100*$tallies['hit'])/$sum) . '%', '!total' => $sum)), 'debug');
       }
       $this->counts['lookup_cache'] = array();
     }

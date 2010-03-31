@@ -1228,6 +1228,14 @@ abstract class Migration {
               '!name' => $this->machineName));
     $outputFunction = $this->outputFunction;
     $outputFunction($message, $type);
+
+    // Report on lookup_cache hit rate. Only visible at 'debug' level.
+    if (!empty($this->counts['lookup_cache'])) {
+      foreach ($this->counts['lookup_cache'] as $name => $tallies) {
+        $tallies += array('hit' => 0, 'miss' => 0); // Set defaults to avoid NOTICE.
+        $outputFunction(t('Lookup cache !mn SM=!name !rate hits (!total total).', array('!mn' => $this->machineName, '!name' => $name, '!rate' => round($tallies['hit']/$tallies['miss']) . '%', '!total' => $tallies['hit']+$tallies['miss'])), 'debug');
+      }
+    }
   }
 
   /**

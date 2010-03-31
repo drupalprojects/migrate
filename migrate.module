@@ -90,6 +90,8 @@ function migrate_field_handler_invoke_all(Migration $migration, stdClass $entity
   $type = str_replace('_', '', $field_info['type']);
   $class_list = _migrate_class_list('%' . $type . 'FieldHandler',
     'MigrateFieldHandler');
+  // TODO: FIXME. See http://drupal.org/node/757988.
+  $class_list = array_slice($class_list, 0, 1);
   foreach ($class_list as $class_name => $handler) {
     if (method_exists($handler, 'prepare')) {
       migrate_instrument_start($class_name . '->prepare');

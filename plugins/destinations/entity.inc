@@ -82,6 +82,15 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *  Raw source data object - passed through to prepare handlers.
    */
   function prepare(Migration $migration, stdClass $entity, stdClass $source_row) {
+    // Add source keys for debugging and identification of migrated data by hooks.
+    foreach ($migration->sourceKeyMap() as $field_name => $key_name) {
+      $keys[$key_name] = $source_row->$field_name;
+    }
+    $entity->migrate = array(
+      'source_keys' => $keys,
+      'machineName' => $migration->machineName,
+    );
+
     // Call any general entity handlers (in particular, the builtin field handler)
     migrate_handler_invoke_all('Entity', 'prepare', $migration, $entity, $source_row);
     // Then call any entity-specific handlers

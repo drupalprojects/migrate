@@ -111,14 +111,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $node->nid = $row->migrate_map_destid1;
     }
 
-    // Add source keys for easier debugging.
-    // TODO: Do this for all entity types.
-    foreach ($migration->sourceKeyMap() as $field_name => $key_name) {
-      $keys[$key_name] = $row->$field_name;
-    }
-    $node->migrate['keys'] = $keys;
-    $node->migrate['migration'] = $migration->machineName;
-
     // Set some required properties.
     if (!isset($node->language)) {
       $node->language = $this->language;

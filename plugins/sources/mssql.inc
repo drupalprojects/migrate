@@ -174,7 +174,8 @@ class MigrateSourceMSSQL extends MigrateSource {
         $this->query = str_replace(':idlist', $keys[0] . ' IN (' . $options['idlist'] . ')', $this->query);
       }
       else {
-        // No idlist specified. Replace :idlost placeholder with harmless WHERE clause.
+        // No idlist specified. Replace :idlist placeholder with harmless WHERE
+        // clause instead of empty since we don't know if an AND follows.
         $this->query = str_replace(':idlist', '1=1', $this->query);
       }
 

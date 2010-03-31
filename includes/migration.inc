@@ -1230,7 +1230,7 @@ abstract class Migration {
     $outputFunction($message, $type);
 
     // Report on lookup_cache hit rate. Only visible at 'debug' level.
-    if (!empty($this->counts['lookup_cache'])) {
+    if ($result != Migration::RESULT_INCOMPLETE && !empty($this->counts['lookup_cache'])) {
       foreach ($this->counts['lookup_cache'] as $name => $tallies) {
         $tallies += array('hit' => 0, 'miss' => 0); // Set defaults to avoid NOTICE.
         $sum = $tallies['hit']+$tallies['miss'];

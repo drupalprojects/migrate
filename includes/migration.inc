@@ -149,6 +149,13 @@ abstract class Migration {
   protected $memoryLimit;
 
   /**
+   * An array of counts. Initially used for cache hit/miss tracking.
+   *
+   * @var array
+   */
+  public $counts = array();
+
+  /**
    * When performing a bulkRollback(), the maximum number of items to pass in
    * a single call. Can be overridden in derived class constructor.
    *
@@ -357,27 +364,62 @@ abstract class Migration {
    */
   public function lookupDestinationID(array $source_id, Migration $destination_migration) {
     migrate_instrument_start('lookupDestinationID');
-    $this->ensureTables();
-    $query = db_select($this->mapTableName, 'map')
-                      ->fields('map', $this->destinationKeyMap());
-    foreach ($this->sourceKeyMap() as $key_name) {
-      $query = $query->condition("map.$key_name", array_shift($source_id), '=');
-    }
-    $result = $query->execute();
-    $destination_id = $result->fetchAssoc();
+    static $frequent = array();
 
-    /*
-     * Handle self references like articles that have 'related articles' and
-     * users that have 'friends'. Sometimes we can't save these references because
-     * the referenced item is not yet migrated. In that case, just mark this row
-     * in map table as needs_update. The entity will be fully saved in a
-     * subsequent import.
-     */
-    if ($destination_id === FALSE) {
-      // We have a lookup miss.
-      if ($this->machineName == $destination_migration->machineName) {
-        // We have an entity that's referencing own migration.
-        $destination_migration->needsUpdate = TRUE;
+    // TODO: Let fieldMapping change lookup_cache_size
+    $lookup_cache_size = 500;
+    $frequent_key = $source_id[0];
+
+    // Initialize if needed.
+    if (!isset($frequent[$this->machineName])) {
+      $frequent[$this->machineName] = array();
+    }
+
+    // Check for cached pairs. Only works for single keys.
+    if (count($source_id) == 1 && isset($frequent[$this->machineName][$frequent_key])) {
+      // Cache hit. Just return.
+      $destination_migration->counts['lookup_cache'][$this->machineName]['hit']++;
+      return $frequent[$this->machineName][$frequent_key];
+    }
+    else {
+      // We have a cache miss.
+      $destination_migration->counts['lookup_cache'][$this->machineName]['miss']++;
+
+      // Query map table and cache the result.
+      $this->ensureTables();
+      $query = db_select($this->mapTableName, 'map')
+                        ->fields('map', $this->destinationKeyMap());
+      foreach ($this->sourceKeyMap() as $key_name) {
+        $query = $query->condition("map.$key_name", array_shift($source_id), '=');
+      }
+      $result = $query->execute();
+      $destination_id = $result->fetchAssoc();
+
+      if ($destination_id === FALSE) {
+        // We have a lookup miss.
+
+        /*
+       * Handle self references like articles that have 'related articles' and
+       * users that have 'friends'. Sometimes we can't save these references because
+       * the referenced item is not yet migrated. In that case, just mark this row
+       * in map table as needs_update. The entity will be fully saved in a
+       * subsequent import.
+       */
+        if ($this->machineName == $destination_migration->machineName) {
+          // We have an entity that's referencing own migration.
+          $destination_migration->needsUpdate = TRUE;
+        }
+      }
+      else {
+        // We have a lookup hit.
+
+        // Optionally cache the lookup hit.
+        // A lookup_cache_size of 0 would disable the cache for a given sourceMigration.
+        if ($lookup_cache_size) {
+          $frequent[$this->machineName] = array($frequent_key => $destination_id) + $frequent[$this->machineName];
+          // Keep most recently used (MRU). Size is 500 items, by default.
+          $frequent[$this->machineName] = array_slice($frequent[$this->machineName], 0, $lookup_cache_size, TRUE);
+        }
       }
     }
 

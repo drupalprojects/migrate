@@ -593,11 +593,22 @@ function drush_migrate_import($args = NULL) {
     drush_print($e->getMessage());
     exit;
   }
+
   if ($_migrate_track_memory) {
     drush_migrate_print_memory();
   }
+
   if ($_migrate_track_timer && !drush_get_context('DRUSH_DEBUG')) {
     drush_print_timers();
+  }
+
+  foreach ($migrations as $migration) {
+    if (!empty($migration->counts['lookup_cache'])) {
+      foreach ($migration->counts['lookup_cache'] as $name => $tallies) {
+        $tallies += array('hit' => 0, 'miss' => 0); // Set defaults to avoid NOTICE.
+        drush_log(dt('Lookup cache !mn SM=!name !rate hits (!total total).', array('!mn' => $migration->machineName, '!name' => $name, '!rate' => round($tallies['hit']/$tallies['miss']) . '%', '!total' => $tallies['hit']+$tallies['miss'])), 'notice');
+      }
+    }
   }
 }
 

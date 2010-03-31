@@ -51,6 +51,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
   function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
+      unset($values['arguments']);
     }
     else {
       $arguments = array();

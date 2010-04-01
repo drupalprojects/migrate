@@ -276,8 +276,11 @@ abstract class Migration {
   /**
    * Lazy creation of map and message tables associated with this migration.
    */
-  protected function ensureTables() {
-    if (!db_table_exists($this->mapTableName)) {
+  public function ensureTables() {
+    // We use our own static to avoid a query in db_table_exists().
+    static $exists = array();
+
+    if (!in_array($this->machineName, $exists) && !db_table_exists($this->mapTableName)) {
       // Generate appropriate schema info for the map and message tables,
       // and map from the source field names to the map/msg field names
       $count = 1;
@@ -351,6 +354,8 @@ abstract class Migration {
       // TODO: If the tables do exist, ideally we would confirm they have
       // the expected definitions, in case the migration has changed...
     }
+    // Static cache so we don't do db_table_exists() again for this migration.
+    $exists[] = $this->machineName;
   }
 
   /**

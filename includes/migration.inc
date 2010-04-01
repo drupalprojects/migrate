@@ -383,7 +383,6 @@ abstract class Migration {
     }
     else {
       // We have a cache miss.
-      $destination_migration->counts['lookup_cache'][$this->machineName]['miss']++;
 
       // Query map table and cache the result.
       $this->ensureTables();
@@ -397,6 +396,7 @@ abstract class Migration {
 
       if ($destination_id === FALSE) {
         // We have a lookup miss.
+        $destination_migration->counts['lookup_cache'][$this->machineName]['miss_miss']++;
 
         /*
        * Handle self references like articles that have 'related articles' and
@@ -412,6 +412,7 @@ abstract class Migration {
       }
       else {
         // We have a lookup hit.
+        $destination_migration->counts['lookup_cache'][$this->machineName]['miss_hit']++;
 
         // Optionally cache the lookup hit.
         // A lookup_cache_size of 0 would disable the cache for a given sourceMigration.
@@ -1232,9 +1233,16 @@ abstract class Migration {
     // Report on lookup_cache hit rate. Only visible at 'debug' level.
     if ($result != Migration::RESULT_INCOMPLETE && !empty($this->counts['lookup_cache'])) {
       foreach ($this->counts['lookup_cache'] as $name => $tallies) {
-        $tallies += array('hit' => 0, 'miss' => 0); // Set defaults to avoid NOTICE.
-        $sum = $tallies['hit']+$tallies['miss'];
-        $outputFunction(t('Lookup cache !mn SM=!name !rate hits (!total total).', array('!mn' => $this->machineName, '!name' => $name, '!rate' => round((100*$tallies['hit'])/$sum) . '%', '!total' => $sum)), 'debug');
+        $tallies += array('hit' => 0, 'miss_hit' => 0, 'miss_miss' => 0); // Set defaults to avoid NOTICE.
+        $sum = $tallies['hit']+$tallies['miss_hit']+$tallies['miss_miss'];
+        $outputFunction(t('Lookup cache: !mn SM=!name !hit hit, !miss_hit miss_hit, !miss_miss miss_miss (!total total).', array(
+                '!mn' => $this->machineName,
+                '!name' => $name,
+                '!hit' => round((100*$tallies['hit'])/$sum) . '%',
+                '!miss_hit' => round((100*$tallies['miss_hit'])/$sum) . '%',
+                '!miss_miss' => round((100*$tallies['miss_miss'])/$sum) . '%',
+                '!total' => $sum
+        )), 'debug');
       }
       $this->counts['lookup_cache'] = array();
     }

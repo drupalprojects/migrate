@@ -276,7 +276,7 @@ abstract class Migration {
   /**
    * Lazy creation of map and message tables associated with this migration.
    */
-  public function ensureTables() {
+  protected function ensureTables() {
     // We use our own static to avoid a query in db_table_exists().
     static $exists = array();
 

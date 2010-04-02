@@ -280,7 +280,7 @@ abstract class Migration {
     // We use our own static to avoid a query in db_table_exists().
     static $exists = array();
 
-    if (!in_array($this->machineName, $exists) && !db_table_exists($this->mapTableName)) {
+    if (!isset($exists[$this->machineName]) && !db_table_exists($this->mapTableName)) {
       // Generate appropriate schema info for the map and message tables,
       // and map from the source field names to the map/msg field names
       $count = 1;
@@ -355,7 +355,7 @@ abstract class Migration {
       // the expected definitions, in case the migration has changed...
     }
     // Static cache so we don't do db_table_exists() again for this migration.
-    $exists[] = $this->machineName;
+    $exists[$this->machineName] = $this->machineName;
   }
 
   /**
@@ -378,6 +378,15 @@ abstract class Migration {
     // Initialize if needed.
     if (!isset($frequent[$this->machineName])) {
       $frequent[$this->machineName] = array();
+    }
+
+    // Initialize if needed.
+    if (!isset($destination_migration->counts['lookup_cache'][$this->machineName])) {
+      $destination_migration->counts['lookup_cache'][$this->machineName] = array(
+         'hit' => 0,
+         'miss_hit' => 0,
+         'miss_miss' => 0,
+      );
     }
 
     // Check for cached pairs. Only works for single keys.

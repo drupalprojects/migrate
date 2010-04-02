@@ -502,7 +502,7 @@ abstract class Migration {
         array('!line' => $line, '!file' => $filename));
       // Record notices and continue
       if ($error_level == E_NOTICE || $error_level == E_USER_NOTICE) {
-        $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
+        $this->saveMessage($message . "(file: $filename, line $line)", Migration::MESSAGE_INFORMATIONAL);
       }
       // Simply ignore strict and deprecated errors
       // Note DEPRECATED constants introduced in PHP 5.3

@@ -47,6 +47,13 @@ function migrate_drush_command() {
     'options' => array(
       'refresh' => 'Recognize new migrations and update counts',
     ),
+    'arguments' => array(
+      'migration' => 'Restrict to a single migration. Optional',
+    ),
+    'examples' => array(
+      'migrate-status' => 'Retrieve status for all migrations',
+      'migrate-status BeerNode' => 'Retrieve status for just one migration',
+    ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('ms'),
   );
@@ -190,11 +197,22 @@ function drush_migrate_backend_invoke() {
 /**
  * A simplified version of the dashboard page.
  */
-function drush_migrate_status() {
+function drush_migrate_status($name = NULL) {
   try {
     $refresh = drush_get_option('refresh');
 
-    $migrations = migrate_migrations($refresh);
+    // Validate input and load Migration(s).
+    if ($name) {
+        if ($migration = Migration::getInstance($name . 'Migration')) {
+          $migrations = array($migration);
+        }
+        else {
+          return drush_set_error(dt('Unrecognized migration: !cn', array('!cn' => $name)));
+        }
+    }
+    else {
+      $migrations = migrate_migrations($refresh);
+    }
 
     $table[] = array(dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'),
       dt('Status'), dt('Last imported'));

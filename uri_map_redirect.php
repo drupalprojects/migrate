@@ -3,7 +3,8 @@
 /**
  * @file
  * Sample file for handling redirection from old to new URIs. Use an Apache
- * rewrite rule (or equivalent) to map legacy requests to this file. Customize
+ * rewrite rule (or equivalent) to map legacy requests to this file. To use, copy
+ * or symlink this file to the root of your drupal site. Customize
  * this file to your needs.
  *
  * TODO: Actually test this code.

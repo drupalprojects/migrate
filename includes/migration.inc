@@ -432,8 +432,11 @@ abstract class Migration {
         // A lookup_cache_size of 0 would disable the cache for a given sourceMigration.
         if ($lookup_cache_size) {
           $frequent[$this->machineName] = array($frequent_key => $destination_id) + $frequent[$this->machineName];
-          // Keep most recently used (MRU). Size is 500 items, by default.
-          $frequent[$this->machineName] = array_slice($frequent[$this->machineName], 0, $lookup_cache_size, TRUE);
+
+          // Keep most recently used (MRU). Size varies between 500 and 1000 items, by default.
+          if (count($frequent[$this->machineName]) > 2 * $lookup_cache_size) {
+            $frequent[$this->machineName] = array_slice($frequent[$this->machineName], 0, $lookup_cache_size, TRUE);
+          }
         }
       }
     }

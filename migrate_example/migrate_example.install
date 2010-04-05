@@ -93,7 +93,7 @@ function migrate_example_tags() {
 
   $instance = array(
     'field_name' => 'taxonomy_' . $vocabulary->machine_name,
-    'object_type' => 'node',
+    'entity_type' => 'node',
     'label' => $vocabulary->name,
     'bundle' => 'migrate_example_beer',
     'description' => $vocabulary->help,
@@ -124,7 +124,7 @@ function migrate_example_image() {
   if (!field_info_instance('node', 'field_migrate_example_image', 'migrate_example_beer')) {
     $instance = array(
       'field_name' => 'field_migrate_example_image',
-      'object_type' => 'node',
+      'entity_type' => 'node',
       'label' => 'Image',
       'bundle' => 'migrate_example_beer',
       'description' => 'Upload an image to go with this beer.',
@@ -198,7 +198,7 @@ function migrate_example_favbeers() {
 
   $instance = array(
     'field_name' => 'field_migrate_example_favbeers',
-    'object_type' => 'user',
+    'entity_type' => 'user',
     'label' => 'Favorite Beers',
     'bundle' => 'user',
     'widget' => array(
@@ -224,7 +224,7 @@ function migrate_example_gender() {
 
   $instance = array(
     'field_name' => 'field_migrate_example_gender',
-    'object_type' => 'user',
+    'entity_type' => 'user',
     'label' => 'Gender',
     'bundle' => 'user',
     'widget' => array(
@@ -245,7 +245,7 @@ function migrate_example_country() {
 
   $instance = array(
     'field_name' => 'field_migrate_example_country',
-    'object_type' => 'node',
+    'entity_type' => 'node',
     'label' => 'Countries',
     'bundle' => 'migrate_example_beer',
     'description' => 'Beer country.',

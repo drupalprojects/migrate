@@ -315,6 +315,8 @@ function migrate_example_data_comment() {
   $query = db_insert('migrate_example_comment')
     ->fields($fields);
   $data = array(
+    array(99999998, NULL, 'im first', 'hot body', 'alice', 'alice@example.com', 0),
+    array(99999998, NULL, 'im second', 'hot body', 'alice', 'alice@example.com', 0),
     array(99999999, NULL, 'im parent', 'hot body', 'alice', 'alice@example.com', 0),
     array(99999999, 1, 'im child', 'cold body', 'bob', NULL, 1),
     array(99999999, 2, 'im grandchild', 'bitter body', 'charlie@example.com', NULL, 1),

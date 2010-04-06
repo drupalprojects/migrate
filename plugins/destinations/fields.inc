@@ -56,6 +56,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
+    // TODO: language should fall back to the destination class for all field types.
     $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
 
     // Setup the standard Field API array for saving.
@@ -65,12 +66,8 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       if (isset($arguments['summary'])) {
         $item['summary'] = $arguments['summary'];
       }
-      if (isset($arguments['format'])) {
-        $item['format'] = $item['value_format'] = $arguments['format'];
-      }
-      else {
-        $item['format'] = filter_fallback_format();
-      }
+      $format = isset($arguments['format']) ?  $arguments['format'] : $migration->destination->textFormat;
+      $item['format'] = $item['value_format'] = $format;
       $item['value'] = $value;
 
       $return[$language][$delta] = $item;

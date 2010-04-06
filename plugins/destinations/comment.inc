@@ -20,8 +20,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  A.k.a. the content type (page, article, etc.) of the ... comment?.
    * @param string $language
    *  Language of the node content.
+   * @param string $text_format
+   *  Default text format for fields on this comment. Can be overridden.
    */
-  public function __construct($bundle, $language = LANGUAGE_NONE, $input_format = NULL) {
+  public function __construct($bundle, $language = LANGUAGE_NONE, $text_format = NULL) {
     // PK definition, for use in constructing map/message tables
     $destination_key = array(
       'cid' => array(
@@ -31,9 +33,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         'description' => 'ID of destination entity',
       ),
     );
-    parent::__construct($destination_key, 'comment', $bundle, $language, $input_format);
+    parent::__construct($destination_key, 'comment', $bundle, $language, $text_format);
     $this->supportsBulkRollback = TRUE;
-    $this->language = $language;
   }
 
   /**

@@ -37,7 +37,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *
    * @var int
    */
-  public $inputFormat;
+  public $textFormat;
 
   /**
    * Simply save the key schema.
@@ -45,16 +45,16 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    * @param array $key_schema
    */
   public function __construct(array $key_schema, $entity_type, $bundle,
-      $language = LANGUAGE_NONE, $input_format = NULL) {
+      $language = LANGUAGE_NONE, $text_format = NULL) {
     parent::__construct($key_schema);
     $this->entityType = $entity_type;
     $this->bundle = $bundle;
     $this->language = $language;
-    if (isset($input_format)) {
-      $this->inputFormat = $input_format;
+    if (isset($text_format)) {
+      $this->textFormat = $input_format;
     }
     else {
-      $this->inputFormat = filter_fallback_format();
+      $this->textFormat = filter_fallback_format();
     }
   }
 

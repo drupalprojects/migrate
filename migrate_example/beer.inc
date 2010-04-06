@@ -147,11 +147,11 @@ class BeerNodeMigration extends Migration {
     $this->addFieldMapping('taxonomy_migrate_example_tags', 'terms')
          ->separator(',');
 
-    // Drupal 7 fields can have attributes such as input formats, or summaries
+    // Drupal 7 fields can have attributes such as text formats, or summaries
     // (equivalent to teasers in previous Drupal versions). These can be
     // passed in an arguments array.
     $arguments = MigrateTextFieldHandler::arguments(
-      array('source_field' => 'excerpt'), filter_fallback_format());
+      array('source_field' => 'excerpt')); // Sets the summary.
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
 

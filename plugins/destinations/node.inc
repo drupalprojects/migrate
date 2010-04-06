@@ -22,7 +22,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    * @param string $language
    *  Default language for nodes created via this destination class.
    */
-  public function __construct($bundle, $language = LANGUAGE_NONE, $input_format = NULL) {
+  public function __construct($bundle, $language = LANGUAGE_NONE, $text_format = NULL) {
     // PK definition, for use in constructing map/message tables
     $destination_key = array(
       'nid' => array(
@@ -32,7 +32,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         'description' => 'ID of destination node',
       ),
     );
-    parent::__construct($destination_key, 'node', $bundle, $language, $input_format);
+    parent::__construct($destination_key, 'node', $bundle, $language, $text_format);
     $this->supportsBulkRollback = TRUE;
   }
 

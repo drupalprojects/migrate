@@ -17,7 +17,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
   /**
    * Basic initialization
    */
-  public function __construct($language = LANGUAGE_NONE, $input_format = NULL) {
+  public function __construct($language = LANGUAGE_NONE, $text_format = NULL) {
     // PK definition, for use in constructing map/message tables
     $destination_key = array(
       'uid' => array(
@@ -27,7 +27,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         'description' => 'ID of destination user',
       ),
     );
-    parent::__construct($destination_key, 'user', 'user', $language, $input_format);
+    parent::__construct($destination_key, 'user', 'user', $language, $text_format);
     $this->supportsBulkRollback = TRUE;
   }
 

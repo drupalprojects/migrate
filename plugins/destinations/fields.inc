@@ -56,8 +56,8 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    // TODO: language should fall back to the destination class for all field types.
-    $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
+
+    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -86,7 +86,7 @@ class MigrateTextWithSummaryFieldHandler extends MigrateTextFieldHandler {
 
 abstract class MigrateValueFieldHandler extends MigrateFieldHandler {
   function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
-    $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
+    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -141,7 +141,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
         ->execute()
         ->fetchAllKeyed(0, 0);
       }
-    $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
+    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
     $result = array();
     $i = 0;
     foreach ($tids as $tid) {
@@ -223,6 +223,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     }
     migrate_instrument_stop('MigrateFileFieldHandler file_function');
 
+    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
     if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;
@@ -230,7 +231,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $object_field['title'] = isset($arguments['source_title_name']) ? $values[$arguments['source_title_name']] : NULL;
       $object_field['description'] = isset($arguments['source_description_name']) ? $values[$arguments['source_description_name']] : NULL;
       $object_field['display'] = isset($arguments['source_display_name']) ? $values[$arguments['source_display_name']] : NULL;
-      $return[$arguments['language']][$delta] = $object_field;
+      $return[$language][$delta] = $object_field;
       return $return;
     }
     else {
@@ -255,7 +256,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param source_display_name
    *
    */
- static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = LANGUAGE_NONE, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL) {
+ static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL) {
     return get_defined_vars();
   }
 }
@@ -272,7 +273,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    $language = isset($arguments['language']) ? $arguments['language'] : LANGUAGE_NONE;
+    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
 
     // Setup the standard Field API array for saving.
     $delta = 0;

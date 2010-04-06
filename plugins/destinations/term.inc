@@ -17,7 +17,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   /**
    * Basic initialization
    */
-  public function __construct($bundle, $language = LANGUAGE_NONE, $text_format = NULL) {
+  public function __construct($bundle, $language = NULL, $text_format = NULL) {
     // PK definition, for use in constructing map/message tables
     $destination_key = array(
       'tid' => array(

@@ -164,7 +164,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $term->parent = array(0);
     }
     if (!isset($term->format)) {
-      $term->format = $this->inputFormat;
+      $term->format = $this->textFormat;
     }
 
     $this->prepare($migration, $term, $row);

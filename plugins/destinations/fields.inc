@@ -177,6 +177,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $full_path = $values[$delta];
     }
 
+    // Check that source exists. If not, bail.
     if (!file_exists($full_path)) {
       $migration->saveMessage(t('Source file does not exist: !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
       return;
@@ -184,6 +185,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
     // We must use full_path including directory part in order to guarantee a unique destination.
     $destination_dir = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'];
+
+    // Check that destination does not exist. If it does, reuse it and return.
+    $destination_file = $destination_dir . "/" . basename($full_path);
 
     $source = (object) array(
       'uri' => $full_path,
@@ -193,35 +197,74 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       'timestamp' => REQUEST_TIME,
     );
 
-    migrate_instrument_start('MigrateFileFieldHandler file_function');
-    switch ($arguments['file_function']) {
-      case 'file_copy':
-        $file = file_copy($source, $destination_dir, $arguments['file_replace']);
-        break;
-      case 'file_move':
-        $file = file_move($source, $destination_dir, $arguments['file_replace']);
-        break;
-      case 'file_fast':
-        // Keep re-using an existing file. We still benefit from the file_exists() check above.
-        if (!isset($fid)) {
-          $full_path = DRUPAL_ROOT . '/misc/druplicon.png';
-          $source = (object) array(
-            'uri' => $full_path,
-            'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
-            'filename' => basename($full_path),
-            'filemime' => file_get_mimetype($full_path),
-            'timestamp' => REQUEST_TIME,
-          );
-          $file = file_copy($source, $destination_dir, FILE_EXISTS_RENAME);
-          $fid = $file->fid;
-        }
-        else {
-          $file = new stdClass;
-          $file->fid = $fid;
-        }
-        break;
+    if (file_exists($destination_file)) {
+      // Save this file to DB.
+      if ($existing_files = file_load_multiple(array(), array('uri' => $destination_file))) {
+        // Existing record exists. Reuse it. TODO: Perhaps we never should re-use records.
+        $file = reset($existing_files);
+        $file = file_save($file);
+      }
+      else {
+        // Get this orphaned file into the file table.
+        $file = clone $source;
+        $file->fid = NULL;
+        $file->uri = $destination_file;
+        $file->status |= FILE_STATUS_PERMANENT; // Save a write in file_field_presave().
+        $file = file_save($file);
+      }
     }
-    migrate_instrument_stop('MigrateFileFieldHandler file_function');
+    else {
+      migrate_instrument_start('MigrateFileFieldHandler file_function');
+      switch ($arguments['file_function']) {
+        case 'file_copy':
+          $file = file_copy($source, $destination_dir, $arguments['file_replace']);
+          break;
+        case 'file_move':
+          // file_move() does a copy then delete which slow. So we implement our own.
+          if (file_prepare_directory($destination_dir)) {
+            if (rename($source->uri, file_directory_path(file_uri_scheme($destination_file)) . '/' . file_uri_target($destination_file))) {
+              $file = clone $source;
+              $file->fid = NULL;
+              $file->uri = $destination_file;
+              $file->status |= FILE_STATUS_PERMANENT; // Save a write in file_field_presave().
+              $file = file_save($file);
+
+              // Inform modules that the file has been copied.
+              module_invoke_all('file_copy', $file, $source);
+              break;
+            }
+            else {
+              $migration->saveMessage(t('Unable to rename !source to !uri', array('!source' => $source->uri, '!uri' => $destination_file)), MIGRATION::MESSAGE_ERROR);
+              return;
+            }
+          }
+          else {
+             $migration->saveMessage(t('Unable to prepare directory !dir', array('!dir' => $destination_dir)), MIGRATION::MESSAGE_ERROR);
+             return;
+          }
+          break;
+        case 'file_fast':
+          // Keep re-using an existing file. We still benefit from the file_exists() check above.
+          if (!isset($fid)) {
+            $full_path = DRUPAL_ROOT . '/misc/druplicon.png';
+            $source = (object) array(
+              'uri' => $full_path,
+              'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
+              'filename' => basename($full_path),
+              'filemime' => file_get_mimetype($full_path),
+              'timestamp' => REQUEST_TIME,
+            );
+            $file = file_copy($source, $destination_dir, FILE_EXISTS_RENAME);
+            $fid = $file->fid;
+          }
+          else {
+            $file = new stdClass;
+            $file->fid = $fid;
+          }
+          break;
+      }
+      migrate_instrument_stop('MigrateFileFieldHandler file_function');
+    }
 
     $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
     if ($file) {
@@ -247,7 +290,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param file_function
    *   file_fast, file_move, or file_copy.
    * @param file_replace
-   *   Value of $replace in that file function. Does not apply to file_save(). Defaults to FILE_EXISTS_RENAME.
+   *   Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.
    * @param language
    *   Language of the text (defaults to destination language)
    * @param source_alt_name

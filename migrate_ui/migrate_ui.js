@@ -6,19 +6,19 @@
  */
 Drupal.behaviors.migrateUISummary = {
   attach: function (context) {
-    // The setSummary method required for this behavior is not available
+    // The drupalSetSummary method required for this behavior is not available
     // on the Blocks administration page, so we need to make sure this
     // behavior is processed only if setSummary is defined.
-    if (typeof jQuery.fn.setSummary == 'undefined') {
+    if (typeof jQuery.fn.drupalSetSummary == 'undefined') {
       return;
     }
 
-    $('fieldset#edit-overview', context).setSummary(function (context) {
+    $('fieldset#edit-overview', context).drupalSetSummary(function (context) {
       if (!$('#owner', context).children()) {
         return '<span class="error">' + Drupal.t('Missing client owner.') + '</span>';
       }
     });
-    $('fieldset#edit-destination', context).setSummary(function (context) {
+    $('fieldset#edit-destination', context).drupalSetSummary(function (context) {
       total = $('tr', context).length - 2;
       unmapped = $('td.migrate-error', context).length / 2;
       mapped = total - unmapped;
@@ -28,7 +28,7 @@ Drupal.behaviors.migrateUISummary = {
       }
       return msg;
     });
-    $('fieldset#edit-source', context).setSummary(function (context) {
+    $('fieldset#edit-source', context).drupalSetSummary(function (context) {
       total = $('tr', context).length - 2;
       unmapped = $('td.migrate-error', context).length / 2;
       mapped = total - unmapped;
@@ -52,7 +52,7 @@ Drupal.behaviors.migrateUISummary = {
           msg = msg + txt + '. ';
         }
       }
-      $(this).setSummary(msg);
+      $(this).drupalSetSummary(msg);
     }
   )}
 }

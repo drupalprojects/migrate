@@ -328,3 +328,24 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     return $return;
   }
 }
+
+class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
+  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+    if (isset($values['arguments'])) {
+      $arguments = $values['arguments'];
+      unset($values['arguments']);
+    }
+    else {
+      $arguments = array();
+    }
+    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
+
+    // Setup the standard Field API array for saving.
+    $delta = 0;
+    foreach ($values as $value) {
+      $return[$language][$delta]['uid'] = $value;
+      $delta++;
+    }
+    return $return;
+  }
+}

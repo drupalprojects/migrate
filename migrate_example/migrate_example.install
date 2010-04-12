@@ -12,6 +12,11 @@ function migrate_example_schema() {
   $schema['migrate_example_comment'] = migrate_example_schema_comment();
   $schema['migrate_example_topic'] = migrate_example_schema_topic();
   $schema['migrate_example_topic_beer'] = migrate_example_schema_topic_beer();
+
+  // These two tables are primarily for testing the table_copy plugin.
+  // They do provide some guidance for uri redirection per uri_map_redirect.php
+  $schema['migrate_example_legacy_urls'] = migrate_example_schema_legacy_urls();
+  $schema['migrate_example_copy_urls'] = migrate_example_schema_legacy_urls();
   return $schema;
 }
 
@@ -31,6 +36,7 @@ function migrate_example_install() {
   migrate_example_data_comment();
   migrate_example_data_topic();
   migrate_example_data_topic_beer();
+  migrate_example_data_urls();
 }
 
 function migrate_example_uninstall() {
@@ -357,6 +363,21 @@ function migrate_example_data_topic_beer() {
   $query->execute();
 }
 
+function migrate_example_data_urls() {
+  $fields = array('id', 'migration_name', 'source_id', 'source_uri', 'modificationdate');
+  $query = db_insert('migrate_example_legacy_urls')
+    ->fields($fields);
+  $data = array(
+    array(1, 'BeerNode', 99999997, 'the_boddington/main', '2010-04-12 08:32:06'),
+    array(2, 'BeerNode', 99999998, 'Miller Lite taste', '2010-04-12 08:32:05'),
+    array(3, 'BeerNode', 99999999, 'green wonder', '2010-04-12 08:32:03'),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
 function migrate_example_schema_beer() {
   return array(
     'description' => 'Beers of the world.',
@@ -565,5 +586,42 @@ function migrate_example_schema_account() {
       ),
     ),
     'primary key' => array('aid'),
+  );
+}
+
+function migrate_example_schema_legacy_urls() {
+  return array(
+    'description' => 'Stores legacy paths and destination ids for redirection.',
+    'fields' => array(
+      'id'  => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Primary Key: ID.',
+      ),
+      'migration_name' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'source_id' => array(
+        'type' => 'int',
+        'length' => 11,
+        'not null' => FALSE,
+      ),
+      'source_uri' => array(
+        'type' => 'varchar',
+        'length' => 500,
+        'not null' => FALSE,
+      ),
+      'modificationdate' => array(
+        'type' => 'datetime',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('ID'),
+    'indexes' => array(
+      'source_uri' => array(array('source_uri', 255)),
+    ),
   );
 }

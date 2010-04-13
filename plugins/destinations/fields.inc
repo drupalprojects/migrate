@@ -126,21 +126,22 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       $arguments = array();
     }
     if (isset($arguments['source_type']) && $arguments['source_type'] == 'tid') {
-      $condition_field = 'td.tid';
       // Nothing to do. We have tids already.
       $tids = $values;
     }
     else {
-      $condition_field = 'td.name';
+      // Get the vocabulary for this term
+      $vid = $field_info['settings']['allowed_values'][0]['vid'];
+
       // Cannot use taxonomy_term_load_multiple() since we have an array of names.
-      // It wants singular value.
-      // TODO: Restrict to the specific taxonomy
+      // It wants a singular value.
       $tids = db_select('taxonomy_term_data', 'td')
         ->fields('td', array('tid'))
-        ->condition($condition_field, $values, 'IN')
+        ->condition('td.name', $values, 'IN')
+        ->condition('td.vid', $vid)
         ->execute()
         ->fetchAllKeyed(0, 0);
-      }
+    }
     $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
     $result = array();
     $i = 0;

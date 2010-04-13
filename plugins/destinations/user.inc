@@ -55,6 +55,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields['timezone'] = t('User: Timezone');
     $fields['language'] = t('User: Language');
     $fields['picture'] = t('User: Picture');
+    $fields['init'] = t('User: Init');
 
     // Then add any fields attached to users
     $field_instance_info = field_info_instances('user', 'user');

@@ -13,6 +13,23 @@ class MigrateDestinationTableCopy extends MigrateDestination {
   public function __construct(array $key_schema, $tableName) {
     parent::__construct($key_schema);
     $this->tableName = $tableName;
+    $this->supportsBulkRollback = TRUE;
+  }
+
+  /**
+   * Delete a batch of rows at once.
+   *
+   * @param $migration
+   *  Controlling migration object. Unused here.
+   * @param $ids
+   *  Array of IDs to be deleted.
+   */
+  public function bulkRollback(Migration $migration, array $ids) {
+    migrate_instrument_start('table_copy bulkRollback');
+    db_delete($this->tableName)
+      ->condition(key($this->keySchema), $ids, 'IN')
+      ->execute();
+    migrate_instrument_stop('table_copy bulkRollback');
   }
 
   /**

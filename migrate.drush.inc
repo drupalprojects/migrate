@@ -201,7 +201,7 @@ function drush_migrate_clear($content_set) {
     }
     else {
       $row = db_fetch_object(db_query("SELECT mcsid,description FROM {migrate_content_sets}
-                                       WHERE LOWER('%s') = LOWER(description)", $content_set));
+                                       WHERE LOWER('%s') = LOWER(machine_name)", $content_set));
     }
     $mcsid = $row->mcsid;
     $description = $row->description;
@@ -290,7 +290,7 @@ function drush_migrate_import($content_set) {
     }
     else {
       $row = db_fetch_object(db_query("SELECT mcsid,description FROM {migrate_content_sets}
-                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
+                                 WHERE LOWER('%s') = LOWER(machine_name)", $content_set));
     }
     $mcsid = $row->mcsid;
     $description = $row->description;
@@ -381,7 +381,7 @@ function drush_migrate_stop($content_set = NULL) {
     }
     else {
       $row = db_fetch_object(db_query("SELECT mcsid,description,status FROM {migrate_content_sets}
-                                 WHERE LOWER('%s') = LOWER(description)", $content_set));
+                                 WHERE LOWER('%s') = LOWER(machine_name)", $content_set));
     }
     $mcsid = $row->mcsid;
     $description = $row->description;

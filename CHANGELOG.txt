@@ -7,8 +7,10 @@ Features and enhancements
 - #721432 - Update capability added to terms.
 
 Bug fixes
+- #736998 - Don't pass update to spawned subshells
 - #719262 - Documented restriction on views with exposed filters.
 - #694020 - Update drush command hook naming
+- #738812 - On comment migration, make sure source field really has a name.
 
 Migrate 1.0
 ===========

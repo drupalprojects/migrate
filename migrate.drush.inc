@@ -123,6 +123,8 @@ function drush_migrate_get_options() {
 function drush_migrate_backend_invoke() {
   $args = drush_get_arguments();
   $options = drush_migrate_get_options();
+  // If we leave the update option in, it will reupdate everything
+  unset($options['update']);
   // @todo: use drush_backend_invoke_args() as per http://drupal.org/node/658420.
   drush_backend_invoke(implode(' ', $args), $options);
 }

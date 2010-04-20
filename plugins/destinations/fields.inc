@@ -217,7 +217,13 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     else {
       migrate_instrument_start('MigrateFileFieldHandler file_function');
       // One can override a file_function via CLI or drushrc.php
-      switch (drush_get_option('file_function', $arguments['file_function'])) {
+      if (isset($migration->options['file_function'])) {
+        $file_function = $migration->options['file_function'];
+      }
+      else {
+        $file_function = $arguments['file_function'];
+      }
+      switch ($file_function) {
         case 'file_copy':
           $file = file_copy($source, $destination_dir, $arguments['file_replace']);
           break;

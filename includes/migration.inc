@@ -61,6 +61,12 @@ abstract class Migration {
   public $destination;
 
   /**
+   * Save options passed to current operation
+   * @var array
+   */
+  public $options;
+
+  /**
    * If the purpose of this migration is primarily to update existing content,
    * rather than to import new content, set this to TRUE.
    *
@@ -723,6 +729,7 @@ abstract class Migration {
    *    after 'frequency' seconds have passed.
    */
   public function rollback(array $options = array()) {
+    $this->options = $options;
     // TODO: Validate dependencies (migrations depending on us have no imported rows)
 /*    if (!isset($options['force'])) {
       if (!$this->dependenciesComplete()) {
@@ -896,6 +903,7 @@ abstract class Migration {
    *    after 'frequency' seconds have passed.
    */
   public function import(array $options = array()) {
+    $this->options = $options;
     if (!isset($options['force'])) {
       if (!$this->dependenciesComplete()) {
         return Migration::RESULT_SKIPPED;

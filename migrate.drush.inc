@@ -533,6 +533,9 @@ function drush_migrate_import($args = NULL) {
     if ($itemlimit = drush_get_option('itemlimit', FALSE)) {
       $options['itemlimit'] = $itemlimit;
     }
+    if ($file_function = drush_get_option('file_function', '')) {
+      $options['file_function'] = $file_function;
+    }
     if (drush_get_option('force', FALSE) == 1) {
       $options['force'] = TRUE;
     }

@@ -1,0 +1,72 @@
+<?php
+// $Id$
+
+/**
+ * Test comment migration.
+ */
+class MigrateCommentUnitTest extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Comment migration',
+      'description' => 'Test migration of comment data',
+      'group' => 'Migrate',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('migrate_example');
+  }
+
+  function testCommentImport() {
+    $migration = Migration::getInstance('BeerTermMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerUserMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('User import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerNodeMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Node import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerCommentMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Comment import returned RESULT_COMPLETED'));
+
+    $result = db_select('migrate_example_beer_comment', 'mec')
+              ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
+              ->orderBy('cid_parent', 'ASC')
+              ->execute();
+
+    $rawcomments = comment_load_multiple(FALSE);
+    // Index by subject
+    $comments = array();
+    foreach ($rawcomments as $comment) {
+      $comments[$comment->subject] = $comment;
+    }
+    $count = 0;
+    foreach ($result as $row) {
+      $count++;
+      $comment = $comments[$row->subject];
+      $this->assertNotNull($comment, t('!subject imported', array('!subject' => $row->subject)));
+      $this->assertEqual($comment->mail, $row->mail,
+        t('Mail matches'));
+      $this->assertEqual($comment->status, COMMENT_PUBLISHED,
+        t('Status matches'));
+      $this->assertEqual($comment->nid, $row->bid,
+        t('Nid matches'));
+      $this->assertEqual($comment->comment_body[LANGUAGE_NONE][0]['value'], $row->body,
+        t('Body matches'));
+      // TODO: uid
+      // TODO: parent
+    }
+    $this->assertEqual(count($comments), $count,
+      t('Counts of comments and input rows match'));
+  }
+}

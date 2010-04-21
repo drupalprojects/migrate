@@ -1,0 +1,66 @@
+<?php
+// $Id$
+
+/**
+ * Test node migration.
+ */
+class MigrateNodeUnitTest extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Node migration',
+      'description' => 'Test migration of node data',
+      'group' => 'Migrate',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('migrate_example');
+  }
+
+  function testNodeImport() {
+    $migration = Migration::getInstance('BeerTermMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerUserMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('User import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerNodeMigration');
+    $migration->outputFunction = 'drupal_set_message';
+    $result = $migration->import();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Node import returned RESULT_COMPLETED'));
+
+    $query = db_select('migrate_example_beer_node', 'b')
+             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image'));
+    $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
+    // Gives a single comma-separated list of terms
+    $query->groupBy('tb.bid');
+    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
+    $result = $query->execute();
+
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_beer'), TRUE);
+    // Index by title
+    $nodes = array();
+    foreach ($rawnodes as $node) {
+      $nodes[$node->title] = $node;
+    }
+    $count = 0;
+    foreach ($result as $row) {
+      $count++;
+      $node = $nodes[$row->name];
+      $this->assertNotNull($node, t('!title imported', array('!title' => $row->name)));
+      $this->assertEqual($row->bid, $node->nid, t('Nid preserved'));
+      // TODO: uid from beeruser map
+      // TODO: countries
+      // TODO: terms
+      // TODO: summary
+      // TODO: image
+    }
+    $this->assertEqual(count($nodes), $count,
+      t('Counts of nodes and input rows match'));
+  }
+}

@@ -23,4 +23,7 @@ files[] = plugins/destinations/table_copy.inc
 files[] = plugins/sources/sql.inc
 files[] = plugins/sources/mssql.inc
 ;NYI files[] = plugins/sources/view.inc
-; TODO: Add test files?
+files[] = tests/plugins/destinations/comment.test
+files[] = tests/plugins/destinations/node.test
+files[] = tests/plugins/destinations/term.test
+files[] = tests/plugins/destinations/user.test

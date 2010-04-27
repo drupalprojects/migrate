@@ -187,6 +187,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     // We must use full_path including directory part in order to guarantee a unique destination.
     $destination_dir = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'];
     $destination_file = $destination_dir . "/" . basename($full_path);
+    $real_destination_file = drupal_realpath($destination_file);
 
     $source = (object) array(
       'uri' => $full_path,
@@ -197,7 +198,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     );
 
     // Check that destination does not exist. If it does, reuse it and return.
-    if (file_exists($destination_file)) {
+    if (file_exists($real_destination_file)) {
       // Save this file to DB.
       if ($existing_files = file_load_multiple(array(), array('uri' => $destination_file))) {
         // Existing record exists. Reuse it. TODO: Perhaps we never should re-use records.
@@ -229,7 +230,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         case 'file_move':
           // file_move() does a copy then delete which slow. So we implement our own.
           if (file_prepare_directory($destination_dir)) {
-            $real_destination_file = drupal_realpath($destination_file);
             if (rename($source->uri, $real_destination_file)) {
               $file = clone $source;
               $file->fid = NULL;

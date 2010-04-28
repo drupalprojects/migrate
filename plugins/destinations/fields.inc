@@ -178,9 +178,11 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $full_path = $values[$delta];
     }
 
-    // Check that source exists. If not, bail.
+    // Check that source exists. If not, mark the entity as 'needs_update' and bail.
+    // Sometimes the source file arrives later, when trsync is slower than DB.
     if (!file_exists($full_path)) {
-      $migration->saveMessage(t('Source file does not exist: !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
+      $migration->saveMessage(t('Source file does not exist: !path', array('!path' => $full_path)), MIGRATION::MESSAGE_WARNING);
+      $migration->needsUpdate = TRUE;
       return;
     }
 

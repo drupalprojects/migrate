@@ -184,7 +184,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       return;
     }
 
-    // We must use full_path including directory part in order to guarantee a unique destination.
     $destination_dir = $field_info['settings']['uri_scheme'] . '://' . $instance['settings']['file_directory'];
     $destination_file = $destination_dir . "/" . basename($full_path);
     $real_destination_file = drupal_realpath($destination_file);

@@ -172,6 +172,23 @@ function migrate_migration_info($form, $form_state, $migration) {
     );
   }
 
+  switch ($migration->systemOfRecord) {
+    case Migration::SOURCE:
+      $system_of_record = t('Source data');
+      break;
+    case Migration::DESTINATION:
+      $system_of_record = t('Destination data');
+      break;
+    default:
+      $system_of_record = t('Unknown');
+      break;
+  }
+  $form['detail']['overview']['system_of_record'] = array(
+    '#prefix' => '<div>',
+    '#markup' => '<strong>' . t('System of record: ') . '</strong>' . $system_of_record,
+    '#suffix' => '</div>',
+  );
+
   $form['detail']['overview']['description'] = array(
     '#prefix' => '<div>',
     '#markup' => $migration->description,

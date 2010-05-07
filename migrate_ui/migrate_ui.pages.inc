@@ -304,7 +304,7 @@ function migrate_migration_info($form, $form_state, $migration) {
       '#type' => 'fieldset',
       '#title' => t('Mapping: ') . $group,
       '#group' => 'detail',
-      '#attributes' => array('class' => 'migrate-mapping'),
+      '#attributes' => array('class' => array('migrate-mapping')),
     );
     $rows = array();
     foreach ($mappings as $mapping) {

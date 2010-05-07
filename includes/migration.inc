@@ -61,29 +61,24 @@ abstract class Migration {
   public $destination;
 
   /**
-<<<<<<< migration.inc
    * Indicate whether the primary system of record for this migration is the
    * source, or the destination (Drupal). In the source case, migration of
    * an existing object will completely replace the Drupal object with data from
    * the source side. In the destination case, the existing Drupal object will
    * be loaded, then changes from the source applied; also, rollback will not be
    * supported.
-=======
-   * Save options passed to current operation
-   * @var array
-   */
-  public $options;
-
-  /**
-   * If the purpose of this migration is primarily to update existing content,
-   * rather than to import new content, set this to TRUE.
->>>>>>> 1.1.2.89
    *
-   * @var boolean
+   * @var int
    */
   const SOURCE = 1;
   const DESTINATION = 2;
   public $systemOfRecord = Migration::SOURCE;
+
+  /**
+   * Save options passed to current operation
+   * @var array
+   */
+  public $options;
 
   /**
    * Specify value of needs_update for current map row. Usually set by

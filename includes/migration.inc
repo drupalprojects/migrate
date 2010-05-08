@@ -837,7 +837,8 @@ abstract class Migration {
           if (isset($frequency)) {
             if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
                 ($frequency_unit == 'items' && $total >= $frequency)) {
-              $this->progressMessage($lastfeedback, $total, FALSE, Migration::RESULT_INCOMPLETE);
+              // TODO: We don't actually track failure to rollback so $successes could be misleading here.
+              $this->progressMessage($lastfeedback, $total, $total, FALSE, Migration::RESULT_INCOMPLETE);
               $lastfeedback = time();
               $total = 0;
             }
@@ -876,7 +877,8 @@ abstract class Migration {
       db_delete($this->messageTableName)
         ->execute();
       migrate_instrument_stop('rollback map/message update');
-      $this->progressMessage($lastfeedback, $total, FALSE, $return);
+
+      $this->progressMessage($lastfeedback, $total, $total, FALSE, $return);
 
       // If we're using highwater marks, reset at completion of a full rollback
       // TODO: What about partial rollbacks? Probably little we can do to make
@@ -925,7 +927,7 @@ abstract class Migration {
         $frequency = $options['feedback']['frequency'];
         $frequency_unit = $options['feedback']['frequency_unit'];
       }
-      $count = $total = 0;
+      $count_since_feedback = $total = $successes_since_feedback = 0;
       while ($data_row = $this->source->fetch($this, $options)) {
         if ($this->memoryExceeded()) {
           $return = Migration::RESULT_INCOMPLETE;
@@ -933,10 +935,10 @@ abstract class Migration {
         }
         if (isset($frequency)) {
           if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
-              ($frequency_unit == 'items' && $count >= $frequency)) {
-            $this->progressMessage($lastfeedback, $count, TRUE, Migration::RESULT_INCOMPLETE);
+              ($frequency_unit == 'items' && $count_since_feedback >= $frequency)) {
+            $this->progressMessage($lastfeedback, $count_since_feedback, $successes_since_feedback, TRUE, Migration::RESULT_INCOMPLETE);
             $lastfeedback = time();
-            $count = 0;
+            $count_since_feedback = $successes_since_feedback = 0;
           }
         }
 
@@ -1081,6 +1083,7 @@ abstract class Migration {
           migrate_instrument_stop('destination import');
           if ($ids) {
             $this->saveIDMapping($data_row, $ids, $this->needsUpdate);
+            $successes_since_feedback++;
           }
           else {
             // TODO: Failure to save
@@ -1089,8 +1092,6 @@ abstract class Migration {
             $outputFunction = $this->outputFunction;
             $outputFunction($message);
           }
-          $count++;
-          $total++;
         }
         catch (MigrateException $e) {
           $this->saveMessage($e->getMessage(), $e->level);
@@ -1102,6 +1103,8 @@ abstract class Migration {
           $outputFunction = $this->outputFunction;
           $outputFunction($e->getMessage());
         }
+        $count_since_feedback++;
+        $total++;
         if (isset($this->highwaterField)) {
           $this->saveHighwater($data_row->{$this->highwaterField});
         }
@@ -1119,13 +1122,13 @@ abstract class Migration {
       // TODO: Factor out to endProcess?
       $time = microtime(TRUE) - $starttime;
       if ($time > 0) {
-        $perminute = round(60*$count/$time);
+        $perminute = round(60*$count_since_feedback/$time);
         $time = round($time, 1);
       }
       else {
         $perminute = '?';
       }
-      $this->progressMessage($lastfeedback, $count, TRUE, $return);
+      $this->progressMessage($lastfeedback, $count_since_feedback, $successes_since_feedback, TRUE, $return);
       $this->endProcess(TRUE, $return == Migration::RESULT_COMPLETED);
     }
     catch (Exception $exception) {
@@ -1212,12 +1215,14 @@ abstract class Migration {
    *  last progress message.
    * @param int $numitems
    *  Number of items processed since $starttime.
+   * @param int $successes
+   *  Number of successful opreations since $starttime.
    * @param boolean $import
    *  TRUE for an import process, FALSE for a rollback process.
    * @param int $result
    *  Status of the process, represented by one of the Migration::RESULT_* constants.
    */
-  protected function progressMessage($starttime, $numitems, $import, $result) {
+  protected function progressMessage($starttime, $numitems, $successes, $import, $result) {
     $time = microtime(TRUE) - $starttime;
     if ($time > 0) {
       $perminute = round(60*$numitems/$time);
@@ -1230,19 +1235,19 @@ abstract class Migration {
     if ($import) {
       switch ($result) {
         case Migration::RESULT_COMPLETED:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - done with '!name'";
+          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - done with '!name'";
           $type = 'completed';
           break;
         case Migration::RESULT_FAILED:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - failure with '!name'";
+          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - failure with '!name'";
           $type = 'failed';
           break;
         case Migration::RESULT_INCOMPLETE:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - continuing with '!name'";
+          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - continuing with '!name'";
           $type = 'ok';
           break;
         case Migration::RESULT_STOPPED:
-          $basetext = "Imported !numitems in !time sec (!perminute/min) - stopped '!name'";
+          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - stopped '!name'";
           $type = 'warning';
           break;
       }
@@ -1268,7 +1273,7 @@ abstract class Migration {
       }
     }
     $message = t($basetext,
-        array('!numitems' => $numitems, '!time' => $time, '!perminute' => $perminute,
+        array('!numitems' => $numitems, '!successes' => $successes, '!failed' => $numitems - $successes, '!time' => $time, '!perminute' => $perminute,
               '!name' => $this->machineName));
     $outputFunction = $this->outputFunction;
     $outputFunction($message, $type);

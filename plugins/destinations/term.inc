@@ -114,19 +114,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $term->tid = $row->migrate_map_destid1;
     }
 
-    // Trying to update an existing term
-    if (isset($term->tid)) {
-      $existing_term = taxonomy_term_load($term->tid);
-      if ($existing_term) {
-        // Incoming data overrides existing data, so only copy non-existent fields
-        foreach ($existing_term as $field => $value) {
-          if (!isset($term->$field)) {
-            $term->$field = $existing_term->$field;
-          }
-        }
-      }
-    }
-
     // Default to bundle if no vocabulary machine name provided
     if (!isset($term->vocabulary_machine_name)) {
       $term->vocabulary_machine_name = $this->bundle;
@@ -168,6 +155,19 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     }
 
     $this->prepare($migration, $term, $row);
+
+    // Trying to update an existing term
+    if ($migration->systemOfRecord == Migration::DESTINATION) {
+      $existing_term = taxonomy_term_load($term->tid);
+      if ($existing_term) {
+        // Incoming data overrides existing data, so only copy non-existent fields
+        foreach ($existing_term as $field => $value) {
+          if (!isset($term->$field)) {
+            $term->$field = $existing_term->$field;
+          }
+        }
+      }
+    }
 
     migrate_instrument_start('taxonomy_term_save');
     $status = taxonomy_term_save($term);

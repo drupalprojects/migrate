@@ -801,9 +801,10 @@ abstract class Migration {
               migrate_instrument_stop('rollback map/message update');
             }
             catch (Exception $e) {
+              $output = $this->outputFunction;
+              $output($e->getMessage());
               migrate_instrument_stop('bulkRollback');
               migrate_instrument_stop('rollback map/message update');
-              continue;
             }
             $destids = array();
             $sourceids = array();

@@ -114,6 +114,7 @@ function migrate_drush_command() {
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
   $migration_options['--stop'] = 'Stop specified migration(s) if applicable.';
   $migration_options['--rollback'] = 'Rollback specified migration(s) if applicable.';
+  $migration_options['--file_function'] = 'Override file function to use when migrating images.';
   $items['migrate-import'] = array(
     'description' => 'Perform one or more migration processes',
     'options' => $migration_options,

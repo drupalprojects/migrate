@@ -330,8 +330,11 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
-      $return[$language][$delta]['nid'] = $value;
-      $delta++;
+      // Don't save empty references
+      if ($value) {
+        $return[$language][$delta]['nid'] = $value;
+        $delta++;
+      }
     }
     return $return;
   }
@@ -351,8 +354,11 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
-      $return[$language][$delta]['uid'] = $value;
-      $delta++;
+      // Don't save empty references
+      if ($value) {
+        $return[$language][$delta]['uid'] = $value;
+        $delta++;
+      }
     }
     return $return;
   }

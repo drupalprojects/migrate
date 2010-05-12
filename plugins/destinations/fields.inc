@@ -329,6 +329,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
 
     // Setup the standard Field API array for saving.
     $delta = 0;
+    $return = array();
     foreach ($values as $value) {
       // Don't save empty references
       if ($value) {
@@ -353,6 +354,7 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
 
     // Setup the standard Field API array for saving.
     $delta = 0;
+    $return = array();
     foreach ($values as $value) {
       // Don't save empty references
       if ($value) {

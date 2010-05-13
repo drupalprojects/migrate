@@ -16,6 +16,11 @@ class MigrateDestinationTableCopy extends MigrateDestination {
     $this->supportsBulkRollback = TRUE;
   }
 
+  public function __toString() {
+    $output = t('Table copy');
+    return $output;
+  }
+
   /**
    * Delete a batch of rows at once.
    *

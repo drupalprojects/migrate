@@ -24,6 +24,7 @@ function migrate_ui_dashboard() {
     array('data' => t('Imported')),
     array('data' => t('Unimported')),
     array('data' => t('Messages')),
+    array('data' => t('Throughput')),
     array('data' => t('Last imported')),
     );
 
@@ -63,6 +64,8 @@ function migrate_ui_dashboard() {
     $query->addExpression('COUNT(*)', 'cnt');
     $num_messages = $query->execute()->fetchField();
     $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $migration->machineName) : 0;
+    $rate = $migration->getLastThroughput();
+    $row['lastthroughput'] = t('!rate/min. !time remaining', array('!rate' => $rate, '!time' => format_interval((60*$unimported) / $rate)));
     $row['lastimported'] = $migration->getLastImported();
     $rows[] = $row;
   }
@@ -74,6 +77,7 @@ function migrate_ui_dashboard() {
     '#attached' => array(
       'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
     ),
+    '#empty' => t('No migrations'),
   );
   return $build;
 }

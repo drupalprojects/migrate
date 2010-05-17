@@ -627,6 +627,18 @@ abstract class Migration {
   }
 
   /**
+   * Retrieve the last throughput for current Migration (items / minute).
+   * @return integer
+   */
+  public function getLastThroughput() {
+    $last_throughput = db_query("SELECT lastthroughput FROM {migrate_status}
+                        WHERE machine_name=:machine_name",
+                       array(':machine_name' => $this->machineName))
+                ->fetchField();
+    return $last_throughput;
+  }
+
+  /**
    * Reports whether this migration process is complete (i.e., all available
    * source rows have been processed).
    */
@@ -698,19 +710,20 @@ abstract class Migration {
    * @param boolean $force
    *  If TRUE, clear the semaphore even if processing isn't set to false (used
    *    for the migrate-stop drush command)
-   * @param boolean $setTime
-   *  If TRUE, record the current time as lastimported (should be set to TRUE only
-   *  at final completion of an import process).
+   * @param integer $overallThroughput
+   *  Throughput for the entire import. Should be 0 except
+   *  at final completion of an import process.
    */
-  public function endProcess($force = FALSE, $setTime = FALSE) {
+  public function endProcess($force = FALSE, $overallThroughput = 0) {
     if ($this->previousErrorHandler) {
       set_error_handler($this->previousErrorHandler);
       $this->previousErrorHandler = NULL;
     }
     if ($this->processing || $force) {
       $fields = array('status' => Migration::STATUS_IDLE);
-      if ($setTime) {
+      if ($overallThroughput) {
         $fields['lastimported'] = gmdate('Y-m-d H:i:s');
+        $fields['lastthroughput'] = $overallThroughput;
       }
       db_merge('migrate_status')
         ->key(array('machine_name' => $this->machineName))
@@ -928,7 +941,7 @@ abstract class Migration {
         $frequency = $options['feedback']['frequency'];
         $frequency_unit = $options['feedback']['frequency_unit'];
       }
-      $count_since_feedback = $total = $successes_since_feedback = 0;
+      $total = $count_since_feedback  = $successes = $successes_since_feedback = 0;
       while ($data_row = $this->source->fetch($this, $options)) {
         if ($this->memoryExceeded()) {
           $return = Migration::RESULT_INCOMPLETE;
@@ -1085,6 +1098,7 @@ abstract class Migration {
           if ($ids) {
             $this->saveIDMapping($data_row, $ids, $this->needsUpdate);
             $successes_since_feedback++;
+            $successes++;
           }
           else {
             // TODO: Failure to save
@@ -1120,17 +1134,15 @@ abstract class Migration {
         }
       }
 
-      // TODO: Factor out to endProcess?
-      $time = microtime(TRUE) - $starttime;
-      if ($time > 0) {
-        $perminute = round(60*$count_since_feedback/$time);
-        $time = round($time, 1);
+      $this->progressMessage($lastfeedback, $count_since_feedback, $successes_since_feedback, TRUE, $return);
+
+      if ($return == Migration::RESULT_COMPLETED) {
+        $overallThroughput = round(60*$successes / (microtime(TRUE) - $starttime));
       }
       else {
-        $perminute = '?';
+        $overallThroughput = FALSE;
       }
-      $this->progressMessage($lastfeedback, $count_since_feedback, $successes_since_feedback, TRUE, $return);
-      $this->endProcess(TRUE, $return == Migration::RESULT_COMPLETED);
+      $this->endProcess(TRUE, $overallThroughput);
     }
     catch (Exception $exception) {
       // If something bad happened, make sure we clear the semaphore

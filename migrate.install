@@ -42,6 +42,11 @@ function migrate_schema_status() {
         'default' => '',
         'description' => 'Highwater mark for detecting updated content',
       ),
+      'lastthroughput' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Rate of success during most recent completed import (# per minute)',
+      ),
     ),
     'primary key' => array('machine_name'),
   );
@@ -78,7 +83,7 @@ function migrate_update_7001() {
       )
   );
 
-  $ret[] = t('Added highwater field to migrate_status table');
+  $ret[] = t('Added highwater column to migrate_status table');
   return $ret;
 }
 
@@ -98,6 +103,23 @@ function migrate_update_7002() {
       ));
     }
   }
-  $ret[] = t('Added last_imported field to all map tables');
+  $ret[] = t('Added last_imported column to all map tables');
+  return $ret;
+}
+
+/**
+ * Add lastthrouput column to migrate_status
+ */
+function migrate_update_7003() {
+  $ret = array();
+  db_add_field('migrate_status', 'lastthroughput', array(
+      'type' => 'int',
+      'length' => 11,
+      'not null' => FALSE,
+      'description' => 'Rate of success during most recent completed import (# per minute)',
+    )
+  );
+
+  $ret[] = t('Added lastthroughput column to migrate_status table');
   return $ret;
 }

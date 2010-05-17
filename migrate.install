@@ -11,12 +11,13 @@
  */
 function migrate_schema() {
   $schema['migrate_content_sets'] = array(
-    'description' => t('Sets of content mappings'),
+    'description' => 'Sets of content mappings',
     'fields' => array(
       'mcsid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'description' => 'Unique ID',
       ),
       'view_name' => array(
         'type' => 'varchar',

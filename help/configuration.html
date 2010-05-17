@@ -39,11 +39,6 @@ thus, the core is optimized for that kind of load and is not well optimized for
 the bulk operations that the Migrate module performs. The following patches are
 recommended to help your performance when performing migrations.</p>
 
-<p>node_delete() unnecessarily caches the node being deleted - when hundreds or
-thousands of nodes are deleted in a single request, you can very quickly run out of memory.
-Go to <a href="http://drupal.org/node/287063">issue #287063</a> and apply the patch
-in comment #8 to prevent this caching.</p>
-
 <p>Deleting a user updates the comments and node_comment_statistics tables rows
 referencing that user's uid, but those columns are not indexed, making deletion
 of users in bulk very slow. The patch at

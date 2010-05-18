@@ -65,7 +65,20 @@ function migrate_ui_dashboard() {
     $num_messages = $query->execute()->fetchField();
     $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $migration->machineName) : 0;
     $rate = $migration->getLastThroughput();
-    $row['lastthroughput'] = t('!rate/min. !time remaining', array('!rate' => $rate, '!time' => format_interval((60*$unimported) / $rate)));
+    if ($rate == '') {
+      $row['lastthroughput'] = t('Unknown');
+    }
+    elseif ($status == Migration::STATUS_IDLE) {
+      $row['lastthroughput'] = t('!rate/min', array('!rate' => $rate));
+    }
+    else {
+      if ($rate > 0) {
+        $row['lastthroughput'] = t('!rate/min, !time remaining', array('!rate' => $rate, '!time' => format_interval((60*$unimported) / $rate)));
+      }
+      else {
+        $row['lastthroughput'] = t('!rate/min, unknown time remaining', array('!rate' => $rate));
+      }
+    }
     $row['lastimported'] = $migration->getLastImported();
     $rows[] = $row;
   }

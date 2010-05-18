@@ -56,8 +56,19 @@ class MigrateDestinationTableCopy extends MigrateDestination {
     $valkey = $row->$key;
     unset($fields->migrate_map_destid1);
     $query = db_merge($this->tableName)->key(array($key => $valkey))->fields((array)$fields);
-    if ($query->execute()) {
+    try {
+      $query->execute();
       return array($valkey);
+    }
+    catch (MigrateException $e) {
+      $this->saveMessage($e->getMessage(), $e->level);
+      $outputFunction = $this->outputFunction;
+      $outputFunction($e->getMessage());
+    }
+    catch (Exception $e) {
+      $this->saveMessage($e->getMessage());
+      $outputFunction = $this->outputFunction;
+      $outputFunction($e->getMessage());
     }
   }
 

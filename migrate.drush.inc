@@ -604,6 +604,10 @@ function drush_migrate_import($args = NULL) {
       else {
         // I'm in a subshell. Import then set return value so parent process can respawn or move on.
         $return = $migration->import($options);
+        if ($return == Migration::RESULT_SKIPPED) {
+          drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
+            array('!name' => $migration->machineName)), 'warning');
+        }
         drush_backend_set_result($return);
       }
       if ($i > 1) {

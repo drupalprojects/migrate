@@ -148,18 +148,8 @@ class MigrateSourceMSSQL extends MigrateSource {
   public function fetch(Migration $migration, array $options = array()) {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
-      // First, if we support syncing of updated source rows, check for rows
-      // that need syncing
-      if ($migration->highwaterField) {
-        // Get highwater from Migration object (migrate_status table)
-        $highwater = $migration->highwater();
-
-        // Plug in to query
-        $this->query = str_replace(':highwater', $highwater, $this->query);
-      }
-
+      
       $keys = array();
-
       foreach ($this->keySchema as $field_name => $field_schema) {
         // Allow caller to provide an alias to table containing the primary key.
         // TODO: Alias should be determined automatically
@@ -168,15 +158,24 @@ class MigrateSourceMSSQL extends MigrateSource {
         }
         $keys[] = $field_name;
       }
-
+      
+      /*
+       * Replace :criteria placeholder with idlist or highwater clauses. We
+       * considered supporting both but it is not worth the complexity. Run twice 
+       * instead.
+       */
       if (isset($options['idlist'])) {
         // TODO: Sanitize. not critical as this is admin supplied data in drush.
-        $this->query = str_replace(':idlist', $keys[0] . ' IN (' . $options['idlist'] . ')', $this->query);
+        $this->query = str_replace(':criteria', $keys[0] . ' IN (' . $options['idlist'] . ')', $this->query);
+      }
+      elseif (isset($migration->highwaterField) && $highwater = $migration->highwater()) {
+        // TODO: quoted value may not be appropriate for all highwater field types.
+        $this->query = str_replace(':criteria', "$migration->highwaterField > '$highwater'", $this->query);
       }
       else {
-        // No idlist specified. Replace :idlist placeholder with harmless WHERE
+        // No idlist or highwater. Replace :criteria placeholder with harmless WHERE
         // clause instead of empty since we don't know if an AND follows.
-        $this->query = str_replace(':idlist', '1=1', $this->query);
+        $this->query = str_replace(':criteria', '1=1', $this->query);
       }
 
       migrate_instrument_start('mssql_query');

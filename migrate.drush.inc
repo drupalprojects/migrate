@@ -25,6 +25,8 @@ function migrate_drush_help($section) {
       return dt('List the fields available for mapping from a source');
     case 'drush:migrate-descriptions':
       return db('View descriptions for a migration and all its mappings');
+    case 'drush:migrate-needs-update':
+      return dt('Reimport records where needs_update=1. This command is only needed when your Drupal DB is on a different DB server from your source data. Otherwise, these records get migrated with just migrate-import.');
     case 'drush:migrate-wipe':
       return dt('Delete all nodes from specified content types.');
   }
@@ -34,6 +36,8 @@ function migrate_drush_help($section) {
  * Implementation of hook_drush_command().
  */
 function migrate_drush_command() {
+  static $commands = FALSE;
+
   $migration_options = array(
     '--itemlimit' => 'The maximum number of items to migrate. If unspecified, all are migrated',
     '--feedback' => 'Frequency of progress messages, in seconds or items processed',
@@ -145,6 +149,20 @@ function migrate_drush_command() {
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mst'),
+  );
+
+  if (!$commands) {
+    $commands = TRUE;
+    $commands = drush_get_commands();
+    unset($commands['migrate-import']['options']['--rollback']);
+  }
+  $items['migrate-needs-update'] = array(
+    'description' => 'Reimport records where needs_update=1',
+    'arguments' => array(
+      'migrations' => 'Comma delimited list of migrations',
+    ),
+    'options' => $commands['migrate-import']['options'],
+    'aliases' => array('mnu'),
   );
 
   $items['migrate-wipe'] = array(
@@ -642,6 +660,35 @@ function drush_migrate_stop($args = NULL) {
       drush_log(dt("Stopping '!description' migration", array('!description' => $migration->machineName)));
       $migration->endProcess(TRUE);
     }
+  }
+  catch (MigrateException $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
+}
+
+/*
+ * A drush command callback.
+ */
+function drush_migrate_needs_update($args = NULL) {
+  $migrations = drush_migrate_get_migrations($args);
+  try {
+    foreach ($migrations as $name => $migration) {
+      drush_log(dt("Starting '!description' migration", array('!description' => $migration->machineName)));
+      $needs_update = db_select('migrate_map_' . strtolower($migration->machineName), 'map')
+                        ->fields('map', array('sourceid1'))
+                        ->condition('needs_update', 1)
+                        ->execute()
+                        ->fetchAllKeyed(0, 0);
+
+      if (!empty($needs_update)) {
+        drush_log(dt("Starting '!description' import: !n items", array('!description' => $migration->machineName, '!n' => count($needs_update))));
+        $options = drush_migrate_get_options();
+        $options['idlist'] = implode(',', $needs_update);
+        drush_backend_invoke_args('migrate-import', array($name), $options);
+      }
+    }
+
   }
   catch (MigrateException $e) {
     drush_print($e->getMessage());

@@ -183,9 +183,11 @@ abstract class Migration {
   protected $rollbackBatchSize = 500;
 
   /**
-   * If present, the name of the source field used for tracking highwater marks.
+   * If present, an array with keys name and alias (optional). Name refers to 
+   * the source columns used for tracking highwater marks. alias is an 
+   * optional table alias.
    *
-   * @var string
+   * @var array
    */
   public $highwaterField;
 
@@ -1121,7 +1123,7 @@ abstract class Migration {
         $count_since_feedback++;
         $total++;
         if (isset($this->highwaterField)) {
-          $this->saveHighwater($data_row->{$this->highwaterField});
+          $this->saveHighwater($data_row->{$this->highwaterField['name']});
         }
 
         // Reset row properties.

@@ -168,9 +168,14 @@ class MigrateSourceMSSQL extends MigrateSource {
         // TODO: Sanitize. not critical as this is admin supplied data in drush.
         $this->query = str_replace(':criteria', $keys[0] . ' IN (' . $options['idlist'] . ')', $this->query);
       }
-      elseif (isset($migration->highwaterField) && $highwater = $migration->highwater()) {
-        // TODO: quoted value may not be appropriate for all highwater field types.
-        $this->query = str_replace(':criteria', "$migration->highwaterField > '$highwater'", $this->query);
+      elseif (isset($migration->highwaterField['name']) && $highwater = $migration->highwater()) {
+        if (empty($migration->highwaterField['alias'])) {
+          $highwater_name = $migration->highwaterField['name'];
+        }
+        else {
+          $highwater_name = $migration->highwaterField['alias'] . '.' . $migration->highwaterField['name'];
+        }
+        $this->query = str_replace(':criteria', "$highwater_name > '$highwater'", $this->query);
       }
       else {
         // No idlist or highwater. Replace :criteria placeholder with harmless WHERE

@@ -60,6 +60,13 @@ abstract class MigrationBase {
   protected $processing = FALSE;
 
   /**
+   * Are we importing, rolling back, or doing nothing?
+   *
+   * @var unknown_type
+   */
+  public $status = Migration::STATUS_IDLE;
+
+  /**
    * When the current operation started.
    * @var int
    */
@@ -314,6 +321,7 @@ abstract class MigrationBase {
     }
 
     $this->processing = TRUE;
+    $this->status = $newStatus;
     db_merge('migrate_status')
       ->key(array('machine_name' => $this->machineName))
       ->fields(array('status' => $newStatus))
@@ -347,6 +355,7 @@ abstract class MigrationBase {
       $this->previousErrorHandler = NULL;
     }
     if ($this->processing || $force) {
+      $this->status = Migration::STATUS_IDLE;
       $fields = array('status' => Migration::STATUS_IDLE);
       if ($overallThroughput) {
         $fields['lastimported'] = gmdate('Y-m-d H:i:s');
@@ -904,20 +913,24 @@ abstract class Migration extends MigrationBase {
 
     // Make sure the map and message tables are present
     $this->ensureTables();
+
+    // Do some standard setup
+    if (isset($this->options['feedback']) && isset($this->options['feedback']['frequency']) &&
+        isset($this->options['feedback']['frequency_unit'])) {
+      $this->frequency = $this->options['feedback']['frequency'];
+      $this->frequency_unit = $this->options['feedback']['frequency_unit'];
+    }
+    $this->lastfeedback = $this->starttime;
+
+    $this->total_processed = $this->total_successes =
+      $this->processed_since_feedback = $this->successes_since_feedback = 0;
   }
 
   /**
    * Perform a rollback operation - remove migrated items from the destination.
    */
   public function rollback() {
-    // TODO: Shared with import - move to beginProcess and track this stuff as properties?
-    $lastfeedback = $this->starttime;
     $return = Migration::RESULT_COMPLETED;
-    if (isset($this->options['feedback']) && isset($this->options['feedback']['frequency']) &&
-        isset($this->options['feedback']['frequency_unit'])) {
-      $frequency = $this->options['feedback']['frequency'];
-      $frequency_unit = $this->options['feedback']['frequency_unit'];
-    }
 
     // TODO: Support multi-field keys
     // TODO: Support idlist
@@ -935,7 +948,7 @@ abstract class Migration extends MigrationBase {
       // Too many at once can lead to memory issues, so batch 'em up
       $destids = array();
       $sourceids = array();
-      $count = $total = 0;
+      $batch_count = 0;
       foreach ($result as $row) {
         if ($this->memoryExceeded()) {
           $return = Migration::RESULT_INCOMPLETE;
@@ -947,9 +960,8 @@ abstract class Migration extends MigrationBase {
         }
         $destids[] = $row->destid1;
         $sourceids[] = $row->sourceid1;
-        $count++;
-        $total++;
-        if ($count >= $this->rollbackBatchSize) {
+        $batch_count++;
+        if ($batch_count >= $this->rollbackBatchSize) {
           try {
             if ($this->systemOfRecord == Migration::SOURCE) {
               migrate_instrument_start('destination bulkRollback');
@@ -965,6 +977,8 @@ abstract class Migration extends MigrationBase {
               ->condition('sourceid1', $sourceids, 'IN')
               ->execute();
             migrate_instrument_stop('rollback map/message update');
+            $this->total_successes += $batch_count;
+            $this->successes_since_feedback += $batch_count;
           }
           catch (Exception $e) {
             $output = $this->outputFunction;
@@ -974,14 +988,22 @@ abstract class Migration extends MigrationBase {
           }
           $destids = array();
           $sourceids = array();
-          $count = 0;
+          $batch_count = 0;
+          // Will increment even if there was an exception... But we don't
+          // really have a way to know how many really were successfully rolled back
+          $this->total_processed += $batch_count;
+          $this->processed_since_feedback += $batch_count;
         }
       }
-      if ($count > 0) {
+      if ($batch_count > 0) {
         if ($this->systemOfRecord == Migration::SOURCE) {
           migrate_instrument_start('destination bulkRollback');
           $this->destination->bulkRollback($this, $destids);
           migrate_instrument_stop('destination bulkRollback');
+          $this->total_processed += $batch_count;
+          $this->total_successes += $batch_count;
+          $this->processed_since_feedback += $batch_count;
+          $this->successes_since_feedback += $batch_count;
         }
         migrate_instrument_start('rollback map/message update');
         db_delete($this->mapTableName)
@@ -994,26 +1016,17 @@ abstract class Migration extends MigrationBase {
       }
     }
     else {
-      $total = 0;
-      // TODO: Can this chunk (shared with import) be factored out?
       foreach ($result as $record) {
         if ($this->memoryExceeded()) {
           $return = Migration::RESULT_INCOMPLETE;
           break;
         }
-        if (isset($frequency)) {
-          if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
-          ($frequency_unit == 'items' && $total >= $frequency)) {
-            // TODO: We don't actually track failure to rollback so $successes could be misleading here.
-            $this->progressMessage($lastfeedback, $total, $total, FALSE, Migration::RESULT_INCOMPLETE);
-            $lastfeedback = time();
-            $total = 0;
-          }
-        }
-        if ($this->getStatus() == Migration::STATUS_IDLE) {
+        elseif ($this->getStatus() == Migration::STATUS_IDLE) {
           $return = Migration::RESULT_STOPPED;
           break;
         }
+
+        $this->progressMessage(Migration::RESULT_INCOMPLETE);
 
         // Rollback one record
         try {
@@ -1031,12 +1044,15 @@ abstract class Migration extends MigrationBase {
             ->condition('sourceid1', $record->sourceid1)
             ->execute();
           migrate_instrument_stop('rollback map/message update');
-          $total++;
+          $this->total_successes++;
+          $this->successes_since_feedback++;
         }
         catch (Exception $e) {
           // TODO: At least count failures
           continue;
         }
+        $this->total_processed++;
+        $this->processed_since_feedback++;
       }
     }
     // Clear message table
@@ -1045,7 +1061,7 @@ abstract class Migration extends MigrationBase {
       ->execute();
     migrate_instrument_stop('rollback map/message update');
 
-    $this->progressMessage($lastfeedback, $total, $total, FALSE, $return);
+    $this->progressMessage($return);
 
     // If we're using highwater marks, reset at completion of a full rollback
     // TODO: What about partial rollbacks? Probably little we can do to make
@@ -1059,32 +1075,19 @@ abstract class Migration extends MigrationBase {
    * Perform an import operation - migrate items from source to destination.
    */
   public function import() {
-    $lastfeedback = $this->starttime;
     $return = Migration::RESULT_COMPLETED;
-    if (isset($this->options['feedback']) && isset($this->options['feedback']['frequency']) &&
-        isset($this->options['feedback']['frequency_unit'])) {
-      $frequency = $this->options['feedback']['frequency'];
-      $frequency_unit = $this->options['feedback']['frequency_unit'];
-    }
-    $total = $count_since_feedback = $this->successes = $successes_since_feedback = 0;
+
     while ($data_row = $this->source->fetch($this, $this->options)) {
       if ($this->memoryExceeded()) {
         $return = Migration::RESULT_INCOMPLETE;
         break;
       }
-      if (isset($frequency)) {
-        if (($frequency_unit == 'seconds' && time()-$lastfeedback >= $frequency) ||
-            ($frequency_unit == 'items' && $count_since_feedback >= $frequency)) {
-          $this->progressMessage($lastfeedback, $count_since_feedback, $successes_since_feedback, TRUE, Migration::RESULT_INCOMPLETE);
-          $lastfeedback = time();
-          $count_since_feedback = $successes_since_feedback = 0;
-        }
-      }
-
-      if ($this->getStatus() == Migration::STATUS_IDLE) {
+      elseif ($this->getStatus() == Migration::STATUS_IDLE) {
         $return = Migration::RESULT_STOPPED;
         break;
       }
+
+      $this->progressMessage(Migration::RESULT_INCOMPLETE);
 
       // Track the current source key for use by map/message tables
       $this->currSourceKey = array();
@@ -1102,7 +1105,7 @@ abstract class Migration extends MigrationBase {
 
         // We still need to check the map, in case we're updating an existing item
         $query = db_select($this->mapTableName, 'map')
-          ->fields('map', array('needs_update', 'destid1'));
+                 ->fields('map', array('needs_update', 'destid1'));
         foreach ($this->sourceKeyMap() as $field_name => $map_name) {
           $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
         }
@@ -1221,8 +1224,8 @@ abstract class Migration extends MigrationBase {
         migrate_instrument_stop('destination import');
         if ($ids) {
           $this->saveIDMapping($data_row, $ids, $this->needsUpdate);
-          $successes_since_feedback++;
-          $this->successes++;
+          $this->successes_since_feedback++;
+          $this->total_successes++;
         }
         else {
           // TODO: Failure to save
@@ -1242,8 +1245,8 @@ abstract class Migration extends MigrationBase {
         $outputFunction = $this->outputFunction;
         $outputFunction($e->getMessage());
       }
-      $count_since_feedback++;
-      $total++;
+      $this->total_processed++;
+      $this->processed_since_feedback++;
       if (isset($this->highwaterField)) {
         $this->saveHighwater($data_row->{$this->highwaterField['name']});
       }
@@ -1260,7 +1263,7 @@ abstract class Migration extends MigrationBase {
       }
     }
 
-    $this->progressMessage($lastfeedback, $count_since_feedback, $successes_since_feedback, TRUE, $return);
+    $this->progressMessage($return);
 
     return $return;
   }
@@ -1336,29 +1339,37 @@ abstract class Migration extends MigrationBase {
   /**
    * Outputs a progress message, reflecting the current status of a migration process.
    *
-   * @param float $starttime
-   *  UNIX timestamp with microseconds, the time of the beginning of the process or the
-   *  last progress message.
-   * @param int $numitems
-   *  Number of items processed since $starttime.
-   * @param int $successes
-   *  Number of successful opreations since $starttime.
-   * @param boolean $import
-   *  TRUE for an import process, FALSE for a rollback process.
    * @param int $result
    *  Status of the process, represented by one of the Migration::RESULT_* constants.
    */
-  protected function progressMessage($starttime, $numitems, $successes, $import, $result) {
-    $time = microtime(TRUE) - $starttime;
+  protected function progressMessage($result) {
+    // In the INCOMPLETE (feedback) case, only proceed under the proper conditions
+    if ($result == Migration::RESULT_INCOMPLETE) {
+      if (isset($this->frequency)) {
+        if (($this->frequency_unit == 'seconds' && time()-$this->lastfeedback >= $this->frequency) ||
+            ($this->frequency_unit == 'items' && $this->processed_since_feedback >= $this->frequency)) {
+          $this->lastfeedback = time();
+          $this->processed_since_feedback = $this->successes_since_feedback = 0;
+        }
+        else {
+          return;
+        }
+      }
+      else {
+        return;
+      }
+    }
+
+    $time = microtime(TRUE) - $this->lastfeedback;
     if ($time > 0) {
-      $perminute = round(60*$numitems/$time);
+      $perminute = round(60*$this->processed_since_feedback/$time);
       $time = round($time, 1);
     }
     else {
       $perminute = '?';
     }
 
-    if ($import) {
+    if ($this->status == Migration::STATUS_IMPORTING) {
       switch ($result) {
         case Migration::RESULT_COMPLETED:
           $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - done with '!name'";
@@ -1399,7 +1410,11 @@ abstract class Migration extends MigrationBase {
       }
     }
     $message = t($basetext,
-        array('!numitems' => $numitems, '!successes' => $successes, '!failed' => $numitems - $successes, '!time' => $time, '!perminute' => $perminute,
+        array('!numitems' => $this->processed_since_feedback,
+              '!successes' => $this->successes_since_feedback,
+              '!failed' => $this->processed_since_feedback - $this->successes_since_feedback,
+              '!time' => $time,
+              '!perminute' => $perminute,
               '!name' => $this->machineName));
     $outputFunction = $this->outputFunction;
     $outputFunction($message, $type);
@@ -1419,6 +1434,10 @@ abstract class Migration extends MigrationBase {
         )), 'debug');
       }
       $this->counts['lookup_cache'] = array();
+    }
+    if ($result == Migration::RESULT_INCOMPLETE) {
+      $this->lastfeedback = time();
+      $this->processed_since_feedback = $this->successes_since_feedback = 0;
     }
   }
 

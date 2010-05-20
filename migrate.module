@@ -8,7 +8,6 @@
  */
 
 // TODO:
-// Singleton Migration objects (perhaps sources and destinations too)
 // Continue hook_schema_alter() for map & message tables?
 // Views hooks for map/message tables
 // xlat support?
@@ -28,7 +27,7 @@
  *  Array of migration objects, keyed by the class name.
  */
 function migrate_migrations($refresh = FALSE) {
-  return _migrate_class_list('%Migration', 'Migration', $refresh);
+  return _migrate_class_list('%Migration', 'MigrationBase', $refresh);
 }
 
 /**

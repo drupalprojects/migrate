@@ -236,8 +236,27 @@ function drush_migrate_status($name = NULL) {
     $table[] = array(dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'),
       dt('Status'), dt('Last imported'));
     foreach ($migrations as $migration) {
-      $total = $migration->source->count($refresh);
-      $imported = $migration->importedCount();
+      $has_counts = TRUE;
+      if (method_exists($migration, 'sourceCount')) {
+        $total = $migration->sourceCount($refresh);
+      }
+      else {
+        $has_counts = FALSE;
+        $total = dt('N/A');
+      }
+      if (method_exists($migration, 'importedCount')) {
+        $imported = $migration->importedCount();
+      }
+      else {
+        $has_counts = FALSE;
+        $imported = dt('N/A');
+      }
+      if ($has_counts) {
+        $unimported = $total - $imported;
+      }
+      else {
+        $unimported = dt('N/A');
+      }
       $status = $migration->getStatus();
       switch ($status) {
         case Migration::STATUS_IDLE:
@@ -253,7 +272,7 @@ function drush_migrate_status($name = NULL) {
           $status = dt('Unknown');
           break;
       }
-      $table[] = array($migration->machineName, $total, $imported, $total-$imported, $status,
+      $table[] = array($migration->machineName, $total, $imported, $unimported, $status,
         $migration->getLastImported());
     }
     drush_print_table($table, TRUE);
@@ -291,11 +310,16 @@ function drush_migrate_fields_destination() {
         return;
       }
     }
-    $table = array();
-    foreach ($destination->fields() as $machine_name => $description) {
-      $table[] = array($description, $machine_name);
+    if (method_exists($destination, fields)) {
+      $table = array();
+      foreach ($destination->fields() as $machine_name => $description) {
+        $table[] = array($description, $machine_name);
+      }
+      drush_print_table($table);
     }
-    drush_print_table($table);
+    else {
+      drush_print(dt('!class has no fields', array('!class' => $class_name)));
+    }
   }
   catch (MigrateException $e) {
     drush_print($e->getMessage());
@@ -319,11 +343,16 @@ function drush_migrate_fields_source() {
                 'error');
       return;
     }
-    $table = array();
-    foreach ($source->fields() as $machine_name => $description) {
-      $table[] = array($description, $machine_name);
+    if (method_exists($source, 'fields')) {
+      $table = array();
+      foreach ($source->fields() as $machine_name => $description) {
+        $table[] = array($description, $machine_name);
+      }
+      drush_print_table($table);
     }
-    drush_print_table($table);
+    else {
+      drush_print(dt('!class has no fields', array('!class' => $class_name)));
+    }
   }
   catch (MigrateException $e) {
     drush_print($e->getMessage());
@@ -345,40 +374,42 @@ function drush_migrate_descriptions() {
                    array('!machine_name' => $machine_name)));
     }
     drush_print($migration->description);
-    // First group the mappings
-    $descriptions = array();
-    foreach ($migration->fieldMappings as $mapping) {
-      $descriptions[$mapping->issueGroup][] = $mapping;
-    }
-    // Put out each group header
-    $table = array();
-    $table[] = array(dt('Destination'), dt('Source'), dt('Default'),
-      dt('Description'));
-    $first = TRUE;
+    if (isset($migration->fieldMappings)) {
+      // First group the mappings
+      $descriptions = array();
+      foreach ($migration->fieldMappings as $mapping) {
+        $descriptions[$mapping->issueGroup][] = $mapping;
+      }
+      // Put out each group header
+      $table = array();
+      $table[] = array(dt('Destination'), dt('Source'), dt('Default'),
+        dt('Description'));
+      $first = TRUE;
 
-    foreach ($descriptions as $group => $mappings) {
-      if ($first) {
-        $first = FALSE;
-      }
-      else {
-        $table[] = array(' ');
-      }
-      // Attempt to offset and highlight the group header a bit so it stands out
-      $group_header = '--- ' . strtoupper($group) . ' ---';
-      $table[] = array('', $group_header);
-      foreach ($mappings as $mapping) {
-        if (is_array($mapping->defaultValue)) {
-          $default = implode(',', $mapping->defaultValue);
+      foreach ($descriptions as $group => $mappings) {
+        if ($first) {
+          $first = FALSE;
         }
         else {
-          $default = $mapping->defaultValue;
+          $table[] = array(' ');
         }
-        $table[] = array($mapping->destinationField, $mapping->sourceField,
-          $default, $mapping->descriptionText);
+        // Attempt to offset and highlight the group header a bit so it stands out
+        $group_header = '--- ' . strtoupper($group) . ' ---';
+        $table[] = array('', $group_header);
+        foreach ($mappings as $mapping) {
+          if (is_array($mapping->defaultValue)) {
+            $default = implode(',', $mapping->defaultValue);
+          }
+          else {
+            $default = $mapping->defaultValue;
+          }
+          $table[] = array($mapping->destinationField, $mapping->sourceField,
+            $default, $mapping->descriptionText);
+        }
       }
-    }
 
-    drush_print_table($table, TRUE);
+      drush_print_table($table, TRUE);
+    }
   }
   catch (MigrateException $e) {
     drush_print($e->getMessage());
@@ -433,7 +464,7 @@ function drush_migrate_rollback($args = NULL) {
 
     foreach ($migrations as $migration) {
       drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->machineName)));
-      $return = $migration->rollback($options);
+      $return = $migration->processRollback($options);
       // If it couldn't finish (presumably because it was appraoching memory_limit),
       // continue in a subprocess
       if ($return == Migration::RESULT_INCOMPLETE) {
@@ -597,7 +628,7 @@ function drush_migrate_import($args = NULL) {
       $i = 0;
       if ($i == 0 && !drush_get_context('DRUSH_BACKEND')) {
         // Our first pass and in the parent process. Run a migration right here.
-        $return = $migration->import($options);
+        $return = $migration->processImport($options);
         if ($return == Migration::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
               use the --force option to run it anyway',

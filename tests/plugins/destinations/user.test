@@ -23,7 +23,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   function testUserImport() {
     $migration = Migration::getInstance('BeerUserMigration');
     $migration->outputFunction = 'drupal_set_message';
-    $result = $migration->import();
+    $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
     $result = db_select('migrate_example_beer_account', 'mea')

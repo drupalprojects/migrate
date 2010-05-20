@@ -40,6 +40,26 @@ abstract class ExampleMigration extends Migration {
   }
 }
 
+class BeerPrepMigration extends MigrationBase {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('If pathauto is present, disable it for the duration');
+  }
+  public function isComplete() {
+    return TRUE;
+  }
+  public function import() {
+    if (module_exists('pathauto')) {
+      module_disable(array('pathauto'));
+    }
+    $outputFunction = $this->outputFunction;
+    $outputFunction(t("Succeeded in !sec sec - done with '!name'",
+      array('!sec' => round(microtime(TRUE) - $this->starttime, 1),
+            '!name' => $this->machineName)), 'completed');
+    return Migration::RESULT_COMPLETED;
+  }
+}
+
 /**
  * There are three essential components to set up in your constructor:
  *  $this->source - An instance of a class derived from MigrateSource, this
@@ -54,6 +74,7 @@ abstract class ExampleMigration extends Migration {
 class BeerTermMigration extends ExampleMigration {
   public function __construct() {
     parent::__construct();
+    $this->dependencies = array('BeerPrepMigration');
 
     // Human-friendly description of your migration process. Be as detailed as you
     // like.
@@ -341,5 +362,27 @@ class BeerCommentMigration extends ExampleMigration {
          ->issueGroup('Implementor issues');
 
     $this->addFieldMapping('comment_body', 'body');
+  }
+}
+
+class BeerFinishMigration extends MigrationBase {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('If pathauto is present and was previously enabled,
+      re-enable it');
+    $this->dependencies = array('BeerCommentMigration');
+  }
+  public function isComplete() {
+    return TRUE;
+  }
+  public function import() {
+    if (!module_exists('pathauto')) {
+      module_enable(array('pathauto'));
+    }
+    $outputFunction = $this->outputFunction;
+    $outputFunction(t("Succeeded in !sec sec - done with '!name'",
+      array('!sec' => round(microtime(TRUE) - $this->starttime, 1),
+            '!name' => $this->machineName)), 'completed');
+    return Migration::RESULT_COMPLETED;
   }
 }

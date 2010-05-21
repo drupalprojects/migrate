@@ -1348,8 +1348,7 @@ abstract class Migration extends MigrationBase {
       if (isset($this->frequency)) {
         if (($this->frequency_unit == 'seconds' && time()-$this->lastfeedback >= $this->frequency) ||
             ($this->frequency_unit == 'items' && $this->processed_since_feedback >= $this->frequency)) {
-          $this->lastfeedback = time();
-          $this->processed_since_feedback = $this->successes_since_feedback = 0;
+          // Fall through
         }
         else {
           return;

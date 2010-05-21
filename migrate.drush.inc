@@ -115,7 +115,7 @@ function migrate_drush_command() {
   );
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
   $migration_options['--needs_update'] =
-    'Reimport records where needs_update=1. This option is only needed when your Drupal DB is on a different DB server from your source data. Otherwise, these records get migrated with just migrate-import.';
+    'Reimport up to 10K records where needs_update=1. This option is only needed when your Drupal DB is on a different DB server from your source data. Otherwise, these records get migrated with just migrate-import.';
   $migration_options['--stop'] = 'Stop specified migration(s) if applicable.';
   $migration_options['--rollback'] = 'Rollback specified migration(s) if applicable.';
   $migration_options['--file_function'] = 'Override file function to use when migrating images.';
@@ -617,7 +617,7 @@ function drush_migrate_import($args = NULL) {
         $needs_update = db_select('migrate_map_' . strtolower($migration->machineName), 'map')
                           ->fields('map', array('sourceid1'))
                           ->condition('needs_update', 1)
-                          ->range(0, 5000)
+                          ->range(0, 10000)
                           ->execute()
                           ->fetchAllKeyed(0, 0);
         $options['idlist'] = implode(',', $needs_update);

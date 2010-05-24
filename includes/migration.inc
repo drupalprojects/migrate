@@ -650,92 +650,7 @@ abstract class Migration extends MigrationBase {
         }
       }
 
-      // Apply mappings.
-      $values = new stdClass;
-      foreach ($this->fieldMappings as $mapping) {
-        if (isset($mapping->destinationField)) {
-          $destination = $mapping->destinationField;
-          $source = $mapping->sourceField;
-          // Make any direct value assignments
-          if ($source && isset($data_row->$source)) {
-            $values->$destination = $data_row->$source;
-          }
-          elseif (!is_null($mapping->defaultValue)) {
-            $values->$destination = $mapping->defaultValue;
-          }
-
-          // If there's a separator specified for this destination, then it
-          // will be populated as an array exploded from the source value
-          if (isset($mapping->separator) && isset($values->$destination)) {
-            $values->$destination = explode($mapping->separator, $values->$destination);
-          }
-
-          // If a source migration is supplied, use the current value for this field
-          // to look up a destination ID from the provided migration
-          if ($mapping->sourceMigration && isset($values->$destination)) {
-            $source_migration = Migration::getInstance($mapping->sourceMigration);
-            // Might be an array, after separator processing
-            if (is_array($values->$destination)) {
-              $source_keys = $values->$destination;
-            }
-            else {
-              $source_keys = array($values->$destination);
-            }
-            $results = array();
-            foreach ($source_keys as $source_key) {
-              $destids = $source_migration->lookupDestinationID(array($source_key), $this);
-              if ($destids) {
-                // Assume that if the destination key is a single value, it
-                // should be passed as such
-                if (count($destids) == 1) {
-                  $results[] = $destids['destid1'];
-                }
-                else {
-                  $results[] = $destids;
-                }
-              }
-              else {
-                $results[] = $mapping->defaultValue;
-              }
-            }
-            if (is_array($values->$destination) || count($results) > 1) {
-              $values->$destination = $results;
-            }
-            else {
-              $values->$destination = $results[0];
-            }
-          }
-
-          // Assign any arguments
-          if (isset($values->$destination)) {
-            if (isset($mapping->arguments)) {
-              if (!is_array($values->$destination)) {
-                $values->$destination = array($values->$destination);
-              }
-              $values->{$destination}['arguments'] = array();
-              foreach ($mapping->arguments as $argname => $destarg) {
-                if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
-                  $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
-                }
-                elseif (is_array($destarg) && isset($destarg['default_value'])) {
-                  $values->{$destination}['arguments'][$argname] = $destarg['default_value'];
-                }
-                else {
-                  $values->{$destination}['arguments'][$argname] = $destarg;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // If there's a destination ID, the intent is to update an existing object,
-      // pass it as the PK
-      // TODO: Support multi-column keys
-      // TODO: 'id' should be the actual destination field name(s) corresponding to the key
-      if (isset($data_row->migrate_map_destid1)) {
-        //$values['id'] = $data_row->migrate_map_destid1;
-      }
+      $values = $this->applyMappings($data_row);
 
       try {
         migrate_instrument_start('destination import', TRUE);
@@ -999,6 +914,10 @@ abstract class Migration extends MigrationBase {
     return $map[$constant];
   }
 
+  /**
+   * Standard top-of-loop stuff, common between rollback and import - check
+   * for exceptional conditions, and display feedback.
+   */
   protected function checkStatus() {
     if ($this->memoryExceeded()) {
       return Migration::RESULT_INCOMPLETE;
@@ -1008,5 +927,104 @@ abstract class Migration extends MigrationBase {
     }
     $this->progressMessage(Migration::RESULT_INCOMPLETE);
     return Migration::RESULT_COMPLETED;
+  }
+
+  /**
+   * Apply field mappings to a data row received form the source, returning
+   * a populated destination object.
+   *
+   * @param stdClass $data_row
+   */
+  protected function applyMappings(stdClass $data_row) {
+    // Apply mappings.
+    $values = new stdClass;
+    foreach ($this->fieldMappings as $mapping) {
+      if (isset($mapping->destinationField)) {
+        $destination = $mapping->destinationField;
+        $source = $mapping->sourceField;
+        // Make any direct value assignments
+        if ($source && isset($data_row->$source)) {
+          $values->$destination = $data_row->$source;
+        }
+        elseif (!is_null($mapping->defaultValue)) {
+          $values->$destination = $mapping->defaultValue;
+        }
+
+        // If there's a separator specified for this destination, then it
+        // will be populated as an array exploded from the source value
+        if (isset($mapping->separator) && isset($values->$destination)) {
+          $values->$destination = explode($mapping->separator, $values->$destination);
+        }
+
+        // If a source migration is supplied, use the current value for this field
+        // to look up a destination ID from the provided migration
+        if ($mapping->sourceMigration && isset($values->$destination)) {
+          $source_migration = Migration::getInstance($mapping->sourceMigration);
+          // Might be an array, after separator processing
+          if (is_array($values->$destination)) {
+            $source_keys = $values->$destination;
+          }
+          else {
+            $source_keys = array($values->$destination);
+          }
+          $results = array();
+          foreach ($source_keys as $source_key) {
+            $destids = $source_migration->lookupDestinationID(array($source_key), $this);
+            if ($destids) {
+              // Assume that if the destination key is a single value, it
+              // should be passed as such
+              if (count($destids) == 1) {
+                $results[] = $destids['destid1'];
+              }
+              else {
+                $results[] = $destids;
+              }
+            }
+            else {
+              $results[] = $mapping->defaultValue;
+            }
+          }
+          if (is_array($values->$destination) || count($results) > 1) {
+            $values->$destination = $results;
+          }
+          else {
+            $values->$destination = $results[0];
+          }
+        }
+
+        // Assign any arguments
+        if (isset($values->$destination)) {
+          if (isset($mapping->arguments)) {
+            if (!is_array($values->$destination)) {
+              $values->$destination = array($values->$destination);
+            }
+            // TODO: Stuffing arguments into the destination field is gross - can
+            // we come up with a better way to communicate them to the field
+            // handlers?
+            $values->{$destination}['arguments'] = array();
+            foreach ($mapping->arguments as $argname => $destarg) {
+              if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
+                $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
+              }
+              elseif (is_array($destarg) && isset($destarg['default_value'])) {
+                $values->{$destination}['arguments'][$argname] = $destarg['default_value'];
+              }
+              else {
+                $values->{$destination}['arguments'][$argname] = $destarg;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // If there's a destination ID, the intent is to update an existing object,
+    // pass it as the PK
+    // TODO: Support multi-column keys
+    // TODO: 'id' should be the actual destination field name(s) corresponding to the key
+    if (isset($data_row->migrate_map_destid1)) {
+      //$values['id'] = $data_row->migrate_map_destid1;
+    }
+    return $values;
   }
 }

@@ -17,6 +17,8 @@ function migrate_drush_help($section) {
       return dt('Perform a given migration');
     case 'drush:migrate-stop':
       return dt('Stop an active migration');
+    case 'drush:migrate-reset-status':
+      return dt('Reset a migration\'s status to idle');
     case 'drush:migrate-status':
       return dt('List all migrations with current status');
     case 'drush:migrate-fields-destination':
@@ -150,7 +152,19 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mst'),
   );
-
+  $items['migrate-reset-status'] = array(
+    'description' => 'Reset a active migration\'s status to idle',
+    'options' => array('--all' => 'Reset all active migration operations'),
+    'arguments' => array(
+      'migration' => 'Name of migration to reset',
+    ),
+    'examples' => array(
+      'migrate-reset-status Article' => 'Reset any active operation on the Article migration',
+      'migrate-reset-status --all' => 'Reset all active migration operations',
+    ),
+    'drupal dependencies' => array('migrate'),
+    'aliases' => array('mrs'),
+  );
   if (!$commands) {
     $commands = TRUE;
     $commands = drush_get_commands();
@@ -259,6 +273,9 @@ function drush_migrate_status($name = NULL) {
           break;
         case Migration::STATUS_ROLLING_BACK:
           $status = dt('Rolling back');
+          break;
+        case Migration::STATUS_STOPPING:
+          $status = dt('Stopping');
           break;
         default:
           $status = dt('Unknown');
@@ -462,6 +479,10 @@ function drush_migrate_rollback($args = NULL) {
       if ($return == Migration::RESULT_INCOMPLETE) {
         drush_migrate_backend_invoke();
       }
+      // If stopped, don't process any further
+      elseif ($return == Migration::RESULT_STOPPED) {
+        break;
+      }
     }
   }
   catch (MigrateException $e) {
@@ -500,6 +521,11 @@ function drush_migrate_import_validate($args = NULL) {
 
 // Implement drush_hook_COMMAND_validate().
 function drush_migrate_stop_validate($args = NULL) {
+  return drush_migrate_validate_common($args);
+}
+
+// Implement drush_hook_COMMAND_validate().
+function drush_migrate_reset_status_validate($args = NULL) {
   return drush_migrate_validate_common($args);
 }
 
@@ -608,6 +634,7 @@ function drush_migrate_import($args = NULL) {
         break;
     }
 
+    $stop = FALSE;
     foreach ($migrations as $name => $migration) {
       drush_log(dt("Importing '!description' migration", array('!description' => $migration->machineName)));
       if (drush_get_option('update')) {
@@ -634,6 +661,9 @@ function drush_migrate_import($args = NULL) {
               use the --force option to run it anyway',
             array('!name' => $migration->machineName)), 'warning');
         }
+        elseif ($return == Migration::RESULT_STOPPED) {
+          break;
+        }
         $i++;
       }
 
@@ -646,6 +676,10 @@ function drush_migrate_import($args = NULL) {
           if ($return == Migration::RESULT_SKIPPED) {
             drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
               array('!name' => $migration->machineName)), 'warning');
+          }
+          elseif ($return == Migration::RESULT_STOPPED) {
+            $stop = TRUE;
+            break;
           }
           $i++;
         }
@@ -661,6 +695,9 @@ function drush_migrate_import($args = NULL) {
       }
       if ($i > 1) {
         drush_log(dt('Completed import of !name in !i passes.', array('!name' => $name, '!i' => $i)), 'debug');
+      }
+      if ($stop) {
+        break;
       }
     }
   }
@@ -689,7 +726,27 @@ function drush_migrate_stop($args = NULL) {
     $migrations = drush_migrate_get_migrations($args);
     foreach ($migrations as $migration) {
       drush_log(dt("Stopping '!description' migration", array('!description' => $migration->machineName)));
-      $migration->endProcess(TRUE);
+      $migration->stopProcess();
+    }
+  }
+  catch (MigrateException $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
+}
+
+/**
+// * Reset the status of a given content set.
+// *
+// * @param $content_set
+// *  The name of the Migration
+// */
+function drush_migrate_reset_status($args = NULL) {
+  try {
+    $migrations = drush_migrate_get_migrations($args);
+    foreach ($migrations as $migration) {
+      drush_log(dt("Resetting '!description' migration", array('!description' => $migration->machineName)));
+      $migration->resetStatus();
     }
   }
   catch (MigrateException $e) {

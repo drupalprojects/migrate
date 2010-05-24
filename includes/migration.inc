@@ -588,6 +588,7 @@ abstract class Migration extends MigrationBase {
     if ($this->highwaterField) {
       $this->saveHighwater('');
     }
+    return $return;
   }
 
   /**
@@ -601,7 +602,7 @@ abstract class Migration extends MigrationBase {
         $return = Migration::RESULT_INCOMPLETE;
         break;
       }
-      elseif ($this->getStatus() == Migration::STATUS_IDLE) {
+      elseif ($this->getStatus() == Migration::STATUS_STOPPING) {
         $return = Migration::RESULT_STOPPED;
         break;
       }
@@ -922,7 +923,7 @@ abstract class Migration extends MigrationBase {
     if ($this->memoryExceeded()) {
       return Migration::RESULT_INCOMPLETE;
     }
-    if ($this->getStatus() == Migration::STATUS_IDLE) {
+    if ($this->getStatus() == Migration::STATUS_STOPPING) {
       return Migration::RESULT_STOPPED;
     }
     $this->progressMessage(Migration::RESULT_INCOMPLETE);

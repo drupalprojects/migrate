@@ -146,6 +146,7 @@ abstract class MigrationBase {
   const STATUS_IDLE = 0;
   const STATUS_IMPORTING = 1;
   const STATUS_ROLLING_BACK = 2;
+  const STATUS_STOPPING = 3;
 
   /**
    * General initialization of a MigrationBase object.
@@ -247,7 +248,8 @@ abstract class MigrationBase {
   /**
    * Check the current status of a migration.
    * @return int
-   *  Migration::STATUS_IDLE, Migration::STATUS_IMPORTING, or Migration::STATUS_ROLLING_BACK
+   *  Migration::STATUS_IDLE, Migration::STATUS_IMPORTING, Migration::STATUS_ROLLING_BACK,
+   *  or Migration::STATUS_STOPPING
    */
   public function getStatus() {
     $status = db_query("SELECT status FROM {migrate_status}
@@ -341,19 +343,16 @@ abstract class MigrationBase {
    * TODO: Add hooks/handlers to be executed once per overall process,
    * and once per individual migration
    *
-   * @param boolean $force
-   *  If TRUE, clear the semaphore even if processing isn't set to false (used
-   *    for the migrate-stop drush command)
    * @param integer $overallThroughput
    *  Throughput for the entire import. Should be 0 except
    *  at final completion of an import process.
    */
-  public function endProcess($force = FALSE, $overallThroughput = 0) {
+  public function endProcess($overallThroughput = 0) {
     if ($this->previousErrorHandler) {
       set_error_handler($this->previousErrorHandler);
       $this->previousErrorHandler = NULL;
     }
-    if ($this->processing || $force) {
+    if ($this->processing) {
       $this->status = Migration::STATUS_IDLE;
       $fields = array('status' => Migration::STATUS_IDLE);
       if ($overallThroughput) {
@@ -366,6 +365,32 @@ abstract class MigrationBase {
         ->execute();
       $this->processing = FALSE;
     }
+  }
+
+  /**
+   * Signal that any current import or rollback process should end itself at
+   * the earliest opportunity
+   */
+  public function stopProcess() {
+    // Do not change the status of an idle migration
+    db_update('migrate_status')
+      ->fields(array('status' => Migration::STATUS_STOPPING))
+      ->condition('machine_name', $this->machineName)
+      ->condition('status', Migration::STATUS_IDLE, '<>')
+      ->execute();
+  }
+
+  /**
+   * Reset the status of the migration to IDLE (to be used when the status
+   * gets stuck, e.g. if a process core-dumped)
+   */
+  public function resetStatus() {
+    // Do not change the status of an already-idle migration
+    db_update('migrate_status')
+      ->fields(array('status' => Migration::STATUS_IDLE))
+      ->condition('machine_name', $this->machineName)
+      ->condition('status', Migration::STATUS_IDLE, '<>')
+      ->execute();
   }
 
   /**
@@ -427,7 +452,7 @@ abstract class MigrationBase {
     else {
       $overallThroughput = FALSE;
     }
-    $this->endProcess(TRUE, $overallThroughput);
+    $this->endProcess($overallThroughput);
     return $return;
   }
 

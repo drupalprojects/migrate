@@ -65,6 +65,9 @@ function migrate_ui_dashboard() {
       case Migration::STATUS_ROLLING_BACK:
         $status = t('Rolling back');
         break;
+      case Migration::STATUS_STOPPING:
+        $status = t('Stopping');
+        break;
       default:
         $status = t('Unknown');
         break;

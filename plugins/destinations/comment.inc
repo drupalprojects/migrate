@@ -127,6 +127,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $comment = (object) $comment;
 
     $this->prepare($migration, $comment, $row);
+    // Make sure we have a nid
+    if (!isset($comment->nid) || !$comment->nid) {
+      throw new MigrateException(t('No node ID provided for comment'));
+    }
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');

@@ -241,6 +241,8 @@ class BeerNodeMigration extends ExampleMigration {
                                       'alias' => 'b',
                                     )
                                   ));
+    // TODO: This can be removed when http://drupal.org/node/423888 is
+    // committed to core
     // By default, MigrateSourceSQL derives a count query from the main query -
     // but we can override it (the core count support doesn't work with GROUP BY)
     $this->source->countQuery = db_select('migrate_example_beer_node', 'b');

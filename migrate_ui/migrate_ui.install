@@ -24,48 +24,51 @@ function migrate_ui_requirements($phase) {
     $info = array();
     $rows = array();
     foreach ($migrations as $migration) {
-      $open = $unmapped_destination = $unmapped_source = $nofield = 0;
-      // TODO: Ugh! Rename one pair or the other...
-      $source_fields_keyed = $destination_fields_keyed = array();
-      $source_fields = $migration->source->fields();
-      $destination_fields = $migration->destination->fields();
-      foreach ($migration->fieldMappings as $mapping) {
-        if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
-          $open++;
-          $severity = REQUIREMENT_WARNING;
+      // Only track true migrations
+      if (is_subclass_of($migration, 'Migration')) {
+        $open = $unmapped_destination = $unmapped_source = $nofield = 0;
+        // TODO: Ugh! Rename one pair or the other...
+        $source_fields_keyed = $destination_fields_keyed = array();
+        $source_fields = $migration->source->fields();
+        $destination_fields = $migration->destination->fields();
+        foreach ($migration->fieldMappings as $mapping) {
+          if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
+            $open++;
+            $severity = REQUIREMENT_WARNING;
+          }
+          if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField])) {
+            $nofield++;
+            $severity = REQUIREMENT_WARNING;
+          }
+          if ($mapping->destinationField && !isset($destination_fields[$mapping->destinationField])) {
+            $nofield++;
+            $severity = REQUIREMENT_WARNING;
+          }
+          $source_fields_keyed[$mapping->sourceField] = $mapping->sourceField;
+          $destination_fields_keyed[$mapping->destinationField] = $mapping->destinationField;
         }
-        if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField])) {
-          $nofield++;
-          $severity = REQUIREMENT_WARNING;
+        $destKey = $migration->destination->keySchema;
+        foreach ($migration->destination->fields() as $machine_name => $description) {
+          if (!isset($destination_fields_keyed[$machine_name]) && !isset($destKey[$machine_name])) {
+            $unmapped_destination++;
+            $severity = REQUIREMENT_WARNING;
+          }
         }
-        if ($mapping->destinationField && !isset($destination_fields[$mapping->destinationField])) {
-          $nofield++;
-          $severity = REQUIREMENT_WARNING;
+        $sourceKey = $migration->source->keySchema;
+        foreach ($migration->source->fields() as $machine_name => $description) {
+          if (!isset($source_fields_keyed[$machine_name]) && !isset($sourceKey[$machine_name])) {
+            $unmapped_source++;
+            $severity = REQUIREMENT_WARNING;
+          }
         }
-        $source_fields_keyed[$mapping->sourceField] = $mapping->sourceField;
-        $destination_fields_keyed[$mapping->destinationField] = $mapping->destinationField;
+        $row = array();
+        $row[] = l($migration->machineName, 'admin/migrate/' . $migration->machineName);
+        $row[] = $open;
+        $row[] = $unmapped_destination;
+        $row[] = $unmapped_source;
+        $row[] = $nofield;
+        $rows[] = $row;
       }
-      $destKey = $migration->destination->keySchema;
-      foreach ($migration->destination->fields() as $machine_name => $description) {
-        if (!isset($destination_fields_keyed[$machine_name]) && !isset($destKey[$machine_name])) {
-          $unmapped_destination++;
-          $severity = REQUIREMENT_WARNING;
-        }
-      }
-      $sourceKey = $migration->source->keySchema;
-      foreach ($migration->source->fields() as $machine_name => $description) {
-        if (!isset($source_fields_keyed[$machine_name]) && !isset($sourceKey[$machine_name])) {
-          $unmapped_source++;
-          $severity = REQUIREMENT_WARNING;
-        }
-      }
-      $row = array();
-      $row[] = l($migration->machineName, 'admin/migrate/' . $migration->machineName);
-      $row[] = $open;
-      $row[] = $unmapped_destination;
-      $row[] = $unmapped_source;
-      $row[] = $nofield;
-      $rows[] = $row;
     }
 
     $description = t('Click on a migration name for full details.');

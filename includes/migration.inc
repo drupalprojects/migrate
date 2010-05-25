@@ -460,7 +460,7 @@ abstract class Migration extends MigrationBase {
       }
     }
     else {
-      if (method_exists($this->destination, 'preImport')) {
+      if (method_exists($this->destination, 'preRollback')) {
         $this->destination->preRollback($this);
       }
     }
@@ -481,7 +481,7 @@ abstract class Migration extends MigrationBase {
       }
     }
     else {
-      if (method_exists($this->destination, 'preImport')) {
+      if (method_exists($this->destination, 'postRollback')) {
         $this->destination->postRollback($this);
       }
     }

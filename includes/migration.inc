@@ -401,8 +401,20 @@ abstract class Migration extends MigrationBase {
    *  Name of the source field (optional).
    */
   public function addFieldMapping($destination_field, $source_field = NULL) {
+    // Warn of duplicate mappings
+    if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
+      $outputFunction = $this->outputFunction;
+      $outputFunction(t('!name addFieldMapping: !dest was previously mapped, overridden',
+        array('!name' => $this->machineName, '!dest' => $destination_field)),
+        'warning');
+    }
     $mapping = new MigrateFieldMapping($destination_field, $source_field);
-    $this->fieldMappings[] = $mapping;
+    if (is_null($destination_field)) {
+      $this->fieldMappings[] = $mapping;
+    }
+    else {
+      $this->fieldMappings[$destination_field] = $mapping;
+    }
     return $mapping;
   }
 

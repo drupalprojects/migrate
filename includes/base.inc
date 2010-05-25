@@ -86,7 +86,7 @@ abstract class MigrationBase {
    * (see drush_log()).
    * @var string
    */
-  public $outputFunction = 'drush_log';
+  public $outputFunction;
 
   /**
    * The fraction of the memory limit at which an operation will be interrupted.
@@ -172,6 +172,14 @@ abstract class MigrationBase {
           array('!limit' => $limit)));
     }
     $this->memoryLimit = $limit;
+
+    // Default the outputFunction based on context
+    if (function_exists('drush_get_option')) {
+      $this->outputFunction = 'drush_log';
+    }
+    else {
+      $this->outputFunction = 'drupal_set_message';
+    }
 
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));

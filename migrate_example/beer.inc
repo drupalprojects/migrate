@@ -255,6 +255,11 @@ class BeerNodeMigration extends ExampleMigration {
          ->description(t('Mapping beer name in source to node title'));
 
     $this->addFieldMapping('sticky')
+         ->defaultValue(0);
+
+    // Oops, we've added a second mapping for sticky... Fortunately, the
+    // Migrate module will warn you that the second mapping overrides the first
+    $this->addFieldMapping('sticky')
          ->description(t('Where is a source field we can map here?'))
          ->issueGroup(t('Client questions'))
          ->issueNumber(765736)

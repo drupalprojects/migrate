@@ -47,7 +47,7 @@ abstract class MigrateDestination {
    * items.
    *
    * $ids is an array of single-field keys to be deleted
-   * abstract public function bulkRollback(Migration $migration, array $ids) {
+   * abstract public function bulkRollback(Migration $migration, array $ids);
    *
    * $key is an array of fields keying a single entry to delete
    * abstract public function rollback(Migration $migration, array $key);
@@ -61,6 +61,17 @@ abstract class MigrateDestination {
   abstract public function import(Migration $migration, stdClass $object, stdClass $row);
 
   /**
+   * Derived classes may implement preImport() and/or postImport(), to do any
+   * processing they need done before or after looping over all source rows.
+   * Similarly, preRollback() or postRollback() may be implemented.
+   *
+   * abstract public function preImport(Migration $migration);
+   * abstract public function postImport(Migration $migration);
+   * abstract public function preRollback(Migration $migration);
+   * abstract public function postRollback(Migration $migration);
+   */
+
+  /**
    * Simply save the key schema.
    *
    * @param array $key_schema
@@ -70,6 +81,9 @@ abstract class MigrateDestination {
   }
 }
 
+/**
+ * All destination handlers should be derived from MigrateDestinationHandler
+ */
 abstract class MigrateDestinationHandler extends MigrateHandler {
   // abstract function arguments(...)
   abstract public function prepare(Migration $migration, stdClass $entity, stdClass $row);

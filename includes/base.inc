@@ -337,7 +337,6 @@ abstract class MigrationBase {
     Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
   }
 
-
   /**
    * End a rollback or import process, releasing the semaphore.
    * TODO: Add hooks/handlers to be executed once per overall process,

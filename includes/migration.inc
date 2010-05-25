@@ -452,6 +452,41 @@ abstract class Migration extends MigrationBase {
 
     $this->total_processed = $this->total_successes =
       $this->processed_since_feedback = $this->successes_since_feedback = 0;
+
+    // Call pre-process methods
+    if ($this->status == Migration::STATUS_IMPORTING) {
+      if (method_exists($this->destination, 'preImport')) {
+        $this->destination->preImport($this);
+      }
+    }
+    else {
+      if (method_exists($this->destination, 'preImport')) {
+        $this->destination->preRollback($this);
+      }
+    }
+  }
+
+  /**
+   * Override MigrationBase::endProcess, to call post hooks
+   *
+   * @param integer $overallThroughput
+   *  Throughput for the entire import. Should be 0 except
+   *  at final completion of an import process.
+   */
+  public function endProcess($overallThroughput = 0) {
+    // Call post-process methods
+    if ($this->status == Migration::STATUS_IMPORTING) {
+      if (method_exists($this->destination, 'postImport')) {
+        $this->destination->postImport($this);
+      }
+    }
+    else {
+      if (method_exists($this->destination, 'preImport')) {
+        $this->destination->postRollback($this);
+      }
+    }
+
+    parent::endProcess($overallThroughput);
   }
 
   /**

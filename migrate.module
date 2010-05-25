@@ -49,9 +49,9 @@ function migrate_handler_invoke_all($destination, $method) {
   array_shift($args);
   array_shift($args);
   $return = array();
-  $class_list = _migrate_class_list('%' . $destination . 'Handler', 'MigrateHandler');
+  $class_list = _migrate_class_list('%Handler', 'MigrateDestinationHandler');
   foreach ($class_list as $class_name => $handler) {
-    if (method_exists($handler, $method)) {
+    if ($handler->handlesType($destination) && method_exists($handler, $method)) {
       migrate_instrument_start($class_name . '->' . $method);
       $result = call_user_func_array(array($handler, $method), $args);
       migrate_instrument_stop($class_name . '->' . $method);
@@ -86,13 +86,10 @@ function migrate_handler_invoke_all($destination, $method) {
 function migrate_field_handler_invoke_all(Migration $migration, stdClass $entity, array $field_info, array $instance,
     array $values) {
   $return = array();
-  $type = str_replace('_', '', $field_info['type']);
-  $class_list = _migrate_class_list('%' . $type . 'FieldHandler',
-    'MigrateFieldHandler');
-  // TODO: FIXME. See http://drupal.org/node/757988.
-  $class_list = array_slice($class_list, 0, 1);
+  $type = $field_info['type'];
+  $class_list = _migrate_class_list('%FieldHandler', 'MigrateFieldHandler');
   foreach ($class_list as $class_name => $handler) {
-    if (method_exists($handler, 'prepare')) {
+    if ($handler->handlesType($type) && method_exists($handler, 'prepare')) {
       migrate_instrument_start($class_name . '->prepare');
       $result = call_user_func_array(array($handler, 'prepare'),
         array($migration, $entity, $field_info, $instance, $values));

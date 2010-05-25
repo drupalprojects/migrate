@@ -19,7 +19,34 @@ abstract class MigrateHandler {
   public $dependencies = array();
 
   /**
-   * Base constructor
+   * List of "types" handled by this handler. Depending on the kind of handler,
+   * these may be destination types, field types, etc.
+   *
+   * @var array
    */
-  public function __construct() {}
+  protected $typesHandled = array();
+
+  /**
+   * Register a list of types handled by this class
+   *
+   * @param array $types
+   */
+  protected function registerTypes(array $types) {
+    // Make the type names the keys
+    foreach ($types as $type) {
+      $type = strtolower($type);
+      $this->typesHandled[$type] = $type;
+    }
+  }
+
+  /**
+   * Does this handler handle the given type?
+   *
+   * @param boolean $type
+   */
+  public function handlesType($type) {
+    return isset($this->typesHandled[strtolower($type)]);
+  }
+
+  abstract public function __construct();
 }

@@ -6,7 +6,11 @@
  * Support for processing entity fields
  */
 
-class MigrateFieldsEntityHandler extends MigrateHandler {
+class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
+  public function __construct() {
+    $this->registerTypes(array('entity'));
+  }
+
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately
@@ -30,10 +34,14 @@ class MigrateFieldsEntityHandler extends MigrateHandler {
 
 abstract class MigrateFieldHandler extends MigrateHandler {
   // abstract function arguments(...)
-  abstract function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values);
+  abstract public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values);
 }
 
 class MigrateTextFieldHandler extends MigrateFieldHandler {
+  public function __construct() {
+    $this->registerTypes(array('text', 'text_long', 'text_with_summary'));
+  }
+
   static function arguments($summary = NULL, $format = NULL, $language = NULL) {
     $arguments = array();
     if (!is_null($summary)) {
@@ -48,7 +56,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     return $arguments;
   }
 
-  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -78,14 +86,13 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
   }
 }
 
-class MigrateTextLongFieldHandler extends MigrateTextFieldHandler {
-}
+class MigrateValueFieldHandler extends MigrateFieldHandler {
+  public function __construct() {
+    $this->registerTypes(array('value', 'list', 'list_boolean', 'list_number',
+      'list_text', 'number_integer', 'number_decimal', 'number_float'));
+  }
 
-class MigrateTextWithSummaryFieldHandler extends MigrateTextFieldHandler {
-}
-
-abstract class MigrateValueFieldHandler extends MigrateFieldHandler {
-  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
 
     // Setup the standard Field API array for saving.
@@ -101,23 +108,12 @@ abstract class MigrateValueFieldHandler extends MigrateFieldHandler {
   }
 }
 
-class MigrateListFieldHandler extends MigrateValueFieldHandler {
-}
-class MigrateListBooleanFieldHandler extends MigrateValueFieldHandler {
-}
-class MigrateListNumberFieldHandler extends MigrateValueFieldHandler {
-}
-class MigrateListTextFieldHandler extends MigrateValueFieldHandler {
-}
-class MigrateNumberIntegerFieldHandler extends MigrateValueFieldHandler {
-}
-class MigrateNumberDecimalFieldHandler extends MigrateValueFieldHandler {
-}
-class MigrateNumberFloatFieldHandler extends MigrateValueFieldHandler {
-}
-
 class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
-  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function __construct() {
+    $this->registerTypes(array('term_reference'));
+  }
+
+  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -155,6 +151,9 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
 }
 
 class MigrateFileFieldHandler extends MigrateFieldHandler {
+  public function __construct() {
+    $this->registerTypes(array('file', 'image'));
+  }
 
   /**
    * Prepare file data for saving as a Field API file field.
@@ -164,7 +163,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     static $fid;
 
     $arguments = $values['arguments'];
@@ -313,11 +312,14 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
   }
 }
 
-class MigrateImageFieldHandler extends MigrateFileFieldHandler {
-}
-
+// TODO: node_reference and user_reference are contrib fields - should be moved
+// to CCK, or migrate_extras
 class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
-  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function __construct() {
+    $this->registerTypes(array('node_reference'));
+  }
+
+  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -342,7 +344,11 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
 }
 
 class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
-  function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function __construct() {
+    $this->registerTypes(array('user_reference'));
+  }
+
+  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);

@@ -69,3 +69,8 @@ abstract class MigrateDestination {
     $this->keySchema = $key_schema;
   }
 }
+
+abstract class MigrateDestinationHandler extends MigrateHandler {
+  // abstract function arguments(...)
+  abstract public function prepare(Migration $migration, stdClass $entity, stdClass $row);
+}

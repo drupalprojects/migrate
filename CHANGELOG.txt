@@ -7,3 +7,11 @@ has not yet begun - for now, review the migrate_example module for information
 on how to implement migrations. The first priority is developing the API and
 drush commands for managing migrations - the UI is provided by a distinct 
 module: migrate_ui.
+
+5/25/10
+-------
+Field handler classes now need to define a constructor, passing an array of
+the field types they handle to parent::__construct($field_types). Destination 
+handler classes should now be derived from MigrateDestinationHandler
+instead of MigrateHandler, and pass an array of the destination types they handle
+to parent::__construct($types). See plugins/destinations/fields.inc for examples.

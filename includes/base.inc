@@ -453,8 +453,8 @@ abstract class MigrationBase {
       throw $exception;
     }
 
-    if ($return == Migration::RESULT_COMPLETED && isset($this->successes)) {
-      $overallThroughput = round(60*$this->successes / (microtime(TRUE) - $this->starttime));
+    if ($return == Migration::RESULT_COMPLETED && isset($this->total_successes)) {
+      $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
     }
     else {
       $overallThroughput = FALSE;

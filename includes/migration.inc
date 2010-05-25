@@ -666,7 +666,7 @@ abstract class Migration extends MigrationBase {
       // message tables, it's up to us
       if (!$this->source->handlesMapFiltering) {
         // Have to enforce itemlimit here
-        if (isset($this->options['itemlimit']) && $this->options['itemlimit'] <= $total) {
+        if (isset($this->options['itemlimit']) && $this->options['itemlimit'] <= $this->total_processed) {
           break;
         }
 

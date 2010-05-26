@@ -134,8 +134,8 @@ class MigrateSourceSQL extends MigrateSource {
         $msg_condition .= "msg.$map_key IS NULL";
       }
       $map_condition .= ' OR map.needs_update = 1';
-      $this->query->leftJoin($migration->mapTableName, 'map', $map_join);
-      $this->query->leftJoin($migration->messageTableName, 'msg', $msg_join);
+      $this->query->leftJoin($migration->getMapTable(), 'map', $map_join);
+      $this->query->leftJoin($migration->getMessageTable(), 'msg', $msg_join);
       $this->query->where($map_condition);
       $this->query->where($msg_condition);
       // And as long as we have the map table, get the destination ID, the

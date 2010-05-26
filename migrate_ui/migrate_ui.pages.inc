@@ -82,7 +82,7 @@ function migrate_ui_dashboard() {
     $row['unimported'] = $unimported;
 
     if (is_subclass_of($migration, 'Migration')) {
-      $query = db_select($migration->messageTableName, 'cnt');
+      $query = db_select($migration->getMessageTable(), 'cnt');
       $query->addExpression('COUNT(*)', 'cnt');
       $num_messages = $query->execute()->fetchField();
       $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $machine_name) : 0;
@@ -175,13 +175,14 @@ function migrate_migration_info($form, $form_state, $migration) {
     $migration = migration_load($migration);
   }
 
-  $has_mappings = isset($migration->fieldMappings);
+  $has_mappings = method_exists($migration, 'getFieldMappings');
 
   $form = array();
 
   if ($has_mappings) {
+    $field_mappings = $migration->getFieldMappings();
     // Identify what destination and source fields are mapped
-    foreach ($migration->fieldMappings as $mapping) {
+    foreach ($field_mappings as $mapping) {
       $sourceFields[$mapping->sourceField] = $mapping->sourceField;
       $destinationFields[$mapping->destinationField] = $mapping->destinationField;
     }
@@ -233,7 +234,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
 
   if ($has_mappings) {
-    switch ($migration->systemOfRecord) {
+    switch ($migration->getSystemOfRecord()) {
       case Migration::SOURCE:
         $system_of_record = t('Source data');
         break;
@@ -269,15 +270,16 @@ function migrate_migration_info($form, $form_state, $migration) {
            as the first parameter to $this->addFieldMapping() in your Migration
            class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
     );
+    $destination = $migration->getDestination();
     $form['detail']['destination']['type'] = array(
       '#type' => 'item',
       '#title' => t('Type'),
-      '#markup' => (string)$migration->destination,
+      '#markup' => (string)$destination,
     );
-    $destKey = $migration->destination->keySchema;
+    $destKey = $destination->keySchema;
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
-    foreach ($migration->destination->fields() as $machine_name => $description) {
+    foreach ($destination->fields() as $machine_name => $description) {
       $classes = array();
       if (isset($destKey[$machine_name])) {
         // Identify primary key
@@ -309,15 +311,16 @@ function migrate_migration_info($form, $form_state, $migration) {
            as the second parameter to $this->addFieldMapping() in your Migration
            class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
     );
+    $source = $migration->getSource();
     $form['detail']['source']['query'] = array(
       '#type' => 'item',
       '#title' => t('Query'),
-      '#markup' => '<pre>' . $migration->source . '</pre>',
+      '#markup' => '<pre>' . $source . '</pre>',
     );
-    $sourceKey = $migration->source->keySchema;
+    $sourceKey = $source->keySchema;
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
-    foreach ($migration->source->fields() as $machine_name => $description) {
+    foreach ($source->fields() as $machine_name => $description) {
       if (isset($sourceKey[$machine_name])) {
         // Identify primary key
         $machine_name .= t(' (PK)');
@@ -341,10 +344,10 @@ function migrate_migration_info($form, $form_state, $migration) {
 
     // First group the mappings
     $descriptions = array();
-    $source_fields = $migration->source->fields();
-    $destination_fields = $migration->destination->fields();
+    $source_fields = $source->fields();
+    $destination_fields = $destination->fields();
 
-    foreach ($migration->fieldMappings as $mapping) {
+    foreach ($field_mappings as $mapping) {
       // Validate source and destination fields actually exist
       if (!is_null($mapping->sourceField) && !isset($source_fields[$mapping->sourceField])) {
         drupal_set_message(t('!source used as source field in mapping but not in

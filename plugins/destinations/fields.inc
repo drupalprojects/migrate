@@ -14,8 +14,9 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately
-    $entity_type = $migration->destination->entityType;
-    $bundle = $migration->destination->bundle;
+    $destination = $migration->getDestination();
+    $entity_type = $destination->entityType;
+    $bundle = $destination->bundle;
     $instances = field_info_instances($entity_type, $bundle);
     foreach ($instances as $machine_name => $instance) {
       if (isset($entity->$machine_name)) {
@@ -65,7 +66,8 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       $arguments = array();
     }
 
-    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
+    $destination = $migration->getDestination();
+    $language = isset($arguments['language']) ? $arguments['language'] : $destination->language;
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -74,7 +76,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       if (isset($arguments['summary'])) {
         $item['summary'] = $arguments['summary'];
       }
-      $format = isset($arguments['format']) ?  $arguments['format'] : $migration->destination->textFormat;
+      $format = isset($arguments['format']) ?  $arguments['format'] : $destination->textFormat;
       $item['format'] = $item['value_format'] = $format;
       $item['value'] = $value;
 
@@ -93,7 +95,8 @@ class MigrateValueFieldHandler extends MigrateFieldHandler {
   }
 
   public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
-    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
+    $language = isset($arguments['language']) ?
+      $arguments['language'] : $migration->getDestination()->language;
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -274,7 +277,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       migrate_instrument_stop('MigrateFileFieldHandler file_function');
     }
 
-    $language = isset($arguments['language']) ? $arguments['language'] : $migration->destination->language;
+    $language = isset($arguments['language']) ?
+      $arguments['language'] : $migration->getDestination()->language;
     if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;

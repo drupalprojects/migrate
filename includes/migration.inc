@@ -19,14 +19,20 @@ abstract class Migration extends MigrationBase {
    *
    * @var MigrateSource
    */
-  public $source;
+  protected $source;
+  public function getSource() {
+    return $this->source;
+  }
 
   /**
    * Destination object for the migration, derived from MigrateDestination.
    *
    * @var MigrateDestination
    */
-  public $destination;
+  protected $destination;
+  public function getDestination() {
+    return $this->destination;
+  }
 
   /**
    * Message types to be passed to saveMessage() and saved in message tables.
@@ -51,7 +57,10 @@ abstract class Migration extends MigrationBase {
    */
   const SOURCE = 1;
   const DESTINATION = 2;
-  public $systemOfRecord = Migration::SOURCE;
+  protected $systemOfRecord = Migration::SOURCE;
+  public function getSystemOfRecord() {
+    return $this->systemOfRecord;
+  }
 
   /**
    * Specify value of needs_update for current map row. Usually set by
@@ -59,7 +68,7 @@ abstract class Migration extends MigrationBase {
    *
    * @var boolean
    */
-  public $needsUpdate = FALSE;
+  protected $needsUpdate = FALSE;
 
   /**
    * Names of tables created for tracking the migration. By default they are
@@ -68,7 +77,13 @@ abstract class Migration extends MigrationBase {
    *
    * @var string
    */
-  public $mapTableName, $messageTableName;
+  protected $mapTableName, $messageTableName;
+  public function getMapTable() {
+    return $this->mapTableName;
+  }
+  public function getMessageTable() {
+    return $this->messageTableName;
+  }
 
   /**
    * Boolean determining whether to track last_imported times in map tables
@@ -82,7 +97,10 @@ abstract class Migration extends MigrationBase {
    *
    * @var array
    */
-  public $fieldMappings = array();
+  protected $fieldMappings = array();
+  public function getFieldMappings() {
+    return $this->fieldMappings;
+  }
 
   /**
    * The (possibly multi-column) key of the source record currently being imported.
@@ -104,7 +122,7 @@ abstract class Migration extends MigrationBase {
    *
    * @var array
    */
-  public $counts = array();
+  protected $counts = array();
 
   /**
    * When performing a bulkRollback(), the maximum number of items to pass in
@@ -121,7 +139,7 @@ abstract class Migration extends MigrationBase {
    *
    * @var array
    */
-  public $highwaterField;
+  protected $highwaterField;
 
   /**
    * General initialization of a Migration object.
@@ -324,7 +342,7 @@ abstract class Migration extends MigrationBase {
    * @param boolean $needs_update
    *  Value for the needs_update field in the map. Defaults to FALSE.
    */
-  public function saveIDMapping(stdClass $source_row, array $dest_ids, $needs_update = FALSE) {
+  protected function saveIDMapping(stdClass $source_row, array $dest_ids, $needs_update = FALSE) {
     migrate_instrument_start('saveIDMapping');
     // Construct the source key
     $keys = array();
@@ -363,7 +381,12 @@ abstract class Migration extends MigrationBase {
     ->execute();
   }
 
-  public function saveHighwater($highwater) {
+  /**
+   * Save the highwater mark for this migration.
+   *
+   * @param mixed $highwater
+   */
+  protected function saveHighwater($highwater) {
     db_update('migrate_status')
     ->fields(array('highwater' => $highwater))
     ->condition('machine_name', $this->machineName)
@@ -394,7 +417,7 @@ abstract class Migration extends MigrationBase {
    * @param string $sourceField
    *  Name of the source field (optional).
    */
-  public function addFieldMapping($destination_field, $source_field = NULL) {
+  protected function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
       $outputFunction = $this->outputFunction;
@@ -749,6 +772,16 @@ abstract class Migration extends MigrationBase {
   // Utility methods
 
   /**
+   * Convenience function to return count of total source records
+   *
+   * @param boolean $refresh
+   *  Pass TRUE to refresh the cached count.
+   */
+  public function sourceCount($refresh = FALSE) {
+    return $this->source->count($refresh);
+  }
+
+  /**
    * Get the number of records successfully imported.
    * @return int
    *  Number of imported records.
@@ -929,16 +962,6 @@ abstract class Migration extends MigrationBase {
                           array(':machine_name' => $this->machineName))
                 ->fetchField();
     return $highwater;
-  }
-
-  /**
-   * Convenience function to return count of total source records
-   *
-   * @param boolean $refresh
-   *  Pass TRUE to refresh the cached count.
-   */
-  public function sourceCount($refresh = FALSE) {
-    return $this->source->count($refresh);
   }
 
   /**

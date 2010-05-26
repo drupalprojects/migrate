@@ -301,7 +301,7 @@ function drush_migrate_fields_destination() {
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
       $migration = Migration::getInstance($class_name);
-      $destination = $migration->destination;
+      $destination = $migration->getDestination();
     }
     else {
       // No match, try a destination class
@@ -344,7 +344,7 @@ function drush_migrate_fields_source() {
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
       $migration = Migration::getInstance($class_name);
-      $source = $migration->source;
+      $source = $migration->getSource();
     }
     else {
       drush_log(dt('No class found matching !machine_name',
@@ -382,11 +382,11 @@ function drush_migrate_descriptions() {
       return drush_set_error(dt('No class found matching !machine_name',
                    array('!machine_name' => $machine_name)));
     }
-    drush_print($migration->description);
-    if (isset($migration->fieldMappings)) {
+    drush_print($migration->getDescription());
+    if (method_exists($migration, 'getFieldMappings')) {
       // First group the mappings
       $descriptions = array();
-      foreach ($migration->fieldMappings as $mapping) {
+      foreach ($migration->getFieldMappings() as $mapping) {
         $descriptions[$mapping->issueGroup][] = $mapping;
       }
       // Put out each group header
@@ -678,7 +678,7 @@ function drush_migrate_import($args = NULL) {
           $return = $return['object'];
           if ($return == Migration::RESULT_SKIPPED) {
             drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
-              array('!name' => $migration->machineName)), 'warning');
+              array('!name' => $migration->getMachineName())), 'warning');
           }
           elseif ($return == Migration::RESULT_STOPPED) {
             $stop = TRUE;
@@ -689,10 +689,10 @@ function drush_migrate_import($args = NULL) {
       }
       else {
         // I'm in a subshell. Import then set return value so parent process can respawn or move on.
-        $return = $migration->import($options);
+        $return = $migration->processImport($options);
         if ($return == Migration::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
-            array('!name' => $migration->machineName)), 'warning');
+            array('!name' => $migration->getMachineName())), 'warning');
         }
         drush_backend_set_result($return);
       }
@@ -748,7 +748,8 @@ function drush_migrate_reset_status($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);
     foreach ($migrations as $migration) {
-      drush_log(dt("Resetting '!description' migration", array('!description' => $migration->machineName)));
+      drush_log(dt("Resetting '!description' migration",
+        array('!description' => $migration->getMachineName())));
       $migration->resetStatus();
     }
   }

@@ -157,7 +157,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $this->prepare($migration, $term, $row);
 
     // Trying to update an existing term
-    if ($migration->systemOfRecord == Migration::DESTINATION) {
+    if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       $existing_term = taxonomy_term_load($term->tid);
       if ($existing_term) {
         // Incoming data overrides existing data, so only copy non-existent fields

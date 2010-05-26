@@ -2,7 +2,9 @@
 name = "Migrate"
 description = "Import content from external sources"
 package = "Development"
-core = 7.x
+core = 6.x
+dependencies[] = autoload
+dependencies[] = dbtng
 files[] = migrate.module
 files[] = migrate.install
 files[] = includes/base.inc

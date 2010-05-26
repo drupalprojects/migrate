@@ -1,0 +1,14 @@
+; $Id$
+name = "Migrate Example"
+description = "Example migration data."
+package = "Development"
+core = 7.x
+dependencies[] = taxonomy
+dependencies[] = image
+dependencies[] = comment
+dependencies[] = migrate
+files[] = migrate_example.module
+files[] = beer.inc
+
+; For testing table_copy plugin. Since is infrequently used, we comment it out.
+; files[] = example.table_copy.inc

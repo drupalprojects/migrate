@@ -1,14 +1,9 @@
 <?php
+// $Id$
 
 /**
  * @file
- * The core of migration support
- * TODO:
- * Fully support compound keys in sources
- * Fully support compound keys in destinations
- * Rollback/import hooks (still useful?)
- * number_integer
- * Better cardinality handling.
+ * Defines the base class for migration processes.
  */
 
 /**
@@ -35,20 +30,34 @@ abstract class MigrationBase {
    *
    * @var string
    */
-  public $machineName;
+  protected $machineName;
+  public function getMachineName() {
+    return $this->machineName;
+  }
 
   /**
    * Detailed information describing the migration.
    *
    * @var string
    */
-  public $description;
+  protected $description;
+  public function getDescription() {
+    return $this->description;
+  }
 
   /**
    * Save options passed to current operation
    * @var array
    */
-  public $options;
+  protected $options;
+  public function getOption($option_name) {
+    if (isset($options[$option_name])) {
+      return $options[$option_name];
+    }
+    else {
+      return NULL;
+    }
+  }
 
   /**
    * Indicates that we are processing a rollback or import - used to avoid
@@ -63,7 +72,7 @@ abstract class MigrationBase {
    *
    * @var unknown_type
    */
-  public $status = Migration::STATUS_IDLE;
+  protected $status = Migration::STATUS_IDLE;
 
   /**
    * When the current operation started.
@@ -78,7 +87,11 @@ abstract class MigrationBase {
    *
    * @var array
    */
-  public $dependencies = array();
+  protected $dependencies = array();
+
+  public function getDependencies() {
+    return $this->dependencies;
+  }
 
   /**
    * Name of a function for displaying feedback. It must take the message to display
@@ -86,7 +99,7 @@ abstract class MigrationBase {
    * (see drush_log()).
    * @var string
    */
-  public $outputFunction;
+  protected $outputFunction;
 
   /**
    * The fraction of the memory limit at which an operation will be interrupted.
@@ -110,7 +123,10 @@ abstract class MigrationBase {
    *
    * @var array
    */
-  public $team = array();
+  protected $team = array();
+  public function getTeam() {
+    return $this->team;
+  }
 
   /**
    * If provided, an URL for an issue tracking system containing :id: where
@@ -118,7 +134,7 @@ abstract class MigrationBase {
    *
    * @var string
    */
-  public $issuePattern;
+  protected $issuePattern;
 
   /**
    * If we set an error handler (during import), remember the previous one so
@@ -191,11 +207,10 @@ abstract class MigrationBase {
   static public function getInstance($class_name) {
     // Otherwise might miss cache hit on case difference
     $class_name = strtolower($class_name);
-    $migrations = &self::$migrations;
-    if (!isset($migrations[$class_name])) {
-      $migrations[$class_name] = new $class_name;
+     if (!isset(self::$migrations[$class_name])) {
+      self::$migrations[$class_name] = new $class_name;
     }
-    return $migrations[$class_name];
+    return self::$migrations[$class_name];
   }
 
   /**
@@ -225,7 +240,7 @@ abstract class MigrationBase {
    * @param $context
    *   An array that points to the active symbol table at the point the error occurred.
    */
-  function errorHandler($error_level, $message, $filename, $line, $context) {
+  public function errorHandler($error_level, $message, $filename, $line, $context) {
     if ($error_level & error_reporting()) {
       $message .= "\n" . t('File !file, line !line',
         array('!line' => $line, '!file' => $filename));
@@ -242,14 +257,30 @@ abstract class MigrationBase {
     }
   }
 
+  /**
+   * Database logging callback - called when there's a database error. We
+   * log non-critical stuff, and throw an exception otherwise
+   *
+   * @param string $type
+   *  Ignored
+   * @param string $message
+   *  Message to display or throw, potentially with t() placeholders
+   * @param array $variables
+   *  Variables to substitute into $message
+   * @param unknown_type $severity
+   *  Watchdog severity level
+   * @param $link
+   *  ???
+   */
   public function loggingCallback($type, $message, $variables = array(),
           $severity = WATCHDOG_NOTICE, $link = NULL) {
     if ($severity == WATCHDOG_NOTICE || $severity == WATCHDOG_INFO ||
         $severity == WATCHDOG_DEBUG) {
-      $this->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
+      $this->saveMessage(t($message, $variables),
+        Migration::MESSAGE_INFORMATIONAL);
     }
     else {
-      throw new MigrateException($message, Migration::MESSAGE_ERROR);
+      throw new MigrateException(t($message, $variables), Migration::MESSAGE_ERROR);
     }
   }
 
@@ -294,7 +325,7 @@ abstract class MigrationBase {
    * Reports whether all dependencies have completed migration
    * TODO: Support rollback (reverse dependencies)
    */
-  public function dependenciesComplete() {
+  protected function dependenciesComplete() {
     foreach ($this->dependencies as $dependency) {
       $migration = Migration::getInstance($dependency);
       if (!$migration->isComplete()) {
@@ -307,8 +338,6 @@ abstract class MigrationBase {
   /**
    * Begin a process, ensuring only one process can be active
    * at once on a given migration.
-   * TODO: Add hooks/handlers to be executed once per overall process,
-   * and once per individual migration
    *
    * @param int $newStatus
    *  Migration::STATUS_IMPORTING or Migration::STATUS_ROLLING_BACK
@@ -346,9 +375,8 @@ abstract class MigrationBase {
   }
 
   /**
-   * End a rollback or import process, releasing the semaphore.
-   * TODO: Add hooks/handlers to be executed once per overall process,
-   * and once per individual migration
+   * End a rollback or import process, releasing the semaphore. Note that it must
+   * be public to be callable as the shutdown function.
    *
    * @param integer $overallThroughput
    *  Throughput for the entire import. Should be 0 except
@@ -468,19 +496,18 @@ abstract class MigrationBase {
    * in one phase (import or rollback), it need not define the other - it will
    * simply report success
    */
-  public function rollback() {
+  protected function rollback() {
     return Migration::RESULT_COMPLETED;
   }
-  public function import() {
+  protected function import() {
     return Migration::RESULT_COMPLETED;
   }
 
   /**
    * Test whether we've exceeded the desired memory threshold. If so, output a message.
+   *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.
-   *
-   * TODO: Throw a MigrationException?
    */
   protected function memoryExceeded() {
     $usage = memory_get_usage();
@@ -512,5 +539,4 @@ abstract class MigrationBase {
       return FALSE;
     }
   }
-
 }

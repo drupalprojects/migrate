@@ -3,13 +3,25 @@
 
 /**
  * @file
- * Support for migration participants.
+ * Info on migration team members. Display-only at the moment, but eventually
+ * there should be notification features.
  */
 
 class MigrateTeamMember {
-  public $name;
-  public $emailAddress;
-  public $group;
+  protected $name;
+  public function getName() {
+    return $this->name;
+  }
+
+  protected $emailAddress;
+  public function getEmailAddress() {
+    return $this->emailAddress;
+  }
+
+  protected $group;
+  public function getGroup() {
+    return $this->group;
+  }
 
   public function __construct($name, $email_address, $group) {
     $this->name = $name;

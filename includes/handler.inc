@@ -16,7 +16,10 @@ abstract class MigrateHandler {
    *
    * @var array
    */
-  public $dependencies = array();
+  protected $dependencies = array();
+  public function getDependencies() {
+    return $this->dependencies;
+  }
 
   /**
    * List of "types" handled by this handler. Depending on the kind of handler,

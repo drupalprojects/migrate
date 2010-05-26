@@ -74,8 +74,9 @@ function migrate_ui_dashboard() {
     }
 
     $row['status'] = $status;
+    $machine_name = $migration->getMachineName();
     $row['machinename'] =
-      l($migration->machineName, 'admin/migrate/' . $migration->machineName);
+      l($machine_name, 'admin/migrate/' . $machine_name);
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     $row['unimported'] = $unimported;
@@ -84,7 +85,7 @@ function migrate_ui_dashboard() {
       $query = db_select($migration->messageTableName, 'cnt');
       $query->addExpression('COUNT(*)', 'cnt');
       $num_messages = $query->execute()->fetchField();
-      $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $migration->machineName) : 0;
+      $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $machine_name) : 0;
     }
     else {
       $row['messages'] = t('N/A');
@@ -206,8 +207,10 @@ function migrate_migration_info($form, $form_state, $migration) {
   );
 
   $team = array();
-  foreach ($migration->team as $member) {
-    $team[$member->group][] = $member->name . ' <' . l($member->emailAddress, 'mailto:' . $member->emailAddress) . '>';
+  foreach ($migration->getTeam() as $member) {
+    $email_address = $member->getEmailAddress();
+    $team[$member->getGroup()][] =
+      $member->getName() . ' <' . l($email_address, 'mailto:' .$email_address) . '>';
   }
 
   foreach ($team as $group => $list) {
@@ -219,11 +222,12 @@ function migrate_migration_info($form, $form_state, $migration) {
     );
   }
 
-  if (count($migration->dependencies) > 0) {
+  $dependencies = $migration->getDependencies();
+  if (count($dependencies) > 0) {
     $form['detail']['overview']['dependencies'] = array(
       '#prefix' => '<div>',
       '#markup' => '<strong>' . t('Dependencies: ') . '</strong>' .
-         implode(', ', $migration->dependencies),
+         implode(', ', $dependencies),
       '#suffix' => '</div>',
     );
   }
@@ -249,7 +253,7 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   $form['detail']['overview']['description'] = array(
     '#prefix' => '<div>',
-    '#markup' => $migration->description,
+    '#markup' => $migration->getDescription(),
     '#suffix' => '</div>',
   );
 

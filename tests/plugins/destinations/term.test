@@ -19,7 +19,6 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
 
   function testTermImport() {
     $migration = Migration::getInstance('BeerTermMigration');
-    $migration->outputFunction = 'drupal_set_message';
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Term import returned RESULT_COMPLETED'));

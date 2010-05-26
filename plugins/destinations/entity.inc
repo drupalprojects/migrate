@@ -83,7 +83,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     }
     $entity->migrate = array(
       'source_keys' => $keys,
-      'machineName' => $migration->machineName,
+      'machineName' => $migration->getMachineName(),
     );
 
     // Call any general entity handlers (in particular, the builtin field handler)

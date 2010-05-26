@@ -61,7 +61,7 @@ class MigrateDestinationTableCopy extends MigrateDestination {
       return array($valkey);
     }
     catch (MigrateException $e) {
-      $this->saveMessage($e->getMessage(), $e->level);
+      $this->saveMessage($e->getMessage(), $e->getLevel());
       $outputFunction = $this->outputFunction;
       $outputFunction($e->getMessage());
     }

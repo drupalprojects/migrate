@@ -147,10 +147,11 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
         else {
           $object = new $record->name;
         }
-        if (count($object->dependencies) > 0) {
+        $dependencies = $object->getDependencies();
+        if (count($dependencies) > 0) {
           // Set classes with dependencies aside for reordering
           $dependent_classes[$record->name] = $object;
-          $required_classes += $object->dependencies;
+          $required_classes += $dependencies;
         }
         else {
           // No dependencies, just add
@@ -182,7 +183,7 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
         $ready = TRUE;
         // Scan all the dependencies for this class and make sure they're all
         // in the final list
-        foreach ($object->dependencies as $dependency) {
+        foreach ($object->getDependencies() as $dependency) {
           if (!isset($class_lists[$class_pattern][$dependency])) {
             $ready = FALSE;
             break;

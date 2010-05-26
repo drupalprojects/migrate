@@ -3,13 +3,7 @@
 
 /**
  * @file
- * The core of migration support
- * TODO:
- * Fully support compound keys in sources
- * Fully support compound keys in destinations
- * Rollback/import hooks (still useful?)
- * number_integer
- * Better cardinality handling.
+ * Defines the base class for import/rollback processes.
  */
 
 /**
@@ -479,7 +473,8 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Override MigrationBase::endProcess, to call post hooks
+   * Override MigrationBase::endProcess, to call post hooks. Note that it must
+   * be public to be callable as the shutdown function.
    *
    * @param integer $overallThroughput
    *  Throughput for the entire import. Should be 0 except
@@ -504,7 +499,7 @@ abstract class Migration extends MigrationBase {
   /**
    * Perform a rollback operation - remove migrated items from the destination.
    */
-  public function rollback() {
+  protected function rollback() {
     $return = Migration::RESULT_COMPLETED;
 
     // TODO: Support multi-field keys
@@ -641,7 +636,7 @@ abstract class Migration extends MigrationBase {
   /**
    * Perform an import operation - migrate items from source to destination.
    */
-  public function import() {
+  protected function import() {
     $return = Migration::RESULT_COMPLETED;
 
     while ($data_row = $this->source->fetch($this, $this->options)) {
@@ -718,7 +713,7 @@ abstract class Migration extends MigrationBase {
         }
       }
       catch (MigrateException $e) {
-        $this->saveMessage($e->getMessage(), $e->level);
+        $this->saveMessage($e->getMessage(), $e->getLevel());
         $outputFunction = $this->outputFunction;
         $outputFunction($e->getMessage());
       }

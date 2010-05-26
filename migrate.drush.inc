@@ -281,7 +281,7 @@ function drush_migrate_status($name = NULL) {
           $status = dt('Unknown');
           break;
       }
-      $table[] = array($migration->machineName, $total, $imported, $unimported, $status,
+      $table[] = array($migration->getMachineName(), $total, $imported, $unimported, $status,
         $migration->getLastImported());
     }
     drush_print_table($table, TRUE);
@@ -472,7 +472,8 @@ function drush_migrate_rollback($args = NULL) {
     }
 
     foreach ($migrations as $migration) {
-      drush_log(dt("Rolling back '!description' migration", array('!description' => $migration->machineName)));
+      drush_log(dt("Rolling back '!description' migration",
+        array('!description' => $migration->getMachineName())));
       $return = $migration->processRollback($options);
       // If it couldn't finish (presumably because it was appraoching memory_limit),
       // continue in a subprocess
@@ -538,7 +539,7 @@ function drush_migrate_validate_common($args) {
   // TODO: Don't load all migrations, instantiate those passed and catch exceptions.
   $migrations = migrate_migrations();
   foreach ($migrations as $migration) {
-    $all[] = strtolower($migration->machineName);
+    $all[] = strtolower($migration->getMachineName());
   }
 
   if (drush_get_option('all')) {
@@ -636,12 +637,14 @@ function drush_migrate_import($args = NULL) {
 
     $stop = FALSE;
     foreach ($migrations as $name => $migration) {
-      drush_log(dt("Importing '!description' migration", array('!description' => $migration->machineName)));
+      $machine_name = $migration->getMachineName();
+      drush_log(dt("Importing '!description' migration",
+        array('!description' => $machine_name)));
       if (drush_get_option('update')) {
         $migration->prepareUpdate();
       }
       if (drush_get_option('needs_update')) {
-        $needs_update = db_select('migrate_map_' . strtolower($migration->machineName), 'map')
+        $needs_update = db_select('migrate_map_' . strtolower($machine_name), 'map')
                           ->fields('map', array('sourceid1'))
                           ->condition('needs_update', 1)
                           ->range(0, 10000)

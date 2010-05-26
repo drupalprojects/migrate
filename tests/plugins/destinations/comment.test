@@ -19,22 +19,18 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
 
   function testCommentImport() {
     $migration = Migration::getInstance('BeerTermMigration');
-    $migration->outputFunction = 'drupal_set_message';
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Term import returned RESULT_COMPLETED'));
     $migration = Migration::getInstance('BeerUserMigration');
-    $migration->outputFunction = 'drupal_set_message';
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
     $migration = Migration::getInstance('BeerNodeMigration');
-    $migration->outputFunction = 'drupal_set_message';
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Node import returned RESULT_COMPLETED'));
     $migration = Migration::getInstance('BeerCommentMigration');
-    $migration->outputFunction = 'drupal_set_message';
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Comment import returned RESULT_COMPLETED'));

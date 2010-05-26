@@ -49,7 +49,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    *
    * @var int
    */
-  public $batchSize;
+  protected $batchSize;
 
   /**
    * Simple initialization.
@@ -148,7 +148,7 @@ class MigrateSourceMSSQL extends MigrateSource {
   public function fetch(Migration $migration, array $options = array()) {
     // Do all the hard work on the first call
     if (!isset($this->result)) {
-      
+
       $keys = array();
       foreach ($this->keySchema as $field_name => $field_schema) {
         // Allow caller to provide an alias to table containing the primary key.
@@ -158,10 +158,10 @@ class MigrateSourceMSSQL extends MigrateSource {
         }
         $keys[] = $field_name;
       }
-      
+
       /*
        * Replace :criteria placeholder with idlist or highwater clauses. We
-       * considered supporting both but it is not worth the complexity. Run twice 
+       * considered supporting both but it is not worth the complexity. Run twice
        * instead.
        */
       if (isset($options['idlist'])) {

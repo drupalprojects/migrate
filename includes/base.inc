@@ -135,6 +135,9 @@ abstract class MigrationBase {
    * @var string
    */
   protected $issuePattern;
+  public function getIssuePattern() {
+    return $this->issuePattern;
+  }
 
   /**
    * If we set an error handler (during import), remember the previous one so

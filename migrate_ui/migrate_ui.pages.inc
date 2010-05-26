@@ -138,7 +138,7 @@ function migrate_ui_messages($migration) {
     $migration = migration_load($migration);
   }
 
-  $messages = db_select($migration->messageTableName, 'msg')
+  $messages = db_select($migration->getMessageTable(), 'msg')
               ->extend('PagerDefault')
               ->limit(500)
               ->fields('msg')
@@ -183,8 +183,10 @@ function migrate_migration_info($form, $form_state, $migration) {
     $field_mappings = $migration->getFieldMappings();
     // Identify what destination and source fields are mapped
     foreach ($field_mappings as $mapping) {
-      $sourceFields[$mapping->sourceField] = $mapping->sourceField;
-      $destinationFields[$mapping->destinationField] = $mapping->destinationField;
+      $source_field = $mapping->getSourceField();
+      $destination_field = $mapping->getDestinationField();
+      $sourceFields[$source_field] = $source_field;
+      $destinationFields[$destination_field] = $destination_field;
     }
 
     $form['detail'] = array(
@@ -276,7 +278,7 @@ function migrate_migration_info($form, $form_state, $migration) {
       '#title' => t('Type'),
       '#markup' => (string)$destination,
     );
-    $destKey = $destination->keySchema;
+    $destKey = $destination->getKeySchema();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
     foreach ($destination->fields() as $machine_name => $description) {
@@ -317,7 +319,7 @@ function migrate_migration_info($form, $form_state, $migration) {
       '#title' => t('Query'),
       '#markup' => '<pre>' . $source . '</pre>',
     );
-    $sourceKey = $source->keySchema;
+    $sourceKey = $source->getKeySchema();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
     foreach ($source->fields() as $machine_name => $description) {
@@ -349,17 +351,19 @@ function migrate_migration_info($form, $form_state, $migration) {
 
     foreach ($field_mappings as $mapping) {
       // Validate source and destination fields actually exist
-      if (!is_null($mapping->sourceField) && !isset($source_fields[$mapping->sourceField])) {
+      $source_field = $mapping->getSourceField();
+      $destination_field = $mapping->getDestinationField();
+      if (!is_null($source_field) && !isset($source_fields[$source_field])) {
         drupal_set_message(t('!source used as source field in mapping but not in
-          list of source fields', array('!source' => $mapping->sourceField)),
+          list of source fields', array('!source' => $source_field)),
         'warning');
       }
-      if (!is_null($mapping->destinationField) && !isset($destination_fields[$mapping->destinationField])) {
+      if (!is_null($destination_field) && !isset($destination_fields[$destination_field])) {
         drupal_set_message(t('!destination used as destination field in mapping but not in
-          list of destination fields', array('!destination' => $mapping->destinationField)),
+          list of destination fields', array('!destination' => $destination_field)),
         'warning');
       }
-      $descriptions[$mapping->issueGroup][] = $mapping;
+      $descriptions[$mapping->getIssueGroup()][] = $mapping;
     }
 
     // Put out each group header
@@ -374,20 +378,21 @@ function migrate_migration_info($form, $form_state, $migration) {
       );
       $rows = array();
       foreach ($mappings as $mapping) {
-        if (is_array($mapping->defaultValue)) {
-          $default = implode(',', $mapping->defaultValue);
+        $default = $mapping->getDefaultValue();
+        if (is_array($default)) {
+          $default = implode(',', $default);
         }
-        else {
-          $default = $mapping->defaultValue;
-        }
-        if (isset($mapping->issuePriority)) {
-          $classes[] = 'migrate-priority-' . $mapping->issuePriority;
-          $priority = MigrateFieldMapping::$priorities[$mapping->issuePriority];
-          if (isset($migration->issuePattern) && isset($mapping->issueNumber)) {
-            $priority .= ' (' . l('#' . $mapping->issueNumber, str_replace(':id:', $mapping->issueNumber,
-              $migration->issuePattern)) . ')';
+        $issue_priority = $mapping->getIssuePriority();
+        if (!is_null($issue_priority)) {
+          $classes[] = 'migrate-priority-' . $issue_priority;
+          $priority = MigrateFieldMapping::$priorities[$issue_priority];
+          $issue_pattern = $migration->getIssuePattern();
+          $issue_number = $mapping->getIssueNumber();
+          if (!is_null($issue_pattern) && !is_null($issue_number)) {
+            $priority .= ' (' . l('#' . $issue_number, str_replace(':id:', $issue_number,
+              $issue_pattern)) . ')';
           }
-          if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
+          if ($issue_priority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
             $classes[] = 'migrate-error';
           }
         }
@@ -396,10 +401,10 @@ function migrate_migration_info($form, $form_state, $migration) {
           $classes[] = 'migrate-priority-' . 1;
         }
         $row = array(
-          array('data' => $mapping->destinationField, 'class' => $classes),
-          array('data' => $mapping->sourceField, 'class' => $classes),
+          array('data' => $mapping->getDestinationField(), 'class' => $classes),
+          array('data' => $mapping->getSourceField(), 'class' => $classes),
           array('data' => $default, 'class' => $classes),
-          array('data' => $mapping->descriptionText,  'class' => $classes),
+          array('data' => $mapping->getDescription(),  'class' => $classes),
           array('data' => $priority, 'class' => $classes),
         );
         $rows[] = $row;

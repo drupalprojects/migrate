@@ -40,7 +40,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       ),
     );
     parent::__construct($destination_key, 'comment', $bundle, $language, $text_format);
-    $this->supportsBulkRollback = TRUE;
   }
 
   /**

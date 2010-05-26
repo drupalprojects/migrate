@@ -16,28 +16,40 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *
    * @var string
    */
-  public $entityType;
+  protected $entityType;
+  public function getEntityType() {
+    return $this->entityType;
+  }
 
   /**
    * The bundle (node type, vocabulary, etc.) of the destination.
    *
    * @var string
    */
-  public $bundle;
+  protected $bundle;
+  public function getBundle() {
+    return $this->bundle;
+  }
 
   /**
    * Default language for text fields in this destination.
    *
    * @var string
    */
-  public $language;
+  protected $language;
+  public function getLanguage() {
+    return $this->language;
+  }
 
   /**
    * Default input format for text fields in this destination.
    *
    * @var int
    */
-  public $textFormat;
+  protected $textFormat;
+  public function getTextFormat() {
+    return $this->textFormat;
+  }
 
   /**
    * Simply save the key schema.
@@ -76,7 +88,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    * @param $source_row
    *  Raw source data object - passed through to prepare handlers.
    */
-  function prepare(Migration $migration, stdClass $entity, stdClass $source_row) {
+  public function prepare(Migration $migration, stdClass $entity, stdClass $source_row) {
     // Add source keys for debugging and identification of migrated data by hooks.
     foreach ($migration->sourceKeyMap() as $field_name => $key_name) {
       $keys[$key_name] = $source_row->$field_name;
@@ -107,7 +119,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    * @param $source_row
    *  Raw source data object - passed through to complete handlers.
    */
-  function complete(Migration $migration, stdClass $entity, stdClass $source_row) {
+  public function complete(Migration $migration, stdClass $entity, stdClass $source_row) {
     // Call any general entity handlers (in particular, the builtin field handler)
     migrate_handler_invoke_all('Entity', 'complete', $migration, $entity, $source_row);
     // Then call any entity-specific handlers

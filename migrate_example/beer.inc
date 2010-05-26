@@ -232,21 +232,23 @@ class BeerNodeMigration extends ExampleMigration {
     $query->groupBy('tb.bid');
     $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
 
-    $this->source = new MigrateSourceSQL($query,
-                                  array(
-                                    'bid' => array(
-                                      'type' => 'int',
-                                      'not null' => TRUE,
-                                      'description' => 'Beer ID.',
-                                      'alias' => 'b',
-                                    )
-                                  ));
     // TODO: This can be removed when http://drupal.org/node/423888 is
     // committed to core
     // By default, MigrateSourceSQL derives a count query from the main query -
     // but we can override it (the core count support doesn't work with GROUP BY)
-    $this->source->countQuery = db_select('migrate_example_beer_node', 'b');
-    $this->source->countQuery->addExpression('COUNT(bid)', 'cnt');
+    $count_query = db_select('migrate_example_beer_node', 'b');
+    $count_query->addExpression('COUNT(bid)', 'cnt');
+
+    $this->source = new MigrateSourceSQL($query,
+                                         array(
+                                           'bid' => array(
+                                             'type' => 'int',
+                                             'not null' => TRUE,
+                                             'description' => 'Beer ID.',
+                                             'alias' => 'b',
+                                           )
+                                         ),
+                                         $count_query);
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');

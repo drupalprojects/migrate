@@ -28,7 +28,6 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       ),
     );
     parent::__construct($destination_key, 'user', 'user', $language, $text_format);
-    $this->supportsBulkRollback = TRUE;
   }
 
   /**

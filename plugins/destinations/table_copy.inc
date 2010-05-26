@@ -13,7 +13,6 @@ class MigrateDestinationTableCopy extends MigrateDestination {
   public function __construct(array $key_schema, $tableName) {
     parent::__construct($key_schema);
     $this->tableName = $tableName;
-    $this->supportsBulkRollback = TRUE;
   }
 
   public function __toString() {

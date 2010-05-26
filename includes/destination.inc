@@ -21,15 +21,10 @@ abstract class MigrateDestination {
    *
    * @var array
    */
-  public $keySchema = array();
-
-  /**
-   * Derived classes should set this to TRUE in their constructor if implementing
-   * bulkRollback(). TODO: Should we just do methodExists on bulkRollback?
-   *
-   * @var boolean
-   */
-  public $supportsBulkRollback = FALSE;
+  protected $keySchema = array();
+  public function getKeySchema() {
+    return $this->keySchema;
+  }
 
   /**
    * Derived classes must implement fields(), returning a list of available

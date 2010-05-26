@@ -21,7 +21,10 @@ abstract class MigrateSource {
    *
    * @var boolean
    */
-  public $handlesMapFiltering = FALSE;
+  protected $handlesMapFiltering = FALSE;
+  public function handlesMapFiltering() {
+    return $this->handlesMapFiltering;
+  }
 
   /**
    * Schema field definition(s) corresponding to the primary key of the source
@@ -30,7 +33,10 @@ abstract class MigrateSource {
    *
    * @var array
    */
-  public $keySchema = array();
+  protected $keySchema = array();
+  public function getKeySchema() {
+    return $this->keySchema;
+  }
 
   /**
    * Derived classes must implement fields(), returning a list of available

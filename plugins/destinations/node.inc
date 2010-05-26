@@ -33,7 +33,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       ),
     );
     parent::__construct($destination_key, 'node', $bundle, $language, $text_format);
-    $this->supportsBulkRollback = TRUE;
   }
 
   /**

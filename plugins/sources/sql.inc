@@ -19,7 +19,7 @@ class MigrateSourceSQL extends MigrateSource {
    *
    * @var SelectQuery
    */
-  public $query, $countQuery;
+  protected $query, $countQuery;
 
   /**
    * The result object from executing the query - traversed to process the
@@ -32,10 +32,15 @@ class MigrateSourceSQL extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(SelectQuery $query, array $key_schema) {
+  public function __construct(SelectQuery $query, array $key_schema, SelectQuery $count_query=NULL) {
     parent::__construct($key_schema);
     $this->query = $query;
-    $this->countQuery = clone $query->countQuery();
+    if (is_null($count_query)) {
+      $this->countQuery = clone $query->countQuery();
+    }
+    else {
+      $this->countQuery = $count_query;
+    }
     $this->handlesMapFiltering = TRUE;
   }
 

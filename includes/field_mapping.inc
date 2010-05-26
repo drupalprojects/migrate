@@ -14,7 +14,10 @@ class MigrateFieldMapping {
    *
    * @var string
    */
-  public $destinationField;
+  protected $destinationField;
+  public function getDestinationField() {
+    return $this->destinationField;
+  }
 
   /**
    * Source field name for the mapping. If empty, the defaultValue will be
@@ -22,7 +25,10 @@ class MigrateFieldMapping {
    *
    * @var string
    */
-  public $sourceField;
+  protected $sourceField;
+  public function getSourceField() {
+    return $this->sourceField;
+  }
 
   /**
    * Default value for simple mappings, when there is no source mapping or the
@@ -31,7 +37,10 @@ class MigrateFieldMapping {
    *
    * @var mixed
    */
-  public $defaultValue;
+  protected $defaultValue;
+  public function getDefaultValue() {
+    return $this->defaultValue;
+  }
 
   /**
    * Separator string. If present, the destination field will be set up as an
@@ -39,7 +48,10 @@ class MigrateFieldMapping {
    *
    * @var string
    */
-  public $separator;
+  protected $separator;
+  public function getSeparator() {
+    return $this->separator;
+  }
 
   /**
    * Class name of source migration for a field. If present, the value in the
@@ -48,7 +60,10 @@ class MigrateFieldMapping {
    *
    * @var string
    */
-  public $sourceMigration;
+  protected $sourceMigration;
+  public function getSourceMigration() {
+    return $this->sourceMigration;
+  }
 
   /**
    * Argument overrides. If present this will be an array, keyed by
@@ -59,12 +74,30 @@ class MigrateFieldMapping {
    *
    * @var array
    */
-  public $arguments;
+  protected $arguments;
+  public function getArguments() {
+    return $this->arguments;
+  }
 
-  public $descriptionText = '';
-  public $issueGroup;
-  public $issueNumber;
-  public $issuePriority = self::ISSUE_PRIORITY_OK;
+  protected $description = '';
+  public function getDescription() {
+    return $this->description;
+  }
+
+  protected $issueGroup;
+  public function getIssueGroup() {
+    return $this->issueGroup;
+  }
+
+  protected $issueNumber;
+  public function getIssueNumber() {
+    return $this->issueNumber;
+  }
+
+  protected $issuePriority = self::ISSUE_PRIORITY_OK;
+  public function getIssuePriority() {
+    return $this->issuePriority;
+  }
 
   const ISSUE_PRIORITY_OK = 1;
   const ISSUE_PRIORITY_LOW = 2;
@@ -110,7 +143,7 @@ class MigrateFieldMapping {
   }
 
   public function description($text) {
-    $this->descriptionText = $text;
+    $this->description = $text;
     return $this;
   }
 

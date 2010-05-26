@@ -168,7 +168,7 @@ abstract class Migration extends MigrationBase {
       $count = 1;
       $source_key_schema = array();
       $pks = array();
-      foreach ($this->source->keySchema as $field_name => $field_schema) {
+      foreach ($this->source->getKeySchema() as $field_name => $field_schema) {
         $mapkey = 'sourceid' . $count++;
         $source_key_schema[$mapkey] = $field_schema;
         $pks[] = $mapkey;
@@ -178,7 +178,7 @@ abstract class Migration extends MigrationBase {
 
       // Add destination keys to map table
       $count = 1;
-      foreach ($this->destination->keySchema as $field_name => $field_schema) {
+      foreach ($this->destination->getKeySchema() as $field_name => $field_schema) {
         $mapkey = 'destid' . $count++;
         $fields[$mapkey] = $field_schema;
       }
@@ -537,7 +537,7 @@ abstract class Migration extends MigrationBase {
     migrate_instrument_stop('rollback map query');
 
     // Support bulk rollback (only with single-field keys?)
-    if ($this->destination->supportsBulkRollback) {
+    if (method_exists($this->destination, 'bulkRollback')) {
       // Too many at once can lead to memory issues, so batch 'em up
       $destids = array();
       $sourceids = array();
@@ -682,7 +682,7 @@ abstract class Migration extends MigrationBase {
 
       // If the source hasn't already filtered out items based on the map and
       // message tables, it's up to us
-      if (!$this->source->handlesMapFiltering) {
+      if (!$this->source->handlesMapFiltering()) {
         // Have to enforce itemlimit here
         if (isset($this->options['itemlimit']) && $this->options['itemlimit'] <= $this->total_processed) {
           break;
@@ -821,7 +821,7 @@ abstract class Migration extends MigrationBase {
     if (!isset($this->sourceKeyMap)) {
       $count = 1;
       $this->sourceKeyMap = array();
-      foreach ($this->source->keySchema as $field_name => $field_schema) {
+      foreach ($this->source->getKeySchema() as $field_name => $field_schema) {
         $this->sourceKeyMap[$field_name] = 'sourceid' . $count++;
       }
     }
@@ -839,7 +839,7 @@ abstract class Migration extends MigrationBase {
     if (!isset($this->destinationKeyMap)) {
       $count = 1;
       $this->destinationKeyMap = array();
-      foreach ($this->destination->keySchema as $field_name => $field_schema) {
+      foreach ($this->destination->getKeySchema() as $field_name => $field_schema) {
         $this->destinationKeyMap[$field_name] = 'destid' . $count++;
       }
     }
@@ -1005,27 +1005,30 @@ abstract class Migration extends MigrationBase {
     // Apply mappings.
     $values = new stdClass;
     foreach ($this->fieldMappings as $mapping) {
-      if (isset($mapping->destinationField)) {
-        $destination = $mapping->destinationField;
-        $source = $mapping->sourceField;
+      $destination = $mapping->getDestinationField();
+      if ($destination) {
+        $source = $mapping->getSourceField();
+        $default = $mapping->getDefaultValue();
         // Make any direct value assignments
         if ($source && isset($data_row->$source)) {
           $values->$destination = $data_row->$source;
         }
-        elseif (!is_null($mapping->defaultValue)) {
-          $values->$destination = $mapping->defaultValue;
+        elseif (!is_null($default)) {
+          $values->$destination = $default;
         }
 
         // If there's a separator specified for this destination, then it
         // will be populated as an array exploded from the source value
-        if (isset($mapping->separator) && isset($values->$destination)) {
-          $values->$destination = explode($mapping->separator, $values->$destination);
+        $separator = $mapping->getSeparator();
+        if ($separator && isset($values->$destination)) {
+          $values->$destination = explode($separator, $values->$destination);
         }
 
         // If a source migration is supplied, use the current value for this field
         // to look up a destination ID from the provided migration
-        if ($mapping->sourceMigration && isset($values->$destination)) {
-          $source_migration = Migration::getInstance($mapping->sourceMigration);
+        $source_migration = $mapping->getSourceMigration();
+        if ($source_migration && isset($values->$destination)) {
+          $source_migration = Migration::getInstance($source_migration);
           // Might be an array, after separator processing
           if (is_array($values->$destination)) {
             $source_keys = $values->$destination;
@@ -1047,7 +1050,7 @@ abstract class Migration extends MigrationBase {
               }
             }
             else {
-              $results[] = $mapping->defaultValue;
+              $results[] = $default;
             }
           }
           if (is_array($values->$destination) || count($results) > 1) {
@@ -1060,7 +1063,8 @@ abstract class Migration extends MigrationBase {
 
         // Assign any arguments
         if (isset($values->$destination)) {
-          if (isset($mapping->arguments)) {
+          $arguments = $mapping->getArguments();
+          if ($arguments) {
             if (!is_array($values->$destination)) {
               $values->$destination = array($values->$destination);
             }
@@ -1068,7 +1072,7 @@ abstract class Migration extends MigrationBase {
             // we come up with a better way to communicate them to the field
             // handlers?
             $values->{$destination}['arguments'] = array();
-            foreach ($mapping->arguments as $argname => $destarg) {
+            foreach ($arguments as $argname => $destarg) {
               if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
                 $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
               }

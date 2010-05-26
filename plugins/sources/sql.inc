@@ -70,6 +70,11 @@ class MigrateSourceSQL extends MigrateSource {
       $fields[drupal_strtolower($field_name)] = drupal_strtolower(
         $field_info['table'] . '.' . $field_info['field']);
     }
+    $expressionFields = $this->query->getExpressions();
+    foreach ($expressionFields as $field_name => $field_info) {
+      // Lower case, because Drupal forces lowercase on fetch
+      $fields[drupal_strtolower($field_name)] = drupal_strtolower($field_info['alias']);
+    }
 
     return $fields;
   }

@@ -13,6 +13,17 @@
  * Destination class implementing migration into comments.
  */
 class MigrateDestinationComment extends MigrateDestinationEntity {
+  static public function getKeySchema() {
+    return array(
+      'cid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'ID of destination entity',
+      ),
+    );
+  }
+
   /**
    * Save the original setting of comment_maintain_node_statistics
    * @var boolean
@@ -30,16 +41,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  Default text format for fields on this comment. Can be overridden.
    */
   public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    // PK definition, for use in constructing map/message tables
-    $destination_key = array(
-      'cid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'description' => 'ID of destination entity',
-      ),
-    );
-    parent::__construct($destination_key, 'comment', $bundle, $language, $text_format);
+    parent::__construct('comment', $bundle, $language, $text_format);
   }
 
   /**

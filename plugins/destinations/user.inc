@@ -14,12 +14,8 @@
  * Destination class implementing migration into users.
  */
 class MigrateDestinationUser extends MigrateDestinationEntity {
-  /**
-   * Basic initialization
-   */
-  public function __construct($language = NULL, $text_format = NULL) {
-    // PK definition, for use in constructing map/message tables
-    $destination_key = array(
+  static public function getKeySchema() {
+    return array(
       'uid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
@@ -27,7 +23,13 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         'description' => 'ID of destination user',
       ),
     );
-    parent::__construct($destination_key, 'user', 'user', $language, $text_format);
+  }
+
+  /**
+   * Basic initialization
+   */
+  public function __construct($language = NULL, $text_format = NULL) {
+    parent::__construct('user', 'user', $language, $text_format);
   }
 
   /**

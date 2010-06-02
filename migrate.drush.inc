@@ -228,7 +228,7 @@ function drush_migrate_status($name = NULL) {
 
     // Validate input and load Migration(s).
     if ($name) {
-        if ($migration = Migration::getInstance($name . 'Migration')) {
+        if ($migration = MigrationBase::getInstance($name . 'Migration')) {
           $migrations = array($migration);
         }
         else {
@@ -265,16 +265,16 @@ function drush_migrate_status($name = NULL) {
       }
       $status = $migration->getStatus();
       switch ($status) {
-        case Migration::STATUS_IDLE:
+        case MigrationBase::STATUS_IDLE:
           $status = dt('Idle');
           break;
-        case Migration::STATUS_IMPORTING:
+        case MigrationBase::STATUS_IMPORTING:
           $status = dt('Importing');
           break;
-        case Migration::STATUS_ROLLING_BACK:
+        case MigrationBase::STATUS_ROLLING_BACK:
           $status = dt('Rolling back');
           break;
-        case Migration::STATUS_STOPPING:
+        case MigrationBase::STATUS_STOPPING:
           $status = dt('Stopping');
           break;
         default:
@@ -300,7 +300,7 @@ function drush_migrate_fields_destination() {
     // First, see if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = Migration::getInstance($class_name);
+      $migration = MigrationBase::getInstance($class_name);
       $destination = $migration->getDestination();
     }
     else {
@@ -343,7 +343,7 @@ function drush_migrate_fields_source() {
     // See if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = Migration::getInstance($class_name);
+      $migration = MigrationBase::getInstance($class_name);
       $source = $migration->getSource();
     }
     else {
@@ -376,7 +376,7 @@ function drush_migrate_descriptions() {
     // See if it matches a migration class
     $class_name = $machine_name . 'Migration';
     if (class_exists($class_name)) {
-      $migration = Migration::getInstance($class_name);
+      $migration = MigrationBase::getInstance($class_name);
     }
     else {
       return drush_set_error(dt('No class found matching !machine_name',
@@ -477,11 +477,11 @@ function drush_migrate_rollback($args = NULL) {
       $return = $migration->processRollback($options);
       // If it couldn't finish (presumably because it was appraoching memory_limit),
       // continue in a subprocess
-      if ($return == Migration::RESULT_INCOMPLETE) {
+      if ($return == MigrationBase::RESULT_INCOMPLETE) {
         drush_migrate_backend_invoke();
       }
       // If stopped, don't process any further
-      elseif ($return == Migration::RESULT_STOPPED) {
+      elseif ($return == MigrationBase::RESULT_STOPPED) {
         break;
       }
     }
@@ -508,7 +508,7 @@ function drush_migrate_get_migrations($args) {
     if (!isset($migration_objects)) {
       foreach (explode(',', $args) as $name) {
         $class_name = $name . 'Migration';
-        $migration_objects[$name] = Migration::getInstance($class_name);
+        $migration_objects[$name] = MigrationBase::getInstance($class_name);
       }
     }
   }
@@ -536,12 +536,6 @@ function drush_migrate_rollback_validate($args = NULL) {
 }
 
 function drush_migrate_validate_common($args) {
-  // TODO: Don't load all migrations, instantiate those passed and catch exceptions.
-  $migrations = migrate_migrations();
-  foreach ($migrations as $migration) {
-    $all[] = strtolower($migration->getMachineName());
-  }
-
   if (drush_get_option('all')) {
     if (!empty($args)) {
       return drush_set_error(NULL, dt('You must specify either a migration name or --all, not both'));
@@ -553,8 +547,10 @@ function drush_migrate_validate_common($args) {
     }
     $machine_names = explode(',', strtolower($args));
 
-    if ($missing = array_diff($machine_names, $all)) {
-      return drush_set_error(dt('Unrecognized migrations: ') . implode(', ', $missing));
+    foreach ($machine_names as $machine_name) {
+      if (!class_exists($machine_name . 'Migration')) {
+        drush_set_error(dt('Unrecognized migration: !name', array('!name' => $machine_name)));
+      }
     }
   }
 
@@ -659,12 +655,12 @@ function drush_migrate_import($args = NULL) {
       if ($i == 0 && !drush_get_context('DRUSH_BACKEND')) {
         // Our first pass and in the parent process. Run a migration right here.
         $return = $migration->processImport($options);
-        if ($return == Migration::RESULT_SKIPPED) {
+        if ($return == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
               use the --force option to run it anyway',
             array('!name' => $migration->machineName)), 'warning');
         }
-        elseif ($return == Migration::RESULT_STOPPED) {
+        elseif ($return == MigrationBase::RESULT_STOPPED) {
           break;
         }
         $i++;
@@ -672,15 +668,15 @@ function drush_migrate_import($args = NULL) {
 
       if (!drush_get_context('DRUSH_BACKEND')) {
         // Subsequent run in the parent process. Spawn subshells ad infinitum.
-        while ($return == Migration::RESULT_INCOMPLETE) {
+        while ($return == MigrationBase::RESULT_INCOMPLETE) {
           $return = drush_migrate_backend_invoke();
           // 'object' holds the return code we care about.
           $return = $return['object'];
-          if ($return == Migration::RESULT_SKIPPED) {
+          if ($return == MigrationBase::RESULT_SKIPPED) {
             drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
               array('!name' => $migration->getMachineName())), 'warning');
           }
-          elseif ($return == Migration::RESULT_STOPPED) {
+          elseif ($return == MigrationBase::RESULT_STOPPED) {
             $stop = TRUE;
             break;
           }
@@ -690,7 +686,7 @@ function drush_migrate_import($args = NULL) {
       else {
         // I'm in a subshell. Import then set return value so parent process can respawn or move on.
         $return = $migration->processImport($options);
-        if ($return == Migration::RESULT_SKIPPED) {
+        if ($return == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
             array('!name' => $migration->getMachineName())), 'warning');
         }

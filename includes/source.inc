@@ -13,30 +13,36 @@
  * describing the source and significant options. See
  * MigrateSourceSQL for an example.
  */
-abstract class MigrateSource {
+abstract class MigrateSource implements Iterator {
   /**
-   * A derived source class should set this to TRUE if it is capable of
-   * filtering out already-migrated items in its fetch() method (in particular,
-   * if it can join directly to the map and message tables).
-   *
-   * @var boolean
+   * The Migration object using this source.
+   * @var Migration
    */
-  protected $handlesMapFiltering = FALSE;
-  public function handlesMapFiltering() {
-    return $this->handlesMapFiltering;
+  protected $migration;
+
+  /**
+   * Map object tracking relationships between source and destination data
+   *
+   * @var MigrateMap
+   */
+  protected $map;
+  public function getMap() {
+    return $this->map;
   }
 
   /**
-   * Schema field definition(s) corresponding to the primary key of the source
-   * being implemented. These are used to construct the source key fields
-   * of the map and message tables for a migration using this source.
+   * The current row from the quey
+   *
+   * @var stdClass
+   */
+  protected $currentRow;
+
+  /**
+   * The primary key of the current row
    *
    * @var array
    */
-  protected $keySchema = array();
-  public function getKeySchema() {
-    return $this->keySchema;
-  }
+  protected $currentKey;
 
   /**
    * Derived classes must implement fields(), returning a list of available
@@ -55,17 +61,34 @@ abstract class MigrateSource {
   abstract public function count($refresh = FALSE);
 
   /**
-   * Derived classes must implement fetch(), returning the next record from the
-   * source as an object.
+   * Record a message related to a source record
+   *
+   * @param string $message
+   *  The message to record.
+   * @param int $level
+   *  Optional message severity (defaults to MESSAGE_ERROR).
    */
-  abstract public function fetch(Migration $migration);
+  public function saveMessage($message, $level = Migration::MESSAGE_ERROR) {
+    if ($this->currentKey) {
+      $this->map->saveMessage($this->currentKey, $message, $level);
+    }
+  }
+
+  public function importedCount() {
+    return $this->map->importedCount();
+  }
+
+  public function getKey() {
+    return $this->map->getSourceKey();
+  }
 
   /**
    * Simply save the key schema.
    *
    * @param array $key_schema
    */
-  public function __construct(array $key_schema) {
-    $this->keySchema = $key_schema;
+  public function __construct(Migration $migration, MigrateMap $map) {
+    $this->migration = $migration;
+    $this->map = $map;
   }
 }

@@ -14,12 +14,8 @@
  * Destination class implementing migration into terms.
  */
 class MigrateDestinationTerm extends MigrateDestinationEntity {
-  /**
-   * Basic initialization
-   */
-  public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    // PK definition, for use in constructing map/message tables
-    $destination_key = array(
+  static public function getKeySchema() {
+    return array(
       'tid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
@@ -27,7 +23,13 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         'description' => 'ID of destination term',
       ),
     );
-    parent::__construct($destination_key, 'taxonomy_term', $bundle, $language, $text_format);
+  }
+
+  /**
+   * Basic initialization
+   */
+  public function __construct($bundle, $language = NULL, $text_format = NULL) {
+    parent::__construct('taxonomy_term', $bundle, $language, $text_format);
   }
 
   /**

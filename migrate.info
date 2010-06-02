@@ -11,6 +11,7 @@ files[] = includes/migration.inc
 files[] = includes/destination.inc
 files[] = includes/exception.inc
 files[] = includes/handler.inc
+files[] = includes/map.inc
 files[] = includes/source.inc
 files[] = includes/team.inc
 files[] = plugins/destinations/entity.inc

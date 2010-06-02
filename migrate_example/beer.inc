@@ -80,6 +80,22 @@ class BeerTermMigration extends ExampleMigration {
     // like.
     $this->description = t('Migrate styles from the source database to taxonomy terms');
 
+    // Create a map object for tracking the relationships between source rows
+    // and their resulting Drupal objects. Pass the name (BeerTerm) of this migration
+    // to use in generating map and message tables. And, pass schema definitions
+    // for the primary keys of the source and destination - we need to be explicit
+    // for our source, but the destination class knows its schema already.
+    $map = new MigratePDOMap($this->machineName,
+        array(
+          'style' => array('type' => 'varchar',
+                           'length' => 255,
+                           'not null' => TRUE,
+                           'description' => 'Topic ID',
+                          )
+        ),
+        MigrateDestinationTerm::getKeySchema()
+      );
+
     // We are getting data from tables in the Drupal default database - first,
     // set up a query for this data.
     $query = db_select('migrate_example_beer_topic', 'met')
@@ -87,18 +103,9 @@ class BeerTermMigration extends ExampleMigration {
              // This sort assures that parents are saved before children.
              ->orderBy('style_parent', 'ASC');
 
-    // Use the query as the basis of our MigrateSource. Note that we need to
-    // provide a schema definition for the primary key of this source, so the
-    // Migration class can track mappings from source data to destination data.
-    $this->source = new MigrateSourceSQL($query,
-                                  array(
-                                    'style' => array(
-                                      'type' => 'varchar',
-                                      'length' => 255,
-                                      'not null' => TRUE,
-                                      'description' => 'Topic ID',
-                                    )
-                                  ));
+    // Create a MigrateSource object, which manages retrieving the input data.
+    // Besides the map and query objects we've just created, we pass a pointer to ourselves
+    $this->source = new MigrateSourceSQL($this, $map, $query);
 
     // Set up our destination - terms in the migrate_example_beer_styles vocabulary
     $this->destination = new MigrateDestinationTerm('migrate_example_beer_styles');
@@ -165,16 +172,19 @@ class BeerUserMigration extends ExampleMigration {
     // The basic setup is similar to BeerTermMigraiton
     parent::__construct();
     $this->description = 'Beers Drinkers of the world';
-    $query = db_select('migrate_example_beer_account', 'mea')
-             ->fields('mea', array('aid', 'status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
-    $this->source = new MigrateSourceSQL($query,
-                                  array(
+    $map = new MigratePDOMap($this->machineName,
+        array(
                                     'aid' => array(
                                       'type' => 'int',
                                       'not null' => TRUE,
-                                      'description' => 'Account ID.',
-                                    )
-                                  ));
+                                      'description' => 'Account ID.'
+                                      )
+        ),
+        MigrateDestinationUser::getKeySchema()
+      );
+    $query = db_select('migrate_example_beer_account', 'mea')
+             ->fields('mea', array('aid', 'status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
+    $this->source = new MigrateSourceSQL($this, $map, $query);
     $this->destination = new MigrateDestinationUser();
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('status', 'status');
@@ -225,21 +235,7 @@ class BeerNodeMigration extends ExampleMigration {
     // the authors of the nodes should be migrated before the nodes themselves.
     $this->dependencies = array('BeerTermMigration', 'BeerUserMigration');
 
-    $query = db_select('migrate_example_beer_node', 'b')
-             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image'));
-    $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
-    // Gives a single comma-separated list of related terms
-    $query->groupBy('tb.bid');
-    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
-
-    // TODO: This can be removed when http://drupal.org/node/423888 is
-    // committed to core
-    // By default, MigrateSourceSQL derives a count query from the main query -
-    // but we can override it (the core count support doesn't work with GROUP BY)
-    $count_query = db_select('migrate_example_beer_node', 'b');
-    $count_query->addExpression('COUNT(bid)', 'cnt');
-
-    $this->source = new MigrateSourceSQL($query,
+    $map = new MigratePDOMap($this->machineName,
                                          array(
                                            'bid' => array(
                                              'type' => 'int',
@@ -248,7 +244,22 @@ class BeerNodeMigration extends ExampleMigration {
                                              'alias' => 'b',
                                            )
                                          ),
-                                         $count_query);
+        MigrateDestinationNode::getKeySchema()
+      );
+
+    $query = db_select('migrate_example_beer_node', 'b')
+             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image'));
+    $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
+    // Gives a single comma-separated list of related terms
+    $query->groupBy('tb.bid');
+    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
+
+    // By default, MigrateSourceSQL derives a count query from the main query -
+    // but we can override it if we know a quicker way
+    $count_query = db_select('migrate_example_beer_node', 'b');
+    $count_query->addExpression('COUNT(bid)', 'cnt');
+
+    $this->source = new MigrateSourceSQL($this, $map, $query, $count_query);
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');
@@ -339,16 +350,19 @@ class BeerCommentMigration extends ExampleMigration {
     parent::__construct();
     $this->description = 'Comments about beers';
     $this->dependencies = array('BeerUserMigration', 'BeerNodeMigration');
-    $query = db_select('migrate_example_beer_comment', 'mec')
-             ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
-             ->orderBy('cid_parent', 'ASC');
-    $this->source = new MigrateSourceSQL($query,
-                                  array(
+    $map = new MigratePDOMap($this->machineName,
+      array(
                                     'cid' => array(
                                       'type' => 'int',
                                       'not null' => TRUE,
                                     )
-                                  ));
+                                  ),
+        MigrateDestinationComment::getKeySchema()
+      );
+    $query = db_select('migrate_example_beer_comment', 'mec')
+             ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
+             ->orderBy('cid_parent', 'ASC');
+    $this->source = new MigrateSourceSQL($this, $map, $query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_beer');
 
     //$this->addFieldMapping('name', 'name');

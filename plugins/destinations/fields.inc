@@ -47,7 +47,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     $arguments = array();
     if (!is_null($summary)) {
       $arguments['summary'] = $summary;
-    }
+   }
     if (!is_null($format)) {
       $arguments['format'] = $format;
     }
@@ -115,7 +115,7 @@ class MigrateValueFieldHandler extends MigrateFieldHandler {
 
 class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
   public function __construct() {
-    $this->registerTypes(array('term_reference'));
+    $this->registerTypes(array('taxonomy_term_reference'));
   }
 
   public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {

@@ -15,16 +15,14 @@
  */
 abstract class MigrateDestination {
   /**
-   * Schema field definition(s) corresponding to the primary key of the destination
+   * To support MigratePDOMap maps, derived destination classes should return
+   * schema field definition(s) corresponding to the primary key of the destination
    * being implemented. These are used to construct the destination key fields
    * of the map table for a migration using this destination.
    *
-   * @var array
+   * abstract static public function getKeySchema()
    */
-  protected $keySchema = array();
-  public function getKeySchema() {
-    return $this->keySchema;
-  }
+
 
   /**
    * Derived classes must implement fields(), returning a list of available
@@ -67,12 +65,9 @@ abstract class MigrateDestination {
    */
 
   /**
-   * Simply save the key schema.
-   *
-   * @param array $key_schema
+   * Null constructor
    */
-  public function __construct(array $key_schema) {
-    $this->keySchema = $key_schema;
+  public function __construct() {
   }
 }
 

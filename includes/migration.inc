@@ -71,28 +71,6 @@ abstract class Migration extends MigrationBase {
   protected $needsUpdate = FALSE;
 
   /**
-   * Names of tables created for tracking the migration. By default they are
-   * constructed from machineName, but a derived Migration class may set them
-   * as it wishes.
-   *
-   * @var string
-   */
-  protected $mapTableName, $messageTableName;
-  public function getMapTable() {
-    return $this->mapTableName;
-  }
-  public function getMessageTable() {
-    return $this->messageTableName;
-  }
-
-  /**
-   * Boolean determining whether to track last_imported times in map tables
-   *
-   * @var boolean
-   */
-  protected $trackLastImported = FALSE;
-
-  /**
    * Simple mappings between destination fields (keys) and source fields (values).
    *
    * @var array
@@ -107,15 +85,6 @@ abstract class Migration extends MigrationBase {
    * @var array
    */
   protected $currSourceKey = array();
-
-  /**
-   * Mappings from field names in the source and destination objects, to the
-   * corresponding field names (e.g., sourceid2, destid1, etc.) in the map and
-   * message tables.
-   *
-   * @var array
-   */
-  protected $sourceKeyMap, $destinationKeyMap;
 
   /**
    * An array of counts. Initially used for cache hit/miss tracking.
@@ -146,263 +115,6 @@ abstract class Migration extends MigrationBase {
    */
   public function __construct() {
     parent::__construct();
-
-    // Default generated table names - derived class can override
-    $this->mapTableName = 'migrate_map_' . drupal_strtolower($this->machineName);
-    $this->messageTableName = 'migrate_message_' . drupal_strtolower($this->machineName);
-  }
-
-  ////////////////////////////////////////////////////////////////////
-  // Map/message table handling
-
-  /**
-   * Lazy creation of map and message tables associated with this migration.
-   */
-  protected function ensureTables() {
-    // We use our own static to avoid a query in db_table_exists().
-    static $exists = array();
-
-    if (!isset($exists[$this->machineName]) && !db_table_exists($this->mapTableName)) {
-      // Generate appropriate schema info for the map and message tables,
-      // and map from the source field names to the map/msg field names
-      $count = 1;
-      $source_key_schema = array();
-      $pks = array();
-      foreach ($this->source->getKeySchema() as $field_name => $field_schema) {
-        $mapkey = 'sourceid' . $count++;
-        $source_key_schema[$mapkey] = $field_schema;
-        $pks[] = $mapkey;
-      }
-
-      $fields = $source_key_schema;
-
-      // Add destination keys to map table
-      $count = 1;
-      foreach ($this->destination->getKeySchema() as $field_name => $field_schema) {
-        $mapkey = 'destid' . $count++;
-        $fields[$mapkey] = $field_schema;
-      }
-      $fields['needs_update'] = array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => (int) FALSE,
-        'description' => 'Flags existing mapped data to be updated',
-      );
-      if ($this->trackLastImported) {
-        $fields['last_imported'] = array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-          'default' => 0,
-          'description' => 'UNIX timestamp of the last time this row was imported',
-        );
-      }
-      $schema = array(
-        'description' => t('Mappings from source key to destination key'),
-        'fields' => $fields,
-        'primary key' => $pks,
-      );
-      db_create_table($this->mapTableName, $schema);
-
-      // Now for the message table
-      $fields = array();
-      $fields['msgid'] = array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      );
-      $fields += $source_key_schema;
-
-      $fields['level'] = array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 1,
-      );
-      $fields['message'] = array(
-        'type' => 'text',
-        'size' => 'medium',
-        'not null' => TRUE,
-      );
-      $schema = array(
-        'description' => t('Messages generated during a migration process'),
-        'fields' => $fields,
-        'primary key' => array('msgid'),
-        'indexes' => array('sourcekey' => $pks),
-      );
-      db_create_table($this->messageTableName, $schema);
-    }
-    else {
-      // TODO: If the tables do exist, ideally we would confirm they have
-      // the expected definitions, in case the migration has changed...
-    }
-    // Static cache so we don't do db_table_exists() again for this migration.
-    $exists[$this->machineName] = $this->machineName;
-  }
-
-  /**
-   * Given a (possibly multi-field) source key, return the (possibly multi-field)
-   * destination key it is mapped to.
-   *
-   * @param array $source_id
-   *  Array of source key values.
-   * @return array
-   *  Array of destination key values, or NULL on failure.
-   */
-  public function lookupDestinationID(array $source_id, Migration $destination_migration) {
-    migrate_instrument_start('lookupDestinationID');
-    static $frequent = array();
-
-    // TODO: Let fieldMapping change lookup_cache_size
-    $lookup_cache_size = 500;
-    $frequent_key = $source_id[0];
-
-    // Initialize if needed.
-    if (!isset($frequent[$this->machineName])) {
-      $frequent[$this->machineName] = array();
-    }
-
-    // Initialize if needed.
-    if (!isset($destination_migration->counts['lookup_cache'][$this->machineName])) {
-      $destination_migration->counts['lookup_cache'][$this->machineName] = array(
-         'hit' => 0,
-         'miss_hit' => 0,
-         'miss_miss' => 0,
-      );
-    }
-
-    // Check for cached pairs. Only works for single keys.
-    if (count($source_id) == 1 && isset($frequent[$this->machineName][$frequent_key])) {
-      // Cache hit. Just return.
-      $destination_migration->counts['lookup_cache'][$this->machineName]['hit']++;
-      return $frequent[$this->machineName][$frequent_key];
-    }
-    else {
-      // We have a cache miss.
-
-      // Query map table and cache the result.
-      $this->ensureTables();
-      $query = db_select($this->mapTableName, 'map')
-                        ->fields('map', $this->destinationKeyMap());
-      foreach ($this->sourceKeyMap() as $key_name) {
-        $query = $query->condition("map.$key_name", array_shift($source_id), '=');
-      }
-      $result = $query->execute();
-      $destination_id = $result->fetchAssoc();
-
-      if ($destination_id === FALSE) {
-        // We have a lookup miss.
-        $destination_migration->counts['lookup_cache'][$this->machineName]['miss_miss']++;
-
-      /*
-       * Handle self references like articles that have 'related articles' and
-       * users that have 'friends'. Sometimes we can't save these references because
-       * the referenced item is not yet migrated. In that case, just mark this row
-       * in map table as needs_update. The entity will be fully saved in a
-       * subsequent import.
-       */
-        if ($this->machineName == $destination_migration->machineName) {
-          // We have an entity that's referencing own migration.
-          $destination_migration->needsUpdate = TRUE;
-        }
-      }
-      else {
-        // We have a lookup hit.
-        $destination_migration->counts['lookup_cache'][$this->machineName]['miss_hit']++;
-
-        // Optionally cache the lookup hit.
-        // A lookup_cache_size of 0 would disable the cache for a given sourceMigration.
-        if ($lookup_cache_size) {
-          $frequent[$this->machineName] = array($frequent_key => $destination_id) + $frequent[$this->machineName];
-
-          // Keep most recently used (MRU). Size varies between 500 and 1000 items, by default.
-          if (count($frequent[$this->machineName]) > 2 * $lookup_cache_size) {
-            $frequent[$this->machineName] = array_slice($frequent[$this->machineName], 0, $lookup_cache_size, TRUE);
-          }
-        }
-      }
-    }
-
-    migrate_instrument_stop('lookupDestinationID');
-    return $destination_id;
-  }
-
-  /**
-   * Called upon successfully import of one record, we record a mapping from
-   * the source key to the destination key. Also may be called, setting the
-   * third parameter to TRUE, to signal an existing record should be remigrated.
-   *
-   * @param stdClass $source_row
-   *  The raw source data. We use the key map derived from the source object
-   *  to get the source key values.
-   * @param array $dest_ids
-   *  The destination key values.
-   * @param boolean $needs_update
-   *  Value for the needs_update field in the map. Defaults to FALSE.
-   */
-  protected function saveIDMapping(stdClass $source_row, array $dest_ids, $needs_update = FALSE) {
-    migrate_instrument_start('saveIDMapping');
-    // Construct the source key
-    $keys = array();
-    foreach ($this->sourceKeyMap() as $field_name => $key_name) {
-      $keys[$key_name] = $source_row->$field_name;
-    }
-    // TODO: Construct field info from destination key info (support multiple fields)
-    $fields = array(
-        'destid1' => $dest_ids[0],
-        'needs_update' => (int)$needs_update,
-    );
-    if ($this->trackLastImported) {
-      $fields['last_imported'] = time();
-    }
-    db_merge($this->mapTableName)
-      ->key($keys)
-      ->fields($fields)
-      ->execute();
-    migrate_instrument_stop('saveIDMapping');
-  }
-
-  /**
-   * Record a message in the migration's message table.
-   *
-   * @param string $message
-   *  The message to record.
-   * @param int $level
-   *  Optional message severity (defaults to MESSAGE_ERROR).
-   */
-  public function saveMessage($message, $level = Migration::MESSAGE_ERROR) {
-    $fields = $this->currSourceKey;
-    $fields['level'] = $level;
-    $fields['message'] = $message;
-    db_insert($this->messageTableName)
-    ->fields($fields)
-    ->execute();
-  }
-
-  /**
-   * Save the highwater mark for this migration.
-   *
-   * @param mixed $highwater
-   */
-  protected function saveHighwater($highwater) {
-    db_update('migrate_status')
-    ->fields(array('highwater' => $highwater))
-    ->condition('machine_name', $this->machineName)
-    ->execute();
-  }
-
-  /**
-   * Prepares this migration to run as an update - that is, in addition to
-   * unmigrated content (source records not in the map table) being imported,
-   * previously-migrated content will also be updated in place.
-   */
-  public function prepareUpdate() {
-    $this->ensureTables();
-    db_update($this->mapTableName)
-    ->fields(array('needs_update' => 1))
-    ->execute();
   }
 
   ////////////////////////////////////////////////////////////////////
@@ -468,9 +180,6 @@ abstract class Migration extends MigrationBase {
   protected function beginProcess($newStatus) {
     parent::beginProcess($newStatus);
 
-    // Make sure the map and message tables are present
-    $this->ensureTables();
-
     // Do some standard setup
     if (isset($this->options['feedback']) && isset($this->options['feedback']['frequency']) &&
         isset($this->options['feedback']['frequency_unit'])) {
@@ -525,31 +234,26 @@ abstract class Migration extends MigrationBase {
   protected function rollback() {
     $return = Migration::RESULT_COMPLETED;
 
-    // TODO: Support multi-field keys
-    // TODO: Support idlist
-    migrate_instrument_start('rollback map query');
-    $query = db_select($this->mapTableName, 'map')
-             ->fields('map', array('sourceid1', 'destid1'));
-    if (isset($this->options['itemlimit'])) {
-      $query = $query->range(0, $this->options['itemlimit']);
-    }
-    $result = $query->execute();
-    migrate_instrument_stop('rollback map query');
-
-    // Support bulk rollback (only with single-field keys?)
     if (method_exists($this->destination, 'bulkRollback')) {
       // Too many at once can lead to memory issues, so batch 'em up
       $destids = array();
       $sourceids = array();
       $batch_count = 0;
-      foreach ($result as $row) {
-        $return = $this->checkStatus();
-        if ($return != Migration::RESULT_COMPLETED) {
+      foreach ($this->source->getMap() as $source_key => $destination_key) {
+        $source_key = unserialize($source_key);
+        if ($this->memoryExceeded()) {
+          $return = Migration::RESULT_INCOMPLETE;
+          break;
+        }
+        elseif ($this->getStatus() == Migration::STATUS_STOPPING) {
+          $return = Migration::RESULT_STOPPED;
           break;
         }
 
-        $destids[] = $row->destid1;
-        $sourceids[] = $row->sourceid1;
+        // Note that bulk rollback is only supported for single-column keys
+        $sourceids[] = $source_key;
+        $destids[] = $destination_key->destid1;
+
         $batch_count++;
         if ($batch_count >= $this->rollbackBatchSize) {
           try {
@@ -560,12 +264,7 @@ abstract class Migration extends MigrationBase {
             }
             // Keep track in case of interruption
             migrate_instrument_start('rollback map/message update');
-            db_delete($this->mapTableName)
-              ->condition('sourceid1', $sourceids, 'IN')
-              ->execute();
-            db_delete($this->messageTableName)
-              ->condition('sourceid1', $sourceids, 'IN')
-              ->execute();
+            $this->source->getMap()->deleteBulk($sourceids);
             migrate_instrument_stop('rollback map/message update');
             $this->total_successes += $batch_count;
             $this->successes_since_feedback += $batch_count;
@@ -596,19 +295,19 @@ abstract class Migration extends MigrationBase {
           $this->successes_since_feedback += $batch_count;
         }
         migrate_instrument_start('rollback map/message update');
-        db_delete($this->mapTableName)
-          ->condition('sourceid1', $sourceids, 'IN')
-          ->execute();
-        db_delete($this->messageTableName)
-          ->condition('sourceid1', $sourceids, 'IN')
-          ->execute();
+        $this->source->getMap()->deleteBulk($sourceids);
         migrate_instrument_stop('rollback map/message update');
       }
     }
     else {
-      foreach ($result as $record) {
-        $return = $this->checkStatus();
-        if ($return != Migration::RESULT_COMPLETED) {
+      foreach ($this->source->getMap() as $source_key => $destination_key) {
+        $source_key = unserialize($source_key);
+        if ($this->memoryExceeded()) {
+          $return = Migration::RESULT_INCOMPLETE;
+          break;
+        }
+        elseif ($this->getStatus() == Migration::STATUS_STOPPING) {
+          $return = Migration::RESULT_STOPPED;
           break;
         }
 
@@ -616,17 +315,12 @@ abstract class Migration extends MigrationBase {
         try {
           if ($this->systemOfRecord == Migration::SOURCE) {
             migrate_instrument_start('destination rollback');
-            $this->destination->rollback($this, array($record->destid1));
+            $this->destination->rollback($this, (array)$destination_key);
             migrate_instrument_stop('destination rollback');
           }
 
           migrate_instrument_start('rollback map/message update');
-          db_delete($this->mapTableName)
-            ->condition('sourceid1', $record->sourceid1)
-            ->execute();
-          db_delete($this->messageTableName)
-            ->condition('sourceid1', $record->sourceid1)
-            ->execute();
+          $this->source->getMap()->delete($source_key);
           migrate_instrument_stop('rollback map/message update');
           $this->total_successes++;
           $this->successes_since_feedback++;
@@ -639,11 +333,6 @@ abstract class Migration extends MigrationBase {
         $this->processed_since_feedback++;
       }
     }
-    // Clear message table
-    migrate_instrument_start('rollback map/message update');
-    db_delete($this->messageTableName)
-      ->execute();
-    migrate_instrument_stop('rollback map/message update');
 
     $this->progressMessage($return);
 
@@ -662,7 +351,8 @@ abstract class Migration extends MigrationBase {
   protected function import() {
     $return = Migration::RESULT_COMPLETED;
 
-    while ($data_row = $this->source->fetch($this, $this->options)) {
+    foreach ($this->source as $data_row) {
+//    while ($data_row = $this->source->fetch($this, $this->options)) {
       if ($this->memoryExceeded()) {
         $return = Migration::RESULT_INCOMPLETE;
         break;
@@ -674,48 +364,6 @@ abstract class Migration extends MigrationBase {
 
       $this->progressMessage(Migration::RESULT_INCOMPLETE);
 
-      // Track the current source key for use by map/message tables
-      $this->currSourceKey = array();
-      foreach ($this->sourceKeyMap() as $field_name => $map_name) {
-        $this->currSourceKey[$map_name] = $data_row->$field_name;
-      }
-
-      // If the source hasn't already filtered out items based on the map and
-      // message tables, it's up to us
-      if (!$this->source->handlesMapFiltering()) {
-        // Have to enforce itemlimit here
-        if (isset($this->options['itemlimit']) && $this->options['itemlimit'] <= $this->total_processed) {
-          break;
-        }
-
-        // We still need to check the map, in case we're updating an existing item
-        $query = db_select($this->mapTableName, 'map')
-                 ->fields('map', array('needs_update', 'destid1'));
-        foreach ($this->sourceKeyMap() as $field_name => $map_name) {
-          $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
-        }
-        $row = $query->execute()->fetchObject();
-        // Save the dest ID in case of update
-        if ($row) {
-          $data_row->migrate_map_destid1 = $row->destid1;
-        }
-
-        // If we're not using highwater marks, we need to check the map to determine
-        // whether this needs migration
-        if (!isset($this->highwaterField)) {
-          // Needs_update may be NULL (no map table entry), 0 (map entry present
-          // but doesn't need update, or 1 (needs update). The 2nd case is the one
-          // where we skip this entry
-          if ($row && $row->needs_update == 0 && is_string($row->needs_update)) {
-            continue;
-          }
-
-          // TODO: Check message table (entries here indicate failed items, we don't
-          // want to run through them again)
-
-        }
-      }
-
       $values = $this->applyMappings($data_row);
 
       try {
@@ -723,12 +371,11 @@ abstract class Migration extends MigrationBase {
         $ids = $this->destination->import($this, $values, $data_row);
         migrate_instrument_stop('destination import');
         if ($ids) {
-          $this->saveIDMapping($data_row, $ids, $this->needsUpdate);
+          $this->source->getMap()->saveIDMapping($data_row, $ids, $this->needsUpdate);
           $this->successes_since_feedback++;
           $this->total_successes++;
         }
         else {
-          // TODO: Failure to save
           $message = t('New object was not saved, no error provided');
           $this->saveMessage($message);
           $outputFunction = $this->outputFunction;
@@ -756,8 +403,7 @@ abstract class Migration extends MigrationBase {
       $this->needsUpdate = FALSE;
 
       // TODO: Temporary. Remove when http://drupal.org/node/375494 is committed.
-      // TODO: Should be done in MigrateDestinationEntity (not all destinations
-      // are entities)
+      // TODO: Should be done in MigrateDestinationEntity
       if (!empty($this->destination->entityType)) {
         entity_get_controller($this->destination->entityType)->resetCache();
       }
@@ -787,11 +433,7 @@ abstract class Migration extends MigrationBase {
    *  Number of imported records.
    */
   public function importedCount() {
-    $this->ensureTables();
-    $query = db_select($this->mapTableName);
-    $query->addExpression('COUNT(*)', 'count');
-    $count = $query->execute()->fetchField();
-    return $count;
+    return $this->source->importedCount();
   }
 
   /**
@@ -803,47 +445,17 @@ abstract class Migration extends MigrationBase {
    *  Number of records errored out.
    */
   public function errorCount() {
-    $this->ensureTables();
-    $query = db_select($this->messageTableName);
-    $query->addExpression('COUNT(*)', 'count');
-    $count = $query->execute()->fetchField();
-    return $count;
+    return $this->source->getMap()->errorCount();
   }
 
   /**
-   * Retrieve a mapping from source key field names to the names used in the
-   * map and message tables.
-   * @return array
-   *  Array keyed by field names in the MigrationSource object, with values of
-   *  the form sourceid[1-9] (assumes no PKs with 10 or more fields)
+   * Get the number of messages associated with this migration
+   *
+   * @return int
+   *  Number of messages.
    */
-  public function sourceKeyMap() {
-    if (!isset($this->sourceKeyMap)) {
-      $count = 1;
-      $this->sourceKeyMap = array();
-      foreach ($this->source->getKeySchema() as $field_name => $field_schema) {
-        $this->sourceKeyMap[$field_name] = 'sourceid' . $count++;
-      }
-    }
-    return $this->sourceKeyMap;
-  }
-
-  /**
-   * Retrieve a mapping from destination key field names to the names used in the
-   * map and message tables.
-   * @return array
-   *  Array keyed by field names in the MigrationDestination object, with values of
-   *  the form destid[1-9] (assumes no PKs with 10 or more fields)
-   */
-  public function destinationKeyMap() {
-    if (!isset($this->destinationKeyMap)) {
-      $count = 1;
-      $this->destinationKeyMap = array();
-      foreach ($this->destination->getKeySchema() as $field_name => $field_schema) {
-        $this->destinationKeyMap[$field_name] = 'destid' . $count++;
-      }
-    }
-    return $this->destinationKeyMap;
+  public function messageCount() {
+    return $this->source->getMap()->messageCount();
   }
 
   /**
@@ -996,7 +608,7 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Apply field mappings to a data row received form the source, returning
+   * Apply field mappings to a data row received from the source, returning
    * a populated destination object.
    *
    * @param stdClass $data_row
@@ -1038,7 +650,7 @@ abstract class Migration extends MigrationBase {
           }
           $results = array();
           foreach ($source_keys as $source_key) {
-            $destids = $source_migration->lookupDestinationID(array($source_key), $this);
+            $destids = $source_migration->source->getMap()->lookupDestinationID(array($source_key), $this);
             if ($destids) {
               // Assume that if the destination key is a single value, it
               // should be passed as such
@@ -1096,5 +708,29 @@ abstract class Migration extends MigrationBase {
       //$values['id'] = $data_row->migrate_map_destid1;
     }
     return $values;
+  }
+
+  /**
+   * Save the highwater mark for this migration.
+   *
+   * @param mixed $highwater
+   */
+  protected function saveHighwater($highwater) {
+    db_update('migrate_status')
+    ->fields(array('highwater' => $highwater))
+    ->condition('machine_name', $this->machineName)
+    ->execute();
+  }
+
+  /**
+   * Pass messages through to the map class
+   *
+   * @param string $message
+   *  The message to record.
+   * @param int $level
+   *  Optional message severity (defaults to MESSAGE_ERROR).
+   */
+  public function saveMessage($message, $level = Migration::MESSAGE_ERROR) {
+    $output = $this->source->saveMessage($message, $level);
   }
 }

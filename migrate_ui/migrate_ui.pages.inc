@@ -137,7 +137,7 @@ function migrate_ui_messages($migration) {
   }
 
   // TODO: need a general MigrateMap API
-  $messages = db_select($migration->getSource()->getMap()->getMessageTable(), 'msg')
+  $messages = db_select($migration->getMap()->getMessageTable(), 'msg')
               ->extend('PagerDefault')
               ->limit(500)
               ->fields('msg')
@@ -318,7 +318,7 @@ function migrate_migration_info($form, $form_state, $migration) {
       '#title' => t('Query'),
       '#markup' => '<pre>' . $source . '</pre>',
     );
-    $sourceKey = $source->getKey();
+    $sourceKey = $migration->getMap()->getSourceKey();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
     foreach ($source->fields() as $machine_name => $description) {

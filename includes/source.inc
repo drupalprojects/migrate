@@ -21,16 +21,6 @@ abstract class MigrateSource implements Iterator {
   protected $migration;
 
   /**
-   * Map object tracking relationships between source and destination data
-   *
-   * @var MigrateMap
-   */
-  protected $map;
-  public function getMap() {
-    return $this->map;
-  }
-
-  /**
    * The current row from the quey
    *
    * @var stdClass
@@ -43,6 +33,9 @@ abstract class MigrateSource implements Iterator {
    * @var array
    */
   protected $currentKey;
+  public function getCurrentKey() {
+    return $this->currentKey;
+  }
 
   /**
    * Derived classes must implement fields(), returning a list of available
@@ -60,35 +53,12 @@ abstract class MigrateSource implements Iterator {
    */
   abstract public function count($refresh = FALSE);
 
-  /**
-   * Record a message related to a source record
+   /**
+   * Simply save the migration.
    *
-   * @param string $message
-   *  The message to record.
-   * @param int $level
-   *  Optional message severity (defaults to MESSAGE_ERROR).
+   * @param Migration $migration
    */
-  public function saveMessage($message, $level = Migration::MESSAGE_ERROR) {
-    if ($this->currentKey) {
-      $this->map->saveMessage($this->currentKey, $message, $level);
-    }
-  }
-
-  public function importedCount() {
-    return $this->map->importedCount();
-  }
-
-  public function getKey() {
-    return $this->map->getSourceKey();
-  }
-
-  /**
-   * Simply save the key schema.
-   *
-   * @param array $key_schema
-   */
-  public function __construct(Migration $migration, MigrateMap $map) {
+  public function __construct(Migration $migration) {
     $this->migration = $migration;
-    $this->map = $map;
   }
 }

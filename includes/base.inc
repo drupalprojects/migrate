@@ -173,6 +173,33 @@ abstract class MigrationBase {
   const STATUS_STOPPING = 3;
 
   /**
+   * Message types to be passed to saveMessage() and saved in message tables.
+   * MESSAGE_INFORMATIONAL represents a condition that did not prevent the operation
+   * from succeeding - all others represent different severities of conditions
+   * resulting in a source record not being imported.
+   */
+  const MESSAGE_ERROR = 1;
+  const MESSAGE_WARNING = 2;
+  const MESSAGE_NOTICE = 3;
+  const MESSAGE_INFORMATIONAL = 4;
+
+  /**
+   * Get human readable name for a message constant.
+   *
+   * @return string
+   *  Name.
+   */
+  public function getMessageLevelName($constant) {
+    $map = array(
+      MigrationBase::MESSAGE_ERROR => t('Error'),
+      MigrationBase::MESSAGE_WARNING => t('Warning'),
+      MigrationBase::MESSAGE_NOTICE => t('Notice'),
+      MigrationBase::MESSAGE_INFORMATIONAL => t('Informational'),
+    );
+    return $map[$constant];
+  }
+
+  /**
    * General initialization of a MigrationBase object.
    */
   public function __construct() {
@@ -448,24 +475,26 @@ abstract class MigrationBase {
    *  the derived class.
    */
   public function processRollback(array $options = array()) {
-    $this->options = $options;
     $return = MigrationBase::RESULT_COMPLETED;
-    // TODO: Validate dependencies (migrations depending on us have no imported rows)
-/*    if (!isset($options['force'])) {
-      if (!$this->dependenciesComplete()) {
-        return Migration::RESULT_SKIPPED;
+    if (method_exists($this, 'rollback')) {
+      $this->options = $options;
+      // TODO: Validate dependencies (migrations depending on us have no imported rows)
+  /*    if (!isset($options['force'])) {
+        if (!$this->dependenciesComplete()) {
+          return Migration::RESULT_SKIPPED;
+        }
+      }*/
+      $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
+      try {
+        $return = $this->rollback();
       }
-    }*/
-    $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
-    try {
-      $return = $this->rollback();
-    }
-    catch (Exception $exception) {
-      // If something bad happened, make sure we clear the semaphore
+      catch (Exception $exception) {
+        // If something bad happened, make sure we clear the semaphore
+        $this->endProcess();
+        throw $exception;
+      }
       $this->endProcess();
-      throw $exception;
     }
-    $this->endProcess();
     return $return;
   }
 
@@ -477,43 +506,43 @@ abstract class MigrationBase {
    *  the derived class.
    */
   public function processImport(array $options = array()) {
-    $this->options = $options;
-    if (!isset($options['force'])) {
-      if (!$this->dependenciesComplete()) {
-        return MigrationBase::RESULT_SKIPPED;
+    $return = MigrationBase::RESULT_COMPLETED;
+    if (method_exists($this, 'import')) {
+      $this->options = $options;
+      if (!isset($options['force'])) {
+        if (!$this->dependenciesComplete()) {
+          return MigrationBase::RESULT_SKIPPED;
+        }
       }
-    }
-    $this->beginProcess(MigrationBase::STATUS_IMPORTING);
-    try {
-      $return = $this->import();
-    }
-    catch (Exception $exception) {
-      // If something bad happened, make sure we clear the semaphore
-      $this->endProcess();
-      throw $exception;
-    }
+      $this->beginProcess(MigrationBase::STATUS_IMPORTING);
+      try {
+        $return = $this->import();
+      }
+      catch (Exception $exception) {
+        // If something bad happened, make sure we clear the semaphore
+        $this->endProcess();
+        throw $exception;
+      }
 
-    if ($return == MigrationBase::RESULT_COMPLETED && isset($this->total_successes)) {
-      $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
+      if ($return == MigrationBase::RESULT_COMPLETED && isset($this->total_successes)) {
+        $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
+      }
+      else {
+        $overallThroughput = 0;
+      }
+      $this->endProcess($overallThroughput);
     }
-    else {
-      $overallThroughput = FALSE;
-    }
-    $this->endProcess($overallThroughput);
     return $return;
   }
 
   /**
-   * Null implementations - if a migration process only needs to do work
-   * in one phase (import or rollback), it need not define the other - it will
-   * simply report success
+   * A derived migration class does the actual rollback or import work in these
+   * methods - we cannot declare them abstract because some classes may define
+   * only one.
+   *
+   * abstract protected function rollback();
+   * abstract protected function import();
    */
-  protected function rollback() {
-    return MigrationBase::RESULT_COMPLETED;
-  }
-  protected function import() {
-    return MigrationBase::RESULT_COMPLETED;
-  }
 
   /**
    * Test whether we've exceeded the desired memory threshold. If so, output a message.
@@ -529,12 +558,14 @@ abstract class MigrationBase {
       $outputFunction(t('Memory usage is !usage (!pct% of limit !limit), resetting statics',
         array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
           'warning');
+      // First, try resetting Drupal's static storage - this frequently releases
+      // plenty of memory to continue
       drupal_static_reset();
       $usage = memory_get_usage();
       $pct_memory = $usage/$this->memoryLimit;
       // Use a lower threshold - we don't want to be in a situation where we keep
       // coming back here and trimming a tiny amount
-      if ($pct_memory > (.85 * $this->memoryThreshold)) {
+      if ($pct_memory > (.90 * $this->memoryThreshold)) {
         $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
           array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
             'warning');

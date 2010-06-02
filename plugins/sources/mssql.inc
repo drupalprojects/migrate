@@ -54,9 +54,9 @@ class MigrateSourceMSSQL extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(array $configuration, $query, $count_query,
+  public function __construct(Migration $migration, array $configuration, $query, $count_query,
       array $key_schema, array $fields, $batch_size = 500) {
-    parent::__construct($key_schema);
+    parent::__construct($migration);
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->configuration = $configuration;

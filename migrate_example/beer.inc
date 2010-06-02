@@ -85,7 +85,7 @@ class BeerTermMigration extends ExampleMigration {
     // to use in generating map and message tables. And, pass schema definitions
     // for the primary keys of the source and destination - we need to be explicit
     // for our source, but the destination class knows its schema already.
-    $map = new MigratePDOMap($this->machineName,
+    $this->map = new MigrateSQLMap($this->machineName,
         array(
           'style' => array('type' => 'varchar',
                            'length' => 255,
@@ -105,7 +105,7 @@ class BeerTermMigration extends ExampleMigration {
 
     // Create a MigrateSource object, which manages retrieving the input data.
     // Besides the map and query objects we've just created, we pass a pointer to ourselves
-    $this->source = new MigrateSourceSQL($this, $map, $query);
+    $this->source = new MigrateSourceSQL($this, $query);
 
     // Set up our destination - terms in the migrate_example_beer_styles vocabulary
     $this->destination = new MigrateDestinationTerm('migrate_example_beer_styles');
@@ -157,6 +157,7 @@ class BeerTermMigration extends ExampleMigration {
 
   }
 }
+
 /**
  * And that's it for the BeerTerm migration! For a simple migration, all you
  * have to do is define the source, the destination, and mappings between the
@@ -172,7 +173,8 @@ class BeerUserMigration extends ExampleMigration {
     // The basic setup is similar to BeerTermMigraiton
     parent::__construct();
     $this->description = 'Beers Drinkers of the world';
-    $map = new MigratePDOMap($this->machineName,
+    $this->dependencies = array('BeerPrepMigration');
+    $this->map = new MigrateSQLMap($this->machineName,
         array(
                                     'aid' => array(
                                       'type' => 'int',
@@ -184,7 +186,7 @@ class BeerUserMigration extends ExampleMigration {
       );
     $query = db_select('migrate_example_beer_account', 'mea')
              ->fields('mea', array('aid', 'status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
-    $this->source = new MigrateSourceSQL($this, $map, $query);
+    $this->source = new MigrateSourceSQL($this, $query);
     $this->destination = new MigrateDestinationUser();
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('status', 'status');
@@ -235,7 +237,7 @@ class BeerNodeMigration extends ExampleMigration {
     // the authors of the nodes should be migrated before the nodes themselves.
     $this->dependencies = array('BeerTermMigration', 'BeerUserMigration');
 
-    $map = new MigratePDOMap($this->machineName,
+    $this->map = new MigrateSQLMap($this->machineName,
                                          array(
                                            'bid' => array(
                                              'type' => 'int',
@@ -259,7 +261,7 @@ class BeerNodeMigration extends ExampleMigration {
     $count_query = db_select('migrate_example_beer_node', 'b');
     $count_query->addExpression('COUNT(bid)', 'cnt');
 
-    $this->source = new MigrateSourceSQL($this, $map, $query, $count_query);
+    $this->source = new MigrateSourceSQL($this, $query, $count_query);
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');
@@ -350,7 +352,7 @@ class BeerCommentMigration extends ExampleMigration {
     parent::__construct();
     $this->description = 'Comments about beers';
     $this->dependencies = array('BeerUserMigration', 'BeerNodeMigration');
-    $map = new MigratePDOMap($this->machineName,
+    $this->map = new MigrateSQLMap($this->machineName,
       array(
                                     'cid' => array(
                                       'type' => 'int',
@@ -362,7 +364,7 @@ class BeerCommentMigration extends ExampleMigration {
     $query = db_select('migrate_example_beer_comment', 'mec')
              ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
              ->orderBy('cid_parent', 'ASC');
-    $this->source = new MigrateSourceSQL($this, $map, $query);
+    $this->source = new MigrateSourceSQL($this, $query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_beer');
 
     //$this->addFieldMapping('name', 'name');

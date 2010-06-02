@@ -15,7 +15,7 @@
  */
 abstract class MigrateDestination {
   /**
-   * To support MigratePDOMap maps, derived destination classes should return
+   * To support MigrateSQLMap maps, derived destination classes should return
    * schema field definition(s) corresponding to the primary key of the destination
    * being implemented. These are used to construct the destination key fields
    * of the map table for a migration using this destination.

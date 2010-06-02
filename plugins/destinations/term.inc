@@ -75,7 +75,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  Array of fields representing the key (in this case, just tid).
    */
   public function rollback(Migration $migration, array $key) {
-    $tid = $key[0];
+    $tid = reset($key);
 
     /*
      * This load() happens soon delete() anyway. We load here in order to

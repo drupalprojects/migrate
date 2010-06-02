@@ -33,7 +33,7 @@ class MigrateSourceSQL extends MigrateSource {
   protected $numProcessed = 0;
 
   /**
-   * If the map is a MigratePDOMap, and the table is compatible with the
+   * If the map is a MigrateSQLMap, and the table is compatible with the
    * source query, we can join directly to the map and make things much faster
    * and simpler.
    *
@@ -44,9 +44,9 @@ class MigrateSourceSQL extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(Migration $migration, MigrateMap $map,
-      SelectQuery $query, SelectQuery $count_query = NULL) {
-    parent::__construct($migration, $map);
+  public function __construct(Migration $migration, SelectQuery $query,
+      SelectQuery $count_query = NULL, $map_joinable = NULL) {
+    parent::__construct($migration);
     $this->query = $query;
     if (is_null($count_query)) {
       $this->countQuery = clone $query->countQuery();
@@ -54,7 +54,42 @@ class MigrateSourceSQL extends MigrateSource {
     else {
       $this->countQuery = $count_query;
     }
+
+    if (!is_null($map_joinable)) {
+      $this->mapJoinable = $map_joinable;
+    }
+    else {
+      // TODO: We want to automatically determine if the map table can be joined
+      // directly to the query, but this won't work unless/until
+      // http://drupal.org/node/802514 is committed, assume joinable for now
+      $this->mapJoinable = TRUE;
+/*      // To be able to join the map directly, it must be a PDO map on the same
+      // connection, or a compatible connection
+      $map = $this->migration->getMap();
+      if (is_a($map, 'MigrateSQLMap')) {
+        $map_options = $map->getConnection()->getConnectionOptions();
+        $query_options = $this->query->connection()->getConnectionOptions();
+
+        // Identical options means it will work
+        if ($map_options == $query_options) {
+          $this->mapJoinable = TRUE;
+        }
+        else {
+          // Otherwise, the one scenario we know will work is if it's MySQL and
+          // the credentials match (SQLite too?)
+          if ($map_options['driver'] == 'mysql' && $query_options['driver'] == 'mysql') {
+            if ($map_options['host'] == $query_options['host'] &&
+                $map_options['port'] == $query_options['port'] &&
+                $map_options['username'] == $query_options['username'] &&
+                $map_options['password'] == $query_options['password']) {
+              $this->mapJoinable = TRUE;
+            }
+          }
+        }
+      }*/
+    }
   }
+
 
   /**
    * Return a string representing the source query.
@@ -113,74 +148,63 @@ class MigrateSourceSQL extends MigrateSource {
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
+
     // Run query, do first next()
     // TODO: Support highwater marks
 
-    // To be able to join the map directly, it must be a PDO map on the same
-    // connection, or a compatible connection
-    if (is_subclass_of($this->map, 'MigratePDOMap')) {
-      $map_connection = $this->map->getConnection();
-      // TODO: Won't work unless/until http://drupal.org/node/814312 is committed,
-      // assume joinable for now
-      $this->mapJoinable = TRUE;
-/*      $query_connection = $this->query->getConnection();
-      if ($map_connection->getTarget() == $query_connection->getTarget()) {
-        $this->mapJoinable = TRUE;
+    if ($this->mapJoinable) {
+      // Build the joins to the map and message tables. Because the source key
+      // could have multiple fields, we need to build things up.
+      // The logic is that we want to include all source rows which have no
+      // existing map or message table entries, or which have map table entry
+      // marked with needs_update=1.
+      $map = $this->migration->getMap();
+      $first = TRUE;
+      $map_join = $msg_join = $map_condition = $msg_condition = '';
+      $count = 1;
+      $keys = array();
+      foreach ($map->getSourceKey() as $field_name => $field_schema) {
+        if (isset($field_schema['alias'])) {
+          $field_name = $field_schema['alias'] . '.' . $field_name;
+        }
+        $keys[] = $field_name;
+        $map_key = 'sourceid' . $count++;
+        if ($first) {
+          $first = FALSE;
+        }
+        else {
+          $map_join .= ' AND ';
+          $msg_join .= ' AND ';
+          $map_condition .= ' OR ';
+          $msg_condition .= ' OR ';
+        }
+        $map_join .= "$field_name = map.$map_key";
+        $msg_join .= "$field_name = msg.$map_key";
+        $map_condition .= "map.$map_key IS NULL";
+        $msg_condition .= "msg.$map_key IS NULL";
       }
-      else {
-        // TODO: see if the credentials are compatible
-      }*/
-    }
-
-    // Build the joins to the map and message tables. Because the source key
-    // could have multiple fields, we need to build things up.
-    // The logic is that we want to include all source rows which have no
-    // existing map or message table entries, or which have map table entry
-    // marked with needs_update=1.
-    $first = TRUE;
-    $map_join = $msg_join = $map_condition = $msg_condition = '';
-    $count = 1;
-    $keys = array();
-    foreach ($this->map->getSourceKey() as $field_name => $field_schema) {
-      if (isset($field_schema['alias'])) {
-        $field_name = $field_schema['alias'] . '.' . $field_name;
+      $map_condition .= ' OR map.needs_update = 1';
+      $this->query->leftJoin($map->getMapTable(), 'map', $map_join);
+      $this->query->leftJoin($map->getMessageTable(), 'msg', $msg_join);
+      $this->query->where($map_condition);
+      $this->query->where($msg_condition);
+      // And as long as we have the map table, get the destination ID, the
+      // import hook will need it to identify the existing destination object.
+      // Alias to reduce possible collisions.
+      // TODO: Handle multi-column destination keys
+      $count = 1;
+      foreach ($map->getDestinationKey() as $field_name => $field_schema) {
+        $map_key = 'destid' . $count++;
+        $this->query->addField('map', $map_key, "migrate_map_$map_key");
       }
-      $keys[] = $field_name;
-      $map_key = 'sourceid' . $count++;
-      if ($first) {
-        $first = FALSE;
+      $this->query->addField('map', 'needs_update');
+      // Only works for single-field key
+      if ($this->migration->getOption('idlist')) {
+        $this->query->condition($keys[0], explode(',', $this->migration->getOption('idlist')), 'IN');
       }
-      else {
-        $map_join .= ' AND ';
-        $msg_join .= ' AND ';
-        $map_condition .= ' OR ';
-        $msg_condition .= ' OR ';
+      if ($this->migration->getOption('itemlimit')) {
+        $this->query->range(0, $this->migration->getOption('itemlimit'));
       }
-      $map_join .= "$field_name = map.$map_key";
-      $msg_join .= "$field_name = msg.$map_key";
-      $map_condition .= "map.$map_key IS NULL";
-      $msg_condition .= "msg.$map_key IS NULL";
-    }
-    $map_condition .= ' OR map.needs_update = 1';
-    $this->query->leftJoin($this->map->getMapTable(), 'map', $map_join);
-    $this->query->leftJoin($this->map->getMessageTable(), 'msg', $msg_join);
-    $this->query->where($map_condition);
-    $this->query->where($msg_condition);
-    // And as long as we have the map table, get the destination ID, the
-    // import hook will need it to identify the existing destination object.
-    // Alias to reduce possible collisions.
-    // TODO: Handle multi-column destination keys
-    $count = 1;
-    foreach ($this->map->getDestinationKey() as $field_name => $field_schema) {
-      $map_key = 'destid' . $count++;
-      $this->query->addField('map', $map_key, "migrate_map_$map_key");
-    }
-    // Only works for single-field key
-    if ($this->migration->getOption('idlist')) {
-      $this->query->condition($keys[0], explode(',', $this->migration->getOption('idlist')), 'IN');
-    }
-    if ($this->migration->getOption('itemlimit')) {
-      $this->query->range(0, $this->migration->getOption('itemlimit'));
     }
     migrate_instrument_start('MigrateSourceSQL execute');
     $this->result = $this->query->execute();
@@ -212,11 +236,6 @@ class MigrateSourceSQL extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
-    // TODO: If we have a previous row, do the end-of-loop stuff (save ID mappings etc.)
-    if (!is_null($this->currentRow)) {
-
-    }
-
     // If we couldn't add the itemlimit to the query directly, enforce it here
     if (!$this->mapJoinable) {
       $itemlimit = $this->migration->getOption('itemlimit');
@@ -234,16 +253,18 @@ class MigrateSourceSQL extends MigrateSource {
       $this->currentRow = NULL;
     }
 
+    $map = $this->migration->getMap();
+
     if ($this->currentRow) {
       $this->numProcessed++;
       $this->currentKey = array();
-      foreach ($this->map->getSourceKey() as $field_name => $field_schema) {
+      foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
       // If we couldn't include the map row in the query, query it directly and
       // add the fields
       if (!$this->mapJoinable) {
-        $this->map->addDestinationKey($this->currentRow);
+        $map->addDestinationKey($this->currentRow);
         // If we're not using highwater marks, we need to check the map to determine
         // whether this needs migration
         if (!isset($this->highwaterField)) {

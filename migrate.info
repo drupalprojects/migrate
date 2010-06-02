@@ -23,6 +23,7 @@ files[] = plugins/destinations/path.inc
 files[] = plugins/destinations/fields.inc
 files[] = plugins/destinations/table_copy.inc
 files[] = plugins/sources/sql.inc
+files[] = plugins/sources/sqlmap.inc
 files[] = plugins/sources/mssql.inc
 ;NYI files[] = plugins/sources/view.inc
 files[] = tests/plugins/destinations/comment.test

@@ -101,7 +101,10 @@ abstract class Migration extends MigrationBase {
    *
    * @var array
    */
-  protected $highwaterField;
+  protected $highwaterField = array();
+  public function getHighwaterField() {
+    return $this->highwaterField;
+  }
 
   protected $currentSourceKey;
 
@@ -373,7 +376,7 @@ abstract class Migration extends MigrationBase {
       }
       $this->total_processed++;
       $this->processed_since_feedback++;
-      if (isset($this->highwaterField)) {
+      if ($this->highwaterField) {
         $this->saveHighwater($data_row->{$this->highwaterField['name']});
       }
 

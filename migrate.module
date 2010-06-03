@@ -133,10 +133,13 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
     $required_classes = array();
 
     // Discover matching class names registered with Drupal
-    $result = db_query("SELECT name FROM {registry}
-                        WHERE type='class' AND LOWER(name) LIKE :pattern
-                        ORDER BY name",
-                       array(':pattern' => strtolower($class_pattern)));
+    $result = db_select('registry', 'r')
+              ->fields('r', array('name'))
+              ->condition('type', 'class')
+              ->condition('name', $class_pattern, 'LIKE')
+              ->orderBy('name')
+              ->execute();
+
     foreach ($result as $record) {
       // Validate it's an implemented subclass of the parent class
       $class = new ReflectionClass($record->name);

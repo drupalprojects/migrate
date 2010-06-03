@@ -146,18 +146,6 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Retrieve the last throughput for current Migration (items / minute).
-   * @return integer
-   */
-  public function getLastThroughput() {
-    $last_throughput = db_query("SELECT lastthroughput FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
-    return $last_throughput;
-  }
-
-  /**
    * Reports whether this migration process is complete (i.e., all available
    * source rows have been processed).
    */
@@ -542,20 +530,6 @@ abstract class Migration extends MigrationBase {
       $this->lastfeedback = time();
       $this->processed_since_feedback = $this->successes_since_feedback = 0;
     }
-  }
-
-  /**
-   * Fetch the current highwater mark for updated content.
-   *
-   * @return string
-   *  The highwater mark.
-   */
-  public function highwater() {
-    $highwater = db_query("SELECT highwater FROM {migrate_status}
-                           WHERE machine_name=:machine_name",
-                          array(':machine_name' => $this->machineName))
-                ->fetchField();
-    return $highwater;
   }
 
   /**

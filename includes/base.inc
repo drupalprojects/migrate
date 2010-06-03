@@ -326,10 +326,11 @@ abstract class MigrationBase {
    *  One of the MigrationBase::STATUS_* constants
    */
   public function getStatus() {
-    $status = db_query("SELECT status FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
+    $status = db_select('migrate_status', 'ms')
+              ->fields('ms', array('status'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
     if (!isset($status)) {
       $status = MigrationBase::STATUS_IDLE;
     }
@@ -342,11 +343,40 @@ abstract class MigrationBase {
    *  Date/time string, formatted... How? Default DB server format?
    */
   public function getLastImported() {
-    $last_imported = db_query("SELECT lastimported FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
+    $last_imported = db_select('migrate_status', 'ms')
+              ->fields('ms', array('lastimported'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
     return $last_imported;
+  }
+
+  /**
+   * Fetch the current highwater mark for updated content.
+   *
+   * @return string
+   *  The highwater mark.
+   */
+  public function getHighwater() {
+    $highwater = db_select('migrate_status', 'ms')
+              ->fields('ms', array('highwater'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
+    return $highwater;
+  }
+
+  /**
+   * Retrieve the last throughput for current Migration (items / minute).
+   * @return integer
+   */
+  public function getLastThroughput() {
+    $last_throughput = db_select('migrate_status', 'ms')
+              ->fields('ms', array('lastthroughput'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
+    return $last_throughput;
   }
 
   /**
@@ -387,10 +417,7 @@ abstract class MigrationBase {
     $this->starttime = microtime(TRUE);
 
     // Check to make sure there's no process already running for this migration
-    $status = db_query("SELECT status FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
+    $status = $this->getStatus();
     if ($status != MigrationBase::STATUS_IDLE) {
       throw new MigrateException(t('There is already an active process on !machine_name',
         array('!machine_name' => $this->machineName)));

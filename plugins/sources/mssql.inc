@@ -172,7 +172,7 @@ class MigrateSourceMSSQL extends MigrateSource {
     }
     else {
       $highwaterField = $this->migration->getHighwaterField();
-      if (isset($highwaterField['name']) && $highwater = $migration->highwater()) {
+      if (isset($highwaterField['name']) && $highwater = $migration->getHighwater()) {
         if (empty($highwaterField['alias'])) {
           $highwater_name = $highwaterField['name'];
         }

@@ -62,7 +62,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     $this->entityType = $entity_type;
     $this->bundle = $bundle;
     $this->language = isset($language) ? $language : LANGUAGE_NONE;
-    $this->textFormat = isset($text_format) ? $text_format : filter_fallback_format();
+    $this->textFormat = isset($text_format) ? $text_format : FILTER_FORMAT_DEFAULT;
   }
 
   public function __toString() {

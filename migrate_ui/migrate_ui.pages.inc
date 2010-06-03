@@ -121,6 +121,7 @@ function migrate_ui_dashboard() {
     ),
     '#empty' => t('No migrations'),
   );
+  // or drupal_get_form('_migrate_ui_dashboard')? drupal_process_form? drupal_render?
   return $build;
 }
 

@@ -136,7 +136,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
 
       // Cannot use taxonomy_term_load_multiple() since we have an array of names.
       // It wants a singular value.
-      $tids = db_select('taxonomy_term_data', 'td')
+      $tids = db_select('term_data', 'td')
         ->fields('td', array('tid'))
         ->condition('td.name', $values, 'IN')
         ->condition('td.vid', $vid)
@@ -203,7 +203,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
       'filename' => basename($full_path),
       'filemime' => file_get_mimetype($full_path),
-      'timestamp' => REQUEST_TIME,
+      'timestamp' => $_SERVER['REQUEST_TIME'],
     );
 
     // Check that destination does not exist. If it does, reuse it and return.
@@ -263,13 +263,13 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         case 'file_fast':
           // Keep re-using an existing file. We still benefit from the file_exists() check above.
           if (!isset($fid)) {
-            $full_path = DRUPAL_ROOT . '/misc/druplicon.png';
+            $full_path = dirname($_SERVER['SCRIPT_FILENAME']) . '/misc/druplicon.png';
             $source = (object) array(
               'uri' => $full_path,
               'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
               'filename' => basename($full_path),
               'filemime' => file_get_mimetype($full_path),
-              'timestamp' => REQUEST_TIME,
+              'timestamp' => $_SERVER['REQUEST_TIME'],
             );
             $file = file_copy($source, $destination_dir, FILE_EXISTS_RENAME);
             $fid = $file->fid;

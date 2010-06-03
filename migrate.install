@@ -53,6 +53,13 @@ function migrate_schema_status() {
 }
 
 /**
+ * Implementation of hook_install().
+ */
+function migrate_install() {
+  drupal_install_schema('migrate');
+}
+
+/**
  * Implementation of hook_uninstall().
  * Drop map/message tables, in case implementing classes did not.
  */
@@ -67,59 +74,5 @@ function migrate_uninstall() {
   foreach (db_find_tables('migrate_message_%') as $tablename) {
     db_drop_table($tablename);
   }
-}
-
-/**
- * Add highwater mark
- */
-function migrate_update_7001() {
-  $ret = array();
-  db_add_field('migrate_status', 'highwater', array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'Highwater mark for detecting updated content',
-      )
-  );
-
-  $ret[] = t('Added highwater column to migrate_status table');
-  return $ret;
-}
-
-/**
- * Add last_imported field to all map tables
- */
-function migrate_update_7002() {
-  $ret = array();
-  foreach (db_find_tables('migrate_map_%') as $tablename) {
-    if (!db_column_exists($tablename, 'last_imported')) {
-      db_add_field($tablename, 'last_imported', array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'UNIX timestamp of the last time this row was imported',
-      ));
-    }
-  }
-  $ret[] = t('Added last_imported column to all map tables');
-  return $ret;
-}
-
-/**
- * Add lastthrouput column to migrate_status
- */
-function migrate_update_7003() {
-  $ret = array();
-  db_add_field('migrate_status', 'lastthroughput', array(
-      'type' => 'int',
-      'length' => 11,
-      'not null' => FALSE,
-      'description' => 'Rate of success during most recent completed import (# per minute)',
-    )
-  );
-
-  $ret[] = t('Added lastthroughput column to migrate_status table');
-  return $ret;
+  drupal_uninstall_schema('migrate');
 }

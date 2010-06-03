@@ -133,10 +133,13 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
     $required_classes = array();
 
     // Discover matching class names registered with Drupal
-    $result = db_query("SELECT name FROM {registry}
-                        WHERE type='class' AND LOWER(name) LIKE :pattern
-                        ORDER BY name",
-                       array(':pattern' => strtolower($class_pattern)));
+    $result = db_select('registry', 'r')
+              ->fields('r', array('name'))
+              ->condition('type', 'class')
+              ->condition('name', $class_pattern, 'LIKE')
+              ->orderBy('name')
+              ->execute();
+
     foreach ($result as $record) {
       // Validate it's an implemented subclass of the parent class
       $class = new ReflectionClass($record->name);
@@ -455,43 +458,14 @@ function _migrate_xlat_get_new_id($contenttype, $oldid) {
   return NULL;
 }
 
-/**
- * Check if a date is valid and return the correct
- * timestamp to use. Returns -1 if the date is not
- * considered valid.
- */
-function _migrate_valid_date($date) {
-  if (empty($date)) {
-    return -1;
-  }
-
-  if (is_numeric($date) && $date > -1) {
-    return $date;
-  }
-  // strtotime() doesn't recognize dashes as separators, change to slashes
-  $date = str_replace('-', '/', $date);
-
-  $time = strtotime($date);
-  if ($time < 0 || !$time) {
-    // Handles form YYYY-MM-DD HH:MM:SS.garbage
-    if (drupal_strlen($date) > 19) {
-      $time = strtotime(drupal_substr($date, 0, 19));
-      if ($time < 0 || !$time) {
-        return -1;
-      }
-    }
-  }
-  return $time;
-}
-
-define('MIGRATE_API_VERSION', 1);
+define('MIGRATE_API_VERSION', 2);
 
 /*
  * Implementation of hook_migrate_api().
  */
 function migrate_migrate_api() {
   $api = array(
-    'api' => 1,
+    'api' => 2,
     'path' => 'modules',
     'integration modules' => array(
       'comment' => array(
@@ -516,20 +490,6 @@ function migrate_migrate_api() {
 
 // ------------------------------------------------------------------
 // Include file helpers - @merlinofchoas: borrowing heavily from views.module
-
-/**
- * Load views files on behalf of modules.
- */
-function migrate_module_include() {
-  foreach (migrate_get_module_apis() as $module => $info) {
-    foreach ($info['integration modules'] as $intmod => $intmod_details) {
-      $file = "$info[path]/$intmod.migrate.inc";
-      if (file_exists($file) && $intmod_details['status'] == TRUE) {
-        require_once $file;
-      }
-    }
-  }
-}
 
 /**
  * Get a list of modules that support the current migrate API.

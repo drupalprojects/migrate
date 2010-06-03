@@ -10,14 +10,10 @@ function migrate_ui_help($path, $arg) {
 }
 
 /**
- * Implementation of hook_permission().
+ * Implementation of hook_perm().
  */
-function migrate_ui_permission() {
-  return array(
-    MIGRATE_ACCESS_BASIC => array(
-      'title' => t('Basic access to migration information'),
-    ),
-  );
+function migrate_ui_perm() {
+  return array(MIGRATE_ACCESS_BASIC);
 }
 
 /**

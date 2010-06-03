@@ -118,7 +118,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
     // To keep node_object_prepare from choking.
     if (!isset($node->created)) {
-      $node->created = REQUEST_TIME;
+      $node->created = $_SERVER['REQUEST_TIME'];
     }
 
     // Set type before invoking prepare handlers - they may take type-dependent actions.

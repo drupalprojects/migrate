@@ -76,7 +76,7 @@ class MigrateSQLMap extends MigrateMap {
    */
   protected function ensureTables() {
     if (!$this->ensured) {
-      if (!db_table_exists($this->mapTable)) {
+      if (!dbtng_table_exists($this->mapTable)) {
         // Generate appropriate schema info for the map and message tables,
         // and map from the source field names to the map/msg field names
         $count = 1;

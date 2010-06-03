@@ -6,7 +6,7 @@
  * Set up the migration example module.
  */
 
-require_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'migrate_example') .
+require_once dirname($_SERVER['SCRIPT_FILENAME']) . '/' . drupal_get_path('module', 'migrate_example') .
   '/beer.install.inc';
 
 function migrate_example_schema() {
@@ -15,9 +15,11 @@ function migrate_example_schema() {
 }
 
 function migrate_example_install() {
+  drupal_install_schema('migrate_example');
   migrate_example_beer_install();
 }
 
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
+  drupal_uninstall_schema('migrate_example');
 }

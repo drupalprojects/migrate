@@ -1,9 +1,55 @@
-Conventions to make porting changes between Drupal 6 and Drupal 6 easier:
+Conventions to make porting changes between Drupal 6 and Drupal 7 easier:
 
 Try to always use specific DBTNG functions such as db_select() instead of the more
 general db_query(), which needs to be renamed to dbtng_query() under Drupal 6.
 
-Known differences to maintain:
 
-comment.inc uses db_query() for an INSERT IGNORE (should become db_merge())
-sqlmap.inc uses db_table_exists()
+TODOs for initial backport to Drupal 6:
+
+Autoload module: Add support for .info parsing, or implement hook_autoload_info
+Replace Field API stuff with CCK stuff
+No is_new support (insert with specified ID) in D6
+Create aliases for D7 functions missing in D6 (new backport module?):
+  *_load_multiple (comment, taxonomy_term, taxonomy_vocabulary, node, user, file)
+  *_delete_multiple
+  taxonomy_term_load (taxonomy_get_term)
+  taxonomy_term_save (taxonomy_save_term)
+  taxonomy_term_delete (taxonomy_del_term)
+  taxonomy_vocabulary_save (taxonomy_save_vocabulary)
+  taxonomy_vocabulary_delete (taxonomy_del_vocabulary)
+  LANGUAGE_NONE ('und')
+Term relationships to nodes - taxonomy_node_* instead of fields
+comment.inc: Changes needed for D6 comment_save() (form assumptions)
+node.inc: Excerpt/teaser handling
+fields.inc: File API changes
+Javascript changes for migrate_ui:
+  #attached -> drupal_add_css/drupal_add_js
+  ???
+migrate_ui_pages.inc: 
+  Classes in arrays -> space-separated strings
+  #theme -> '#value' => theme(...)
+  #markup -> #value
+  Use of drupal_get_form in menu hook?
+
+
+Known differences to maintain (be careful not to undo these when porting new 
+changes):
+
+*.info: Core compatibility, PHP 5.2 requirement
+*.install: Update functions
+*.install: D6 requires drupal_install_schema/drupal_uninstall_schema
+
+base.inc: No drupal_static in D6 - no 2nd shot on memory check
+sqlmap.inc: Uses db_table_exists()
+
+entity.inc: filter_fallback_format() (D7) vs. FILTER_FORMAT_DEFAULT (D6)
+comment.inc: Uses db_query() for an INSERT IGNORE (should become db_merge())
+comment.inc: timestamp in D6, created/changed in D7
+fields.inc, migrate_example.install: RUPAL_ROOT in D7 -> 
+  dirname($_SERVER['SCRIPT_FILENAME']) in D6
+fields.inc, node.inc: REQUEST_TIME in D7 -> $_SERVER['REQUEST_TIME'] in D6 
+fields.inc: Taxonomy table names
+
+migrate_ui.module: hook_perm vs. hook_permission
+
+

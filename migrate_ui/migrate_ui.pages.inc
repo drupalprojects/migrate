@@ -56,16 +56,16 @@ function migrate_ui_dashboard() {
     }
     $status = $migration->getStatus();
     switch ($status) {
-      case Migration::STATUS_IDLE:
+      case MigrationBase::STATUS_IDLE:
         $status = t('Idle');
         break;
-      case Migration::STATUS_IMPORTING:
+      case MigrationBase::STATUS_IMPORTING:
         $status = t('Importing');
         break;
-      case Migration::STATUS_ROLLING_BACK:
+      case MigrationBase::STATUS_ROLLING_BACK:
         $status = t('Rolling back');
         break;
-      case Migration::STATUS_STOPPING:
+      case MigrationBase::STATUS_STOPPING:
         $status = t('Stopping');
         break;
       default:
@@ -82,9 +82,7 @@ function migrate_ui_dashboard() {
     $row['unimported'] = $unimported;
 
     if (is_subclass_of($migration, 'Migration')) {
-      $query = db_select($migration->getMessageTable(), 'cnt');
-      $query->addExpression('COUNT(*)', 'cnt');
-      $num_messages = $query->execute()->fetchField();
+      $num_messages = $migration->messageCount();
       $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $machine_name) : 0;
     }
     else {
@@ -95,7 +93,7 @@ function migrate_ui_dashboard() {
       if ($rate == '') {
         $row['lastthroughput'] = t('Unknown');
       }
-      elseif ($status == Migration::STATUS_IDLE) {
+      elseif ($status == MigrationBase::STATUS_IDLE) {
         $row['lastthroughput'] = t('!rate/min', array('!rate' => $rate));
       }
       else {
@@ -138,14 +136,15 @@ function migrate_ui_messages($migration) {
     $migration = migration_load($migration);
   }
 
-  $messages = db_select($migration->getMessageTable(), 'msg')
+  // TODO: need a general MigrateMap API
+  $messages = db_select($migration->getMap()->getMessageTable(), 'msg')
               ->extend('PagerDefault')
               ->limit(500)
               ->fields('msg')
               ->execute();
 
   foreach ($messages as $message) {
-    $classes[] = $message->level <= Migration::MESSAGE_WARNING ? 'migrate-error' : '';
+    $classes[] = $message->level <= MigrationBase::MESSAGE_WARNING ? 'migrate-error' : '';
     $rows[] = array(
       array('data' => $message->sourceid1, 'class' => $classes), // TODO: deal with compound keys
       array('data' => $migration->getMessageLevelName($message->level), 'class' => $classes),
@@ -319,7 +318,7 @@ function migrate_migration_info($form, $form_state, $migration) {
       '#title' => t('Query'),
       '#markup' => '<pre>' . $source . '</pre>',
     );
-    $sourceKey = $source->getKeySchema();
+    $sourceKey = $migration->getMap()->getSourceKey();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
     foreach ($source->fields() as $machine_name => $description) {

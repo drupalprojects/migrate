@@ -23,6 +23,11 @@ abstract class MigrationBase {
    */
   protected static $migrations = array();
 
+  protected static $currentMigration;
+  public static function currentMigration() {
+    return self::$currentMigration;
+  }
+
   /**
    * The machine name of this Migration object, derived by removing the 'Migration'
    * suffix from the class name. Used to construct default map/message table names,
@@ -51,8 +56,8 @@ abstract class MigrationBase {
    */
   protected $options;
   public function getOption($option_name) {
-    if (isset($options[$option_name])) {
-      return $options[$option_name];
+    if (isset($this->options[$option_name])) {
+      return $this->options[$option_name];
     }
     else {
       return NULL;
@@ -70,9 +75,9 @@ abstract class MigrationBase {
   /**
    * Are we importing, rolling back, or doing nothing?
    *
-   * @var unknown_type
+   * @var enum
    */
-  protected $status = Migration::STATUS_IDLE;
+  protected $status = MigrationBase::STATUS_IDLE;
 
   /**
    * When the current operation started.
@@ -104,11 +109,11 @@ abstract class MigrationBase {
   /**
    * The fraction of the memory limit at which an operation will be interrupted.
    * Can be overridden by a Migration subclass if one would like to push the
-   * envelope. Defaults to 80%.
+   * envelope. Defaults to 85%.
    *
    * @var float
    */
-  protected $memoryThreshold = 0.8;
+  protected $memoryThreshold = 0.85;
 
   /**
    * The PHP memory_limit expressed in bytes.
@@ -168,6 +173,33 @@ abstract class MigrationBase {
   const STATUS_STOPPING = 3;
 
   /**
+   * Message types to be passed to saveMessage() and saved in message tables.
+   * MESSAGE_INFORMATIONAL represents a condition that did not prevent the operation
+   * from succeeding - all others represent different severities of conditions
+   * resulting in a source record not being imported.
+   */
+  const MESSAGE_ERROR = 1;
+  const MESSAGE_WARNING = 2;
+  const MESSAGE_NOTICE = 3;
+  const MESSAGE_INFORMATIONAL = 4;
+
+  /**
+   * Get human readable name for a message constant.
+   *
+   * @return string
+   *  Name.
+   */
+  public function getMessageLevelName($constant) {
+    $map = array(
+      MigrationBase::MESSAGE_ERROR => t('Error'),
+      MigrationBase::MESSAGE_WARNING => t('Warning'),
+      MigrationBase::MESSAGE_NOTICE => t('Notice'),
+      MigrationBase::MESSAGE_INFORMATIONAL => t('Informational'),
+    );
+    return $map[$constant];
+  }
+
+  /**
    * General initialization of a MigrationBase object.
    */
   public function __construct() {
@@ -217,20 +249,21 @@ abstract class MigrationBase {
   }
 
   /**
-   * There's no relevant message table, so simply output any messages we receive
+   * Derived classes will store the message appropriately.
    *
    * @param string $message
    *  The message to record.
    * @param int $level
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
-  public function saveMessage($message, $level = Migration::MESSAGE_ERROR) {
+  public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
     $output = $this->outputFunction;
     $output($message, $level);
   }
 
   /**
    * Custom PHP error handler.
+   * TODO: Redundant with hook_watchdog?
    *
    * @param $error_level
    *   The level of the error raised.
@@ -249,13 +282,13 @@ abstract class MigrationBase {
         array('!line' => $line, '!file' => $filename));
       // Record notices and continue
       if ($error_level == E_NOTICE || $error_level == E_USER_NOTICE) {
-        $this->saveMessage($message . "(file: $filename, line $line)", Migration::MESSAGE_INFORMATIONAL);
+        $this->saveMessage($message . "(file: $filename, line $line)", MigrationBase::MESSAGE_INFORMATIONAL);
       }
       // Simply ignore strict and deprecated errors
       // Note DEPRECATED constants introduced in PHP 5.3
       elseif (!($error_level == E_STRICT || $error_level == 8192 ||
                 $error_level == 16384)) {
-        throw new MigrateException($message, Migration::MESSAGE_ERROR);
+        throw new MigrateException($message, MigrationBase::MESSAGE_ERROR);
       }
     }
   }
@@ -263,6 +296,7 @@ abstract class MigrationBase {
   /**
    * Database logging callback - called when there's a database error. We
    * log non-critical stuff, and throw an exception otherwise
+   * TODO: Eliminate in favor of hook_watchdog()?
    *
    * @param string $type
    *  Ignored
@@ -279,27 +313,26 @@ abstract class MigrationBase {
           $severity = WATCHDOG_NOTICE, $link = NULL) {
     if ($severity == WATCHDOG_NOTICE || $severity == WATCHDOG_INFO ||
         $severity == WATCHDOG_DEBUG) {
-      $this->saveMessage(t($message, $variables),
-        Migration::MESSAGE_INFORMATIONAL);
+      $this->saveMessage(t($message, $variables), MigrationBase::MESSAGE_INFORMATIONAL);
     }
     else {
-      throw new MigrateException(t($message, $variables), Migration::MESSAGE_ERROR);
+      throw new MigrateException(t($message, $variables), MigrationBase::MESSAGE_ERROR);
     }
   }
 
   /**
    * Check the current status of a migration.
    * @return int
-   *  Migration::STATUS_IDLE, Migration::STATUS_IMPORTING, Migration::STATUS_ROLLING_BACK,
-   *  or Migration::STATUS_STOPPING
+   *  One of the MigrationBase::STATUS_* constants
    */
   public function getStatus() {
-    $status = db_query("SELECT status FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
+    $status = db_select('migrate_status', 'ms')
+              ->fields('ms', array('status'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
     if (!isset($status)) {
-      $status = Migration::STATUS_IDLE;
+      $status = MigrationBase::STATUS_IDLE;
     }
     return $status;
   }
@@ -310,11 +343,40 @@ abstract class MigrationBase {
    *  Date/time string, formatted... How? Default DB server format?
    */
   public function getLastImported() {
-    $last_imported = db_query("SELECT lastimported FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
+    $last_imported = db_select('migrate_status', 'ms')
+              ->fields('ms', array('lastimported'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
     return $last_imported;
+  }
+
+  /**
+   * Fetch the current highwater mark for updated content.
+   *
+   * @return string
+   *  The highwater mark.
+   */
+  public function getHighwater() {
+    $highwater = db_select('migrate_status', 'ms')
+              ->fields('ms', array('highwater'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
+    return $highwater;
+  }
+
+  /**
+   * Retrieve the last throughput for current Migration (items / minute).
+   * @return integer
+   */
+  public function getLastThroughput() {
+    $last_throughput = db_select('migrate_status', 'ms')
+              ->fields('ms', array('lastthroughput'))
+              ->condition('machine_name', $this->machineName)
+              ->execute()
+              ->fetchField();
+    return $last_throughput;
   }
 
   /**
@@ -330,7 +392,7 @@ abstract class MigrationBase {
    */
   protected function dependenciesComplete() {
     foreach ($this->dependencies as $dependency) {
-      $migration = Migration::getInstance($dependency);
+      $migration = MigrationBase::getInstance($dependency);
       if (!$migration->isComplete()) {
         return FALSE;
       }
@@ -343,20 +405,20 @@ abstract class MigrationBase {
    * at once on a given migration.
    *
    * @param int $newStatus
-   *  Migration::STATUS_IMPORTING or Migration::STATUS_ROLLING_BACK
+   *  MigrationBase::STATUS_IMPORTING or MigrationBase::STATUS_ROLLING_BACK
    */
   protected function beginProcess($newStatus) {
+    // So hook_watchdog() knows what migration (if any) is running
+    self::$currentMigration = $this;
+
     // Try to make the semaphore handling atomic (depends on DB support)
     $transaction = db_transaction();
 
     $this->starttime = microtime(TRUE);
 
     // Check to make sure there's no process already running for this migration
-    $status = db_query("SELECT status FROM {migrate_status}
-                        WHERE machine_name=:machine_name",
-                       array(':machine_name' => $this->machineName))
-                ->fetchField();
-    if ($status != Migration::STATUS_IDLE) {
+    $status = $this->getStatus();
+    if ($status != MigrationBase::STATUS_IDLE) {
       throw new MigrateException(t('There is already an active process on !machine_name',
         array('!machine_name' => $this->machineName)));
     }
@@ -369,12 +431,13 @@ abstract class MigrationBase {
       ->execute();
 
     // Set an error handler for imports
-    if ($newStatus == Migration::STATUS_IMPORTING) {
+    if ($newStatus == MigrationBase::STATUS_IMPORTING) {
       $this->previousErrorHandler = set_error_handler(array($this, 'errorHandler'));
     }
 
     // And capture anything the DB tries to log to the watchdog
-    Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
+    // TODO: Broken by http://drupal.org/node/711108 - what to do?
+    //Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
   }
 
   /**
@@ -391,8 +454,8 @@ abstract class MigrationBase {
       $this->previousErrorHandler = NULL;
     }
     if ($this->processing) {
-      $this->status = Migration::STATUS_IDLE;
-      $fields = array('status' => Migration::STATUS_IDLE);
+      $this->status = MigrationBase::STATUS_IDLE;
+      $fields = array('status' => MigrationBase::STATUS_IDLE);
       if ($overallThroughput) {
         $fields['lastimported'] = gmdate('Y-m-d H:i:s');
         $fields['lastthroughput'] = $overallThroughput;
@@ -412,9 +475,9 @@ abstract class MigrationBase {
   public function stopProcess() {
     // Do not change the status of an idle migration
     db_update('migrate_status')
-      ->fields(array('status' => Migration::STATUS_STOPPING))
+      ->fields(array('status' => MigrationBase::STATUS_STOPPING))
       ->condition('machine_name', $this->machineName)
-      ->condition('status', Migration::STATUS_IDLE, '<>')
+      ->condition('status', MigrationBase::STATUS_IDLE, '<>')
       ->execute();
   }
 
@@ -425,9 +488,9 @@ abstract class MigrationBase {
   public function resetStatus() {
     // Do not change the status of an already-idle migration
     db_update('migrate_status')
-      ->fields(array('status' => Migration::STATUS_IDLE))
+      ->fields(array('status' => MigrationBase::STATUS_IDLE))
       ->condition('machine_name', $this->machineName)
-      ->condition('status', Migration::STATUS_IDLE, '<>')
+      ->condition('status', MigrationBase::STATUS_IDLE, '<>')
       ->execute();
   }
 
@@ -439,24 +502,26 @@ abstract class MigrationBase {
    *  the derived class.
    */
   public function processRollback(array $options = array()) {
-    $this->options = $options;
-    $return = Migration::RESULT_COMPLETED;
-    // TODO: Validate dependencies (migrations depending on us have no imported rows)
-/*    if (!isset($options['force'])) {
-      if (!$this->dependenciesComplete()) {
-        return Migration::RESULT_SKIPPED;
+    $return = MigrationBase::RESULT_COMPLETED;
+    if (method_exists($this, 'rollback')) {
+      $this->options = $options;
+      // TODO: Validate dependencies (migrations depending on us have no imported rows)
+  /*    if (!isset($options['force'])) {
+        if (!$this->dependenciesComplete()) {
+          return Migration::RESULT_SKIPPED;
+        }
+      }*/
+      $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
+      try {
+        $return = $this->rollback();
       }
-    }*/
-    $this->beginProcess(Migration::STATUS_ROLLING_BACK);
-    try {
-      $return = $this->rollback();
-    }
-    catch (Exception $exception) {
-      // If something bad happened, make sure we clear the semaphore
+      catch (Exception $exception) {
+        // If something bad happened, make sure we clear the semaphore
+        $this->endProcess();
+        throw $exception;
+      }
       $this->endProcess();
-      throw $exception;
     }
-    $this->endProcess();
     return $return;
   }
 
@@ -468,43 +533,43 @@ abstract class MigrationBase {
    *  the derived class.
    */
   public function processImport(array $options = array()) {
-    $this->options = $options;
-    if (!isset($options['force'])) {
-      if (!$this->dependenciesComplete()) {
-        return Migration::RESULT_SKIPPED;
+    $return = MigrationBase::RESULT_COMPLETED;
+    if (method_exists($this, 'import')) {
+      $this->options = $options;
+      if (!isset($options['force'])) {
+        if (!$this->dependenciesComplete()) {
+          return MigrationBase::RESULT_SKIPPED;
+        }
       }
-    }
-    $this->beginProcess(Migration::STATUS_IMPORTING);
-    try {
-      $return = $this->import();
-    }
-    catch (Exception $exception) {
-      // If something bad happened, make sure we clear the semaphore
-      $this->endProcess();
-      throw $exception;
-    }
+      $this->beginProcess(MigrationBase::STATUS_IMPORTING);
+      try {
+        $return = $this->import();
+      }
+      catch (Exception $exception) {
+        // If something bad happened, make sure we clear the semaphore
+        $this->endProcess();
+        throw $exception;
+      }
 
-    if ($return == Migration::RESULT_COMPLETED && isset($this->total_successes)) {
-      $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
+      if ($return == MigrationBase::RESULT_COMPLETED && isset($this->total_successes)) {
+        $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
+      }
+      else {
+        $overallThroughput = 0;
+      }
+      $this->endProcess($overallThroughput);
     }
-    else {
-      $overallThroughput = FALSE;
-    }
-    $this->endProcess($overallThroughput);
     return $return;
   }
 
   /**
-   * Null implementations - if a migration process only needs to do work
-   * in one phase (import or rollback), it need not define the other - it will
-   * simply report success
+   * A derived migration class does the actual rollback or import work in these
+   * methods - we cannot declare them abstract because some classes may define
+   * only one.
+   *
+   * abstract protected function rollback();
+   * abstract protected function import();
    */
-  protected function rollback() {
-    return Migration::RESULT_COMPLETED;
-  }
-  protected function import() {
-    return Migration::RESULT_COMPLETED;
-  }
 
   /**
    * Test whether we've exceeded the desired memory threshold. If so, output a message.
@@ -520,12 +585,14 @@ abstract class MigrationBase {
       $outputFunction(t('Memory usage is !usage (!pct% of limit !limit), resetting statics',
         array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
           'warning');
+      // First, try resetting Drupal's static storage - this frequently releases
+      // plenty of memory to continue
       drupal_static_reset();
       $usage = memory_get_usage();
       $pct_memory = $usage/$this->memoryLimit;
       // Use a lower threshold - we don't want to be in a situation where we keep
       // coming back here and trimming a tiny amount
-      if ($pct_memory > (.85 * $this->memoryThreshold)) {
+      if ($pct_memory > (.90 * $this->memoryThreshold)) {
         $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
           array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
             'warning');

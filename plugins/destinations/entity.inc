@@ -56,9 +56,9 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *
    * @param array $key_schema
    */
-  public function __construct(array $key_schema, $entity_type, $bundle,
+  public function __construct($entity_type, $bundle,
       $language = NULL, $text_format = NULL) {
-    parent::__construct($key_schema);
+    parent::__construct();
     $this->entityType = $entity_type;
     $this->bundle = $bundle;
     $this->language = isset($language) ? $language : LANGUAGE_NONE;
@@ -90,11 +90,13 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    */
   public function prepare(Migration $migration, stdClass $entity, stdClass $source_row) {
     // Add source keys for debugging and identification of migrated data by hooks.
+    /* TODO: Restore
     foreach ($migration->sourceKeyMap() as $field_name => $key_name) {
       $keys[$key_name] = $source_row->$field_name;
     }
+    */
     $entity->migrate = array(
-      'source_keys' => $keys,
+//      'source_keys' => $keys,
       'machineName' => $migration->getMachineName(),
     );
 

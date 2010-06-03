@@ -13,6 +13,16 @@
  * Destination class implementing migration into nodes.
  */
 class MigrateDestinationNode extends MigrateDestinationEntity {
+  static public function getKeySchema() {
+    return array(
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'ID of destination node',
+      ),
+    );
+  }
 
   /**
    * Basic initialization
@@ -23,16 +33,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    *  Default language for nodes created via this destination class.
    */
   public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    // PK definition, for use in constructing map/message tables
-    $destination_key = array(
-      'nid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'description' => 'ID of destination node',
-      ),
-    );
-    parent::__construct($destination_key, 'node', $bundle, $language, $text_format);
+    parent::__construct('node', $bundle, $language, $text_format);
   }
 
   /**

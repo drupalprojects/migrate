@@ -13,29 +13,28 @@
  * describing the source and significant options. See
  * MigrateSourceSQL for an example.
  */
-abstract class MigrateSource {
+abstract class MigrateSource implements Iterator {
   /**
-   * A derived source class should set this to TRUE if it is capable of
-   * filtering out already-migrated items in its fetch() method (in particular,
-   * if it can join directly to the map and message tables).
-   *
-   * @var boolean
+   * The Migration object using this source.
+   * @var Migration
    */
-  protected $handlesMapFiltering = FALSE;
-  public function handlesMapFiltering() {
-    return $this->handlesMapFiltering;
-  }
+  protected $migration;
 
   /**
-   * Schema field definition(s) corresponding to the primary key of the source
-   * being implemented. These are used to construct the source key fields
-   * of the map and message tables for a migration using this source.
+   * The current row from the quey
+   *
+   * @var stdClass
+   */
+  protected $currentRow;
+
+  /**
+   * The primary key of the current row
    *
    * @var array
    */
-  protected $keySchema = array();
-  public function getKeySchema() {
-    return $this->keySchema;
+  protected $currentKey;
+  public function getCurrentKey() {
+    return $this->currentKey;
   }
 
   /**
@@ -54,18 +53,12 @@ abstract class MigrateSource {
    */
   abstract public function count($refresh = FALSE);
 
-  /**
-   * Derived classes must implement fetch(), returning the next record from the
-   * source as an object.
-   */
-  abstract public function fetch(Migration $migration);
-
-  /**
-   * Simply save the key schema.
+   /**
+   * Simply save the migration.
    *
-   * @param array $key_schema
+   * @param Migration $migration
    */
-  public function __construct(array $key_schema) {
-    $this->keySchema = $key_schema;
+  public function __construct(Migration $migration) {
+    $this->migration = $migration;
   }
 }

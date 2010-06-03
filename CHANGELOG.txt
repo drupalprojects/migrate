@@ -8,6 +8,14 @@ on how to implement migrations. The first priority is developing the API and
 drush commands for managing migrations - the UI is provided by a distinct 
 module: migrate_ui.
 
+6/2/10
+------
+Major refactoring. Largely behind-the-scenes as long as you're operating at the
+level of migrate_example (e.g., not retrieving $migration->mapTableName), but
+for each migration you must now also instantiate a MigrateMap object along with
+the source and destination (see migrate_example).
+
+
 5/25/10
 -------
 Field handler classes now need to define a constructor, passing an array of

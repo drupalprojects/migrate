@@ -15,9 +15,9 @@
 class MigrateSourceView extends MigrateSourceSQL {
   protected $viewName;
 
-  public function __construct($view_name, array $keys) {
+  public function __construct($migration, $view_name) {
     $this->viewName = $view_name;
     // TODO: Derive the query from the view
-    parent::__construct($query, $keys);
+    parent::__construct($migration, $query);
   }
 }

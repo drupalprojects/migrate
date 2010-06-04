@@ -171,7 +171,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         INSERT IGNORE INTO {node_comment_statistics} (nid, cid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (
           SELECT c.nid, c.cid, c.created, c.name, c.uid, c2.comment_count FROM comment c
           JOIN (
-            SELECT c.nid, MAX(c.created) AS created, COUNT(*) AS comment_count FROM comment c WHERE status=1 GROUP BY c.nid
+            SELECT c.nid, MAX(c.created) AS created, COUNT(*) AS comment_count FROM comment c WHERE status=:published GROUP BY c.nid
           ) AS c2 ON c.nid = c2.nid AND c.created=c2.created
         )";
       db_query($sql, array(':published' => COMMENT_PUBLISHED));

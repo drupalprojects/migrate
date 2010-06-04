@@ -74,7 +74,13 @@ class BeerPrepMigration extends MigrationBase {
 class BeerTermMigration extends ExampleMigration {
   public function __construct() {
     parent::__construct();
+    // You can list migrations that must run before this one - you will not be
+    // able to run this migration until that one's done, unless you specify
+    // --force on the drush command
     $this->dependencies = array('BeerPrepMigration');
+    // You can also list migrations that you want listed before this one - you
+    // don't need --force to run this one first, the effect is cosmetic only
+    $this->softDependencies = array('BeerUserMigration');
 
     // Human-friendly description of your migration process. Be as detailed as you
     // like.

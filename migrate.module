@@ -214,11 +214,11 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
  * @param array $log_entry
  */
 function migrate_watchdog($log_entry) {
-  if ($migration = Migration::currentMigration()) {
+/*  if ($migration = Migration::currentMigration()) {
     // TODO: set appropriate level
     $migration->saveMessage(t($log_entry['message'], $log_entry['variables']));
     return;
-  }
+  }*/
 }
 
 /**

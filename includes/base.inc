@@ -92,10 +92,15 @@ abstract class MigrationBase {
    *
    * @var array
    */
-  protected $dependencies = array();
-
+  protected $dependencies = array(), $softDependencies = array();
+  public function getHardDependencies() {
+     return $this->dependencies;
+   }
+  public function getSoftDependencies() {
+    return $this->softDependencies;
+  }
   public function getDependencies() {
-    return $this->dependencies;
+    return array_merge($this->dependencies, $this->softDependencies);
   }
 
   /**
@@ -387,7 +392,7 @@ abstract class MigrationBase {
   abstract public function isComplete();
 
   /**
-   * Reports whether all dependencies have completed migration
+   * Reports whether all (hard) dependencies have completed migration
    * TODO: Support rollback (reverse dependencies)
    */
   protected function dependenciesComplete() {

@@ -225,12 +225,21 @@ function migrate_migration_info($form, $form_state, $migration) {
     );
   }
 
-  $dependencies = $migration->getDependencies();
+  $dependencies = $migration->getHardDependencies();
   if (count($dependencies) > 0) {
     $form['detail']['overview']['dependencies'] = array(
       '#prefix' => '<div>',
       '#markup' => '<strong>' . t('Dependencies: ') . '</strong>' .
          implode(', ', $dependencies),
+      '#suffix' => '</div>',
+    );
+  }
+  $soft_dependencies = $migration->getSoftDependencies();
+  if (count($soft_dependencies) > 0) {
+    $form['detail']['overview']['soft_dependencies'] = array(
+      '#prefix' => '<div>',
+      '#markup' => '<strong>' . t('Soft Dependencies: ') . '</strong>' .
+         implode(', ', $soft_dependencies),
       '#suffix' => '</div>',
     );
   }

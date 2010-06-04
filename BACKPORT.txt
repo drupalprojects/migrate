@@ -7,17 +7,16 @@ general db_query(), which needs to be renamed to dbtng_query() under Drupal 6.
 TODOs for initial backport to Drupal 6:
 
 Autoload module: Add support for .info parsing, or implement hook_autoload_info
+Autoload matches classes case-insensitively - can we relax that?
 Replace Field API stuff with CCK stuff
 No is_new support (insert with specified ID) in D6
-Create aliases for D7 functions missing in D6 (new backport module?):
-  *_load_multiple (comment, taxonomy_term, taxonomy_vocabulary, node, user, file)
+Create aliases for D7 functions missing in D6 (d7.inc):
+  *_load_multiple (comment, taxonomy_term, node, user, file)
   *_delete_multiple
   taxonomy_term_load (taxonomy_get_term)
   taxonomy_term_save (taxonomy_save_term)
   taxonomy_term_delete (taxonomy_del_term)
-  taxonomy_vocabulary_save (taxonomy_save_vocabulary)
   taxonomy_vocabulary_delete (taxonomy_del_vocabulary)
-  LANGUAGE_NONE ('und')
 Term relationships to nodes - taxonomy_node_* instead of fields
 comment.inc: Changes needed for D6 comment_save() (form assumptions)
 node.inc: Excerpt/teaser handling

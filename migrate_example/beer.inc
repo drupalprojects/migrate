@@ -182,11 +182,11 @@ class BeerUserMigration extends ExampleMigration {
     $this->dependencies = array('BeerPrepMigration');
     $this->map = new MigrateSQLMap($this->machineName,
         array(
-                                    'aid' => array(
-                                      'type' => 'int',
-                                      'not null' => TRUE,
-                                      'description' => 'Account ID.'
-                                      )
+          'aid' => array(
+            'type' => 'int',
+            'not null' => TRUE,
+            'description' => 'Account ID.'
+          )
         ),
         MigrateDestinationUser::getKeySchema()
       );
@@ -210,12 +210,6 @@ class BeerUserMigration extends ExampleMigration {
     // be applied to any rows where the source field is empty or NULL.
     $this->addFieldMapping('roles')
          ->defaultValue(drupal_map_assoc(array(2)));
-
-    $this->addFieldMapping('field_migrate_example_gender', 'sex');
-
-    // Need to have node_reference module enabled for this
-    $this->addFieldMapping('field_migrate_example_favbeers', 'beers')
-         ->separator('|');
   }
 
   // If you define a prepare() method in your migration, it will be called

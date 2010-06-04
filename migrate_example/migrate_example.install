@@ -6,8 +6,8 @@
  * Set up the migration example module.
  */
 
-require_once dirname($_SERVER['SCRIPT_FILENAME']) . '/' . drupal_get_path('module', 'migrate_example') .
-  '/beer.install.inc';
+require_once drupal_get_path('module', 'migrate') . '/includes/d7.inc';
+require drupal_get_path('module', 'migrate_example') . '/beer.install.inc';
 
 function migrate_example_schema() {
   $schema = migrate_example_beer_schema();

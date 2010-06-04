@@ -21,14 +21,15 @@ function migrate_example_beer_schema() {
 }
 
 function migrate_example_beer_install() {
+  drupal_install_schema('migrate_example');
   migrate_example_beer_content_type();
   migrate_example_beer_tags();
-  migrate_example_beer_image();
+/*  migrate_example_beer_image();
   migrate_example_beer_country();
   migrate_example_beer_gender();
   if (module_exists('node_reference')) {
     migrate_example_beer_favs();
-  }
+  }*/
 
   // Populate our tables.
   migrate_example_beer_data_account();
@@ -45,6 +46,7 @@ function migrate_example_beer_uninstall() {
     // Grab key of the first returned vocabulary.
     taxonomy_vocabulary_delete(key($vids));
   }
+  drupal_uninstall_schema('migrate_example');
 }
 
 function migrate_example_beer_schema_node() {
@@ -314,7 +316,7 @@ function migrate_example_beer_content_type() {
     array(
       'type' => 'migrate_example_beer',
       'name' => st('Beer'),
-      'base' => 'node_content',
+      'module' => 'node',
       'description' => st("Beer is what we drink."),
       'custom' => 1,
       'modified' => 1,
@@ -332,46 +334,20 @@ function migrate_example_beer_tags() {
   // Create a vocabulary named "Migrate Example Beer Styles", enabled for the 'migrate_example_beer' content type.
   $description = st('Use tags to group beers on similar topics into categories.');
   $help = st('Enter a comma-separated list of words to describe your content.');
-  $vocabulary = (object) array(
+  $vocabulary = array(
     'name' => 'Migrate Example Beer Styles',
     'description' => $description,
     'machine_name' => 'migrate_example_beer_styles',
     'help' => $help,
-
+    'multiple' => 1,
+    'required' => 0,
+    'hierarchy' => 1,
+    'relations' => 0,
+    'module' => 'migrate_example',
+    'nodes' => array('migrate_example_beer' => 1),
   );
+
   taxonomy_vocabulary_save($vocabulary);
-
-  if (!field_info_field('migrate_example_beer_styles')) {
-    $field = array(
-      'field_name' => $vocabulary->machine_name,
-      'type' => 'taxonomy_term_reference',
-      // Set cardinality to unlimited for tagging.
-      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
-      'settings' => array(
-        'allowed_values' => array(
-          array(
-            'vid' => $vocabulary->vid,
-            'parent' => 0,
-          ),
-        ),
-      ),
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('node', 'migrate_example_beer_styles', 'migrate_example_beer')) {
-    $instance = array(
-      'field_name' => $vocabulary->machine_name,
-      'entity_type' => 'node',
-      'label' => $vocabulary->name,
-      'bundle' => 'migrate_example_beer',
-      'description' => $vocabulary->help,
-      'widget' => array(
-        'type' => 'taxonomy_autocomplete',
-      ),
-    );
-    field_create_instance($instance);
-  }
 }
 
 // Create an image field named "Migrate Example Image", enabled for the 'Beer' content type.

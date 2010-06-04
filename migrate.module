@@ -7,6 +7,8 @@
  * into a Drupal installation.
  */
 
+require_once drupal_get_path('module', 'migrate') . '/includes/d7.inc';
+
 // TODO:
 // Continue hook_schema_alter() for map & message tables?
 // Views hooks for map/message tables

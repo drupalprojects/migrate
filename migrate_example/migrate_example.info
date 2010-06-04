@@ -8,6 +8,7 @@ dependencies[] = taxonomy
 ;dependencies[] = image
 dependencies[] = comment
 dependencies[] = migrate
+dependencies[] = content
 files[] = migrate_example.module
 files[] = beer.inc
 

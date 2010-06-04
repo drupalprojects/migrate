@@ -14,7 +14,7 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately
-    $destination = $migration->getDestination();
+/*    $destination = $migration->getDestination();
     $entity_type = $destination->getEntityType();
     $bundle = $destination->getBundle();
     $instances = field_info_instances($entity_type, $bundle);
@@ -28,7 +28,7 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
         $entity->$machine_name = migrate_field_handler_invoke_all($migration, $entity, $field_info,
           $instance, $entity->$machine_name);
       }
-    }
+    }*/
     migrate_instrument_stop('MigrateDestinationEntity->prepareFields');
   }
 }

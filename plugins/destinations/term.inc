@@ -51,15 +51,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $fields['parent_name'] = t('Term: Parent (by name)');
     $fields['parent'] = t('Term: Parent (by Drupal term ID)');
 
-    // Then add any fields attached to this vocabulary (bundle)
-    $field_instance_info = field_info_instances($this->entityType, $this->bundle);
-    foreach ($field_instance_info as $machine_name => $instance) {
-      $field_info = field_info_field($machine_name);
-
-      $fields[$machine_name] = t('Term:') . ' ' . $instance['label'] .
-        ' (' . $field_info['type'] . ')';
-    }
-
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Term', 'fields');
 

@@ -9,6 +9,14 @@
  * Menu callback for dashboard page
  */
 function migrate_ui_dashboard() {
+  return drupal_get_form('_migrate_ui_dashboard_form');
+}
+
+/**
+ * Form definition for dashboard page
+ */
+function _migrate_ui_dashboard_form() {
+  drupal_add_css(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css');
   $build = array();
 
   $build['overview'] = array(
@@ -113,15 +121,10 @@ function migrate_ui_dashboard() {
   }
 
   $build['dashboard'] = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-    '#attached' => array(
-      'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
-    ),
-    '#empty' => t('No migrations'),
+    '#prefix' => '<div>',
+    '#value' => theme_table($header, $rows),
+    '#suffix' => '</div>',
   );
-  // or drupal_get_form('_migrate_ui_dashboard')? drupal_process_form? drupal_render?
   return $build;
 }
 
@@ -129,6 +132,7 @@ function migrate_ui_dashboard() {
  * Menu callback for messages page
  */
 function migrate_ui_messages($migration) {
+  drupal_add_css(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css');
   $build = $rows = array();
 
   $header = array(t('Source ID'), t('Level'), t('Message'));
@@ -145,32 +149,31 @@ function migrate_ui_messages($migration) {
               ->execute();
 
   foreach ($messages as $message) {
-    $classes[] = $message->level <= MigrationBase::MESSAGE_WARNING ? 'migrate-error' : '';
+    $class = $message->level <= MigrationBase::MESSAGE_WARNING ? 'migrate-error' : '';
     $rows[] = array(
-      array('data' => $message->sourceid1, 'class' => $classes), // TODO: deal with compound keys
-      array('data' => $migration->getMessageLevelName($message->level), 'class' => $classes),
-      array('data' => $message->message, 'class' => $classes),
+      array('data' => $message->sourceid1, 'class' => $class), // TODO: deal with compound keys
+      array('data' => $migration->getMessageLevelName($message->level), 'class' => $class),
+      array('data' => $message->message, 'class' => $class),
     );
     unset($classes);
   }
 
   $build['messages'] = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-    '#empty' => t('No messages'),
-    '#attached' => array(
-      'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
-    ),
+    '#prefix' => '<div>',
+    '#value' => theme_table($header, $rows),
+    '#suffix' => '</div>',
   );
+
   $build['migrate_ui_pager'] = array('#theme' => 'pager');
-  return $build;
+  return drupal_render($build);
 }
 
 /**
  * Menu callback function for migration view page.
  */
-function migrate_migration_info($form, $form_state, $migration) {
+function migrate_migration_info($form_state, $migration) {
+  drupal_add_css(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css');
+
   if (is_string($migration)) {
     $migration = migration_load($migration);
   }
@@ -178,6 +181,9 @@ function migrate_migration_info($form, $form_state, $migration) {
   $has_mappings = method_exists($migration, 'getFieldMappings');
 
   $form = array();
+  $form['detail'] = array(
+    '#type' => 'fieldset',
+  );
 
   if ($has_mappings) {
     $field_mappings = $migration->getFieldMappings();
@@ -188,19 +194,6 @@ function migrate_migration_info($form, $form_state, $migration) {
       $sourceFields[$source_field] = $source_field;
       $destinationFields[$destination_field] = $destination_field;
     }
-
-    $form['detail'] = array(
-      '#type' => 'vertical_tabs',
-      '#attached' => array(
-        'js' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.js'),
-        'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
-      ),
-    );
-  }
-  else {
-    $form['detail'] = array(
-      '#type' => 'fieldset',
-    );
   }
 
   $form['detail']['overview'] = array(
@@ -218,10 +211,9 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   foreach ($team as $group => $list) {
     $form['detail']['overview'][$group] = array(
-      '#theme' => 'item_list',
-      '#title' => $group,
-      '#attributes' => array('id' => 'team'),
-      '#items' => $list,
+      '#prefix' => '<div>',
+      '#value' => theme_item_list($list, $group, 'ul', array('id' => 'team')),
+      '#suffix' => '</div>',
     );
   }
 
@@ -229,7 +221,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   if (count($dependencies) > 0) {
     $form['detail']['overview']['dependencies'] = array(
       '#prefix' => '<div>',
-      '#markup' => '<strong>' . t('Dependencies: ') . '</strong>' .
+      '#value' => '<strong>' . t('Dependencies: ') . '</strong>' .
          implode(', ', $dependencies),
       '#suffix' => '</div>',
     );
@@ -238,7 +230,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   if (count($soft_dependencies) > 0) {
     $form['detail']['overview']['soft_dependencies'] = array(
       '#prefix' => '<div>',
-      '#markup' => '<strong>' . t('Soft Dependencies: ') . '</strong>' .
+      '#value' => '<strong>' . t('Soft Dependencies: ') . '</strong>' .
          implode(', ', $soft_dependencies),
       '#suffix' => '</div>',
     );
@@ -258,14 +250,14 @@ function migrate_migration_info($form, $form_state, $migration) {
     }
     $form['detail']['overview']['system_of_record'] = array(
       '#prefix' => '<div>',
-      '#markup' => '<strong>' . t('System of record: ') . '</strong>' . $system_of_record,
+      '#value' => '<strong>' . t('System of record: ') . '</strong>' . $system_of_record,
       '#suffix' => '</div>',
     );
   }
 
   $form['detail']['overview']['description'] = array(
     '#prefix' => '<div>',
-    '#markup' => $migration->getDescription(),
+    '#value' => $migration->getDescription(),
     '#suffix' => '</div>',
   );
 
@@ -273,6 +265,8 @@ function migrate_migration_info($form, $form_state, $migration) {
     // Destination field information
     $form['detail']['destination'] = array(
       '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
       '#title' => t('Destination'),
       '#group' => 'detail',
       '#description' =>
@@ -285,35 +279,37 @@ function migrate_migration_info($form, $form_state, $migration) {
     $form['detail']['destination']['type'] = array(
       '#type' => 'item',
       '#title' => t('Type'),
-      '#markup' => (string)$destination,
+      '#value' => (string)$destination,
     );
     $destKey = $destination->getKeySchema();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
     foreach ($destination->fields() as $machine_name => $description) {
-      $classes = array();
+      $class = '';
       if (isset($destKey[$machine_name])) {
         // Identify primary key
         $machine_name .= t(' (PK)');
       }
       else {
         // Add class for mapped/unmapped. Used in summary.
-        $classes[] = !isset($destinationFields[$machine_name]) ? 'migrate-error' : '';
+        if (!isset($destinationFields[$machine_name])) {
+          $class = 'migrate-error';
+        }
       }
-      $rows[] = array(array('data' => $machine_name, 'class' => $classes), array('data' => $description, 'class' => $classes));
+      $rows[] = array(array('data' => $machine_name, 'class' => $class), array('data' => $description, 'class' => $class));
     }
-    $classes = array();
 
     $form['detail']['destination']['fields'] = array(
-      '#theme' => 'table',
-      '#header' => $header,
-      '#rows' => $rows,
-      '#empty' => t('No fields'),
+      '#prefix' => '<div>',
+      '#value' => theme_table($header, $rows),
+      '#suffix' => '</div>',
     );
 
     // TODO: Get source_fields from arguments
     $form['detail']['source'] = array(
       '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
       '#title' => t('Source'),
       '#group' => 'detail',
       '#description' =>
@@ -326,29 +322,30 @@ function migrate_migration_info($form, $form_state, $migration) {
     $form['detail']['source']['query'] = array(
       '#type' => 'item',
       '#title' => t('Query'),
-      '#markup' => '<pre>' . $source . '</pre>',
+      '#value' => '<pre>' . $source . '</pre>',
     );
     $sourceKey = $migration->getMap()->getSourceKey();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
     foreach ($source->fields() as $machine_name => $description) {
+      $class = '';
       if (isset($sourceKey[$machine_name])) {
         // Identify primary key
         $machine_name .= t(' (PK)');
       }
       else {
         // Add class for mapped/unmapped. Used in summary.
-        $classes = !isset($sourceFields[$machine_name]) ? 'migrate-error' : '';
+        if (!isset($sourceFields[$machine_name])) {
+          $class =  'migrate-error';
+        }
       }
-      $rows[] = array(array('data' => $machine_name, 'class' => $classes), array('data' => $description, 'class' => $classes));
+      $rows[] = array(array('data' => $machine_name, 'class' => $class), array('data' => $description, 'class' => $class));
     }
-    $classes = array();
 
     $form['detail']['source']['fields'] = array(
-      '#theme' => 'table',
-      '#header' => $header,
-      '#rows' => $rows,
-      '#empty' => t('No fields'),
+      '#prefix' => '<div>',
+      '#value' => theme_table($header, $rows),
+      '#suffix' => '</div>',
     );
 
     $header = array(t('Destination'), t('Source'), t('Default'), t('Description'), t('Priority'));
@@ -381,9 +378,11 @@ function migrate_migration_info($form, $form_state, $migration) {
     foreach ($descriptions as $group => $mappings) {
       $form['detail'][$group] = array(
         '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
         '#title' => t('Mapping: ') . $group,
         '#group' => 'detail',
-        '#attributes' => array('class' => array('migrate-mapping')),
+        '#attributes' => array('class' => 'migrate-mapping'),
       );
       $rows = array();
       foreach ($mappings as $mapping) {
@@ -393,7 +392,7 @@ function migrate_migration_info($form, $form_state, $migration) {
         }
         $issue_priority = $mapping->getIssuePriority();
         if (!is_null($issue_priority)) {
-          $classes[] = 'migrate-priority-' . $issue_priority;
+          $class = 'migrate-priority-' . $issue_priority;
           $priority = MigrateFieldMapping::$priorities[$issue_priority];
           $issue_pattern = $migration->getIssuePattern();
           $issue_number = $mapping->getIssueNumber();
@@ -402,29 +401,30 @@ function migrate_migration_info($form, $form_state, $migration) {
               $issue_pattern)) . ')';
           }
           if ($issue_priority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
-            $classes[] = 'migrate-error';
+            $class .= ' migrate-error';
           }
         }
         else {
           $priority = t('OK');
-          $classes[] = 'migrate-priority-' . 1;
+          $class .= ' migrate-priority-' . 1;
         }
         $row = array(
-          array('data' => $mapping->getDestinationField(), 'class' => $classes),
-          array('data' => $mapping->getSourceField(), 'class' => $classes),
-          array('data' => $default, 'class' => $classes),
-          array('data' => $mapping->getDescription(),  'class' => $classes),
-          array('data' => $priority, 'class' => $classes),
+          array('data' => $mapping->getDestinationField(), 'class' => $class),
+          array('data' => $mapping->getSourceField(), 'class' => $class),
+          array('data' => $default, 'class' => $class),
+          array('data' => $mapping->getDescription(),  'class' => $class),
+          array('data' => $priority, 'class' => $class),
         );
         $rows[] = $row;
-        $classes = array();
+        $class = '';
       }
       $form['detail'][$group]['table'] = array(
-        '#theme' => 'table',
-        '#header' => $header,
-        '#rows' => $rows,
+        '#prefix' => '<div>',
+        '#value' => theme_table($header, $rows),
+        '#suffix' => '</div>',
       );
     }
   }
+
   return $form;
 }

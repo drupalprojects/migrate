@@ -21,7 +21,6 @@ function migrate_example_beer_schema() {
 }
 
 function migrate_example_beer_install() {
-  drupal_install_schema('migrate_example');
   migrate_example_beer_content_type();
   migrate_example_beer_tags();
 /*  migrate_example_beer_image();
@@ -46,7 +45,6 @@ function migrate_example_beer_uninstall() {
     // Grab key of the first returned vocabulary.
     taxonomy_vocabulary_delete(key($vids));
   }
-  drupal_uninstall_schema('migrate_example');
 }
 
 function migrate_example_beer_schema_node() {

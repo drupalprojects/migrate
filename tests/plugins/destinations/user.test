@@ -14,7 +14,8 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('migrate_example');
+    parent::setUp('autoload', 'dbtng', 'migrate', 'content', 'migrate_example');
+    autoload_get_lookup(TRUE);
 
     // To test timestamps
     date_default_timezone_set('US/Mountain');

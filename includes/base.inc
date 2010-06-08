@@ -471,6 +471,7 @@ abstract class MigrationBase {
         ->execute();
       $this->processing = FALSE;
     }
+    self::$currentMigration = NULL;
   }
 
   /**

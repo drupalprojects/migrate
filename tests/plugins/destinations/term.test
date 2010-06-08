@@ -14,7 +14,7 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('migrate_example');
+    parent::setUp('taxonomy', 'migrate', 'migrate_example');
   }
 
   function testTermImport() {
@@ -51,5 +51,13 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     }
     $this->assertEqual(count($terms), $count,
       t('Counts of terms and input rows match'));
+
+    // Test rollback
+    $result = $migration->processRollback();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Term rollback returned RESULT_COMPLETED'));
+    $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_beer_styles');
+    $rawterms = taxonomy_term_load_multiple(array(), array('vid' => $vocab->vid));
+    $this->assertEqual(count($rawterms), 0, t('All terms deleted'));
   }
 }

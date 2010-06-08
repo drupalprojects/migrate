@@ -14,7 +14,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('migrate_example');
+    parent::setUp('migrate', 'migrate_example');
 
     // To test timestamps
     date_default_timezone_set('US/Mountain');
@@ -57,5 +57,13 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     }
     $this->assertEqual(count($users), $count,
       t('Counts of users and input rows match'));
+
+    // Test rollback
+    $result = $migration->processRollback();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('User rollback returned RESULT_COMPLETED'));
+    $rawusers = user_load_multiple(FALSE, array(), TRUE);
+    // 2 users left - anon and admin
+    $this->assertEqual(count($rawusers), 2, t('All imported users deleted'));
   }
 }

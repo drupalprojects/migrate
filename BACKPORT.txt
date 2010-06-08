@@ -1,28 +1,5 @@
 Conventions to make porting changes between Drupal 6 and Drupal 7 easier:
 
-Try to always use specific DBTNG functions such as db_select() instead of the more
-general db_query(), which needs to be renamed to dbtng_query() under Drupal 6.
-
-
-Known differences to maintain:
-
-Core compatibility in .info files.
-
-comment.inc uses db_query() for an INSERT IGNORE (should become db_merge())
-
-sqlmap.inc uses db_table_exists()
-
-.install update functions
-
-DRUPAL_ROOT in D7 -> dirname($_SERVER['SCRIPT_FILENAME']) in D6 (fields.inc,
-migrate_example.install)
-
-REQUEST_TIME in D7 -> $_SERVER['REQUEST_TIME'] in D6 (fields.inc, node.inc)
-
-No drupal_static in D6 - no 2nd shot on memory check (base.inc)
-
-hook_perm vs. hook_permission - migrate_ui.module
-
-D6 requires drupal_install_schema/drupal_uninstall_schema in .install
-
-D6 page callbacks return rendered strings - migrate_ui.pages.inc
+Try to always use specific DBTNG functions such as db_select() instead of the 
+more general db_query(), which needs to be renamed to dbtng_query() under 
+Drupal 6.

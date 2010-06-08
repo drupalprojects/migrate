@@ -14,7 +14,7 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('migrate_example');
+    parent::setUp('taxonomy', 'image', 'comment', 'migrate', 'migrate_example');
   }
 
   function testCommentImport() {
@@ -64,5 +64,12 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     }
     $this->assertEqual(count($comments), $count,
       t('Counts of comments and input rows match'));
+
+    // Test rollback
+    $result = $migration->processRollback();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Comment rollback returned RESULT_COMPLETED'));
+    $rawcomments = comment_load_multiple(FALSE);
+    $this->assertEqual(count($rawcomments), 0, t('All comments deleted'));
   }
 }

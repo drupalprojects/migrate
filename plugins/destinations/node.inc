@@ -47,6 +47,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields = array();
     // First the core (node table) properties
     $fields['nid'] = t('Node: Existing node ID');
+    $fields['is_new'] = t('Node: Indicates a new node with the specified nid should be created');
     $fields['name'] = t('Node: Authored by (username)');
     $fields['uid'] = t('Node: Authored by (uid)');
     $fields['created'] = t('Node: Created timestamp');

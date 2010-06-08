@@ -59,5 +59,17 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_beer_styles');
     $rawterms = taxonomy_term_load_multiple(array(), array('vid' => $vocab->vid));
     $this->assertEqual(count($rawterms), 0, t('All terms deleted'));
+    $count = db_select('migrate_map_beerterm', 'map')
+              ->fields('map', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Map cleared'));
+    $count = db_select('migrate_message_beerterm', 'msg')
+              ->fields('msg', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Messages cleared'));
   }
 }

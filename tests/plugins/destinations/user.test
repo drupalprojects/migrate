@@ -65,5 +65,17 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     $rawusers = user_load_multiple(FALSE, array(), TRUE);
     // 2 users left - anon and admin
     $this->assertEqual(count($rawusers), 2, t('All imported users deleted'));
+    $count = db_select('migrate_map_beeruser', 'map')
+              ->fields('map', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Map cleared'));
+    $count = db_select('migrate_message_beeruser', 'msg')
+              ->fields('msg', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Messages cleared'));
   }
 }

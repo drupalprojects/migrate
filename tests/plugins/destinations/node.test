@@ -66,5 +66,17 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       t('Node rollback returned RESULT_COMPLETED'));
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_beer'), TRUE);
     $this->assertEqual(count($rawnodes), 0, t('All nodes deleted'));
+    $count = db_select('migrate_map_beernode', 'map')
+              ->fields('map', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Map cleared'));
+    $count = db_select('migrate_message_beernode', 'msg')
+              ->fields('msg', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Messages cleared'));
   }
 }

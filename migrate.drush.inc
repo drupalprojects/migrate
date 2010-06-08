@@ -658,7 +658,7 @@ function drush_migrate_import($args = NULL) {
         if ($return == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
               use the --force option to run it anyway',
-            array('!name' => $migration->machineName)), 'warning');
+            array('!name' => $migration->getMachineName())), 'warning');
         }
         elseif ($return == MigrationBase::RESULT_STOPPED) {
           break;

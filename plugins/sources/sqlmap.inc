@@ -440,6 +440,15 @@ class MigrateSQLMap extends MigrateMap {
     }
   }
 
+  /**
+   * Clear non-informational messages from the message table.
+   */
+  public function clearErrors() {
+    $this->connection->delete($this->messageTable)
+                     ->condition('level', MigrationBase::MESSAGE_INFORMATIONAL, '<>')
+                     ->execute();
+  }
+
   protected $result = NULL;
   protected $currentRow = NULL;
   protected $currentKey = array();

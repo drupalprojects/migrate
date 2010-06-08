@@ -310,6 +310,8 @@ abstract class Migration extends MigrationBase {
       }
     }
 
+    $this->map->clearErrors();
+
     $this->progressMessage($return);
 
     // If we're using highwater marks, reset at completion of a full rollback

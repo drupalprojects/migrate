@@ -325,6 +325,7 @@ function migrate_example_beer_content_type() {
   foreach ($types as $type) {
     $type = node_type_set_defaults($type);
     node_type_save($type);
+    node_add_body_field($type);
   }
 }
 

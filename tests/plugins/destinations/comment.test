@@ -71,5 +71,17 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
       t('Comment rollback returned RESULT_COMPLETED'));
     $rawcomments = comment_load_multiple(FALSE);
     $this->assertEqual(count($rawcomments), 0, t('All comments deleted'));
+    $count = db_select('migrate_map_beercomment', 'map')
+              ->fields('map', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Map cleared'));
+    $count = db_select('migrate_message_beercomment', 'msg')
+              ->fields('msg', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Messages cleared'));
   }
 }

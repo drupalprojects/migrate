@@ -217,7 +217,6 @@ function migrate_watchdog($log_entry) {
   if ($migration = Migration::currentMigration()) {
     // TODO: set appropriate level
     $migration->saveMessage(t($log_entry['message'], $log_entry['variables']));
-    return;
   }
 }
 

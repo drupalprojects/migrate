@@ -9,6 +9,7 @@ dependencies[] = comment
 dependencies[] = migrate
 files[] = migrate_example.module
 files[] = beer.inc
+files[] = wine.inc
 
 ; For testing table_copy plugin. Since is infrequently used, we comment it out.
 ; files[] = example.table_copy.inc

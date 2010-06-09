@@ -21,12 +21,12 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function testUserImport() {
-    $migration = Migration::getInstance('BeerUserMigration');
+    $migration = Migration::getInstance('WineUserMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
-    $result = db_select('migrate_example_beer_account', 'mea')
-             ->fields('mea', array('aid', 'status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'))
+    $result = db_select('migrate_example_wine_account', 'mea')
+             ->fields('mea', array('accountid', 'status', 'posted', 'name', 'nickname', 'password', 'mail'))
              ->execute();
     $rawusers = user_load_multiple(FALSE, array(), TRUE);
     // Index by name
@@ -52,8 +52,6 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
         t('Created time matches'));
       $this->assertTrue(user_check_password($row->password, $account),
         t('Password matches'));
-      $this->assertEqual($account->field_migrate_example_gender[LANGUAGE_NONE][0]['value'],
-        $row->sex, t('Gender matches'));
     }
     $this->assertEqual(count($users), $count,
       t('Counts of users and input rows match'));
@@ -65,13 +63,13 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     $rawusers = user_load_multiple(FALSE, array(), TRUE);
     // 2 users left - anon and admin
     $this->assertEqual(count($rawusers), 2, t('All imported users deleted'));
-    $count = db_select('migrate_map_beeruser', 'map')
+    $count = db_select('migrate_map_wineuser', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()
               ->execute()
               ->fetchField();
     $this->assertEqual($count, 0, t('Map cleared'));
-    $count = db_select('migrate_message_beeruser', 'msg')
+    $count = db_select('migrate_message_wineuser', 'msg')
               ->fields('msg', array('sourceid1'))
               ->countQuery()
               ->execute()

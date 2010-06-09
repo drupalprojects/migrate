@@ -8,16 +8,21 @@
 
 require_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'migrate_example') .
   '/beer.install.inc';
+require_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'migrate_example') .
+  '/wine.install.inc';
 
 function migrate_example_schema() {
   $schema = migrate_example_beer_schema();
+  $schema += migrate_example_wine_schema();
   return $schema;
 }
 
 function migrate_example_install() {
   migrate_example_beer_install();
+  migrate_example_wine_install();
 }
 
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
+  migrate_example_wine_uninstall();
 }

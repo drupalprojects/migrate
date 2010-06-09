@@ -19,7 +19,7 @@
  * define an abstract intermediate class derived from Migration, then derive your
  * individual migrations from that, to share settings, utility functions, etc.
  */
-abstract class ExampleMigration extends Migration {
+abstract class BasicExampleMigration extends Migration {
   public function __construct() {
     // Always call the parent constructor first for basic setup
     parent::__construct();
@@ -54,18 +54,9 @@ abstract class ExampleMigration extends Migration {
  *    fields correspond to what destination fields, and additional information
  *    associated with the mappings.
  */
-class BeerTermMigration extends ExampleMigration {
+class BeerTermMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
-    // You can list migrations that must run before this one - you will not be
-    // able to run this migration until that one's done, unless you specify
-    // --force on the drush command (we'll get to BeerPrepMigration later).
-    $this->dependencies = array('BeerPrepMigration');
-
-    // You can also specify migrations that you want listed before this one - you
-    // don't need --force to run this one first, the effect is cosmetic only
-    $this->softDependencies = array('BeerUserMigration');
-
     // Human-friendly description of your migration process. Be as detailed as you
     // like.
     $this->description = t('Migrate styles from the source database to taxonomy terms');
@@ -166,12 +157,11 @@ class BeerTermMigration extends ExampleMigration {
  * through static mappings - you will frequently need to do some run-time
  * transformations of the data.
  */
-class BeerUserMigration extends ExampleMigration {
+class BeerUserMigration extends BasicExampleMigration {
   public function __construct() {
     // The basic setup is similar to BeerTermMigraiton
     parent::__construct();
     $this->description = t('Beer Drinkers of the world');
-    $this->dependencies = array('BeerPrepMigration');
     $this->map = new MigrateSQLMap($this->machineName,
         array('aid' => array(
                 'type' => 'int',
@@ -261,7 +251,7 @@ class BeerUserMigration extends ExampleMigration {
   }
 }
 
-class BeerNodeMigration extends ExampleMigration {
+class BeerNodeMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Beers of the world');
@@ -381,7 +371,7 @@ class BeerNodeMigration extends ExampleMigration {
   }
 }
 
-class BeerCommentMigration extends ExampleMigration {
+class BeerCommentMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about beers';
@@ -438,70 +428,5 @@ class BeerCommentMigration extends ExampleMigration {
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('language')
          ->issueGroup(t('DNM'));
-  }
-}
-
-/**
- * While usually you'll create true migrations - processes that copy data from
- * some source into Drupal - you can also define processing steps for either
- * the import or rollback stages that take other actions. In this case, we want
- * to disable pathauto while the migration steps run.
- */
-class BeerPrepMigration extends MigrationBase {
-  public function __construct() {
-    parent::__construct();
-    $this->description = t('If pathauto is present, disable it for the duration');
-  }
-  // Define isComplete(), returning a boolean, to indicate whether dependent
-  // migrations may proceed
-  public function isComplete() {
-    // If pathauto is disabled, other migrations are free to go
-    if (module_exists('pathauto')) {
-      return FALSE;
-    }
-    else {
-      return TRUE;
-    }
-  }
-  // Implement any action you want to occur during an import process in an
-  // import() process (alternatively, if you have an action which you want to
-  // run during rollbacks, define a rollback() method).
-  public function import() {
-    if (module_exists('pathauto')) {
-      module_disable(array('pathauto'));
-    }
-    // Provide feedback
-    $outputFunction = $this->outputFunction;
-    $outputFunction(t("Succeeded in !sec sec - done with '!name'",
-      array('!sec' => round(microtime(TRUE) - $this->starttime, 1),
-            '!name' => $this->machineName)), 'completed');
-    return Migration::RESULT_COMPLETED;
-  }
-}
-
-class BeerFinishMigration extends MigrationBase {
-  public function __construct() {
-    parent::__construct();
-    $this->description = t('If pathauto is present and was previously enabled,
-      re-enable it');
-    $this->dependencies = array('BeerCommentMigration');
-  }
-  public function isComplete() {
-    if (module_exists('pathauto')) {
-      return TRUE;
-    }
-    else {
-      return FALSE;
-    }
-  }
-  public function import() {
-    if (!module_exists('pathauto')) {
-      module_enable(array('pathauto'));
-    }
-    $outputFunction = $this->outputFunction;
-    $outputFunction(t("Succeeded in !sec sec - done with '!name'",
-      array('!sec' => round(microtime(TRUE) - $this->starttime, 1),
-            '!name' => $this->machineName)), 'completed');
-    return Migration::RESULT_COMPLETED;
   }
 }

@@ -130,9 +130,9 @@ abstract class Migration extends MigrationBase {
   protected function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
-      $outputFunction = $this->outputFunction;
-      $outputFunction(t('!name addFieldMapping: !dest was previously mapped, overridden',
-        array('!name' => $this->machineName, '!dest' => $destination_field)),
+      call_user_func($this->outputFunction,
+        t('!name addFieldMapping: !dest was previously mapped, overridden',
+          array('!name' => $this->machineName, '!dest' => $destination_field)),
         'warning');
     }
     $mapping = new MigrateFieldMapping($destination_field, $source_field);
@@ -251,8 +251,7 @@ abstract class Migration extends MigrationBase {
             $this->successes_since_feedback += $batch_count;
           }
           catch (Exception $e) {
-            $output = $this->outputFunction;
-            $output($e->getMessage());
+            call_user_func($this->outputFunction, $e->getMessage());
             migrate_instrument_stop('bulkRollback');
             migrate_instrument_stop('rollback map/message update');
           }
@@ -350,19 +349,16 @@ abstract class Migration extends MigrationBase {
         else {
           $message = t('New object was not saved, no error provided');
           $this->saveMessage($message);
-          $outputFunction = $this->outputFunction;
-          $outputFunction($message);
+          call_user_func($this->outputFunction, $message);
         }
       }
       catch (MigrateException $e) {
         $this->saveMessage($e->getMessage(), $e->getLevel());
-        $outputFunction = $this->outputFunction;
-        $outputFunction($e->getMessage());
+        call_user_func($this->outputFunction, $e->getMessage());
       }
       catch (Exception $e) {
         $this->saveMessage($e->getMessage());
-        $outputFunction = $this->outputFunction;
-        $outputFunction($e->getMessage());
+        call_user_func($this->outputFunction, $e->getMessage());
       }
       $this->total_processed++;
       $this->processed_since_feedback++;
@@ -509,15 +505,15 @@ abstract class Migration extends MigrationBase {
               '!time' => $time,
               '!perminute' => $perminute,
               '!name' => $this->machineName));
-    $outputFunction = $this->outputFunction;
-    $outputFunction($message, $type);
+    call_user_func($this->outputFunction, $message, $type);
 
     // Report on lookup_cache hit rate. Only visible at 'debug' level.
     if ($result != Migration::RESULT_INCOMPLETE && !empty($this->counts['lookup_cache'])) {
       foreach ($this->counts['lookup_cache'] as $name => $tallies) {
         $tallies += array('hit' => 0, 'miss_hit' => 0, 'miss_miss' => 0); // Set defaults to avoid NOTICE.
         $sum = $tallies['hit']+$tallies['miss_hit']+$tallies['miss_miss'];
-        $outputFunction(t('Lookup cache: !mn SM=!name !hit hit, !miss_hit miss_hit, !miss_miss miss_miss (!total total).', array(
+        call_user_func($this->outputFunction,
+          t('Lookup cache: !mn SM=!name !hit hit, !miss_hit miss_hit, !miss_miss miss_miss (!total total).', array(
                 '!mn' => $this->machineName,
                 '!name' => $name,
                 '!hit' => round((100*$tallies['hit'])/$sum) . '%',

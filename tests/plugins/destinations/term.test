@@ -18,17 +18,17 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
   }
 
   function testTermImport() {
-    $migration = Migration::getInstance('BeerTermMigration');
+    $migration = Migration::getInstance('WineTermMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Term import returned RESULT_COMPLETED'));
-    $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_beer_styles');
+    $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_wine_styles');
     $rawterms = taxonomy_term_load_multiple(array(), array('vid' => $vocab->vid));
     $terms = array();
     foreach ($rawterms as $term) {
       $terms[$term->name] = $term;
     }
-    $result = db_select('migrate_example_beer_topic', 'met')
+    $result = db_select('migrate_example_wine_topic', 'met')
              ->fields('met', array('style', 'details', 'style_parent'))
              ->execute();
     $count = 0;
@@ -56,16 +56,16 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Term rollback returned RESULT_COMPLETED'));
-    $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_beer_styles');
+    $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_wine_styles');
     $rawterms = taxonomy_term_load_multiple(array(), array('vid' => $vocab->vid));
     $this->assertEqual(count($rawterms), 0, t('All terms deleted'));
-    $count = db_select('migrate_map_beerterm', 'map')
+    $count = db_select('migrate_map_wineterm', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()
               ->execute()
               ->fetchField();
     $this->assertEqual($count, 0, t('Map cleared'));
-    $count = db_select('migrate_message_beerterm', 'msg')
+    $count = db_select('migrate_message_wineterm', 'msg')
               ->fields('msg', array('sourceid1'))
               ->countQuery()
               ->execute()

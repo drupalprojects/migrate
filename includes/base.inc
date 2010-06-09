@@ -262,8 +262,7 @@ abstract class MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
-    $output = $this->outputFunction;
-    $output($message, $level);
+    call_user_func($this->outputFunction, $message, $level);
   }
 
   /**
@@ -587,10 +586,12 @@ abstract class MigrationBase {
     $usage = memory_get_usage();
     $pct_memory = $usage/$this->memoryLimit;
     if ($pct_memory > $this->memoryThreshold) {
-      $outputFunction = $this->outputFunction;
-      $outputFunction(t('Memory usage is !usage (!pct% of limit !limit), resetting statics',
-        array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
-          'warning');
+      call_user_func($this->outputFunction,
+        t('Memory usage is !usage (!pct% of limit !limit), resetting statics',
+          array('!pct' => round($pct_memory*100),
+                '!usage' => format_size($usage),
+                '!limit' => format_size($this->memoryLimit))),
+        'warning');
       // First, try resetting Drupal's static storage - this frequently releases
       // plenty of memory to continue
       drupal_static_reset();
@@ -599,15 +600,21 @@ abstract class MigrationBase {
       // Use a lower threshold - we don't want to be in a situation where we keep
       // coming back here and trimming a tiny amount
       if ($pct_memory > (.90 * $this->memoryThreshold)) {
-        $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
-          array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
-            'warning');
+        call_user_func($this->outputFunction,
+          t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
+            array('!pct' => round($pct_memory*100),
+                  '!usage' => format_size($usage),
+                  '!limit' => format_size($this->memoryLimit))),
+          'warning');
         return TRUE;
       }
       else {
-        $outputFunction(t('Memory usage is now !usage (!pct% of limit !limit), reclaimed enough, continuing',
-          array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
-            'warning');
+        call_user_func($this->outputFunction,
+          t('Memory usage is now !usage (!pct% of limit !limit), reclaimed enough, continuing',
+            array('!pct' => round($pct_memory*100),
+                  '!usage' => format_size($usage),
+                  '!limit' => format_size($this->memoryLimit))),
+          'warning');
         return FALSE;
       }
     }

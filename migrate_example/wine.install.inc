@@ -3,58 +3,53 @@
 
 /**
  * @file
- * Set up for the beer (basic) example.
+ * Set up for the wine (advanced) example.
  */
-function migrate_example_beer_schema() {
-  $schema['migrate_example_beer_account'] = migrate_example_beer_schema_account();
-  $schema['migrate_example_beer_node'] = migrate_example_beer_schema_node();
-  $schema['migrate_example_beer_comment'] = migrate_example_beer_schema_comment();
-  $schema['migrate_example_beer_topic'] = migrate_example_beer_schema_topic();
-  $schema['migrate_example_beer_topic_node'] = migrate_example_beer_schema_topic_node();
+function migrate_example_wine_schema() {
+  $schema['migrate_example_wine_account'] = migrate_example_wine_schema_account();
+  $schema['migrate_example_wine_topic'] = migrate_example_wine_schema_topic();
+  $schema['migrate_example_wine_node'] = migrate_example_wine_schema_node();
+  $schema['migrate_example_wine_topic_node'] = migrate_example_wine_schema_topic_node();
+  $schema['migrate_example_wine_comment'] = migrate_example_wine_schema_comment();
 
   // These two tables are primarily for testing the table_copy plugin.
   // They do provide some guidance for uri redirection per uri_map_redirect.php
-  $schema['migrate_example_beer_legacy_urls'] = migrate_example_beer_schema_legacy_urls();
-  $schema['migrate_example_beer_copy_urls'] = migrate_example_beer_schema_legacy_urls();
+  $schema['migrate_example_wine_legacy_urls'] = migrate_example_wine_schema_legacy_urls();
+  $schema['migrate_example_wine_copy_urls'] = migrate_example_wine_schema_legacy_urls();
 
   return $schema;
 }
 
-function migrate_example_beer_install() {
-  migrate_example_beer_content_type();
-  migrate_example_beer_tags();
-  migrate_example_beer_image();
-  migrate_example_beer_country();
-  migrate_example_beer_gender();
-  if (module_exists('node_reference')) {
-    migrate_example_beer_favs();
-  }
+function migrate_example_wine_install() {
+  migrate_example_wine_content_type();
+  migrate_example_wine_tags();
+  migrate_example_wine_image();
 
   // Populate our tables.
-  migrate_example_beer_data_account();
-  migrate_example_beer_data_node();
-  migrate_example_beer_data_comment();
-  migrate_example_beer_data_topic();
-  migrate_example_beer_data_topic_node();
-  migrate_example_beer_data_urls();
+  migrate_example_wine_data_account();
+  migrate_example_wine_data_topic();
+  migrate_example_wine_data_topic_node();
+  migrate_example_wine_data_node();
+  migrate_example_wine_data_comment();
+  migrate_example_wine_data_urls();
 }
 
-function migrate_example_beer_uninstall() {
-  migrate_example_beer_content_type_delete();
-  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_beer_styles'))) {
+function migrate_example_wine_uninstall() {
+  migrate_example_wine_content_type_delete();
+  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_wine_styles'))) {
     // Grab key of the first returned vocabulary.
     taxonomy_vocabulary_delete(key($vids));
   }
 }
 
-function migrate_example_beer_schema_node() {
+function migrate_example_wine_schema_node() {
   return array(
-    'description' => 'Beers of the world.',
+    'description' => 'wines of the world.',
     'fields' => array(
       'bid'  => array(
         'type' => 'serial',
         'not null' => TRUE,
-        'description' => 'Beer ID.',
+        'description' => 'wine ID.',
       ),
       'name'  => array(
         'type' => 'varchar',
@@ -65,13 +60,13 @@ function migrate_example_beer_schema_node() {
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => 'Full description of the beer.',
+        'description' => 'Full description of the wine.',
       ),
       'excerpt' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => 'Abstract for this beer.',
+        'description' => 'Abstract for this wine.',
       ),
       'countries' => array(
         'type' => 'varchar',
@@ -79,7 +74,7 @@ function migrate_example_beer_schema_node() {
         'not null' => FALSE,
         'description' => 'Countries of origin. Multiple values, delimited by pipe',
       ),
-      'aid' => array(
+      'accountid' => array(
         'type' => 'int',
         'length' => 11,
         'not null' => FALSE,
@@ -96,7 +91,7 @@ function migrate_example_beer_schema_node() {
   );
 }
 
-function migrate_example_beer_schema_topic() {
+function migrate_example_wine_schema_topic() {
   return array(
     'description' => 'Categories',
     'fields' => array(
@@ -126,21 +121,21 @@ function migrate_example_beer_schema_topic() {
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => 'Relative hoppiness of the beer',
+        'description' => 'Relative hoppiness of the wine',
       ),
     ),
     'primary key' => array('style'),
   );
 }
 
-function migrate_example_beer_schema_topic_node() {
+function migrate_example_wine_schema_topic_node() {
   return array(
-    'description' => 'Beers topic pairs.',
+    'description' => 'wines topic pairs.',
     'fields' => array(
       'bid'  => array(
         'type' => 'int',
         'not null' => TRUE,
-        'description' => 'Beer ID.',
+        'description' => 'wine ID.',
       ),
       'style'  => array(
         'type' => 'varchar',
@@ -153,9 +148,9 @@ function migrate_example_beer_schema_topic_node() {
   );
 }
 
-function migrate_example_beer_schema_comment() {
+function migrate_example_wine_schema_comment() {
   return array(
-    'description' => 'Beers comments.',
+    'description' => 'wines comments.',
     'fields' => array(
       'cid'  => array(
         'type' => 'serial',
@@ -166,7 +161,7 @@ function migrate_example_beer_schema_comment() {
         'type' => 'int',
         'length' => 11,
         'not null' => TRUE,
-        'description' => 'Beer ID that is being commented upon',
+        'description' => 'wine ID that is being commented upon',
       ),
       'cid_parent' => array(
         'type' => 'int',
@@ -198,7 +193,7 @@ function migrate_example_beer_schema_comment() {
         'not null' => FALSE,
         'description' => 'Comment email (if anon)',
       ),
-      'aid' => array(
+      'accountid' => array(
         'type' => 'int',
         'length' => 11,
         'not null' => FALSE,
@@ -209,13 +204,13 @@ function migrate_example_beer_schema_comment() {
   );
 }
 
-function migrate_example_beer_schema_account() {
+function migrate_example_wine_schema_account() {
   return array(
-    'description' => 'Beers accounts.',
+    'description' => 'Wine accounts.',
     'fields' => array(
-      'aid'  => array(
+      'accountid'  => array(
         'type' => 'serial',
-        //'not null' => TRUE,
+        'not null' => TRUE,
         'description' => 'Account ID',
       ),
       'status'  => array(
@@ -254,23 +249,12 @@ function migrate_example_beer_schema_account() {
         'not null' => FALSE,
         'description' => 'Account email',
       ),
-      'sex' => array(
-        'type' => 'int',
-        'not null' => FALSE,
-        'description' => 'Gender',
-      ),
-      'beers' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'description' => 'Favorite Beers',
-      ),
     ),
-    'primary key' => array('aid'),
+    'primary key' => array('accountid'),
   );
 }
 
-function migrate_example_beer_schema_legacy_urls() {
+function migrate_example_wine_schema_legacy_urls() {
   return array(
     'description' => 'Stores legacy paths and destination ids for redirection.',
     'fields' => array(
@@ -307,15 +291,15 @@ function migrate_example_beer_schema_legacy_urls() {
   );
 }
 
-function migrate_example_beer_content_type() {
+function migrate_example_wine_content_type() {
   // This code based on from standard.profile.
   // Insert default user-defined node types into the database.
   $types = array(
     array(
-      'type' => 'migrate_example_beer',
-      'name' => st('Beer'),
+      'type' => 'migrate_example_wine',
+      'name' => st('wine'),
       'base' => 'node_content',
-      'description' => st("Beer is what we drink."),
+      'description' => st("wine is what we drink."),
       'custom' => 1,
       'modified' => 1,
       'locked' => 1,
@@ -329,20 +313,20 @@ function migrate_example_beer_content_type() {
   }
 }
 
-function migrate_example_beer_tags() {
-  // Create a vocabulary named "Migrate Example Beer Styles", enabled for the 'migrate_example_beer' content type.
-  $description = st('Use tags to group beers on similar topics into categories.');
+function migrate_example_wine_tags() {
+  // Create a vocabulary named "Migrate Example wine Styles", enabled for the 'migrate_example_wine' content type.
+  $description = st('Use tags to group wines on similar topics into categories.');
   $help = st('Enter a comma-separated list of words to describe your content.');
   $vocabulary = (object) array(
-    'name' => 'Migrate Example Beer Styles',
+    'name' => 'Migrate Example wine Styles',
     'description' => $description,
-    'machine_name' => 'migrate_example_beer_styles',
+    'machine_name' => 'migrate_example_wine_styles',
     'help' => $help,
 
   );
   taxonomy_vocabulary_save($vocabulary);
 
-  if (!field_info_field('migrate_example_beer_styles')) {
+  if (!field_info_field('migrate_example_wine_styles')) {
     $field = array(
       'field_name' => $vocabulary->machine_name,
       'type' => 'taxonomy_term_reference',
@@ -360,12 +344,12 @@ function migrate_example_beer_tags() {
     field_create_field($field);
   }
 
-  if (!field_info_instance('node', 'migrate_example_beer_styles', 'migrate_example_beer')) {
+  if (!field_info_instance('node', 'migrate_example_wine_styles', 'migrate_example_wine')) {
     $instance = array(
       'field_name' => $vocabulary->machine_name,
       'entity_type' => 'node',
       'label' => $vocabulary->name,
-      'bundle' => 'migrate_example_beer',
+      'bundle' => 'migrate_example_wine',
       'description' => $vocabulary->help,
       'widget' => array(
         'type' => 'taxonomy_autocomplete',
@@ -375,8 +359,8 @@ function migrate_example_beer_tags() {
   }
 }
 
-// Create an image field named "Migrate Example Image", enabled for the 'Beer' content type.
-function migrate_example_beer_image() {
+// Create an image field named "Migrate Example Image", enabled for the 'wine' content type.
+function migrate_example_wine_image() {
   if (!field_info_field('field_migrate_example_image')) {
     $field = array(
       'field_name' => 'field_migrate_example_image',
@@ -392,13 +376,13 @@ function migrate_example_beer_image() {
     field_create_field($field);
   }
 
-  if (!field_info_instance('node', 'field_migrate_example_image', 'migrate_example_beer')) {
+  if (!field_info_instance('node', 'field_migrate_example_image', 'migrate_example_wine')) {
     $instance = array(
       'field_name' => 'field_migrate_example_image',
       'entity_type' => 'node',
       'label' => 'Image',
-      'bundle' => 'migrate_example_beer',
-      'description' => 'Upload an image to go with this beer.',
+      'bundle' => 'migrate_example_wine',
+      'description' => 'Upload an image to go with this wine.',
       'settings' => array(
         'file_directory' => 'field/migrate_example/image',
         'file_extensions' => 'png gif jpg jpeg',
@@ -455,114 +439,20 @@ function migrate_example_beer_image() {
   }
 }
 
-function migrate_example_beer_favs() {
-  if (!field_info_field('field_migrate_example_favbeers')) {
-    $field = array(
-      'field_name'  => 'field_migrate_example_favbeers',
-      'type'        => 'node_reference',
-      'cardinality' => -1,
-      'settings' => array(
-        'referenceable_types' => array('migrate_example_beer'),
-      ),
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('user', 'field_migrate_example_favbeers', 'user')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_favbeers',
-      'entity_type' => 'user',
-      'label' => 'Favorite Beers',
-      'bundle' => 'user',
-      'widget' => array(
-        'type' => 'node_reference_autocomplete',
-      ),
-    );
-    field_create_instance($instance);
-  }
-}
-
-// Create Gender list field on User entity.
-function migrate_example_beer_gender() {
-  if (!field_info_field('field_migrate_example_gender')) {
-    $field = array(
-      'field_name' => 'field_migrate_example_gender',
-      'type' => 'list',
-      'settings' => array(
-      'allowed_values' =>
-        "0|Male\n".
-        "1|Female\n",
-      ),
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('user', 'field_migrate_example_gender', 'user')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_gender',
-      'entity_type' => 'user',
-      'label' => 'Gender',
-      'bundle' => 'user',
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-    );
-    field_create_instance($instance);
-  }
-}
-
-// Create a text field named "Countries", enabled for the 'Beer' content type.
-function migrate_example_beer_country() {
-  if (!field_info_field('field_migrate_example_country')) {
-    $field = array(
-      'field_name' => 'field_migrate_example_country',
-      'type' => 'text',
-      'cardinality' => -1,
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('node', 'field_migrate_example_country', 'migrate_example_beer')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_country',
-      'entity_type' => 'node',
-      'label' => 'Countries',
-      'bundle' => 'migrate_example_beer',
-      'description' => 'Beer country.',
-
-      'widget' => array(
-        'type' => 'text_textfield',
-      ),
-    );
-    field_create_instance($instance);
-  }
-}
-
-function migrate_example_beer_content_type_delete() {
-  $bundle = 'migrate_example_beer';
-  $field_names = array('migrate_example_beer_styles', 'field_migrate_example_image', 'field_migrate_example_country');
+function migrate_example_wine_content_type_delete() {
+  $bundle = 'migrate_example_wine';
+  $field_names = array('migrate_example_wine_styles', 'field_migrate_example_image');
   foreach ($field_names as $field_name) {
     $instance = field_info_instance('node', $field_name, $bundle);
     field_delete_instance($instance);
     field_delete_field($field_name);
   }
   node_type_delete($bundle);
-
-  $bundle = 'user';
-  $field_names = array('field_migrate_example_gender');
-  if (module_exists('node_reference')) {
-    $field_names[] = 'field_migrate_example_favbeers';
-  }
-  foreach ($field_names as $field_name) {
-    $instance = field_info_instance('user', $field_name, $bundle);
-    field_delete_instance($instance);
-    field_delete_field($field_name);
-  }
 }
 
-function migrate_example_beer_data_node() {
-  $fields = array('bid', 'name', 'body', 'excerpt', 'countries', 'aid', 'image');
-  $query = db_insert('migrate_example_beer_node')
+function migrate_example_wine_data_node() {
+  $fields = array('bid', 'name', 'body', 'excerpt', 'countries', 'accountid', 'image');
+  $query = db_insert('migrate_example_wine_node')
     ->fields($fields);
   // Use high bid numbers to avoid overwriting an existing node id.
   $data = array(
@@ -576,14 +466,14 @@ function migrate_example_beer_data_node() {
   $query->execute();
 }
 
-function migrate_example_beer_data_account() {
-  $fields = array('status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers');
-  $query = db_insert('migrate_example_beer_account')
+function migrate_example_wine_data_account() {
+  $fields = array('status', 'posted', 'name', 'nickname', 'password', 'mail');
+  $query = db_insert('migrate_example_wine_account')
     ->fields($fields);
   $data = array(
-    array(1, '2010-03-30 10:31:05', 'alice', 'alice hot pants', 'alicepass', 'alice@example.com', '1', '99999999|99999998|99999997'),
-    array(0, '2007-03-15 10:31:05', 'bob', 'rebob', 'bobpass', 'bob@example.com', '1', '99999999|99999997'),
-    array(1, '2004-02-29 10:31:05', 'charlie', 'charlie chocolate', 'mykids', 'charlie@example.com', '0', '99999999|99999998'),
+    array(1, '2010-03-30 10:31:05', 'alice', 'alice hot pants', 'alicepass', 'alice@example.com'),
+    array(0, '2007-03-15 10:31:05', 'bob', 'rebob', 'bobpass', 'bob@example.com'),
+    array(1, '2004-02-29 10:31:05', 'charlie', 'charlie chocolate', 'mykids', 'charlie@example.com'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));
@@ -591,9 +481,9 @@ function migrate_example_beer_data_account() {
   $query->execute();
 }
 
-function migrate_example_beer_data_comment() {
-  $fields = array('bid', 'cid_parent', 'subject', 'body', 'name', 'mail', 'aid');
-  $query = db_insert('migrate_example_beer_comment')
+function migrate_example_wine_data_comment() {
+  $fields = array('bid', 'cid_parent', 'subject', 'body', 'name', 'mail', 'accountid');
+  $query = db_insert('migrate_example_wine_comment')
     ->fields($fields);
   $data = array(
     array(99999998, NULL, 'im first', 'hot body', 'alice', 'alice@example.com', 0),
@@ -608,9 +498,9 @@ function migrate_example_beer_data_comment() {
   $query->execute();
 }
 
-function migrate_example_beer_data_topic() {
+function migrate_example_wine_data_topic() {
   $fields = array('style', 'details', 'style_parent', 'region', 'hoppiness');
-  $query = db_insert('migrate_example_beer_topic')
+  $query = db_insert('migrate_example_wine_topic')
     ->fields($fields);
   $data = array(
     array('ale', 'traditional', NULL, 'Medieval British Isles', 'Medium'),
@@ -623,9 +513,9 @@ function migrate_example_beer_data_topic() {
   $query->execute();
 }
 
-function migrate_example_beer_data_topic_node() {
+function migrate_example_wine_data_topic_node() {
   $fields = array('bid', 'style');
-  $query = db_insert('migrate_example_beer_topic_node')
+  $query = db_insert('migrate_example_wine_topic_node')
     ->fields($fields);
   $data = array(
     array(99999999, 'pilsner'),
@@ -638,14 +528,14 @@ function migrate_example_beer_data_topic_node() {
   $query->execute();
 }
 
-function migrate_example_beer_data_urls() {
+function migrate_example_wine_data_urls() {
   $fields = array('id', 'migration_name', 'source_id', 'source_uri', 'modificationdate');
-  $query = db_insert('migrate_example_beer_legacy_urls')
+  $query = db_insert('migrate_example_wine_legacy_urls')
     ->fields($fields);
   $data = array(
-    array(1, 'BeerNode', 99999997, 'the_boddington/main', '2010-04-12 08:32:06'),
-    array(2, 'BeerNode', 99999998, 'Miller Lite taste', '2010-04-12 08:32:05'),
-    array(3, 'BeerNode', 99999999, 'green wonder', '2010-04-12 08:32:03'),
+    array(1, 'wineNode', 99999997, 'the_boddington/main', '2010-04-12 08:32:06'),
+    array(2, 'wineNode', 99999998, 'Miller Lite taste', '2010-04-12 08:32:05'),
+    array(3, 'wineNode', 99999999, 'green wonder', '2010-04-12 08:32:03'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

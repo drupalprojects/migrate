@@ -18,28 +18,28 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function testNodeImport() {
-    $migration = Migration::getInstance('BeerTermMigration');
+    $migration = Migration::getInstance('WineTermMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('BeerUserMigration');
+    $migration = Migration::getInstance('WineUserMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('BeerNodeMigration');
+    $migration = Migration::getInstance('WineNodeMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Node import returned RESULT_COMPLETED'));
 
-    $query = db_select('migrate_example_beer_node', 'b')
-             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image'));
+    $query = db_select('migrate_example_wine_node', 'b')
+             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'accountid', 'countries', 'image'));
     $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
     // Gives a single comma-separated list of terms
     $query->groupBy('tb.bid');
     $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
     $result = $query->execute();
 
-    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_beer'), TRUE);
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
     // Index by title
     $nodes = array();
     foreach ($rawnodes as $node) {
@@ -51,8 +51,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       $node = $nodes[$row->name];
       $this->assertNotNull($node, t('!title imported', array('!title' => $row->name)));
       $this->assertEqual($row->bid, $node->nid, t('Nid preserved'));
-      // TODO: uid from beeruser map
-      // TODO: countries
+      // TODO: uid from wineuser map
       // TODO: terms
       // TODO: summary
       // TODO: image
@@ -64,15 +63,15 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Node rollback returned RESULT_COMPLETED'));
-    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_beer'), TRUE);
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
     $this->assertEqual(count($rawnodes), 0, t('All nodes deleted'));
-    $count = db_select('migrate_map_beernode', 'map')
+    $count = db_select('migrate_map_winenode', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()
               ->execute()
               ->fetchField();
     $this->assertEqual($count, 0, t('Map cleared'));
-    $count = db_select('migrate_message_beernode', 'msg')
+    $count = db_select('migrate_message_winenode', 'msg')
               ->fields('msg', array('sourceid1'))
               ->countQuery()
               ->execute()

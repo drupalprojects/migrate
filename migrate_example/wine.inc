@@ -16,21 +16,11 @@
  */
 abstract class AdvancedExampleMigration extends Migration {
   public function __construct() {
-    // Always call the parent constructor first for basic setup
     parent::__construct();
-
-    // With migrate_ui enabled, migration pages will indicate people involved in
-    // the particular migration, with their role and contact info. We default the
-    // list in the shared class; it can be overridden for specific migrations.
     $this->team = array(
-      new MigrateTeamMember('Liz Taster', 'ltaster@example.com', t('Product Owner')),
-      new MigrateTeamMember('Larry Brewer', 'lbrewer@example.com', t('Implementor')),
+      new MigrateTeamMember('Jack Kramer', 'jkramer@example.com', t('Taster')),
+      new MigrateTeamMember('Linda Madison', 'lmadison@example.com', t('Winemaker')),
     );
-
-    // Individual mappings in a migration can be linked to a ticket or issue
-    // in an external tracking system. Define the URL pattern here in the shared
-    // class with ':id:' representing the position of the issue number, then add
-    // ->issueNumber(1234) to a mapping.
     $this->issuePattern = 'http://drupal.org/node/:id:';
   }
 }
@@ -47,7 +37,7 @@ class WinePrepMigration extends MigrationBase {
     $this->description = t('If pathauto is present, disable it for the duration');
     // TIP: Regular dependencies, besides enforcing (in the absence of --force)
     // the run order of migrations, affect the sorting of migrations on display.
-    // You can use soft dependencies to affect the display order when the
+    // You can use soft dependencies to affect just the display order when the
     // migrations aren't technically required to run in a certain order. In this
     // case, we want the wine migrations to appear after the beer migrations -
     // without this line, they would be intermingled due to their lack of
@@ -71,55 +61,76 @@ class WinePrepMigration extends MigrationBase {
   public function import() {
     if (module_exists('pathauto')) {
       module_disable(array('pathauto'));
+      call_user_func($this->outputFunction, t('Disabled pathauto module'));
     }
-    // Provide feedback
-    call_user_func($this->outputFunction, t("Succeeded in !sec sec - done with '!name'",
-      array('!sec' => round(microtime(TRUE) - $this->starttime, 1),
-            '!name' => $this->machineName)), 'completed');
-    return Migration::RESULT_COMPLETED;
+    else {
+      call_user_func($this->outputFunction, t('Pathauto is already disabled'));
+    }
+    // Must return one of the MigrationBase RESULT constants
+    return MigrationBase::RESULT_COMPLETED;
   }
 }
 
-class WineTermMigration extends AdvancedExampleMigration {
-  public function __construct() {
+// The term migrations are very similar - implement the commonalities here
+abstract class WineTermMigration extends AdvancedExampleMigration {
+  public function __construct($type, $vocabulary_name, $description) {
     parent::__construct();
+    $this->description = $description;
     $this->dependencies = array('WinePrepMigration');
-    $this->description = t('Migrate styles from the source database to taxonomy terms');
     $this->map = new MigrateSQLMap($this->machineName,
         array(
-          'style' => array('type' => 'varchar',
-                           'length' => 255,
-                           'not null' => TRUE,
-                           'description' => 'Topic ID',
-                          )
+          'categoryid' => array('type' => 'int',
+                                'unsigned' => TRUE,
+                                'not null' => TRUE,
+                               )
         ),
         MigrateDestinationTerm::getKeySchema()
       );
 
-    $query = db_select('migrate_example_wine_topic', 'met')
-             ->fields('met', array('style', 'details', 'style_parent', 'region', 'hoppiness'))
+    $query = db_select('migrate_example_wine_categories', 'wc')
+             ->fields('wc', array('categoryid', 'name', 'details', 'category_parent'))
+             ->condition('type', $type)
              // This sort assures that parents are saved before children.
-             ->orderBy('style_parent', 'ASC');
+             ->orderBy('category_parent', 'ASC');
     $this->source = new MigrateSourceSQL($this, $query);
-    $this->destination = new MigrateDestinationTerm('migrate_example_wine_styles');
-    $this->addFieldMapping('name', 'style');
+    $this->destination = new MigrateDestinationTerm($vocabulary_name);
+
+    // Mapped fields
+    $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('description', 'details');
-    $this->addFieldMapping('parent_name', 'style_parent')
-         ->description(t('The incoming style_parent field is the name of the term parent'));
-    $this->addFieldMapping(NULL, 'hoppiness')
-         ->description(t('This info will not be maintained in Drupal'))
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping(NULL, 'region')
-         ->description('Will a field be added to the vocabulary for this?')
-         ->issueGroup(t('Client Issues'))
-         ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_MEDIUM)
-         ->issueNumber(770064);
+    $this->addFieldMapping('parent', 'category_parent')
+         ->sourceMigration(get_class($this));
+
+    // Unmapped source fields
+
+    // Unmapped destination fields
     $this->addFieldMapping('format')
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('weight')
          ->issueGroup(t('DNM'));
-    $this->addFieldMapping('parent')
+    $this->addFieldMapping('parent_name')
          ->issueGroup(t('DNM'));
+  }
+}
+
+class WineVarietyMigration extends WineTermMigration {
+  public function __construct() {
+    parent::__construct('variety', 'migrate_example_wine_varieties',
+      t('Migrate varieties from the source database to taxonomy terms'));
+  }
+}
+
+class WineRegionMigration extends WineTermMigration {
+  public function __construct() {
+    parent::__construct('region', 'migrate_example_wine_regions',
+      t('Migrate regions from the source database to taxonomy terms'));
+  }
+}
+
+class WineBestWithMigration extends WineTermMigration {
+  public function __construct() {
+    parent::__construct('best_with', 'migrate_example_wine_best_with',
+      t('Migrate "Best With" from the source database to taxonomy terms'));
   }
 }
 
@@ -131,14 +142,15 @@ class WineUserMigration extends AdvancedExampleMigration {
     $this->map = new MigrateSQLMap($this->machineName,
         array('accountid' => array(
                 'type' => 'int',
+                'unsigned' => TRUE,
                 'not null' => TRUE,
                 'description' => 'Account ID.'
                 )
              ),
         MigrateDestinationUser::getKeySchema()
     );
-    $query = db_select('migrate_example_wine_account', 'mea')
-             ->fields('mea', array('accountid', 'status', 'posted', 'name', 'nickname', 'password', 'mail'));
+    $query = db_select('migrate_example_wine_account', 'wa')
+             ->fields('wa', array('accountid', 'status', 'posted', 'name', 'nickname', 'password', 'mail'));
     $this->source = new MigrateSourceSQL($this, $query);
     $this->destination = new MigrateDestinationUser();
 
@@ -147,7 +159,6 @@ class WineUserMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('status', 'status');
     $this->addFieldMapping('created', 'posted')
          ->description('See prepare method');
-    date_default_timezone_set('US/Mountain');
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('pass', 'password');
     $this->addFieldMapping('roles')
@@ -174,6 +185,9 @@ class WineUserMigration extends AdvancedExampleMigration {
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('init')
          ->issueGroup(t('DNM'));
+    // No genders for wine user
+    $this->addFieldMapping('field_migrate_example_gender')
+         ->issueGroup(t('DNM'));
   }
 
   public function prepare(stdClass $account, stdClass $row) {
@@ -184,32 +198,117 @@ class WineUserMigration extends AdvancedExampleMigration {
   }
 }
 
-class WineNodeMigration extends AdvancedExampleMigration {
+class WineProducerMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
-    $this->description = t('Wines of the world');
-    $this->dependencies = array('WineTermMigration', 'WineUserMigration');
+    $this->description = t('Wine producers of the world');
+    $this->dependencies = array('WineRegionMigration', 'WineUserMigration');
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
-        'bid' => array(
+        'producerid' => array(
           'type' => 'int',
+          'unsigned' => TRUE,
           'not null' => TRUE,
-          'description' => 'Wine ID.',
-          'alias' => 'b',
+          'alias' => 'p',
         )
       ),
       MigrateDestinationNode::getKeySchema()
     );
 
-    $query = db_select('migrate_example_wine_node', 'b')
-             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'accountid', 'image'));
-    $query->leftJoin('migrate_example_wine_topic_node', 'tb', 'b.bid = tb.bid');
+    $query = db_select('migrate_example_wine_producer', 'p')
+             ->fields('p', array('producerid', 'name', 'body', 'excerpt', 'accountid'));
+    // Region term is singletons, handled straighforwardly
+    $query->leftJoin('migrate_example_wine_category_producer', 'reg',
+      "p.producerid = reg.producerid");
+    $query->addField('reg', 'categoryid', 'region');
+
+    $this->source = new MigrateSourceSQL($this, $query);
+    $this->destination = new MigrateDestinationNode('migrate_example_producer');
+
+    // Mapped fields
+    $this->addFieldMapping('title', 'name')
+         ->description(t('Mapping producer name in source to node title'));
+    $this->addFieldMapping('uid', 'accountid')
+         ->sourceMigration('WineUserMigration')
+         ->defaultValue(1);
+    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+         ->sourceMigration('WineRegionMigration');
+    $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
+    $this->addFieldMapping('body', 'body')
+         ->arguments($arguments);
+    $this->addFieldMapping(NULL, 'excerpt');
+    $this->addFieldMapping('sticky')
+         ->defaultValue(0);
+
+    // No unmapped source fields
+
+    // Unmapped destination fields
+    $this->addFieldMapping('is_new')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('name')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('created')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('changed')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('status')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('promote')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('revision')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('language')
+         ->issueGroup(t('DNM'));
+  }
+}
+
+// TODO: Add node_reference field pointing to producer
+class WineWineMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('Wines of the world');
+    $this->dependencies = array('WineVarietyMigration', 'WineRegionMigration',
+      'WineBestWithMigration', 'WineUserMigration', 'WineProducerMigration');
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'wineid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'description' => 'Wine ID',
+          'alias' => 'w',
+        )
+      ),
+      MigrateDestinationNode::getKeySchema()
+    );
+
+    $query = db_select('migrate_example_wine', 'w')
+             ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image'));
+    // Variety and region terms are singletons, need to go two levels deep
+    $query->leftJoin('migrate_example_wine_category_wine', 'cwvar',
+      "w.wineid = cwvar.wineid");
+    $query->leftJoin('migrate_example_wine_categories', 'var',
+      "cwvar.categoryid = var.categoryid AND var.type = 'variety'");
+    $query->addField('var', 'categoryid', 'variety');
+
+    $query->leftJoin('migrate_example_wine_category_wine', 'cwreg',
+      "w.wineid = cwreg.wineid");
+    $query->leftJoin('migrate_example_wine_categories', 'reg',
+      "cwreg.categoryid = reg.categoryid AND var.type = 'region'");
+    $query->addField('reg', 'categoryid', 'region');
+
+    $query->leftJoin('migrate_example_wine_category_wine', 'cwbw',
+      "w.wineid = cwbw.wineid");
+    $query->leftJoin('migrate_example_wine_categories', 'bw',
+      "cwbw.categoryid = bw.categoryid AND bw.type = 'best_with'");
     // Gives a single comma-separated list of related terms
-    $query->groupBy('tb.bid');
-    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
-    $count_query = db_select('migrate_example_wine_node', 'b');
-    $count_query->addExpression('COUNT(bid)', 'cnt');
+    $query->groupBy('cwbw.wineid');
+    $query->addExpression('GROUP_CONCAT(bw.categoryid)', 'best_with');
+
+    $count_query = db_select('migrate_example_wine', 'w');
+    $count_query->addExpression('COUNT(wineid)', 'cnt');
 
     $this->source = new MigrateSourceSQL($this, $query, $count_query);
     $this->destination = new MigrateDestinationNode('migrate_example_wine');
@@ -217,15 +316,16 @@ class WineNodeMigration extends AdvancedExampleMigration {
     // Mapped fields
     $this->addFieldMapping('title', 'name')
          ->description(t('Mapping wine name in source to node title'));
-    $this->addFieldMapping('nid', 'bid')
-         ->description(t('Preserve old wine ID as nid in Drupal'));
-    $this->addFieldMapping('is_new')
-         ->defaultValue(TRUE);
     $this->addFieldMapping('uid', 'accountid')
          ->sourceMigration('WineUserMigration')
          ->defaultValue(1);
-    $this->addFieldMapping('migrate_example_wine_styles', 'terms')
-         ->separator(',');
+    $this->addFieldMapping('migrate_example_wine_varieties', 'variety')
+         ->sourceMigration('WineVarietyMigration');
+    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+         ->sourceMigration('WineRegionMigration');
+    $this->addFieldMapping('migrate_example_wine_best_with', 'best_with')
+         ->separator(',')
+         ->sourceMigration('WineBestWithMigration');
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
@@ -239,6 +339,8 @@ class WineNodeMigration extends AdvancedExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
+    $this->addFieldMapping('is_new')
+         ->issueGroup(t('DNM'));
     $this->addFieldMapping('name')
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('created')
@@ -260,18 +362,19 @@ class WineCommentMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about wines';
-    $this->dependencies = array('WineUserMigration', 'WineNodeMigration');
+    $this->dependencies = array('WineUserMigration', 'WineWineMigration');
     $this->map = new MigrateSQLMap($this->machineName,
-      array('cid' => array(
+      array('commentid' => array(
               'type' => 'int',
+              'unsigned' => TRUE,
               'not null' => TRUE,
              )
            ),
         MigrateDestinationComment::getKeySchema()
       );
-    $query = db_select('migrate_example_wine_comment', 'mec')
-             ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'accountid', 'body', 'bid', 'subject'))
-             ->orderBy('cid_parent', 'ASC');
+    $query = db_select('migrate_example_wine_comment', 'wc')
+             ->fields('wc', array('commentid', 'comment_parent', 'name', 'mail', 'accountid', 'body', 'wineid', 'subject'))
+             ->orderBy('comment_parent');
     $this->source = new MigrateSourceSQL($this, $query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_wine');
 
@@ -281,13 +384,13 @@ class WineCommentMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
-    $this->addFieldMapping('nid', 'bid');
+    $this->addFieldMapping('nid', 'wineid');
     $this->addFieldMapping('uid', 'accountid')
          ->sourceMigration('WineUserMigration')
          ->defaultValue(0);
-    $this->addFieldMapping('pid', 'cid_parent')
+    $this->addFieldMapping('pid', 'comment_parent')
          ->sourceMigration('WineCommentMigration')
-         ->description('Parent comment.');
+         ->description('Parent comment');
 
     $this->addFieldMapping('comment_body', 'body');
 
@@ -330,12 +433,13 @@ class WineFinishMigration extends MigrationBase {
   }
   public function import() {
     if (!module_exists('pathauto')) {
+      // TODO: Really should keep track of whether it was originally enabled
       module_enable(array('pathauto'));
+      call_user_func($this->outputFunction, t('Re-enabled pathauto module'));
     }
-    call_user_func($this->outputFunction,
-      t("Succeeded in !sec sec - done with '!name'",
-        array('!sec' => round(microtime(TRUE) - $this->starttime, 1),
-              '!name' => $this->machineName)), 'completed');
+    else {
+      call_user_func($this->outputFunction, t('Pathauto module already enabled'));
+    }
     return Migration::RESULT_COMPLETED;
   }
 }

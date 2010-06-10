@@ -18,25 +18,37 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function testNodeImport() {
-    $migration = Migration::getInstance('WineTermMigration');
+    $migration = Migration::getInstance('WineVarietyMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
-      t('Term import returned RESULT_COMPLETED'));
+      t('Variety term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineRegionMigration');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Region term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineBestWithMigration');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('"Best With" term import returned RESULT_COMPLETED'));
     $migration = Migration::getInstance('WineUserMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineNodeMigration');
+    $migration = Migration::getInstance('WineProducerMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
-      t('Node import returned RESULT_COMPLETED'));
+      t('Producer node import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineWineMigration');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import returned RESULT_COMPLETED'));
 
-    $query = db_select('migrate_example_wine_node', 'b')
-             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'accountid', 'countries', 'image'));
-    $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
+    $query = db_select('migrate_example_wine', 'w')
+             ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image'));
+/*    $query->leftJoin('migrate_example_wine_category_wine', 'cw', 'w.wineid=cw.wineid');
     // Gives a single comma-separated list of terms
     $query->groupBy('tb.bid');
-    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
+    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');*/
     $result = $query->execute();
 
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
@@ -50,28 +62,27 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       $count++;
       $node = $nodes[$row->name];
       $this->assertNotNull($node, t('!title imported', array('!title' => $row->name)));
-      $this->assertEqual($row->bid, $node->nid, t('Nid preserved'));
       // TODO: uid from wineuser map
       // TODO: terms
       // TODO: summary
       // TODO: image
     }
     $this->assertEqual(count($nodes), $count,
-      t('Counts of nodes and input rows match'));
+      t('Counts of wine nodes and input rows match'));
 
     // Test rollback
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
-      t('Node rollback returned RESULT_COMPLETED'));
+      t('Wine node rollback returned RESULT_COMPLETED'));
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
     $this->assertEqual(count($rawnodes), 0, t('All nodes deleted'));
-    $count = db_select('migrate_map_winenode', 'map')
+    $count = db_select('migrate_map_winewine', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()
               ->execute()
               ->fetchField();
     $this->assertEqual($count, 0, t('Map cleared'));
-    $count = db_select('migrate_message_winenode', 'msg')
+    $count = db_select('migrate_message_winewine', 'msg')
               ->fields('msg', array('sourceid1'))
               ->countQuery()
               ->execute()

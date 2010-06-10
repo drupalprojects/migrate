@@ -17,6 +17,9 @@
  */
 function migrate_ui_requirements($phase) {
   $reqs = array();
+  // TODO: Needs work to support newly-protected fields
+  return $reqs;
+
   $severity = REQUIREMENT_OK;
   // TODO: UI for disabling reports
   if ($phase == 'runtime' && variable_get('migrate_ui_status_report', TRUE)) {
@@ -29,33 +32,33 @@ function migrate_ui_requirements($phase) {
         $open = $unmapped_destination = $unmapped_source = $nofield = 0;
         // TODO: Ugh! Rename one pair or the other...
         $source_fields_keyed = $destination_fields_keyed = array();
-        $source_fields = $migration->source->fields();
-        $destination_fields = $migration->destination->fields();
-        foreach ($migration->fieldMappings as $mapping) {
-          if ($mapping->issuePriority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
+        $source_fields = $migration->getSource()->fields();
+        $destination_fields = $migration->getDestination()->fields();
+        foreach ($migration->getFieldMappings() as $mapping) {
+          if ($mapping->getIssuePriority() != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
             $open++;
             $severity = REQUIREMENT_WARNING;
           }
-          if ($mapping->sourceField && !isset($source_fields[$mapping->sourceField])) {
+          if ($mapping->getSourceField() && !isset($source_fields[$mapping->getSourceField()])) {
             $nofield++;
             $severity = REQUIREMENT_WARNING;
           }
-          if ($mapping->destinationField && !isset($destination_fields[$mapping->destinationField])) {
+          if ($mapping->getDestinationField() && !isset($destination_fields[$mapping->getDestinationField()])) {
             $nofield++;
             $severity = REQUIREMENT_WARNING;
           }
           $source_fields_keyed[$mapping->sourceField] = $mapping->sourceField;
           $destination_fields_keyed[$mapping->destinationField] = $mapping->destinationField;
         }
-        $destKey = $migration->destination->keySchema;
+        $destKey = $migration->getDestination()->keySchema;
         foreach ($migration->destination->fields() as $machine_name => $description) {
           if (!isset($destination_fields_keyed[$machine_name]) && !isset($destKey[$machine_name])) {
             $unmapped_destination++;
             $severity = REQUIREMENT_WARNING;
           }
         }
-        $sourceKey = $migration->source->keySchema;
-        foreach ($migration->source->fields() as $machine_name => $description) {
+        $sourceKey = $migration->getSource()->keySchema;
+        foreach ($migration->getSource()->fields() as $machine_name => $description) {
           if (!isset($source_fields_keyed[$machine_name]) && !isset($sourceKey[$machine_name])) {
             $unmapped_source++;
             $severity = REQUIREMENT_WARNING;

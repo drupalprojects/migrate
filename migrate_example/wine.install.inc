@@ -285,9 +285,33 @@ function migrate_example_wine_schema_comment() {
       ),
       'accountid' => array(
         'type' => 'int',
-        'length' => 11,
+        'unsigned' => TRUE,
         'not null' => FALSE,
         'description' => 'Account ID (if any).',
+      ),
+      'commenthost' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'IP/domain of host posted from',
+      ),
+      'userpage' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'User homepage',
+      ),
+      'posted' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Date comment posted',
+      ),
+      'lastchanged' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Date comment last changed',
       ),
     ),
     'primary key' => array('commentid'),
@@ -683,15 +707,26 @@ function migrate_example_wine_data_account() {
 }
 
 function migrate_example_wine_data_comment() {
-  $fields = array('commentid', 'wineid', 'comment_parent', 'subject', 'body', 'name', 'mail', 'accountid');
+  $fields = array('commentid', 'wineid', 'comment_parent', 'subject', 'body',
+    'name', 'mail', 'accountid', 'commenthost', 'userpage', 'posted', 'lastchanged');
   $query = db_insert('migrate_example_wine_comment')
     ->fields($fields);
   $data = array(
-    array(1, 1, NULL, 'im first', 'Tasty', 'grace', 'grace@example.com', 0),
-    array(2, 1, NULL, 'im second', 'Delicious', 'horace', 'horace@example.com', 0),
-    array(3, 1, NULL, 'im parent', 'Don\'t care for it', 'irene', 'irene@example.com', 0),
-    array(4, 1, 3, 'im child', 'But it\'s so good!', 'emily', NULL, 3),
-    array(5, 1, 4, 'im grandchild', 'Right on, Emily!', 'thefonz@example.com', NULL, 4),
+    array(1, 1, NULL, 'im first', 'Tasty', 'grace', 'grace@example.com', 0,
+      '123.456.78.9', 'http:://grace.example.com/',
+      strtotime('2010-01-02 03:04:05'), strtotime('2010-04-05 06:07:08')),
+    array(2, 1, NULL, 'im second', 'Delicious', 'horace', 'horace@example.com', 0,
+      'example.com', NULL,
+      strtotime('2010-02-02 03:04:05'), strtotime('2010-05-05 06:07:08')),
+    array(3, 1, NULL, 'im parent', 'Don\'t care for it', 'irene', 'irene@example.com', 0,
+      '254.0.2.5', 'http:://www.example.com/irene',
+      strtotime('2010-03-02 03:04:05'), strtotime('2010-03-02 03:04:05')),
+    array(4, 1, 3, 'im child', 'But it\'s so good!', 'emily', NULL, 3,
+      '58.29.126.1', 'http:://www.wine.com/',
+      strtotime('2010-01-02 03:04:05'), strtotime('2010-01-02 03:04:05')),
+    array(5, 1, 4, 'im grandchild', 'Right on, Emily!', 'thefonz@example.com', NULL, 9,
+      '123.456.78.9', NULL,
+      strtotime('2010-06-02 03:04:05'), strtotime('2010-06-02 03:04:05')),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

@@ -394,7 +394,9 @@ class WineCommentMigration extends AdvancedExampleMigration {
         MigrateDestinationComment::getKeySchema()
       );
     $query = db_select('migrate_example_wine_comment', 'wc')
-             ->fields('wc', array('commentid', 'comment_parent', 'name', 'mail', 'accountid', 'body', 'wineid', 'subject'))
+             ->fields('wc', array('commentid', 'comment_parent', 'name', 'mail',
+              'accountid', 'body', 'wineid', 'subject', 'commenthost', 'userpage',
+              'posted', 'lastchanged'))
              ->orderBy('comment_parent');
     $this->source = new MigrateSourceSQL($this, $query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_wine');
@@ -405,32 +407,24 @@ class WineCommentMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
-    $this->addFieldMapping('nid', 'wineid');
+    $this->addFieldMapping('nid', 'wineid')
+         ->sourceMigration('WineWineMigration');
     $this->addFieldMapping('uid', 'accountid')
          ->sourceMigration('WineUserMigration')
          ->defaultValue(0);
     $this->addFieldMapping('pid', 'comment_parent')
          ->sourceMigration('WineCommentMigration')
          ->description('Parent comment');
-
     $this->addFieldMapping('comment_body', 'body');
+    $this->addFieldMapping('hostname', 'commenthost');
+    $this->addFieldMapping('created', 'posted');
+    $this->addFieldMapping('changed', 'lastchanged');
+    $this->addFieldMapping('homepage', 'userpage');
 
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('user_name')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('user_email')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('hostname')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('created')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('changed')
-         ->issueGroup(t('DNM'));
     $this->addFieldMapping('thread')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('homepage')
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('language')
          ->issueGroup(t('DNM'));

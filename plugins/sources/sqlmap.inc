@@ -152,6 +152,28 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
+   * Given a (possibly multi-field) destination key, return the (possibly multi-field)
+   * source key mapped to it.
+   *
+   * @param array $destination_id
+   *  Array of destination key values.
+   * @return array
+   *  Array of source key values, or NULL on failure.
+   */
+  public function lookupSourceID(array $destination_id) {
+    migrate_instrument_start('lookupSourceID');
+    $query = $this->connection->select($this->mapTable, 'map')
+              ->fields('map', $this->sourceKeyMap);
+    foreach ($this->destinationKeyMap as $key_name) {
+      $query = $query->condition("map.$key_name", array_shift($destination_id), '=');
+    }
+    $result = $query->execute();
+    $source_id = $result->fetchAssoc();
+    migrate_instrument_stop('lookupSourceID');
+    return $source_id;
+  }
+
+  /**
    * Given a (possibly multi-field) source key, return the (possibly multi-field)
    * destination key it is mapped to.
    *

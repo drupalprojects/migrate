@@ -48,7 +48,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // First the core (node table) properties
     $fields['nid'] = t('Node: Existing node ID');
     $fields['is_new'] = t('Node: Indicates a new node with the specified nid should be created');
-    $fields['name'] = t('Node: Authored by (username)');
     $fields['uid'] = t('Node: Authored by (uid)');
     $fields['created'] = t('Node: Created timestamp');
     $fields['changed'] = t('Node: Modified timestamp');
@@ -117,17 +116,19 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $node->language = $this->language;
     }
 
-    // To keep node_object_prepare from choking.
-    if (!isset($node->created)) {
-      $node->created = REQUEST_TIME;
-    }
-
     // Set type before invoking prepare handlers - they may take type-dependent actions.
     $node->type = $this->bundle;
 
     // Apply defaults, allow standard node prepare hooks to fire.
     // node_object_prepare() will blow these away, so save them here and
     // stuff them in later if need be.
+    if (isset($node->created)) {
+      $created = $node->created;
+    }
+    else {
+      //To keep node_object_prepare() from choking
+      $node->created = REQUEST_TIME;
+    }
     if (isset($node->changed)) {
       $changed = $node->changed;
     }
@@ -135,9 +136,10 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $uid = $node->uid;
     }
     node_object_prepare($node);
-    if (isset($changed)) {
-      $node->changed = $changed;
+    if (isset($created)) {
+      $node->created = $created;
     }
+    // No point to resetting $node->changed here, node_save() will overwrite it
     if (isset($uid)) {
       $node->uid = $uid;
     }
@@ -148,6 +150,16 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');
+
+    // Unfortunately, http://drupal.org/node/722688 was not accepted, so fix
+    // the changed timestamp here
+    if (isset($changed) && isset($node->nid)) {
+      db_update('node')
+        ->fields(array('changed' => $changed))
+        ->condition('nid', $node->nid)
+        ->execute();
+      $node->changed = $changed;
+    }
     $this->complete($migration, $node, $row);
     $return = isset($node->nid) ? array($node->nid) : FALSE;
     return $return;

@@ -20,9 +20,30 @@ function migrate_example_schema() {
 function migrate_example_install() {
   migrate_example_beer_install();
   migrate_example_wine_install();
+  // A simple format for testing migration of format
+  $example_format = array(
+    'name' => 'Migrate example format',
+    'weight' => 20,
+    'filters' => array(
+      // Escape all HTML.
+      'filter_html_escape' => array(
+        'weight' => 0,
+        'status' => 1,
+      ),
+    ),
+  );
+  $example_format = (object) $example_format;
+  filter_format_save($example_format);
 }
 
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
   migrate_example_wine_uninstall();
+  $formats = filter_formats();
+  foreach ($formats as $format) {
+    if ($format->name == 'Migrate example format') {
+      filter_format_delete($format);
+      break;
+    }
+  }
 }

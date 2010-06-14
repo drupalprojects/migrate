@@ -49,6 +49,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields['roles'] = t('User: Roles');
     $fields['theme'] = t('User: Default theme');
     $fields['signature'] = t('User: Signature');
+    $fields['signature_format'] = t('User: Signature format');
     $fields['created'] = t('User: Registered timestamp');
     $fields['access'] = t('User: Last access timestamp');
     $fields['login'] = t('User: Last login timestamp');

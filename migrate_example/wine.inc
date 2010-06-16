@@ -72,10 +72,10 @@ class WinePrepMigration extends MigrationBase {
   public function import() {
     if (module_exists('pathauto')) {
       module_disable(array('pathauto'));
-      call_user_func($this->outputFunction, t('Disabled pathauto module'), 'success');
+      $this->showMessage(t('Disabled pathauto module'), 'success');
     }
     else {
-      call_user_func($this->outputFunction, t('Pathauto is already disabled'), 'success');
+      $this->showMessage(t('Pathauto is already disabled'), 'success');
     }
     // Must return one of the MigrationBase RESULT constants
     return MigrationBase::RESULT_COMPLETED;
@@ -262,7 +262,8 @@ class WineProducerMigration extends AdvancedExampleMigration {
          ->sourceMigration('WineUserMigration')
          ->defaultValue(1);
     $this->addFieldMapping('migrate_example_wine_regions', 'region')
-         ->sourceMigration('WineRegionMigration');
+         ->sourceMigration('WineRegionMigration')
+         ->arguments(array('source_type' => 'tid'));
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
@@ -289,6 +290,93 @@ class WineProducerMigration extends AdvancedExampleMigration {
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('language')
          ->issueGroup(t('DNM'));
+  }
+}
+
+/**
+ * TIP: An example of importing from an XML feed. See the files in the xml
+ * directory - index.xml contains a list of IDs to import, and <id>.xml
+ * is the data for a given producer.
+ *
+ * First, you need to extend MigrateXMLSource, implementing count(),
+ * populateIdlist(), and constructObjectUrl().
+ */
+class WineXMLSource extends MigrateXMLSource {
+  /**
+   * Return a count of all available source records.
+   */
+  public function count($refresh = FALSE) {
+    $xml = simplexml_load_file($this->listUrl);
+    // Number of sourceid elements beneath the top-level element
+    $count = count($xml->sourceid);
+    return $count;
+  }
+
+  /**
+   * Return an array of IDs to be imported.
+   *
+   * @param $xml
+   *  SimpleXMLElement object representing the listing file.
+   */
+  protected function populateIdlist($xml) {
+    $this->idList = (array)$xml->sourceid;
+  }
+
+  /**
+   * Given the ID of an object to import, construct the URL to retrieve it
+   *
+   * @param $id
+   */
+  protected function constructObjectUrl($id) {
+    $object_url = 'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') .
+      "/xml/$id.xml";
+    return $object_url;
+  }
+}
+
+/**
+ * Note that, if basing a migration on an XML source, you need to derive it
+ * from XMLMigration instead of Migration.
+ */
+class WineProducerXMLMigration extends XMLMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('XML feed of wine producers of the world');
+    $this->dependencies = array('WineRegionMigration', 'WineUserMigration');
+
+    // The source ID here is the one retrieved from the XML listing file, and
+    // used to identify the specific object's file
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'sourceid' => array(
+          'type' => 'varchar',
+          'length' => 4,
+          'not null' => TRUE,
+        )
+      ),
+      MigrateDestinationNode::getKeySchema()
+    );
+
+    // The key argument for XML source object is the URL of the listing
+    $this->source = new WineXMLSource($this,
+      'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') . '/xml/index.xml');
+
+    $this->destination = new MigrateDestinationNode('migrate_example_producer');
+
+    // Note that for XML sources, in addition to the source field passed to
+    // addFieldMapping (the name under which it will be saved in the data row
+    // passed through the migration process) we specify the Xpath used to retrieve
+    // the value from the XML.
+    $this->addFieldMapping('title', 'title')
+         ->xpath('/producer/name');
+    $this->addFieldMapping('uid', 'authorid')
+         ->xpath('/producer/authorid')
+         ->sourceMigration('WineUserMigration')
+         ->defaultValue(1);
+    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+         ->xpath('/producer/region');
+    $this->addFieldMapping('body', 'description')
+         ->xpath('/producer/description');
   }
 }
 
@@ -450,10 +538,10 @@ class WineFinishMigration extends MigrationBase {
     if (!module_exists('pathauto')) {
       // TODO: Really should keep track of whether it was originally enabled
       module_enable(array('pathauto'));
-      call_user_func($this->outputFunction, t('Re-enabled pathauto module'), 'success');
+      $this->showMessage(t('Re-enabled pathauto module'), 'success');
     }
     else {
-      call_user_func($this->outputFunction, t('Pathauto module already enabled', 'success'));
+      $this->showMessage(t('Pathauto module already enabled', 'success'));
     }
     return Migration::RESULT_COMPLETED;
   }

@@ -215,23 +215,6 @@ class MigrateSourceSQL extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::current() - called when entering a loop
-   * iteration, returning the current row
-   */
-  public function current() {
-    return $this->currentRow;
-  }
-
-  /**
-   * Implementation of Iterator::key - called when entering a loop iteration, returning
-   * the key of the current row. It must be a scalar - we will serialize
-   * to fulfill the requirement, but using getCurrentKey() is preferable.
-   */
-  public function key() {
-    return serialize($this->currentKey);
-  }
-
-  /**
    * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
    * as well as explicitly from rewind().
    */
@@ -282,13 +265,5 @@ class MigrateSourceSQL extends MigrateSource {
       }
     }
     migrate_instrument_stop('MigrateSourceSQL next');
-  }
-
-  /**
-   * Implementation of Iterator::valid() - called at the top of the loop, returning
-   * TRUE to process the loop and FALSE to terminate it
-   */
-  public function valid() {
-    return !is_null($this->currentRow);
   }
 }

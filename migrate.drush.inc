@@ -724,7 +724,7 @@ function drush_migrate_stop($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);
     foreach ($migrations as $migration) {
-      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->machineName)));
+      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->getMachineName())));
       $migration->stopProcess();
     }
   }

@@ -152,6 +152,46 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
+   * Retrieve a row from the map table, given a source ID
+   *
+   * @param array $source_id
+   */
+  public function getRowBySource(array $source_id) {
+    migrate_instrument_start('mapRowBySource');
+    $fields = $this->destinationKeyMap;
+    $fields[] = 'needs_update';
+    $fields[] = 'last_imported';
+    $query = $this->connection->select($this->mapTable, 'map')
+              ->fields('map', $fields);
+    foreach ($this->sourceKeyMap as $key_name) {
+      $query = $query->condition("map.$key_name", array_shift($source_id), '=');
+    }
+    $result = $query->execute();
+    migrate_instrument_stop('mapRowBySource');
+    return $result->fetchAssoc();
+  }
+
+  /**
+   * Retrieve a row from the map table, given a destination ID
+   *
+   * @param array $source_id
+   */
+  public function getRowByDestination(array $destination_id) {
+    migrate_instrument_start('mapRowByDestination');
+    $fields = $this->sourceKeyMap;
+    $fields[] = 'needs_update';
+    $fields[] = 'last_imported';
+    $query = $this->connection->select($this->mapTable, 'map')
+              ->fields('map', $fields);
+    foreach ($this->destinationKeyMap as $key_name) {
+      $query = $query->condition("map.$key_name", array_shift($destination_id), '=');
+    }
+    $result = $query->execute();
+    migrate_instrument_stop('mapRowByDestination');
+    return $result->fetchAssoc();
+  }
+
+  /**
    * Given a (possibly multi-field) destination key, return the (possibly multi-field)
    * source key mapped to it.
    *
@@ -323,14 +363,20 @@ class MigrateSQLMap extends MigrateMap {
   public function saveMessage($source_key, $message, $level = Migration::MESSAGE_ERROR) {
     // Source IDs as arguments
     $count = 1;
-    foreach ($source_key as $key_value) {
-      $fields['sourceid' . $count++] = $key_value;
+    if (is_array($source_key)) {
+      foreach ($source_key as $key_value) {
+        $fields['sourceid' . $count++] = $key_value;
+      }
+      $fields['level'] = $level;
+      $fields['message'] = $message;
+      $this->connection->insert($this->messageTable)
+        ->fields($fields)
+        ->execute();
     }
-    $fields['level'] = $level;
-    $fields['message'] = $message;
-    $this->connection->insert($this->messageTable)
-      ->fields($fields)
-      ->execute();
+    else {
+      // TODO: What else can we do?
+      print($message);
+    }
   }
 
   /**
@@ -382,30 +428,6 @@ class MigrateSQLMap extends MigrateMap {
     $query->addExpression('COUNT(*)', 'count');
     $count = $query->execute()->fetchField();
     return $count;
-  }
-
-  /**
-   * Retrieve the destination ID values corresponding to a given source row, and
-   * add them to the row
-   *
-   * @param stdClass $data_row
-   */
-  public function addDestinationKey(stdClass &$data_row) {
-    $fields = array('needs_update');
-    foreach ($this->destinationKeyMap as $map_field) {
-      $fields[] = $map_field;
-    }
-    $query = $this->connection->select($this->mapTable, 'map')
-             ->fields('map', $fields);
-    foreach ($this->sourceKeyMap as $field_name => $map_name) {
-      $query = $query->condition("map.$map_name", $data_row->$field_name, '=');
-    }
-    $result = $query->execute()->fetchAssoc();
-    if (is_array($result)) {
-      foreach ($result as $field => $value) {
-        $data_row->$field = $value;
-      }
-    }
   }
 
   /**

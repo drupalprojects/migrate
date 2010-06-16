@@ -254,7 +254,8 @@ abstract class MigrationBase {
   }
 
   /**
-   * Derived classes will store the message appropriately.
+   * Default to printing messages, but derived classes are expected to save
+   * messages indexed by current source ID.
    *
    * @param string $message
    *  The message to record.
@@ -262,6 +263,18 @@ abstract class MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
+    showMessage($message, $level);
+  }
+
+  /**
+   * Output the given message appropriately (drush_print/drupal_set_message/etc.)
+   *
+   * @param string $message
+   *  The message to output.
+   * @param int $level
+   *  Optional message severity (defaults to MESSAGE_ERROR).
+   */
+  public function showMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
     call_user_func($this->outputFunction, $message, $level);
   }
 
@@ -586,7 +599,7 @@ abstract class MigrationBase {
     $usage = memory_get_usage();
     $pct_memory = $usage/$this->memoryLimit;
     if ($pct_memory > $this->memoryThreshold) {
-      call_user_func($this->outputFunction,
+      $this->showMessage(
         t('Memory usage is !usage (!pct% of limit !limit), resetting statics',
           array('!pct' => round($pct_memory*100),
                 '!usage' => format_size($usage),
@@ -600,7 +613,7 @@ abstract class MigrationBase {
       // Use a lower threshold - we don't want to be in a situation where we keep
       // coming back here and trimming a tiny amount
       if ($pct_memory > (.90 * $this->memoryThreshold)) {
-        call_user_func($this->outputFunction,
+        $this->showMessage(
           t('Memory usage is now !usage (!pct% of limit !limit), not enough reclaimed, starting new batch',
             array('!pct' => round($pct_memory*100),
                   '!usage' => format_size($usage),
@@ -609,7 +622,7 @@ abstract class MigrationBase {
         return TRUE;
       }
       else {
-        call_user_func($this->outputFunction,
+        $this->showMessage(
           t('Memory usage is now !usage (!pct% of limit !limit), reclaimed enough, continuing',
             array('!pct' => round($pct_memory*100),
                   '!usage' => format_size($usage),

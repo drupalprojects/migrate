@@ -756,6 +756,8 @@ function migrate_example_wine_data_categories() {
     array(7, 'region', 'Pomerol', 5, NULL, 2),
     array(16, 'region', 'Chile', NULL, NULL, 3),
     array(17, 'region', 'Colchagua Valley', 16, NULL, 1),
+    array(20, 'region', 'California', NULL, NULL, 5),
+    array(21, 'region', 'Redwood Valley', 20, NULL, 1),
     array(10, 'best_with', 'Beef', NULL, NULL, 5),
     array(12, 'best_with', 'Pork', NULL, NULL, -3),
     array(15, 'best_with', 'Chicken', NULL, NULL, -5),

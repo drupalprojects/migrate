@@ -34,17 +34,9 @@ function migrate_example_wine_install() {
 
 function migrate_example_wine_uninstall() {
   migrate_example_wine_content_type_delete();
-  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_wine_varieties'))) {
-    // Grab key of the first returned vocabulary.
-    taxonomy_vocabulary_delete(key($vids));
-  }
-  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_wine_regions'))) {
-    // Grab key of the first returned vocabulary.
-    taxonomy_vocabulary_delete(key($vids));
-  }
-  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_wine_best_with'))) {
-    // Grab key of the first returned vocabulary.
-    taxonomy_vocabulary_delete(key($vids));
+  $vocabs = taxonomy_get_vocabularies('migrate_example_wine');
+  foreach ($vocabs as $vocab) {
+    taxonomy_vocabulary_delete($vocab->vid);
   }
 }
 
@@ -554,22 +546,22 @@ function migrate_example_wine_image() {
 
 function migrate_example_wine_content_type_delete() {
   $bundle = 'migrate_example_wine';
-  $field_names = array('migrate_example_wine_varieties',
+/*  $field_names = array('migrate_example_wine_varieties',
     'migrate_example_wine_regions', 'migrate_example_wine_best_with',
     'field_migrate_example_image');
   foreach ($field_names as $field_name) {
     $instance = field_info_instance('node', $field_name, $bundle);
     field_delete_instance($instance);
     field_delete_field($field_name);
-  }
+  }*/
   node_type_delete($bundle);
   $bundle = 'migrate_example_producer';
-  $field_names = array('migrate_example_wine_regions');
+/*  $field_names = array('migrate_example_wine_regions');
   foreach ($field_names as $field_name) {
     $instance = field_info_instance('node', $field_name, $bundle);
     field_delete_instance($instance);
     field_delete_field($field_name);
-  }
+  }*/
   node_type_delete($bundle);
 }
 

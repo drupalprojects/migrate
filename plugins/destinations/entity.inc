@@ -4,6 +4,8 @@
 /**
  * @file
  * Defines base for migration destinations implemented as Drupal entities.
+ * Drupal 6 note: Yes, there is no "entity" in D6. We maintain this intermediate
+ * class to simplify keeping the D6 and D7 implementations in sync.
  */
 
 /**
@@ -101,7 +103,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     );
 
     // Call any general entity handlers (in particular, the builtin field handler)
-//    migrate_handler_invoke_all('Entity', 'prepare', $migration, $entity, $source_row);
+    migrate_handler_invoke_all('Entity', 'prepare', $migration, $entity, $source_row);
     // Then call any entity-specific handlers
     migrate_handler_invoke_all($this->entityType, 'prepare', $migration, $entity, $source_row);
     // Then call any prepare handler for this specific Migration.

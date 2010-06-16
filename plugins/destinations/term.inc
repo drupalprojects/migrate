@@ -68,24 +68,10 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   public function rollback(Migration $migration, array $key) {
     $tid = reset($key);
 
-    /*
-     * This load() happens soon delete() anyway. We load here in order to
-     * avoid notices when term has already been deleted. That is easily possible
-     * considering how deleting a term parent also deletes children in same call.
-     */
-    migrate_instrument_start('taxonomy_term_load');
-    if (taxonomy_term_load($tid)) {
-      migrate_instrument_stop('taxonomy_term_load');
-      migrate_instrument_start('taxonomy_term_delete');
-      $result = (bool) taxonomy_term_delete($tid);
-      migrate_instrument_stop('taxonomy_term_delete');
-    }
-    else {
-      migrate_instrument_stop('taxonomy_term_load');
-      // If it didn't exist, consider this a success
-      $result = TRUE;
-    }
-    return $result;
+    migrate_instrument_start('taxonomy_term_delete');
+    $result = (bool) taxonomy_del_term($tid);
+    migrate_instrument_stop('taxonomy_term_delete');
+    return $result == SAVED_DELETED;
   }
 
   /**
@@ -115,12 +101,13 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     if (empty($term->vid)) {
       static $vocab_map = array();
       if (!isset($vocab_map[$term->vocabulary_machine_name])) {
-        // The keys of the returned array are vids
-        $vocabs = taxonomy_vocabulary_load_multiple(array(),
-          array('machine_name' => $term->vocabulary_machine_name));
-        $vids = array_keys($vocabs);
-        if (isset($vids[0])) {
-          $vocab_map[$term->vocabulary_machine_name] = $vids[0];
+        $vid = db_select('vocabulary', 'v')
+               ->fields('v', array('vid'))
+               ->condition('name', $term->vocabulary_machine_name)
+               ->execute()
+               ->fetchField();
+        if ($vid) {
+          $vocab_map[$term->vocabulary_machine_name] = $vid;
         }
         else {
           $migration->saveMessage(t('No vocabulary found with machine_name !name',
@@ -134,10 +121,13 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     if (isset($term->parent_name)) {
       // Look for the name in the same vocabulary.
       // Note that hierarchies may have multiples of the same name...
-      $terms = taxonomy_term_load_multiple(array(),
-        array('name' => trim($term->parent_name), 'vid' => $term->vid));
-      $tids = array_keys($terms);
-      $term->parent = $tids[0];
+      $terms = taxonomy_get_term_by_name(trim($term->parent_name));
+      foreach ($terms as $candidate) {
+        if ($candidate->vid == $term->vid) {
+          $term->parent = $candidate->tid;
+          break;
+        }
+      }
       unset($term->parent_name);
     }
     if (!isset($term->parent)) {
@@ -163,7 +153,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     }
 
     migrate_instrument_start('taxonomy_term_save');
-    $status = taxonomy_term_save($term);
+    $term = (array)$term;
+    $status = taxonomy_save_term($term);
+    $term = (object)$term;
     migrate_instrument_stop('taxonomy_term_save');
     $this->complete($migration, $term, $row);
     $return = isset($term->tid) ? array($term->tid) : FALSE;

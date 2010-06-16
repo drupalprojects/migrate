@@ -92,7 +92,7 @@ class BeerTermMigration extends BasicExampleMigration {
     $this->source = new MigrateSourceSQL($this, $query);
 
     // Set up our destination - terms in the migrate_example_beer_styles vocabulary
-    $this->destination = new MigrateDestinationTerm('migrate_example_beer_styles');
+    $this->destination = new MigrateDestinationTerm('Migrate Example Beer Styles');
 
     // Assign mappings TO destination fields FROM source fields. To discover
     // the names used in these calls, use the drush commands

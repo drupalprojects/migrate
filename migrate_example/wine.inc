@@ -125,21 +125,21 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
 
 class WineVarietyMigration extends WineTermMigration {
   public function __construct() {
-    parent::__construct('variety', 'migrate_example_wine_varieties',
+    parent::__construct('variety', 'Migrate Example Wine Varieties',
       t('Migrate varieties from the source database to taxonomy terms'));
   }
 }
 
 class WineRegionMigration extends WineTermMigration {
   public function __construct() {
-    parent::__construct('region', 'migrate_example_wine_regions',
+    parent::__construct('region', 'Migrate Example Wine Regions',
       t('Migrate regions from the source database to taxonomy terms'));
   }
 }
 
 class WineBestWithMigration extends WineTermMigration {
   public function __construct() {
-    parent::__construct('best_with', 'migrate_example_wine_best_with',
+    parent::__construct('best_with', 'Migrate Example Wine Best With',
       t('Migrate "Best With" from the source database to taxonomy terms'));
   }
 }

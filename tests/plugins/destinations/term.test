@@ -14,7 +14,8 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('taxonomy', 'migrate', 'migrate_example');
+    parent::setUp('autoload', 'dbtng', 'taxonomy', 'migrate', 'migrate_example');
+    autoload_get_lookup(TRUE);
   }
 
   function testTermImport() {
@@ -22,8 +23,12 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Variety term import returned RESULT_COMPLETED'));
-    $vocab = taxonomy_vocabulary_machine_name_load('migrate_example_wine_varieties');
-    $rawterms = taxonomy_term_load_multiple(array(), array('vid' => $vocab->vid));
+    $vid = db_select('vocabulary', 'v')
+           ->fields('v', array('vid'))
+           ->condition('name', 'Migrate Example Wine Varieties')
+           ->execute()
+           ->fetchField();
+    $rawterms = taxonomy_get_tree($vid);
     $terms = array();
     foreach ($rawterms as $term) {
       $terms[$term->name] = $term;
@@ -49,8 +54,6 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
       t('Descriptions match'));
     $this->assertEqual($terms['Merlot']->weight, $rows['Merlot']->ordering,
       t('Weights match'));
-    $this->assertEqual($terms['Merlot']->format, $migration->basicFormat,
-      t('Formats match'));
     $parents = taxonomy_get_parents($terms['White wine']->tid);
     $this->assertEqual(count($parents), 0, t('Term without parent properly migrated'));
     $parents = taxonomy_get_parents($terms['Merlot']->tid);
@@ -61,8 +64,17 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Variety term rollback returned RESULT_COMPLETED'));
-    $rawterms = taxonomy_term_load_multiple(array(), array('vid' => $vocab->vid));
-    $this->assertEqual(count($rawterms), 0, t('All terms deleted'));
+    // You'd think we could call taxonomy_get_tree() again, but its static cache
+    // doesn't know about the deletions
+    $count = db_select('term_data', 'td')
+             ->fields('td', array('tid'))
+             ->condition('vid', $vid)
+             ->countQuery()
+             ->execute()
+             ->fetchField();
+    if (!$this->assertEqual($count, 0, t('All terms deleted'))) {
+      $this->error(t('!count terms remaining', array('!count' => $count)));
+    }
     $count = db_select('migrate_map_winevariety', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()

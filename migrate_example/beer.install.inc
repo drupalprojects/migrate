@@ -41,9 +41,9 @@ function migrate_example_beer_install() {
 
 function migrate_example_beer_uninstall() {
   migrate_example_beer_content_type_delete();
-  if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_beer_styles'))) {
+  if ($vocabs = taxonomy_get_vocabularies('migrate_example_beer')) {
     // Grab key of the first returned vocabulary.
-    taxonomy_vocabulary_delete(key($vids));
+    taxonomy_vocabulary_delete(key($vocabs));
   }
 }
 
@@ -513,24 +513,13 @@ function migrate_example_beer_country() {
 
 function migrate_example_beer_content_type_delete() {
   $bundle = 'migrate_example_beer';
-  $field_names = array('migrate_example_beer_styles', 'field_migrate_example_image', 'field_migrate_example_country');
+/*  $field_names = array('migrate_example_beer_styles', 'field_migrate_example_image', 'field_migrate_example_country');
   foreach ($field_names as $field_name) {
     $instance = field_info_instance('node', $field_name, $bundle);
     field_delete_instance($instance);
     field_delete_field($field_name);
-  }
+  }*/
   node_type_delete($bundle);
-
-  $bundle = 'user';
-  $field_names = array('field_migrate_example_gender');
-  if (module_exists('node_reference')) {
-    $field_names[] = 'field_migrate_example_favbeers';
-  }
-  foreach ($field_names as $field_name) {
-    $instance = field_info_instance('user', $field_name, $bundle);
-    field_delete_instance($instance);
-    field_delete_field($field_name);
-  }
 }
 
 function migrate_example_beer_data_node() {

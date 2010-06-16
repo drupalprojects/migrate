@@ -47,7 +47,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $fields['description'] = t('Term: Description');
     $fields['format'] = t('Term: Format');
     $fields['weight'] = t('Term: Weight');
-    // TODO: Only if vocab has hierarchy
+    // TODO: Remove parent_name, implement via arguments
     $fields['parent_name'] = t('Term: Parent (by name)');
     $fields['parent'] = t('Term: Parent (by Drupal term ID)');
 

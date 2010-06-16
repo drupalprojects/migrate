@@ -59,8 +59,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $fields['pid'] = t('Comment: Parent (by Drupal ID)');
     $fields['nid'] = t('Comment: Node (by Drupal ID)');
     $fields['uid'] = t('Comment: User (by Drupal ID)');
-    $fields['user_name'] = t('Comment: User (by username)');
-    $fields['user_email'] = t('Comment: User (by email address');
     $fields['subject'] = t('Comment: Subject');
     $fields['hostname'] = t('Comment: Hostname/IP address');
     $fields['timestamp'] = t('Comment: Modified timestamp');
@@ -128,9 +126,21 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     if (!isset($comment->nid) || !$comment->nid) {
       throw new MigrateException(t('No node ID provided for comment'));
     }
+
+    // comment_save() hardcodes hostname, so if we're trying to set it we
+    // need to save it and apply it after
+    if (isset($comment->hostname)) {
+      $hostname = $comment->hostname;
+    }
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');
+    if (isset($hostname) && isset($comment->cid)) {
+      db_update('comment')
+        ->fields(array('hostname' => $hostname))
+        ->condition('cid', $comment->cid)
+        ->execute();
+    }
     $this->complete($migration, $comment, $row);
     $return = isset($comment->cid) ? array($comment->cid) : FALSE;
     return $return;

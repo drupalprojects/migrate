@@ -8,18 +8,45 @@
 
 require_once drupal_get_path('module', 'migrate') . '/includes/d7.inc';
 require drupal_get_path('module', 'migrate_example') . '/beer.install.inc';
+require drupal_get_path('module', 'migrate_example') . '/wine.install.inc';
 
 function migrate_example_schema() {
   $schema = migrate_example_beer_schema();
+  $schema += migrate_example_wine_schema();
   return $schema;
 }
 
 function migrate_example_install() {
   drupal_install_schema('migrate_example');
   migrate_example_beer_install();
+  migrate_example_wine_install();
+  /* TODO: D6 backport
+  // A simple format for testing migration of format
+  $example_format = array(
+    'name' => 'Migrate example format',
+    'weight' => 20,
+    'filters' => array(
+      // Escape all HTML.
+      'filter_html_escape' => array(
+        'weight' => 0,
+        'status' => 1,
+      ),
+    ),
+  );
+  $example_format = (object) $example_format;
+  filter_format_save($example_format);*/
 }
 
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
+  migrate_example_wine_uninstall();
   drupal_uninstall_schema('migrate_example');
+  /* TODO: D6 backport
+  $formats = filter_formats();
+  foreach ($formats as $format) {
+    if ($format->name == 'Migrate example format') {
+      filter_format_delete($format);
+      break;
+    }
+  }*/
 }

@@ -17,6 +17,9 @@
  */
 function migrate_ui_requirements($phase) {
   $reqs = array();
+  // TODO: Needs work to support newly-protected fields
+  return $reqs;
+
   $severity = REQUIREMENT_OK;
   // TODO: UI for disabling reports
   if ($phase == 'runtime' && variable_get('migrate_ui_status_report', TRUE)) {

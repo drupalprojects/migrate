@@ -81,14 +81,6 @@ abstract class MigrateMap implements Iterator {
   abstract public function messageCount();
 
   /**
-   * Retrieve the destination ID values corresponding to a given source row, and
-   * add them to the row
-   *
-   * @param stdClass $data_row
-   */
-  abstract public function addDestinationKey(stdClass &$data_row);
-
-  /**
    * Delete the map and message entries for a given source record
    *
    * @param array $source_key
@@ -101,4 +93,15 @@ abstract class MigrateMap implements Iterator {
    * @param array $source_keys
    */
   abstract public function deleteBulk(array $source_keys);
+
+  /**
+   * Clear all non-information messages from the map.
+   */
+  abstract public function clearErrors();
+
+  /**
+   * Retrieve map data for a given source or destination item
+   */
+  abstract public function getRowBySource(array $source_id);
+  abstract public function getRowByDestination(array $destination_id);
 }

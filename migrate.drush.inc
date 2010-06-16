@@ -658,7 +658,7 @@ function drush_migrate_import($args = NULL) {
         if ($return == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
               use the --force option to run it anyway',
-            array('!name' => $migration->machineName)), 'warning');
+            array('!name' => $migration->getMachineName())), 'warning');
         }
         elseif ($return == MigrationBase::RESULT_STOPPED) {
           break;
@@ -724,7 +724,7 @@ function drush_migrate_stop($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);
     foreach ($migrations as $migration) {
-      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->machineName)));
+      drush_log(dt("Stopping '!description' migration", array('!description' => $migration->getMachineName())));
       $migration->stopProcess();
     }
   }

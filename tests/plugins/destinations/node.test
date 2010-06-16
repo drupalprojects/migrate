@@ -14,50 +14,156 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('migrate_example');
+    parent::setUp('taxonomy', 'image', 'migrate', 'migrate_example');
   }
 
   function testNodeImport() {
-    $migration = Migration::getInstance('BeerTermMigration');
+    $migration = Migration::getInstance('WineVarietyMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
-      t('Term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('BeerUserMigration');
+      t('Variety term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineRegionMigration');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Region term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineBestWithMigration');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('"Best With" term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineUserMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('BeerNodeMigration');
+    $migration = Migration::getInstance('WineProducerMigration');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
-      t('Node import returned RESULT_COMPLETED'));
+      t('Producer node import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineWineMigration');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import returned RESULT_COMPLETED'));
 
-    $query = db_select('migrate_example_beer_node', 'b')
-             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image'));
-    $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
-    // Gives a single comma-separated list of terms
-    $query->groupBy('tb.bid');
-    $query->addExpression('GROUP_CONCAT(tb.style)', 'terms');
-    $result = $query->execute();
-
-    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_beer'), TRUE);
+    // Gather wine and producer nodes, and their corresponding input data
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_producer'), TRUE);
     // Index by title
-    $nodes = array();
+    $producer_nodes = array();
     foreach ($rawnodes as $node) {
-      $nodes[$node->title] = $node;
+      $producer_nodes[$node->title] = $node;
     }
-    $count = 0;
+
+    $query = db_select('migrate_example_wine_producer', 'p')
+             ->fields('p', array('producerid', 'name', 'body', 'excerpt', 'accountid'));
+    // Region term is singletons, handled straighforwardly
+    $query->leftJoin('migrate_example_wine_category_producer', 'reg',
+      "p.producerid = reg.producerid");
+    $query->addField('reg', 'categoryid', 'region');
+    $result = $query->execute();
+    $producer_rows = array();
     foreach ($result as $row) {
-      $count++;
-      $node = $nodes[$row->name];
-      $this->assertNotNull($node, t('!title imported', array('!title' => $row->name)));
-      $this->assertEqual($row->bid, $node->nid, t('Nid preserved'));
-      // TODO: uid from beeruser map
-      // TODO: countries
-      // TODO: terms
-      // TODO: summary
-      // TODO: image
+      $producer_rows[$row->name] = $row;
     }
-    $this->assertEqual(count($nodes), $count,
-      t('Counts of nodes and input rows match'));
+    $this->assertEqual(count($producer_nodes), count($producer_rows),
+      t('Counts of producer nodes and input rows match'));
+
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    // Index by title
+    $wine_nodes = array();
+    foreach ($rawnodes as $node) {
+      $wine_nodes[$node->title] = $node;
+    }
+    $query = db_select('migrate_example_wine', 'w')
+             ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid',
+               'image', 'posted', 'last_changed', 'variety', 'region'));
+    $query->leftJoin('migrate_example_wine_category_wine', 'cwbw',
+      "w.wineid = cwbw.wineid");
+    $query->leftJoin('migrate_example_wine_categories', 'bw',
+      "cwbw.categoryid = bw.categoryid AND bw.type = 'best_with'");
+    // Gives a single comma-separated list of related terms
+    $query->groupBy('cwbw.wineid');
+    $query->addExpression('GROUP_CONCAT(bw.categoryid)', 'best_with');
+    $result = $query->execute();
+    $wine_rows = array();
+    foreach ($result as $row) {
+      $wine_rows[$row->name] = $row;
+    }
+    $this->assertEqual(count($wine_nodes), count($wine_rows),
+      t('Counts of wine nodes and input rows match'));
+
+    // Test each base node field
+    $producer_node = $producer_nodes['Montes'];
+    $producer_row = $producer_rows['Montes'];
+    $wine_node = $wine_nodes['Montes Classic Cabernet Sauvignon'];
+    $wine_row = $wine_rows['Montes Classic Cabernet Sauvignon'];
+    $user_migration = MigrationBase::getInstance('WineUserMigration');
+
+    $mapped_uid = $user_migration->getMap()->lookupDestinationID(
+      array($producer_row->accountid), $migration);
+    if (is_array($mapped_uid)) {
+      $this->assertEqual($producer_node->uid, reset($mapped_uid),
+        t('uid properly migrated'));
+    }
+    else {
+      $this->error(t('Account ID !id not migrated', array('!id' => $producer_row->accountid)));
+    }
+    $this->assertEqual($wine_node->created, $wine_row->posted,
+      t('created properly migrated'));
+    $this->assertEqual($wine_node->changed, $wine_row->last_changed,
+      t('changed properly migrated'));
+
+    // Test Field API fields of all types
+    // body_with_summary
+    $body = field_get_items('node', $wine_node, 'body');
+    $this->assertEqual($body[0]['value'], $wine_row->body,
+      t('body properly migrated'));
+    $this->assertEqual($body[0]['summary'], $wine_row->excerpt,
+      t('summary properly migrated'));
+    // taxonomy_term_reference - single and multiple
+    $variety = field_get_items('node', $wine_node, 'migrate_example_wine_varieties');
+    $variety_migration = MigrationBase::getInstance('WineVarietyMigration');
+    $mapped_tid = $variety_migration->getMap()->lookupDestinationID(
+      array($wine_row->variety), $migration);
+    if (is_array($mapped_tid)) {
+      $this->assertEqual($variety[0]['tid'], reset($mapped_tid),
+        t('Single taxonomy_term_reference properly migrated'));
+    }
+    else {
+      $this->error(t('Variety !var not migrated', array('!var' => $wine_row->variety)));
+    }
+    $best_with = field_get_items('node', $wine_node, 'migrate_example_wine_best_with');
+    $best_with_migration = MigrationBase::getInstance('WineBestWithMigration');
+    $source_ids = explode(',', $wine_row->best_with);
+    $mapped_tids = array();
+    foreach ($source_ids as $source_id) {
+      $tid = $best_with_migration->getMap()->lookupDestinationID(
+        array($source_id), $migration);
+      if ($tid) {
+        $mapped_tids[reset($tid)] = reset($tid);
+      }
+    }
+    $this->assertEqual(count($best_with), count($mapped_tids),
+      t('Counts of Best With match'));
+    foreach ($best_with as $current) {
+      $this->assertNotNull($mapped_tids[$current['tid']],
+        t('Multiple value taxonomy_term_reference properly migrated'));
+    }
+
+    // Test rollback
+    $result = $migration->processRollback();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node rollback returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    $this->assertEqual(count($rawnodes), 0, t('All nodes deleted'));
+    $count = db_select('migrate_map_winewine', 'map')
+              ->fields('map', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Map cleared'));
+    $count = db_select('migrate_message_winewine', 'msg')
+              ->fields('msg', array('sourceid1'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Messages cleared'));
   }
 }

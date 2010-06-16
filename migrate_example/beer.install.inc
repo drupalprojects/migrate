@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Set up for the beer example.
+ * Set up for the beer (basic) example.
  */
 function migrate_example_beer_schema() {
   $schema['migrate_example_beer_account'] = migrate_example_beer_schema_account();

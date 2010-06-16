@@ -28,6 +28,13 @@ abstract class MigrateSource implements Iterator {
   protected $currentRow;
 
   /**
+   * Number of eligible rows processed so far (used for itemlimit checking)
+   *
+   * @var int
+   */
+  protected $numProcessed = 0;
+
+  /**
    * The primary key of the current row
    *
    * @var array
@@ -60,5 +67,35 @@ abstract class MigrateSource implements Iterator {
    */
   public function __construct(Migration $migration) {
     $this->migration = $migration;
+  }
+
+  /**
+   * Default implementations of Iterator methods - many derivations will find
+   * these adequate and will only need to implement rewind() and next()
+   */
+
+  /**
+   * Implementation of Iterator::current() - called when entering a loop
+   * iteration, returning the current row
+   */
+  public function current() {
+    return $this->currentRow;
+  }
+
+  /**
+   * Implementation of Iterator::key - called when entering a loop iteration, returning
+   * the key of the current row. It must be a scalar - we will serialize
+   * to fulfill the requirement, but using getCurrentKey() is preferable.
+   */
+  public function key() {
+    return serialize($this->currentKey);
+  }
+
+  /**
+   * Implementation of Iterator::valid() - called at the top of the loop, returning
+   * TRUE to process the loop and FALSE to terminate it
+   */
+  public function valid() {
+    return !is_null($this->currentRow);
   }
 }

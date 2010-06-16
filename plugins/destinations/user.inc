@@ -49,6 +49,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields['roles'] = t('User: Roles');
     $fields['theme'] = t('User: Default theme');
     $fields['signature'] = t('User: Signature');
+    $fields['signature_format'] = t('User: Signature format');
     $fields['created'] = t('User: Registered timestamp');
     $fields['access'] = t('User: Last access timestamp');
     $fields['login'] = t('User: Last login timestamp');
@@ -74,7 +75,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    */
   public function bulkRollback(Migration $migration, array $uids) {
     migrate_instrument_start('user_delete_multiple');
-    user_delete_multiple($uids);
+    foreach ($uids as $uid) {
+      user_delete(array(), $uid);
+    }
     migrate_instrument_stop('user_delete_multiple');
   }
 

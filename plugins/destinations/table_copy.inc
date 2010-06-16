@@ -61,13 +61,11 @@ class MigrateDestinationTableCopy extends MigrateDestination {
     }
     catch (MigrateException $e) {
       $this->saveMessage($e->getMessage(), $e->getLevel());
-      $outputFunction = $this->outputFunction;
-      $outputFunction($e->getMessage());
+      $this->showMessage($e->getMessage());
     }
     catch (Exception $e) {
       $this->saveMessage($e->getMessage());
-      $outputFunction = $this->outputFunction;
-      $outputFunction($e->getMessage());
+      $this->showMessage($e->getMessage());
     }
   }
 

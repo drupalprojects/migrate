@@ -50,6 +50,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields['uid'] = t('Node: Authored by (uid)');
     $fields['created'] = t('Node: Created timestamp');
     $fields['changed'] = t('Node: Modified timestamp');
+    $fields['body'] = t('Node: Body');
+    $fields['teaser'] = t('Node: Teaser');
     $fields['status'] = t('Node: Published');
     $fields['promote'] = t('Node: Promoted to front page');
     $fields['sticky'] = t('Node: Sticky at top of lists');
@@ -60,6 +62,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     if ($node_type->has_title) {
       $fields['title'] = t('Node:') . ' ' . $node_type->title_label;
     }
+
+
 
     // Then add any fields attached to this node type (bundle)
     // TODO: Factor out into entity.inc
@@ -88,7 +92,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    */
   public function bulkRollback(Migration $migration, array $nids) {
     migrate_instrument_start('node_delete_multiple');
-    node_delete_multiple($nids);
+    foreach ($nids as $nid) {
+      node_delete($nid);
+    }
     migrate_instrument_stop('node_delete_multiple');
   }
 
@@ -111,37 +117,12 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $node->nid = $row->migrate_map_destid1;
     }
 
-    // Set some required properties.
-    if (!isset($node->language)) {
-      $node->language = $this->language;
-    }
-
     // Set type before invoking prepare handlers - they may take type-dependent actions.
     $node->type = $this->bundle;
 
-    // Apply defaults, allow standard node prepare hooks to fire.
-    // node_object_prepare() will blow these away, so save them here and
-    // stuff them in later if need be.
-    if (isset($node->created)) {
-      $created = $node->created;
-    }
-    else {
-      //To keep node_object_prepare() from choking
-      $node->created = REQUEST_TIME;
-    }
+    // Save changed timestamp and set it later, node_save sets it unconditionally
     if (isset($node->changed)) {
       $changed = $node->changed;
-    }
-    if (isset($node->uid)) {
-      $uid = $node->uid;
-    }
-    node_object_prepare($node);
-    if (isset($created)) {
-      $node->created = $created;
-    }
-    // No point to resetting $node->changed here, node_save() will overwrite it
-    if (isset($uid)) {
-      $node->uid = $uid;
     }
 
     // Invoke migration prepare handlers

@@ -23,12 +23,8 @@ function migrate_example_beer_schema() {
 function migrate_example_beer_install() {
   migrate_example_beer_content_type();
   migrate_example_beer_tags();
-/*  migrate_example_beer_image();
+//  migrate_example_beer_image();
   migrate_example_beer_country();
-  migrate_example_beer_gender();
-  if (module_exists('node_reference')) {
-    migrate_example_beer_favs();
-  }*/
 
   // Populate our tables.
   migrate_example_beer_data_account();
@@ -428,87 +424,16 @@ function migrate_example_beer_image() {
   }
 }
 
-function migrate_example_beer_favs() {
-  if (!field_info_field('field_migrate_example_favbeers')) {
-    $field = array(
-      'field_name'  => 'field_migrate_example_favbeers',
-      'type'        => 'node_reference',
-      'cardinality' => -1,
-      'settings' => array(
-        'referenceable_types' => array('migrate_example_beer'),
-      ),
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('user', 'field_migrate_example_favbeers', 'user')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_favbeers',
-      'entity_type' => 'user',
-      'label' => 'Favorite Beers',
-      'bundle' => 'user',
-      'widget' => array(
-        'type' => 'node_reference_autocomplete',
-      ),
-    );
-    field_create_instance($instance);
-  }
-}
-
-// Create Gender list field on User entity.
-function migrate_example_beer_gender() {
-  if (!field_info_field('field_migrate_example_gender')) {
-    $field = array(
-      'field_name' => 'field_migrate_example_gender',
-      'type' => 'list',
-      'settings' => array(
-      'allowed_values' =>
-        "0|Male\n".
-        "1|Female\n",
-      ),
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('user', 'field_migrate_example_gender', 'user')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_gender',
-      'entity_type' => 'user',
-      'label' => 'Gender',
-      'bundle' => 'user',
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-    );
-    field_create_instance($instance);
-  }
-}
-
 // Create a text field named "Countries", enabled for the 'Beer' content type.
 function migrate_example_beer_country() {
-  if (!field_info_field('field_migrate_example_country')) {
-    $field = array(
-      'field_name' => 'field_migrate_example_country',
-      'type' => 'text',
-      'cardinality' => -1,
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('node', 'field_migrate_example_country', 'migrate_example_beer')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_country',
-      'entity_type' => 'node',
-      'label' => 'Countries',
-      'bundle' => 'migrate_example_beer',
-      'description' => 'Beer country.',
-
-      'widget' => array(
-        'type' => 'text_textfield',
-      ),
-    );
-    field_create_instance($instance);
-  }
+  $field = array(
+    'field_name' => 'field_migrate_example_country',
+    'type' => 'text',
+    'widget_type' => 'text_textfield',
+    'type_name' => 'migrate_example_beer',
+    'label' => t('Country'),
+  );
+  content_field_instance_create($field);
 }
 
 function migrate_example_beer_content_type_delete() {

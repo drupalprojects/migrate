@@ -14,7 +14,12 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('taxonomy', 'image', 'migrate', 'migrate_example');
+    parent::setUp('autoload', 'dbtng', 'taxonomy', /*'image',*/ 'migrate', 'migrate_example');
+    autoload_get_lookup(TRUE);
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array('access content',
+      'administer nodes', 'create page content', 'delete any page content'));
+    $this->drupalLogin($migrate_user);
   }
 
   function testNodeImport() {
@@ -44,10 +49,14 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       t('Wine node import returned RESULT_COMPLETED'));
 
     // Gather wine and producer nodes, and their corresponding input data
-    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_producer'), TRUE);
-    // Index by title
+    $nids = db_select('node', 'n')
+            ->fields('n', array('nid'))
+            ->condition('type', 'migrate_example_producer')
+            ->execute()
+            ->fetchCol();
     $producer_nodes = array();
-    foreach ($rawnodes as $node) {
+    foreach ($nids as $nid) {
+      $node = node_load($nid);
       $producer_nodes[$node->title] = $node;
     }
 
@@ -65,10 +74,14 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $this->assertEqual(count($producer_nodes), count($producer_rows),
       t('Counts of producer nodes and input rows match'));
 
-    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
-    // Index by title
+    $nids = db_select('node', 'n')
+            ->fields('n', array('nid'))
+            ->condition('type', 'migrate_example_wine')
+            ->execute()
+            ->fetchCol();
     $wine_nodes = array();
-    foreach ($rawnodes as $node) {
+    foreach ($nids as $nid) {
+      $node = node_load($nid);
       $wine_nodes[$node->title] = $node;
     }
     $query = db_select('migrate_example_wine', 'w')
@@ -109,27 +122,24 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       t('created properly migrated'));
     $this->assertEqual($wine_node->changed, $wine_row->last_changed,
       t('changed properly migrated'));
+    $this->assertEqual($wine_node->body, $wine_row->body,
+      t('body properly migrated'));
+    $this->assertEqual($wine_node->teaser, $wine_row->excerpt,
+      t('teaser properly migrated'));
 
     // Test Field API fields of all types
-    // body_with_summary
-    $body = field_get_items('node', $wine_node, 'body');
-    $this->assertEqual($body[0]['value'], $wine_row->body,
-      t('body properly migrated'));
-    $this->assertEqual($body[0]['summary'], $wine_row->excerpt,
-      t('summary properly migrated'));
     // taxonomy_term_reference - single and multiple
-    $variety = field_get_items('node', $wine_node, 'migrate_example_wine_varieties');
     $variety_migration = MigrationBase::getInstance('WineVarietyMigration');
     $mapped_tid = $variety_migration->getMap()->lookupDestinationID(
       array($wine_row->variety), $migration);
     if (is_array($mapped_tid)) {
-      $this->assertEqual($variety[0]['tid'], reset($mapped_tid),
+      $this->assertNotNull($node->taxonomy[reset($mapped_tid)],
         t('Single taxonomy_term_reference properly migrated'));
     }
     else {
       $this->error(t('Variety !var not migrated', array('!var' => $wine_row->variety)));
     }
-    $best_with = field_get_items('node', $wine_node, 'migrate_example_wine_best_with');
+
     $best_with_migration = MigrationBase::getInstance('WineBestWithMigration');
     $source_ids = explode(',', $wine_row->best_with);
     $mapped_tids = array();
@@ -140,10 +150,10 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
         $mapped_tids[reset($tid)] = reset($tid);
       }
     }
-    $this->assertEqual(count($best_with), count($mapped_tids),
-      t('Counts of Best With match'));
-    foreach ($best_with as $current) {
-      $this->assertNotNull($mapped_tids[$current['tid']],
+/*    $this->assertEqual(count($best_with), count($mapped_tids),
+      t('Counts of Best With match'));*/
+    foreach ($mapped_tids as $tid) {
+      $this->assertNotNull($node->taxonomy[$tid],
         t('Multiple value taxonomy_term_reference properly migrated'));
     }
 
@@ -151,8 +161,13 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node rollback returned RESULT_COMPLETED'));
-    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
-    $this->assertEqual(count($rawnodes), 0, t('All nodes deleted'));
+    $count = db_select('node', 'n')
+              ->fields('n', array('nide'))
+              ->condition('type', 'migrate_example_wine')
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('All nodes deleted'));
     $count = db_select('migrate_map_winewine', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()

@@ -133,7 +133,9 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       $hostname = $comment->hostname;
     }
     migrate_instrument_start('comment_save');
+    $comment = (array)$comment;
     comment_save($comment);
+    $comment = (object)$comment;
     migrate_instrument_stop('comment_save');
     if (isset($hostname) && isset($comment->cid)) {
       db_update('comment')
@@ -169,9 +171,9 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       // two comments on the same node share same timestamp.
       $sql = "
         INSERT IGNORE INTO {node_comment_statistics} (nid, cid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (
-          SELECT c.nid, c.cid, c.timestamp, c.name, c.uid, c2.comment_count FROM comment c
+          SELECT c.nid, c.cid, c.timestamp, c.name, c.uid, c2.comment_count FROM comments c
           JOIN (
-            SELECT c.nid, MAX(c.timestamp) AS timestamp, COUNT(*) AS comment_count FROM comment c WHERE status=:published GROUP BY c.nid
+            SELECT c.nid, MAX(c.timestamp) AS timestamp, COUNT(*) AS comment_count FROM comments c WHERE status=:published GROUP BY c.nid
           ) AS c2 ON c.nid = c2.nid AND c.timestamp=c2.timestamp
         )";
       dbtng_query($sql, array(':published' => COMMENT_PUBLISHED));

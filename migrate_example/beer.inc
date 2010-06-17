@@ -296,14 +296,6 @@ class BeerNodeMigration extends BasicExampleMigration {
          ->issueNumber(765736)
          ->issuePriority(MigrateFieldMapping::ISSUE_PRIORITY_LOW);
 
-    // To maintain node identities between the old and new systems (i.e., have
-    // the same unique IDs), map the ID column from the old system to nid and
-    // set is_new to TRUE.
-    $this->addFieldMapping('nid', 'bid')
-         ->description(t('Preserve old beer ID as nid in Drupal'));
-    $this->addFieldMapping('is_new')
-         ->defaultValue(TRUE);
-
     // References to related objects (such as the author of the content) are
     // most likely going to be identifiers from the source data, not Drupal
     // identifiers (such as uids). You can use the mapping from the relevant
@@ -319,19 +311,12 @@ class BeerNodeMigration extends BasicExampleMigration {
     $this->addFieldMapping('field_migrate_example_country', 'countries')
          ->separator('|');
     // These are related terms, which by default will be looked up by name
-    $this->addFieldMapping('migrate_example_beer_styles', 'terms')
+    $this->addFieldMapping('Migrate Example Beer Styles', 'terms')
          ->separator(',');
 
-    // Drupal 7 fields can have attributes such as text formats, or excerpts
-    // (equivalent to teasers in previous Drupal versions).
-    // The source_field argument specifies what field in the source query maps
-    // to the corresponding attribute (excerpt in this case)
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
-    $this->addFieldMapping('body', 'body')
-         ->arguments($arguments);
-    // Since the excerpt is mapped via an argument, add a null mapping so it's
-    // not flagged as unmapped
-    $this->addFieldMapping(NULL, 'excerpt');
+    $this->addFieldMapping('body', 'body');
+    $this->addFieldMapping('teaser', 'excerpt');
 
     // Copy an image file, write DB record to files table, and save in Field storage.
     $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);

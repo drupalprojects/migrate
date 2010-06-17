@@ -241,13 +241,11 @@ class WineProducerMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('uid', 'accountid')
          ->sourceMigration('WineUserMigration')
          ->defaultValue(1);
-    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+    $this->addFieldMapping('Migrate Example Wine Regions', 'region')
          ->sourceMigration('WineRegionMigration')
          ->arguments(array('source_type' => 'tid'));
-    $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
-    $this->addFieldMapping('body', 'body')
-         ->arguments($arguments);
-    $this->addFieldMapping(NULL, 'excerpt');
+    $this->addFieldMapping('body', 'body');
+    $this->addFieldMapping('teaser', 'excerpt');
     $this->addFieldMapping('sticky')
          ->defaultValue(0);
 
@@ -353,7 +351,7 @@ class WineProducerXMLMigration extends XMLMigration {
          ->xpath('/producer/authorid')
          ->sourceMigration('WineUserMigration')
          ->defaultValue(1);
-    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+    $this->addFieldMapping('Migrate Example Wine Regions', 'region')
          ->xpath('/producer/region');
     $this->addFieldMapping('body', 'description')
          ->xpath('/producer/description');
@@ -408,20 +406,19 @@ class WineWineMigration extends AdvancedExampleMigration {
     // In this case, the source values are IDs, so we specify the relevant
     // migration (so the tid can be looked up in the map), and tell the term
     // field handler that it is receiving tids instead of names
-    $this->addFieldMapping('migrate_example_wine_varieties', 'variety')
+    $this->addFieldMapping('Migrate Example Wine Varieties', 'variety')
          ->sourceMigration('WineVarietyMigration')
          ->arguments(array('source_type' => 'tid'));
-    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+    $this->addFieldMapping('Migrate Example Wine Regions', 'region')
          ->sourceMigration('WineRegionMigration')
          ->arguments(array('source_type' => 'tid'));
-    $this->addFieldMapping('migrate_example_wine_best_with', 'best_with')
+    $this->addFieldMapping('Migrate Example Wine Best With', 'best_with')
          ->separator(',')
          ->sourceMigration('WineBestWithMigration')
          ->arguments(array('source_type' => 'tid'));
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
-    $this->addFieldMapping('body', 'body')
-         ->arguments($arguments);
-    $this->addFieldMapping(NULL, 'excerpt');
+    $this->addFieldMapping('body', 'body');
+    $this->addFieldMapping('teaser', 'excerpt');
     $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);

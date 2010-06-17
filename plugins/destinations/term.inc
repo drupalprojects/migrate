@@ -162,3 +162,42 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     return $return;
   }
 }
+
+/**
+ * Handler to process term assignments for nodes
+ */
+class MigrateTermNodeHandler extends MigrateDestinationHandler {
+  public function __construct() {
+    $this->registerTypes(array('node'));
+  }
+
+  public function prepare(Migration $migration, stdClass $node, stdClass $row) {
+    // Identify vocabularies for this node type
+    $vocabs = taxonomy_get_vocabularies($node->type);
+    foreach ($vocabs as $vid => $vocab) {
+      $vocab_name = $vocab->name;
+      if (isset($node->$vocab_name)) {
+        $vocab_values = $node->$vocab_name;
+        $by_tid = FALSE;
+        if (isset($vocab_values['arguments'])) {
+          if ($vocab_values['arguments']['source_type'] == 'tid') {
+            $by_tid = TRUE;
+          }
+          unset($vocab_values['arguments']);
+        }
+        foreach ($vocab_values as $term_value) {
+          if ($by_tid) {
+            $node->taxonomy[$term_value] = $term_value;
+          }
+          else {
+            foreach (taxonomy_get_term_by_name($term_value) as $term) {
+              if ($term->vid == $vid) {
+                $node->taxonomy[$term->tid] = $term->tid;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -7,6 +7,7 @@
  */
 
 require_once drupal_get_path('module', 'migrate') . '/includes/d7.inc';
+//require drupal_get_path('module', 'content') . '/includes/content.crud.inc';
 require drupal_get_path('module', 'migrate_example') . '/beer.install.inc';
 require drupal_get_path('module', 'migrate_example') . '/wine.install.inc';
 

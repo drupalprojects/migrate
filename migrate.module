@@ -77,24 +77,22 @@ function migrate_handler_invoke_all($destination, $method) {
  *  Migration object representing the current migration
  * @param $entity
  *  The object we are building up before calling example_save().
- * @param $field_info
- *  Array of info on the field, from field_info_field().
  * @param $instance
  *  Array of info in the field instance, from field_info_instances().
  * @param $values
  *  Array of incoming values, to be transformed into the appropriate structure
  *  for the field type.
  */
-function migrate_field_handler_invoke_all(Migration $migration, stdClass $entity, array $field_info, array $instance,
+function migrate_field_handler_invoke_all(Migration $migration, stdClass $entity, array $instance,
     array $values) {
   $return = array();
-  $type = $field_info['type'];
+  $type = $instance['type'];
   $class_list = _migrate_class_list('%FieldHandler', 'MigrateFieldHandler');
   foreach ($class_list as $class_name => $handler) {
     if ($handler->handlesType($type) && method_exists($handler, 'prepare')) {
       migrate_instrument_start($class_name . '->prepare');
       $result = call_user_func_array(array($handler, 'prepare'),
-        array($migration, $entity, $field_info, $instance, $values));
+        array($migration, $entity, $instance, $values));
       migrate_instrument_stop($class_name . '->prepare');
       if (isset($result) && is_array($result)) {
         $return = array_merge_recursive($return, $result);

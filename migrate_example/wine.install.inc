@@ -20,7 +20,7 @@ function migrate_example_wine_schema() {
 function migrate_example_wine_install() {
   migrate_example_wine_content_types();
   migrate_example_wine_categories();
-//  migrate_example_wine_image();
+  migrate_example_wine_fields();
 
   // Populate our tables.
   migrate_example_wine_data_account();
@@ -102,6 +102,12 @@ function migrate_example_wine_schema_wine() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'description' => 'Wine region',
+      ),
+      'rating' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'Rating (100-point scale)',
       ),
     ),
     'primary key' => array('wineid'),
@@ -464,9 +470,18 @@ function migrate_example_wine_categories() {
   taxonomy_vocabulary_save($vocabulary);
 }
 
-// Create an image field named "Migrate Example Image", enabled for the 'wine' content type.
-function migrate_example_wine_image() {
-  if (!field_info_field('field_migrate_example_image')) {
+// Create CCK fields for our node types
+function migrate_example_wine_fields() {
+  $field = array(
+    'field_name' => 'field_migrate_example_wine_ratin',
+    'type' => 'number_decimal',
+    'widget_type' => 'number',
+    'type_name' => 'migrate_example_wine',
+    'label' => t('Rating'),
+    'scale' => 0,
+  );
+  content_field_instance_create($field);
+  /*  if (!field_info_field('field_migrate_example_image')) {
     $field = array(
       'field_name' => 'field_migrate_example_image',
       'type' => 'image',
@@ -541,38 +556,22 @@ function migrate_example_wine_image() {
       ),
     );
     field_create_instance($instance);
-  }
+  }*/
 }
 
 function migrate_example_wine_content_type_delete() {
-  $bundle = 'migrate_example_wine';
-/*  $field_names = array('migrate_example_wine_varieties',
-    'migrate_example_wine_regions', 'migrate_example_wine_best_with',
-    'field_migrate_example_image');
-  foreach ($field_names as $field_name) {
-    $instance = field_info_instance('node', $field_name, $bundle);
-    field_delete_instance($instance);
-    field_delete_field($field_name);
-  }*/
-  node_type_delete($bundle);
-  $bundle = 'migrate_example_producer';
-/*  $field_names = array('migrate_example_wine_regions');
-  foreach ($field_names as $field_name) {
-    $instance = field_info_instance('node', $field_name, $bundle);
-    field_delete_instance($instance);
-    field_delete_field($field_name);
-  }*/
-  node_type_delete($bundle);
+  node_type_delete('migrate_example_wine');
+  node_type_delete('migrate_example_producer');
 }
 
 function migrate_example_wine_data_wine() {
   $fields = array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image',
-    'posted', 'last_changed', 'variety', 'region');
+    'posted', 'last_changed', 'variety', 'region', 'rating');
   $query = db_insert('migrate_example_wine')
     ->fields($fields);
   $data = array(
     array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9, NULL,
-      strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17),
+      strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

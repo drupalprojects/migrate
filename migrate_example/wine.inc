@@ -381,7 +381,7 @@ class WineWineMigration extends AdvancedExampleMigration {
 
     $query = db_select('migrate_example_wine', 'w')
              ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid',
-              'image', 'posted', 'last_changed', 'variety', 'region'));
+              'image', 'posted', 'last_changed', 'variety', 'region', 'rating'));
     $query->leftJoin('migrate_example_wine_category_wine', 'cwbw',
       "w.wineid = cwbw.wineid");
     $query->leftJoin('migrate_example_wine_categories', 'bw',
@@ -416,7 +416,7 @@ class WineWineMigration extends AdvancedExampleMigration {
          ->separator(',')
          ->sourceMigration('WineBestWithMigration')
          ->arguments(array('source_type' => 'tid'));
-    $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
+    $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
     $this->addFieldMapping('body', 'body');
     $this->addFieldMapping('teaser', 'excerpt');
     $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);

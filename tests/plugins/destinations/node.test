@@ -14,7 +14,8 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('autoload', 'dbtng', 'taxonomy', /*'image',*/ 'migrate', 'migrate_example');
+    parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
+       /*'image',*/ 'migrate', 'migrate_example');
     autoload_get_lookup(TRUE);
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',
@@ -86,7 +87,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     }
     $query = db_select('migrate_example_wine', 'w')
              ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid',
-               'image', 'posted', 'last_changed', 'variety', 'region'));
+               'image', 'posted', 'last_changed', 'variety', 'region', 'rating'));
     $query->leftJoin('migrate_example_wine_category_wine', 'cwbw',
       "w.wineid = cwbw.wineid");
     $query->leftJoin('migrate_example_wine_categories', 'bw',
@@ -127,8 +128,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $this->assertEqual($wine_node->teaser, $wine_row->excerpt,
       t('teaser properly migrated'));
 
-    // Test Field API fields of all types
-    // taxonomy_term_reference - single and multiple
+    // Taxonomy terms - single and multiple
     $variety_migration = MigrationBase::getInstance('WineVarietyMigration');
     $mapped_tid = $variety_migration->getMap()->lookupDestinationID(
       array($wine_row->variety), $migration);
@@ -156,6 +156,10 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       $this->assertNotNull($node->taxonomy[$tid],
         t('Multiple value taxonomy_term_reference properly migrated'));
     }
+
+    // Test Field API fields of all types
+    $this->assertEqual($wine_node->field_migrate_example_wine_ratin[0]['value'],
+      $wine_row->rating, t('Decimal field (rating) matches'));
 
     // Test rollback
     $result = $migration->processRollback();

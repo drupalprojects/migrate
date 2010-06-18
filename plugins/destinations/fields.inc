@@ -14,28 +14,31 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately
-/*    $destination = $migration->getDestination();
+    $destination = $migration->getDestination();
     $entity_type = $destination->getEntityType();
-    $bundle = $destination->getBundle();
-    $instances = field_info_instances($entity_type, $bundle);
-    foreach ($instances as $machine_name => $instance) {
-      if (isset($entity->$machine_name)) {
-        // Normalize to an array
-        if (!is_array($entity->$machine_name)) {
-          $entity->$machine_name = array($entity->$machine_name);
+    // Nodes only in Drupal 6
+    if ($entity_type == 'node') {
+      $bundle = $destination->getBundle();
+      $info = content_types($bundle);
+      $instances = $info['fields'];
+      foreach ($instances as $machine_name => $instance) {
+        if (isset($entity->$machine_name)) {
+          // Normalize to an array
+          if (!is_array($entity->$machine_name)) {
+            $entity->$machine_name = array($entity->$machine_name);
+          }
+          $entity->$machine_name = migrate_field_handler_invoke_all($migration, $entity,
+            $instance, $entity->$machine_name);
         }
-        $field_info = field_info_field($machine_name);
-        $entity->$machine_name = migrate_field_handler_invoke_all($migration, $entity, $field_info,
-          $instance, $entity->$machine_name);
       }
-    }*/
+    }
     migrate_instrument_stop('MigrateDestinationEntity->prepareFields');
   }
 }
 
 abstract class MigrateFieldHandler extends MigrateHandler {
   // abstract function arguments(...)
-  abstract public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values);
+  abstract public function prepare(Migration $migration, stdClass $entity, array $instance, array $values);
 }
 
 class MigrateTextFieldHandler extends MigrateFieldHandler {
@@ -57,7 +60,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     return $arguments;
   }
 
-  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -67,8 +70,6 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     }
 
     $destination = $migration->getDestination();
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $destination->getLanguage();
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -82,7 +83,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       $item['format'] = $item['value_format'] = $format;
       $item['value'] = $value;
 
-      $return[$language][$delta] = $item;
+      $return[$delta] = $item;
       $delta++;
     }
 
@@ -96,63 +97,17 @@ class MigrateValueFieldHandler extends MigrateFieldHandler {
       'list_text', 'number_integer', 'number_decimal', 'number_float'));
   }
 
-  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
-
+  public function prepare(Migration $migration, stdClass $entity, array $instance, array $values) {
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
-      $return[$language][$delta]['value'] = $value;
+      $return[$delta]['value'] = $value;
       $delta++;
     }
     if (!isset($return)) {
       $return = NULL;
     }
     return $return;
-  }
-}
-
-class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
-  public function __construct() {
-    $this->registerTypes(array('taxonomy_term_reference'));
-  }
-
-  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
-    if (isset($values['arguments'])) {
-      $arguments = $values['arguments'];
-      unset($values['arguments']);
-    }
-    else {
-      $arguments = array();
-    }
-    if (isset($arguments['source_type']) && $arguments['source_type'] == 'tid') {
-      // Nothing to do. We have tids already.
-      $tids = $values;
-    }
-    else {
-      // Get the vocabulary for this term
-      $vid = $field_info['settings']['allowed_values'][0]['vid'];
-
-      // Cannot use taxonomy_term_load_multiple() since we have an array of names.
-      // It wants a singular value.
-      $tids = db_select('term_data', 'td')
-        ->fields('td', array('tid'))
-        ->condition('td.name', $values, 'IN')
-        ->condition('td.vid', $vid)
-        ->execute()
-        ->fetchAllKeyed(0, 0);
-    }
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
-    $result = array();
-    $i = 0;
-    foreach ($tids as $tid) {
-      $result[$language][$i] = array();
-      $result[$language][$i]['tid'] = $tid;
-      $i++;
-    }
-    return $result;
   }
 }
 
@@ -169,7 +124,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $instance, array $values) {
     static $fid;
 
     $arguments = $values['arguments'];
@@ -193,7 +148,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       return;
     }
 
-    $destination_dir = $field_info['settings']['uri_scheme'] . '://' .
+    $destination_dir = $instance['settings']['uri_scheme'] . '://' .
       $instance['settings']['file_directory'];
     $destination_file = $destination_dir . "/" . basename($full_path);
     $real_destination_file = drupal_realpath($destination_file);
@@ -283,8 +238,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       migrate_instrument_stop('MigrateFileFieldHandler file_function');
     }
 
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
     if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;
@@ -292,7 +245,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $object_field['title'] = isset($arguments['source_title_name']) ? $values[$arguments['source_title_name']] : NULL;
       $object_field['description'] = isset($arguments['source_description_name']) ? $values[$arguments['source_description_name']] : NULL;
       $object_field['display'] = isset($arguments['source_display_name']) ? $values[$arguments['source_display_name']] : NULL;
-      $return[$language][$delta] = $object_field;
+      $return[$delta] = $object_field;
       return $return;
     }
     else {
@@ -317,7 +270,10 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param source_display_name
    *
    */
- static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL) {
+ static function arguments($source_path = NULL, $file_function = 'file_copy',
+      $file_replace = FILE_EXISTS_RENAME, $source_alt_name = NULL,
+      $source_title_name = NULL, $source_description_name = NULL,
+      $source_display_name = NULL) {
     return get_defined_vars();
   }
 }
@@ -329,7 +285,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('node_reference'));
   }
 
-  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -337,8 +293,6 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    $language = isset($arguments['language']) ? $arguments['language'] :
-      $migration->getDestination()->getLanguage();
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -346,7 +300,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     foreach ($values as $value) {
       // Don't save empty references
       if ($value) {
-        $return[$language][$delta]['nid'] = $value;
+        $return[$delta]['nid'] = $value;
         $delta++;
       }
     }
@@ -359,7 +313,7 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('user_reference'));
   }
 
-  public function prepare(Migration $migration, stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare(Migration $migration, stdClass $entity, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -367,8 +321,6 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -376,7 +328,7 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     foreach ($values as $value) {
       // Don't save empty references
       if ($value) {
-        $return[$language][$delta]['uid'] = $value;
+        $return[$delta]['uid'] = $value;
         $delta++;
       }
     }

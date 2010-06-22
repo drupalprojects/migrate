@@ -178,13 +178,16 @@ class MigrateTermNodeHandler extends MigrateDestinationHandler {
       $vocab_name = $vocab->name;
       if (isset($node->$vocab_name)) {
         $vocab_values = $node->$vocab_name;
+        if (!is_array($vocab_values)) {
+          $vocab_values = array($vocab_values);
+        }
         $by_tid = FALSE;
-        if (isset($vocab_values['arguments'])) {
+        if (isset($vocab_values['arguments']['source_type'])) {
           if ($vocab_values['arguments']['source_type'] == 'tid') {
             $by_tid = TRUE;
           }
-          unset($vocab_values['arguments']);
         }
+        unset($vocab_values['arguments']);
         foreach ($vocab_values as $term_value) {
           if ($by_tid) {
             $node->taxonomy[$term_value] = $term_value;

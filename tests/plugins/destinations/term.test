@@ -14,7 +14,8 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('autoload', 'dbtng', 'taxonomy', 'migrate', 'migrate_example');
+    parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
+      'migrate', 'migrate_example');
     autoload_get_lookup(TRUE);
   }
 

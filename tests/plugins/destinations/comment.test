@@ -14,7 +14,14 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('taxonomy', 'comment', 'migrate', 'migrate_example');
+    parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
+       /*'image',*/ 'migrate', 'migrate_example', 'comment');
+    autoload_get_lookup(TRUE);
+    // Create and login user
+    $migrate_user = $this->drupalCreateUser(array('access content',
+      'administer nodes', 'create page content', 'delete any page content',
+      'post comments', 'administer comments'));
+    $this->drupalLogin($migrate_user);
   }
 
   function testCommentImport() {
@@ -53,17 +60,22 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
                 'posted', 'lastchanged'))
               ->orderBy('comment_parent')
               ->execute();
-
-    $rawcomments = comment_load_multiple(FALSE);
-    // Index by subject
-    $comments = array();
-    foreach ($rawcomments as $comment) {
-      $comments[$comment->subject] = $comment;
-    }
     $rows = array();
     foreach ($result as $row) {
       $rows[$row->subject] = $row;
     }
+
+    $result = db_select('comments', 'c')
+              ->fields('c', array('cid', 'pid', 'nid', 'uid', 'subject', 'comment',
+                'hostname', 'timestamp', 'status', 'format', 'thread', 'name',
+                'mail', 'homepage'))
+              ->orderBy('pid')
+              ->execute();
+    $comments = array();
+    foreach ($result as $row) {
+      $comments[$row->subject] = $row;
+    }
+
     $this->assertEqual(count($comments), count($rows),
       t('Counts of comments and input rows match'));
 
@@ -75,12 +87,12 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $wine_migration = MigrationBase::getInstance('WineWineMigration');
     $destid = $wine_migration->getMap()->lookupDestinationID(array($row->wineid), $migration);
     $this->assertEqual($comment->nid, reset($destid), t('Nid matches'));
-    $body = field_get_items('comment', $comment, 'comment_body');
-    $this->assertEqual($body[0]['value'], $row->body, t('Body matches'));
+    $this->error(print_r($comment, TRUE));
+    $this->error(print_r($row, TRUE));
+    $this->assertEqual($comment->comment, $row->body, t('Body matches'));
     $this->assertEqual($comment->hostname, $row->commenthost, t('Hostname matches'));
     $this->assertEqual($comment->homepage, $row->userpage, t('Homepage matches'));
-    $this->assertEqual($comment->created, $row->posted, t('Created matches'));
-    $this->assertEqual($comment->changed, $row->lastchanged, t('Changed matches'));
+    $this->assertEqual($comment->timestamp, $row->lastchanged, t('Changed matches'));
 
     $comment = $comments['im child'];
     $row = $rows['im child'];
@@ -93,8 +105,12 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Comment rollback returned RESULT_COMPLETED'));
-    $rawcomments = comment_load_multiple(FALSE);
-    $this->assertEqual(count($rawcomments), 0, t('All comments deleted'));
+    $count = db_select('comments', 'c')
+              ->fields('c', array('cid'))
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+    $this->assertEqual($count, 0, t('Comments cleared'));
     $count = db_select('migrate_map_winecomment', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()

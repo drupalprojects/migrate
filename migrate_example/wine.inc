@@ -480,10 +480,9 @@ class WineCommentMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('pid', 'comment_parent')
          ->sourceMigration('WineCommentMigration')
          ->description('Parent comment');
-    $this->addFieldMapping('comment_body', 'body');
+    $this->addFieldMapping('comment', 'body');
     $this->addFieldMapping('hostname', 'commenthost');
-    $this->addFieldMapping('created', 'posted');
-    $this->addFieldMapping('changed', 'lastchanged');
+    $this->addFieldMapping('timestamp', 'lastchanged');
     $this->addFieldMapping('homepage', 'userpage');
 
     // No unmapped source fields

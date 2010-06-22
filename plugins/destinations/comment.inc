@@ -84,8 +84,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  Array of comment IDs to be deleted.
    */
   public function bulkRollback(Migration $migration, array $cids) {
+    require_once drupal_get_path('module', 'comment') . '/comment.admin.inc';
     migrate_instrument_start('comment_delete_multiple');
-    $result = comment_delete_multiple($cids);
+    foreach ($cids as $cid) {
+      comment_delete($cid);
+    }
     migrate_instrument_stop('comment_delete_multiple');
     return $result;
   }
@@ -137,14 +140,15 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     comment_save($comment);
     $comment = (object)$comment;
     migrate_instrument_stop('comment_save');
-    if (isset($hostname) && isset($comment->cid)) {
-      db_update('comment')
+    if (isset($hostname) && isset($comment->cid) && $comment->cid > 0) {
+      db_update('comments')
         ->fields(array('hostname' => $hostname))
         ->condition('cid', $comment->cid)
         ->execute();
     }
     $this->complete($migration, $comment, $row);
-    $return = isset($comment->cid) ? array($comment->cid) : FALSE;
+    $return = (isset($comment->cid) && $comment->cid > 0)
+      ? array($comment->cid) : FALSE;
     return $return;
   }
 
@@ -170,8 +174,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       // TODO: DBTNG. Ignore keyword is Mysql only? Is only used in the rare case when
       // two comments on the same node share same timestamp.
       $sql = "
-        INSERT IGNORE INTO {node_comment_statistics} (nid, cid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (
-          SELECT c.nid, c.cid, c.timestamp, c.name, c.uid, c2.comment_count FROM comments c
+        INSERT IGNORE INTO {node_comment_statistics} (nid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (
+          SELECT c.nid, c.timestamp, c.name, c.uid, c2.comment_count FROM comments c
           JOIN (
             SELECT c.nid, MAX(c.timestamp) AS timestamp, COUNT(*) AS comment_count FROM comments c WHERE status=:published GROUP BY c.nid
           ) AS c2 ON c.nid = c2.nid AND c.timestamp=c2.timestamp

@@ -21,21 +21,14 @@ function migrate_example_install() {
   drupal_install_schema('migrate_example');
   migrate_example_beer_install();
   migrate_example_wine_install();
-  /* TODO: D6 backport
   // A simple format for testing migration of format
-  $example_format = array(
-    'name' => 'Migrate example format',
-    'weight' => 20,
-    'filters' => array(
-      // Escape all HTML.
-      'filter_html_escape' => array(
-        'weight' => 0,
-        'status' => 1,
-      ),
-    ),
-  );
-  $example_format = (object) $example_format;
-  filter_format_save($example_format);*/
+  db_insert('filter_formats')
+    ->fields(array(
+      'name' => 'Migrate example format',
+      'roles' => ',1,',
+      'cache' => 1,
+    ))
+    ->execute();
 }
 
 function migrate_example_uninstall() {

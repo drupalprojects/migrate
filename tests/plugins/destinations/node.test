@@ -166,7 +166,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node rollback returned RESULT_COMPLETED'));
     $count = db_select('node', 'n')
-              ->fields('n', array('nide'))
+              ->fields('n', array('nid'))
               ->condition('type', 'migrate_example_wine')
               ->countQuery()
               ->execute()

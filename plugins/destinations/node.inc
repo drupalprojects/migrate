@@ -92,9 +92,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    */
   public function bulkRollback(Migration $migration, array $nids) {
     migrate_instrument_start('node_delete_multiple');
-    foreach ($nids as $nid) {
-      node_delete($nid);
-    }
+    node_delete_multiple($nids);
     migrate_instrument_stop('node_delete_multiple');
   }
 

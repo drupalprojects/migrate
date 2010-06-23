@@ -84,11 +84,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  Array of comment IDs to be deleted.
    */
   public function bulkRollback(Migration $migration, array $cids) {
-    require_once drupal_get_path('module', 'comment') . '/comment.admin.inc';
     migrate_instrument_start('comment_delete_multiple');
-    foreach ($cids as $cid) {
-      comment_delete($cid);
-    }
+    $result = comment_delete_multiple($cids);
     migrate_instrument_stop('comment_delete_multiple');
     return $result;
   }

@@ -14,7 +14,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('autoload', 'dbtng', 'migrate', 'content', 'text', 'number',
+    parent::setUp('autoautoload', 'autoload', 'dbtng', 'migrate', 'content', 'text', 'number',
       'migrate_example');
     autoload_get_lookup(TRUE);
 

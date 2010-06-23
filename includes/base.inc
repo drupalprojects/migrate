@@ -94,8 +94,8 @@ abstract class MigrationBase {
    */
   protected $dependencies = array(), $softDependencies = array();
   public function getHardDependencies() {
-     return $this->dependencies;
-   }
+    return $this->dependencies;
+  }
   public function getSoftDependencies() {
     return $this->softDependencies;
   }
@@ -381,6 +381,18 @@ abstract class MigrationBase {
               ->execute()
               ->fetchField();
     return $highwater;
+  }
+
+  /**
+   * Save the highwater mark for this migration.
+   *
+   * @param mixed $highwater
+   */
+  protected function saveHighwater($highwater) {
+    db_update('migrate_status')
+    ->fields(array('highwater' => $highwater))
+    ->condition('machine_name', $this->machineName)
+    ->execute();
   }
 
   /**

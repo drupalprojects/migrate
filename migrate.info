@@ -5,6 +5,7 @@ package = "Development"
 core = 6.x
 php = 5.2
 dependencies[] = autoload
+dependencies[] = autoautoload
 dependencies[] = dbtng
 files[] = migrate.module
 files[] = migrate.install

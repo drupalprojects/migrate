@@ -14,7 +14,7 @@ class MigrateXMLUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
+    parent::setUp('autoautoload', 'autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
       'migrate', 'migrate_example');
     autoload_get_lookup(TRUE);
     // Create and login user

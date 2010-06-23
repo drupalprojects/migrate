@@ -75,9 +75,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    */
   public function bulkRollback(Migration $migration, array $uids) {
     migrate_instrument_start('user_delete_multiple');
-    foreach ($uids as $uid) {
-      user_delete(array(), $uid);
-    }
+    user_delete_multiple($uids);
     migrate_instrument_stop('user_delete_multiple');
   }
 

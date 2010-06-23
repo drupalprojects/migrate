@@ -311,7 +311,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     $this->addFieldMapping('field_migrate_example_country', 'countries')
          ->separator('|');
     // These are related terms, which by default will be looked up by name
-    $this->addFieldMapping('Migrate Example Beer Styles', 'terms')
+    $this->addFieldMapping('migrate_example_beer_styles', 'terms')
          ->separator(',');
 
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));

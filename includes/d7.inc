@@ -26,3 +26,26 @@ function taxonomy_vocabulary_save(&$vocabulary) {
   }
   return taxonomy_save_vocabulary($vocabulary);
 }
+
+function node_delete_multiple($nids) {
+  foreach ($nids as $nid) {
+    node_delete($nid);
+  }
+}
+
+function user_delete_multiple($uids) {
+  foreach ($uids as $uid) {
+    user_delete(array(), $uid);
+  }
+}
+
+function comment_delete_multiple($cids) {
+  require_once drupal_get_path('module', 'comment') . '/comment.admin.inc';
+  foreach ($cids as $cid) {
+    comment_delete($cid);
+  }
+}
+
+function filter_fallback_format() {
+  return FILTER_FORMAT_DEFAULT;
+}

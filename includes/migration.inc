@@ -646,18 +646,6 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Save the highwater mark for this migration.
-   *
-   * @param mixed $highwater
-   */
-  protected function saveHighwater($highwater) {
-    db_update('migrate_status')
-    ->fields(array('highwater' => $highwater))
-    ->condition('machine_name', $this->machineName)
-    ->execute();
-  }
-
-  /**
    * Pass messages through to the map class
    *
    * @param string $message

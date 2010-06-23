@@ -32,4 +32,3 @@ files[] = tests/plugins/destinations/node.test
 files[] = tests/plugins/destinations/term.test
 files[] = tests/plugins/destinations/user.test
 files[] = tests/plugins/sources/xml.test
-

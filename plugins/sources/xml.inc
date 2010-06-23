@@ -56,7 +56,7 @@ abstract class MigrateXMLSource extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    // The fields are defined in the Contructor for this plugin.
+    // The fields are defined in the constructor for this plugin.
     return $this->fields;
   }
 

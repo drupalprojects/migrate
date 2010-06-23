@@ -145,14 +145,15 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');
-    if (isset($hostname) && isset($comment->cid)) {
+    if (isset($hostname) && isset($comment->cid) && $comment->cid > 0) {
       db_update('comment')
         ->fields(array('hostname' => $hostname))
         ->condition('cid', $comment->cid)
         ->execute();
     }
     $this->complete($migration, $comment, $row);
-    $return = isset($comment->cid) ? array($comment->cid) : FALSE;
+    $return = (isset($comment->cid) && $comment->cid > 0)
+      ? array($comment->cid) : FALSE;
     return $return;
   }
 

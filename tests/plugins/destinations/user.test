@@ -30,12 +30,16 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
               'sex', 'password', 'mail', 'last_access', 'last_login',
               'sig', 'original_mail'))
              ->execute();
-    $rawusers = user_load_multiple(FALSE, array(), TRUE);
+    $uids = db_select('users', 'u')
+              ->fields('u', array('uid'))
+              ->execute()
+              ->fetchCol();
     // Index by name
     $users = array();
-    foreach ($rawusers as $uid => $account) {
+    foreach ($uids as $uid) {
       // Skip anon/admin users
       if ($uid > 1) {
+        $account = user_load($uid);
         $users[$account->name] = $account;
       }
     }
@@ -82,9 +86,13 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User rollback returned RESULT_COMPLETED'));
-    $rawusers = user_load_multiple(FALSE, array(), TRUE);
+    $count = db_select('users', 'u')
+             ->fields('u', array('uid'))
+             ->countQuery()
+             ->execute()
+             ->fetchField();
     // 2 users left - anon and admin
-    $this->assertEqual(count($rawusers), 2, t('All imported users deleted'));
+    $this->assertEqual($count, 2, t('All imported users deleted'));
     $count = db_select('migrate_map_wineuser', 'map')
               ->fields('map', array('sourceid1'))
               ->countQuery()

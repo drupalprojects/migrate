@@ -756,25 +756,18 @@ function drush_migrate_reset_status($args = NULL) {
 }
 
 /**
- * TODO: Port to d7.
  * A drush command callback.
  */
 function drush_migrate_wipe() {
   $types = func_get_args();
-  $sql = "SELECT nid FROM {node} WHERE type IN (:types)";
-  $result = db_query($sql, array(':types' => $types));
-  // TODO: use node_delete_multiple()
-  foreach ($result as $row) {
-    node_delete($row->nid);
-
-    // TODO: Check for closeness to memory limit
-/*    $usage = memory_get_usage();
-    $memory_limit = _migrate_memory_limit();
-    $pct_memory = $usage/$memory_limit;
-    if ($pct_memory > MIGRATE_MEMORY_THRESHOLD) {
-      // Low on memory. Spawn a subshell.
-      drush_migrate_backend_invoke();
-    }*/
+  $nids = db_select('node', 'n')
+          ->fields('n', array('nid'))
+          ->condition('type', $types, 'IN')
+          ->execute()
+          ->fetchCol();
+  // TODO: Call node_delete_multiple in batches of 500 or so
+  foreach ($nids as $nid) {
+    node_delete($nid);
   }
 }
 

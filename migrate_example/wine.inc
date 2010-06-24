@@ -23,7 +23,7 @@ abstract class AdvancedExampleMigration extends Migration {
       new MigrateTeamMember('Jack Kramer', 'jkramer@example.com', t('Taster')),
       new MigrateTeamMember('Linda Madison', 'lmadison@example.com', t('Winemaker')),
     );
-    $this->issuePattern = 'http://drupal.org/node/:id:';
+    $this->issuePattern = 'http://drupal.org/node/:id';
 
     // A format of our own, for testing migration of formats
     $formats = filter_formats();

@@ -139,8 +139,8 @@ abstract class MigrationBase {
   }
 
   /**
-   * If provided, an URL for an issue tracking system containing :id: where
-   * the issue number will go (e.g., 'http://example.com/project/ticket/:id:').
+   * If provided, an URL for an issue tracking system containing :id where
+   * the issue number will go (e.g., 'http://example.com/project/ticket/:id').
    *
    * @var string
    */

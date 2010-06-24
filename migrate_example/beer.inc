@@ -34,9 +34,9 @@ abstract class BasicExampleMigration extends Migration {
 
     // Individual mappings in a migration can be linked to a ticket or issue
     // in an external tracking system. Define the URL pattern here in the shared
-    // class with ':id:' representing the position of the issue number, then add
+    // class with ':id' representing the position of the issue number, then add
     // ->issueNumber(1234) to a mapping.
-    $this->issuePattern = 'http://drupal.org/node/:id:';
+    $this->issuePattern = 'http://drupal.org/node/:id';
   }
 }
 

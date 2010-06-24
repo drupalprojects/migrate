@@ -28,6 +28,13 @@ abstract class MigrateXMLSource extends MigrateSource {
   protected $idList = array();
 
   /**
+   * List of available source fields.
+   *
+   * @var array
+   */
+  protected $fields = array();
+
+  /**
    * Simple initialization.
    */
   public function __construct(Migration $migration, $list_url) {

@@ -397,7 +397,7 @@ function migrate_migration_info($form_state, $migration) {
           $issue_pattern = $migration->getIssuePattern();
           $issue_number = $mapping->getIssueNumber();
           if (!is_null($issue_pattern) && !is_null($issue_number)) {
-            $priority .= ' (' . l('#' . $issue_number, str_replace(':id:', $issue_number,
+            $priority .= ' (' . l('#' . $issue_number, str_replace(':id', $issue_number,
               $issue_pattern)) . ')';
           }
           if ($issue_priority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {

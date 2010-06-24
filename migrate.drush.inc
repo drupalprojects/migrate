@@ -430,9 +430,6 @@ function drush_migrate_descriptions() {
  * Roll back one specified migration
  */
 function drush_migrate_rollback($args = NULL) {
-  // node_delete() has silly perm requirements in d5/d6.
-  drush_set_option('user', 1);
-  drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
   try {
     $migrations = drush_migrate_get_migrations($args);
 
@@ -539,6 +536,11 @@ function drush_migrate_rollback_validate($args = NULL) {
 }
 
 function drush_migrate_validate_common($args) {
+  // Let's load user 1, seems to be need for creating path aliases and deleting content.
+  global $user;
+  $user_one = user_load(array('uid' => '1'));
+  $user = $user_one;
+  session_save_session(FALSE);
   if (drush_get_option('all')) {
     if (!empty($args)) {
       return drush_set_error(NULL, dt('You must specify either a migration name or --all, not both'));
@@ -762,9 +764,6 @@ function drush_migrate_reset_status($args = NULL) {
  * A drush command callback.
  */
 function drush_migrate_wipe() {
-  // node_delete() has silly perm requirements in d5/d6.
-  drush_set_option('user', 1);
-  drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
   $types = func_get_args();
   $nids = db_select('node', 'n')
           ->fields('n', array('nid'))

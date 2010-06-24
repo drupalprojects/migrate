@@ -6,16 +6,16 @@
  * Support for paths in core Drupal objects
  */
 
-class MigratePathEntityHandler extends MigrateDestinationHandler {
+class MigratePathNodeHandler extends MigrateDestinationHandler {
   public function __construct() {
-    $this->registerTypes(array('entity'));
+    $this->registerTypes(array('node'));
+  }
+
+  public function fields() {
+    return array('path' => t('Node: Path alias'));
   }
 
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
-    if (isset($entity->path_alias)) {
-      $entity->path = array();
-      $entity->path['alias'] = $entity->path_alias;
-      unset($entity->path_alias);
-    }
+    // TODO: Shouldn't be required
   }
 }

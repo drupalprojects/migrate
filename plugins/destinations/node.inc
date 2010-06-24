@@ -63,19 +63,18 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $fields['title'] = t('Node:') . ' ' . $node_type->title_label;
     }
 
-
-
     // Then add any fields attached to this node type (bundle)
-    // TODO: Factor out into entity.inc
-    // TODO: Provide more details (like cardinality)
-    /* TODO: CCK instead of Field API
-    $field_instance_info = field_info_instances($this->entityType, $this->bundle);
-    foreach ($field_instance_info as $machine_name => $instance) {
-      $field_info = field_info_field($machine_name);
-      $fields[$machine_name] = t('Node:') . ' ' . $instance['label'] .
-        ' (' . $field_info['type'] . ')';
+    // TODO: Move to migrate_extras
+    if (module_exists('content')) {
+      $field_instance_info = content_fields();
+      foreach ($field_instance_info as $machine_name => $instance) {
+        if ($instance['type_name'] == $this->bundle) {
+          $fields[$machine_name] = t('Node:') . ' ' . $instance['widget']['label'] .
+            ' (' . $instance['type'] . ')';
+        }
+      }
     }
-*/
+
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Node', 'fields');
 

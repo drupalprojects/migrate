@@ -9,6 +9,7 @@ dependencies[] = taxonomy
 dependencies[] = comment
 dependencies[] = migrate
 dependencies[] = content
+dependencies[] = date
 files[] = migrate_example.module
 files[] = beer.inc
 files[] = wine.inc

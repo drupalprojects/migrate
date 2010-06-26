@@ -4,6 +4,7 @@
 /**
  * @file
  * Support for processing entity fields
+ * TODO: Move to migrate_extras
  */
 
 class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
@@ -278,8 +279,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
   }
 }
 
-// TODO: node_reference and user_reference are contrib fields - should be moved
-// to CCK, or migrate_extras
 class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
   public function __construct() {
     $this->registerTypes(array('node_reference'));
@@ -333,5 +332,77 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
       }
     }
     return $return;
+  }
+}
+
+
+class MigrateDateFieldHandler extends MigrateFieldHandler {
+  public function __construct() {
+    $this->registerTypes(array('date', 'datestamp', 'datetime'));
+  }
+
+  public function prepare(Migration $migration, stdClass $entity, array $instance, array $values) {
+    // Setup the standard Field API array for saving.
+    $delta = 0;
+    foreach ($values as $value) {
+      // Work from a timestamp
+      $timestamp = $this->timestamp($value);
+
+      // What does the destination field expect?
+      if ($instance['type'] == 'datestamp') {
+        // UNIX timestamp
+        $value = $timestamp;
+      }
+      elseif ($instance['type'] == 'datetime') {
+        // YYYY-MM-DD HH:MM:SS
+        $value = format_date($timestamp, 'Y-m-d H:i');
+      }
+      elseif ($instance['type'] == 'date') {
+        // ISO date: YYYY-MM-DDTHH:MM:SS
+        $value = format_date($timestamp, 'Y-m-dTH:i');
+      }
+      else {
+        // Should never get here
+      }
+      $return[$delta]['value'] = $value;
+      $delta++;
+    }
+    if (!isset($return)) {
+      $return = NULL;
+    }
+    return $return;
+  }
+
+  /**
+   * Convert an incoming string (which may be a UNIX timestamp, or an arbitrarily-formatted
+   * date/time string) to a UNIX timestamp.
+   *
+   * @param string $value
+   */
+  protected function timestamp($value) {
+    // Default empty values to now
+    if (empty($value)) {
+      return time();
+    }
+
+    // Does it look like it's already a timestamp? Just return it
+    if (is_numeric($value) && $value > -1) {
+      return $value;
+    }
+
+    // strtotime() doesn't recognize dashes as separators, change to slashes
+    $value = str_replace('-', '/', $value);
+
+    $time = strtotime($value);
+    if ($time < 0 || !$time) {
+      // Handles form YYYY-MM-DD HH:MM:SS.garbage
+      if (drupal_strlen($value) > 19) {
+        $time = strtotime(drupal_substr($value, 0, 19));
+        if ($time < 0 || !$time) {
+          return -1;
+        }
+      }
+    }
+    return $time;
   }
 }

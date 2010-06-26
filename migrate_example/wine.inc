@@ -381,7 +381,8 @@ class WineWineMigration extends AdvancedExampleMigration {
 
     $query = db_select('migrate_example_wine', 'w')
              ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid',
-              'image', 'posted', 'last_changed', 'variety', 'region', 'rating'));
+              'image', 'posted', 'last_changed', 'variety', 'region', 'rating',
+              'last_reviewed'));
     $query->leftJoin('migrate_example_wine_category_wine', 'cwbw',
       "w.wineid = cwbw.wineid");
     $query->leftJoin('migrate_example_wine_categories', 'bw',
@@ -417,11 +418,12 @@ class WineWineMigration extends AdvancedExampleMigration {
          ->sourceMigration('WineBestWithMigration')
          ->arguments(array('source_type' => 'tid'));
     $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
+    $this->addFieldMapping('field_migrate_example_wine_rvw', 'last_reviewed');
     $this->addFieldMapping('body', 'body');
     $this->addFieldMapping('teaser', 'excerpt');
-    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
+/*    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
     $this->addFieldMapping('field_migrate_example_image', 'image')
-         ->arguments($arguments);
+         ->arguments($arguments);*/
     $this->addFieldMapping('sticky')
          ->defaultValue(0);
     // These are already UNIX timestamps, so just pass through

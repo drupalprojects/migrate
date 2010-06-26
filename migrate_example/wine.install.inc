@@ -109,6 +109,12 @@ function migrate_example_wine_schema_wine() {
         'not null' => FALSE,
         'description' => 'Rating (100-point scale)',
       ),
+      'last_reviewed' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'When it was last reviewed',
+      ),
     ),
     'primary key' => array('wineid'),
   );
@@ -481,6 +487,70 @@ function migrate_example_wine_fields() {
     'scale' => 0,
   );
   content_field_instance_create($field);
+  $field= array(
+    'field_name' => 'field_migrate_example_wine_rvw',
+    'type' => 'datestamp',
+    'type_name' => 'migrate_example_wine',
+    'display_settings' => array(
+      'label' => array(
+        'format' => 'above',
+        'exclude' => 0,
+      ),
+      'teaser' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'full' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'token' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+    ),
+    'widget_active' => '1',
+    'required' => '0',
+    'multiple' => '0',
+    'module' => 'date',
+    'active' => '1',
+    'granularity' => array(
+      'year' => 'year',
+      'month' => 'month',
+      'day' => 'day',
+      'hour' => 'hour',
+      'minute' => 'minute',
+    ),
+    'timezone_db' => 'UTC',
+    'tz_handling' => 'site',
+    'todate' => '',
+    'repeat' => 0,
+    'repeat_collapsed' => '',
+    'default_format' => 'medium',
+    'widget' => array(
+      'default_value' => 'blank',
+      'default_value_code' => '',
+      'default_value2' => 'same',
+      'default_value_code2' => '',
+      'input_format' => 'M j Y',
+      'input_format_custom' => '',
+      'increment' => '15',
+      'text_parts' => array(),
+      'year_range' => '-3:+3',
+      'label_position' => 'above',
+      'label' => 'Last Reviewed',
+      'weight' => '10',
+      'description' => '',
+      'type' => 'date_text',
+      'module' => 'date',
+    ),
+  );
+  content_field_instance_create($field);
+
   /*  if (!field_info_field('field_migrate_example_image')) {
     $field = array(
       'field_name' => 'field_migrate_example_image',
@@ -566,12 +636,13 @@ function migrate_example_wine_content_type_delete() {
 
 function migrate_example_wine_data_wine() {
   $fields = array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image',
-    'posted', 'last_changed', 'variety', 'region', 'rating');
+    'posted', 'last_changed', 'variety', 'region', 'rating', 'last_reviewed');
   $query = db_insert('migrate_example_wine')
     ->fields($fields);
   $data = array(
     array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9, NULL,
-      strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95),
+      strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95,
+      '3/4/10 05:06:07 PM'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

@@ -135,7 +135,8 @@ abstract class MigrateXMLSource extends MigrateSource {
       $object_url = $this->constructObjectUrl($id);
 
       migrate_instrument_start('load object xml');
-      $xml = simplexml_load_file($object_url);
+      // Allow derived class to override for preprocessing of XML
+      $xml = $this->loadXmlUrl($object_url);
       migrate_instrument_stop('load object xml');
       if ($xml) {
         $this->numProcessed++;
@@ -169,6 +170,13 @@ abstract class MigrateXMLSource extends MigrateSource {
     }
 
     migrate_instrument_stop('MigrateSourceXML next');
+  }
+
+  /**
+   * Default XML loader - just use Simplexml directly
+   */
+  protected function loadXmlUrl($object_url) {
+    return simplexml_load_file($object_url);
   }
 }
 

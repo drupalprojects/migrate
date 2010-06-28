@@ -42,7 +42,9 @@ function _migrate_dashboard_form($form_state) {
       $view = views_get_view($row->view_name);
       if (!$view) {
         drupal_set_message(t('View !view does not exist - either (re)create this view, or
-          remove the content set using it.', array('!view' => $row->view_name)));
+            remove the content set !content_set',
+          array('!view' => $row->view_name,
+                '!content_set' => l($row->description, "admin/content/migrate/content_set/$row->mcsid"))));
         continue;
       }
       $clearing[$row->mcsid] = '';

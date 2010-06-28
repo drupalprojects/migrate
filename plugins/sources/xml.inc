@@ -37,9 +37,10 @@ abstract class MigrateXMLSource extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(Migration $migration, $list_url) {
+  public function __construct(Migration $migration, $list_url, $fields) {
     parent::__construct($migration);
     $this->listUrl = $list_url;
+    $this->fields = $fields;
     // Suppress errors during parsing, so we can pick them up after
     libxml_use_internal_errors(TRUE);
   }

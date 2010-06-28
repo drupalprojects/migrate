@@ -119,7 +119,11 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
     // Save changed timestamp and set it later, node_save sets it unconditionally
     if (isset($node->changed)) {
-      $changed = $node->changed;
+      $changed = MigrationBase::timestamp($node->changed);
+    }
+
+    if (isset($node->created)) {
+      $node->created = MigrationBase::timestamp($node->created);
     }
 
     // Invoke migration prepare handlers
@@ -139,6 +143,14 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $node->changed = $changed;
     }
     $this->complete($migration, $node, $row);
+
+    // Clear the node cache periodically
+    static $count = 0;
+    if ($count++ > 100) {
+      node_load('foo', NULL, TRUE);
+      $count = 0;
+    }
+
     $return = isset($node->nid) ? array($node->nid) : FALSE;
     return $return;
   }

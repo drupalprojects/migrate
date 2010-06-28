@@ -621,4 +621,37 @@ abstract class MigrationBase {
       return FALSE;
     }
   }
+
+  /**
+   * Convert an incoming string (which may be a UNIX timestamp, or an arbitrarily-formatted
+   * date/time string) to a UNIX timestamp.
+   *
+   * @param string $value
+   */
+  static public function timestamp($value) {
+    // Default empty values to now
+    if (empty($value)) {
+      return time();
+    }
+
+    // Does it look like it's already a timestamp? Just return it
+    if (is_numeric($value) && $value > -1) {
+      return $value;
+    }
+
+    // strtotime() doesn't recognize dashes as separators, change to slashes
+    $value = str_replace('-', '/', $value);
+
+    $time = strtotime($value);
+    if ($time < 0 || !$time) {
+      // Handles form YYYY-MM-DD HH:MM:SS.garbage
+      if (drupal_strlen($value) > 19) {
+        $time = strtotime(drupal_substr($value, 0, 19));
+        if ($time < 0 || !$time) {
+          return -1;
+        }
+      }
+    }
+    return $time;
+  }
 }

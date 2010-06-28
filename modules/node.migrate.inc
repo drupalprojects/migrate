@@ -249,7 +249,7 @@ function node_migrate_fields_node($type) {
   $fields = array();
   if (user_access('administer nodes')) {
     $fields = array(
-      '[nid]' => t('Node: Existing node id'),
+      '[nid]' => t('Node: ID of pre-existing node to update'),
       'name' => t('Node: Authored by (username)'),
       'uid' => t('Node: Authored by (uid)'),
       'created' => t('Node: Authored on'),

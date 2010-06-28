@@ -100,9 +100,7 @@ abstract class MigrateXMLSource extends MigrateSource {
     }
 
     // Load up the first row
-    if ($xml) {
-      $this->next();
-    }
+    $this->next();
   }
 
   /**

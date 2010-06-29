@@ -262,7 +262,16 @@ abstract class XMLMigration extends Migration {
   public function applyXpath($data_row, $xpath) {
     $result = $data_row->xml->xpath($xpath);
     if ($result) {
-      return (string)$result[0];
+      if (count($result) > 1) {
+        $return = array();
+        foreach ($result as $record) {
+          $return[] = (string)$record;
+        }
+        return $return;
+      }
+      else {
+        return (string)$result[0];
+      }
     }
     else {
       return NULL;

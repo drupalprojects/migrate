@@ -764,6 +764,11 @@ function drush_migrate_reset_status($args = NULL) {
  * A drush command callback.
  */
 function drush_migrate_wipe() {
+  // Let's load user 1, seems to be need for creating path aliases and deleting content.
+  global $user;
+  $user_one = user_load(array('uid' => '1'));
+  $user = $user_one;
+  session_save_session(FALSE);
   $types = func_get_args();
   $nids = db_select('node', 'n')
           ->fields('n', array('nid'))

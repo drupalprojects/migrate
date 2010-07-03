@@ -14,8 +14,4 @@ class MigratePathNodeHandler extends MigrateDestinationHandler {
   public function fields() {
     return array('path' => t('Node: Path alias'));
   }
-
-  public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
-    // TODO: Shouldn't be required
-  }
 }

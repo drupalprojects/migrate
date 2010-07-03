@@ -37,7 +37,7 @@ abstract class MigrateXMLSource extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(Migration $migration, $list_url, $fields) {
+  public function __construct(Migration $migration, $list_url, $fields = array()) {
     parent::__construct($migration);
     $this->listUrl = $list_url;
     $this->fields = $fields;

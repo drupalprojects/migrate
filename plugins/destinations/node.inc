@@ -64,7 +64,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     }
 
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('node', 'fields', $this->bundle);
+    $fields += migrate_handler_invoke_all('Node', 'fields', $this->entityType, $this->bundle);
 
     return $fields;
   }

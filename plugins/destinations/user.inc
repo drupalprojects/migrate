@@ -60,7 +60,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields['init'] = t('User: Init');
 
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('User', 'fields');
+    $fields += migrate_handler_invoke_all('User', 'fields', $this->entityType, $this->bundle);
 
     return $fields;
   }

@@ -76,5 +76,10 @@ abstract class MigrateDestination {
  */
 abstract class MigrateDestinationHandler extends MigrateHandler {
   // abstract function arguments(...)
-  abstract public function prepare(Migration $migration, stdClass $entity, stdClass $row);
+  /**
+   * Any one or more of these methods may be implemented
+   */
+  //abstract public function fields();
+  //abstract public function prepare(Migration $migration, stdClass $entity, stdClass $row);
+  //abstract public function complete(Migration $migration, stdClass $entity, stdClass $row);
 }

@@ -11,11 +11,15 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
     $this->registerTypes(array('entity'));
   }
 
+  public function fields() {
+    return array('path' => t('Node: Path alias'));
+  }
+
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
-    if (isset($entity->path_alias)) {
+    if (isset($entity->path)) {
+      $path = $entity->path;
       $entity->path = array();
-      $entity->path['alias'] = $entity->path_alias;
-      unset($entity->path_alias);
+      $entity->path['alias'] = $path;
     }
   }
 }

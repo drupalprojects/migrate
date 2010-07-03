@@ -146,6 +146,16 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Remove any existing mappings for a given destination field.
+   *
+   * @param string $destinationField
+   *  Name of the destination field.
+   */
+  protected function removeFieldMapping($destination_field) {
+    unset($this->fieldMappings[$destination_field]);
+  }
+
+  /**
    * Reports whether this migration process is complete (i.e., all available
    * source rows have been processed).
    */

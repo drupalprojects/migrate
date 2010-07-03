@@ -11,6 +11,19 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
     $this->registerTypes(array('entity'));
   }
 
+  public function fields($entity_type, $bundle) {
+    $fields = array();
+    $field_instance_info = field_info_instances($entity_type, $bundle);
+    foreach ($field_instance_info as $machine_name => $instance) {
+      $field_info = field_info_field($machine_name);
+
+      $fields[$machine_name] = t('Field:') . ' ' . $instance['label'] .
+        ' (' . $field_info['type'] . ')';
+    }
+
+    return $fields;
+  }
+
   public function prepare(Migration $migration, stdClass $entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately

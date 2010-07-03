@@ -70,17 +70,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $fields['homepage'] = t('Comment: Homepage');
     $fields['language'] = t('Comment: Language');
 
-    // Then add any fields attached to comments
-    $field_instance_info = field_info_instances($this->entityType, $this->bundle);
-    foreach ($field_instance_info as $machine_name => $instance) {
-      $field_info = field_info_field($machine_name);
-
-      $fields[$machine_name] = t('Comment:') . ' ' . $instance['label'] .
-        ' (' . $field_info['type'] . ')';
-    }
-
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('Comment', 'fields');
+    $fields += migrate_handler_invoke_all('Comment', 'fields', $this->entityType, $this->bundle);
 
     return $fields;
   }

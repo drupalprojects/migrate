@@ -28,11 +28,19 @@ abstract class MigrateXMLSource extends MigrateSource {
   protected $idList = array();
 
   /**
+   * List of available source fields.
+   *
+   * @var array
+   */
+  protected $fields = array();
+
+  /**
    * Simple initialization.
    */
-  public function __construct(Migration $migration, $list_url) {
+  public function __construct(Migration $migration, $list_url, $fields = array()) {
     parent::__construct($migration);
     $this->listUrl = $list_url;
+    $this->fields = $fields;
     // Suppress errors during parsing, so we can pick them up after
     libxml_use_internal_errors(TRUE);
   }
@@ -92,9 +100,7 @@ abstract class MigrateXMLSource extends MigrateSource {
     }
 
     // Load up the first row
-    if ($xml) {
-      $this->next();
-    }
+    $this->next();
   }
 
   /**
@@ -102,36 +108,33 @@ abstract class MigrateXMLSource extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    $this->currentRow = NULL;
+    $this->currentKey = NULL;
+
     // Enforce the itemlimit
     $itemlimit = $this->migration->getOption('itemlimit');
     if ($itemlimit && $this->numProcessed >= $itemlimit) {
-      $this->currentRow = NULL;
-      $this->currentKey = NULL;
       return;
     }
 
     // get next object (next ID not already in the map, unless needs_update=1)
     migrate_instrument_start('MigrateSourceXML next');
-    migrate_instrument_start('get id to process');
-    // TODO: Alos check message table (entries here indicate failed items, we don't
-    // want to run through them again)
     while ($id = array_shift($this->idList)) {
+      // Check the map - if it's already mapped, and not marked for update, skip it
       $map_row = $this->migration->getMap()->getRowBySource(array($id));
-      if (!$map_row || $map_row['needs_update'] == 1) {
-        break;
+      if ($map_row && $map_row['needs_update'] == 0) {
+        continue;
       }
-    }
-    migrate_instrument_stop('get id to process');
-
-    if ($id) {
-      $this->currentKey = array($id);
+      // TODO: Also check message table (entries here indicate failed items, we don't
+      // want to run through them again)
       $object_url = $this->constructObjectUrl($id);
-
       migrate_instrument_start('load object xml');
-      $xml = simplexml_load_file($object_url);
+      // Allow derived class to override for preprocessing of XML
+      $xml = $this->loadXmlUrl($object_url);
       migrate_instrument_stop('load object xml');
       if ($xml) {
         $this->numProcessed++;
+        $this->currentKey = array($id);
         $this->currentRow = new stdclass;
         $this->currentRow->xml = $xml;
         // Save the ID using the map source key - it will be used for mapping
@@ -144,24 +147,29 @@ abstract class MigrateXMLSource extends MigrateSource {
             $data_row->$field = $value;
           }
         }
+        // OK, got a valid one, break out and return
+        break;
       }
       else {
-        // TODO: Should use saveMessage so it goes in the message table, and
-        // should continue on (all processing will stop with this one)
-        $this->migration->showMessage(t('Loading of !objecturl failed:',
-          array('!objecturl' => $object_url)));
+        $message =  t('Loading of !objecturl failed:', array('!objecturl' => $object_url));
         foreach (libxml_get_errors() as $error) {
-          $this->migration->showMessage($error);
+          $message .= "\n" . $error->message;
         }
+        $this->migration->getMap()->saveMessage(
+          array($id), $message, MigrationBase::MESSAGE_ERROR);
+        libxml_clear_errors();
         $this->currentKey = NULL;
       }
     }
-    else {
-      $this->currentKey = NULL;
-      $this->currentRow = NULL;
-    }
 
     migrate_instrument_stop('MigrateSourceXML next');
+  }
+
+  /**
+   * Default XML loader - just use Simplexml directly
+   */
+  protected function loadXmlUrl($object_url) {
+    return simplexml_load_file($object_url);
   }
 }
 
@@ -254,7 +262,16 @@ abstract class XMLMigration extends Migration {
   public function applyXpath($data_row, $xpath) {
     $result = $data_row->xml->xpath($xpath);
     if ($result) {
-      return (string)$result[0];
+      if (count($result) > 1) {
+        $return = array();
+        foreach ($result as $record) {
+          $return[] = (string)$record;
+        }
+        return $return;
+      }
+      else {
+        return (string)$result[0];
+      }
     }
     else {
       return NULL;

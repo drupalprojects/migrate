@@ -10,6 +10,7 @@ dependencies[] = comment
 dependencies[] = migrate
 dependencies[] = content
 dependencies[] = date
+dependencies[] = migrate_extras
 files[] = migrate_example.module
 files[] = beer.inc
 files[] = wine.inc

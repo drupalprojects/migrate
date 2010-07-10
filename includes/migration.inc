@@ -602,11 +602,17 @@ abstract class Migration extends MigrationBase {
           $results = array();
           foreach ($source_keys as $source_key) {
             $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
+            if (!$destids) {
+              // No match found, give the implementing migration a chance to create
+              // a stub for us to reference (presumably the real object will be
+              // migrated later in the process)
+              $destids = $source_migration->createStubWrapper(array($source_key));
+            }
             if ($destids) {
               // Assume that if the destination key is a single value, it
               // should be passed as such
               if (count($destids) == 1) {
-                $results[] = $destids['destid1'];
+                $results[] = reset($destids);
               }
               else {
                 $results[] = $destids;
@@ -653,6 +659,29 @@ abstract class Migration extends MigrationBase {
     }
 
     return $values;
+  }
+
+  /**
+   * If stub creation is enabled, try to create a stub and save the mapping.
+   */
+  protected function createStubWrapper(array $source_key) {
+    if (method_exists($this, 'createStub')) {
+      $destids = $this->createStub();
+      if ($destids) {
+        // Fake a data row with the source key in it
+        $map_source_key = $this->map->getSourceKey();
+        $data_row = new stdClass;
+        $i = 0;
+        foreach ($map_source_key as $key => $definition) {
+          $data_row->$key = $source_key[$i++];
+        }
+        $this->map->saveIDMapping($data_row, $destids, TRUE);
+      }
+    }
+    else {
+      $destids = NULL;
+    }
+    return $destids;
   }
 
   /**

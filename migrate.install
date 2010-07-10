@@ -67,12 +67,13 @@ function migrate_uninstall() {
   // Note: If a derived Migration class defined its own map or message
   // table name not fitting this pattern, that class is solely responsible for
   // cleaning up
-  // TODO: Prefix table names (db_find_tables does not do it)
+  /* TODO: No db_find_tables in D6
   foreach (db_find_tables('migrate_map_%') as $tablename) {
     db_drop_table($tablename);
   }
   foreach (db_find_tables('migrate_message_%') as $tablename) {
     db_drop_table($tablename);
   }
+  */
   drupal_uninstall_schema('migrate');
 }

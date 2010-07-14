@@ -184,6 +184,13 @@ function migrate_migration_info($form_state, $migration) {
   $form['detail'] = array(
     '#type' => 'fieldset',
   );
+  
+  // Add vertical tabs display if available.
+  $form['detail']['#pre_render'][] = 'vertical_tabs_form_pre_render';
+  // Despite docs (http://drupal.org/handbook/modules/vertical-tabs), line below isn't working.
+  // $form['detail']['#attached']['js']['vertical-tabs'] = drupal_get_path('module', 'migrate_ui') . '/migrate_ui.js';
+  // Here is easy workarund.
+  drupal_add_js(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.js');
 
   if ($has_mappings) {
     $field_mappings = $migration->getFieldMappings();

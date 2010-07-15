@@ -219,12 +219,13 @@ class MigrateSourceSQL extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    $this->currentRow = NULL;
+    $this->currentKey = NULL;
     // If we couldn't add the itemlimit to the query directly, enforce it here
     if (!$this->mapJoinable) {
       $itemlimit = $this->migration->getOption('itemlimit');
       if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        $this->currentRow = NULL;
-        $this->currentKey = NULL;
+        return;
       }
     }
 
@@ -247,7 +248,9 @@ class MigrateSourceSQL extends MigrateSource {
       // If we couldn't include the map row in the query, query it directly and
       // add the fields
       if (!$this->mapJoinable) {
-        $map->addDestinationKey($this->currentRow);
+        // TODO: revisit
+//        $map->addDestinationKey($this->currentRow);
+
         // If we're not using highwater marks, we need to check the map to determine
         // whether this needs migration
         if (!isset($this->highwaterField)) {

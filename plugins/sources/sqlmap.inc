@@ -56,7 +56,7 @@ class MigrateSQLMap extends MigrateMap {
     $this->messageTable = 'migrate_message_' . drupal_strtolower($machine_name);
     $this->sourceKey = $source_key;
     $this->destinationKey = $destination_key;
-    $this->connection = Database::getConnection($connection_key);
+    $this->connection = Database::getConnection('default', $connection_key);
     // Build the source and destination key maps
     $this->sourceKeyMap = array();
     $count = 1;

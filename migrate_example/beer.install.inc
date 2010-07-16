@@ -23,7 +23,7 @@ function migrate_example_beer_schema() {
 function migrate_example_beer_install() {
   migrate_example_beer_content_type();
   migrate_example_beer_tags();
-//  migrate_example_beer_image();
+  migrate_example_beer_image();
   migrate_example_beer_country();
 
   // Populate our tables.
@@ -346,82 +346,14 @@ function migrate_example_beer_tags() {
 
 // Create an image field named "Migrate Example Image", enabled for the 'Beer' content type.
 function migrate_example_beer_image() {
-  if (!field_info_field('field_migrate_example_image')) {
-    $field = array(
-      'field_name' => 'field_migrate_example_image',
-      'type' => 'image',
-      'cardinality' => 1,
-      'translatable' => TRUE,
-      'indexes' => array('fid' => array('fid')),
-      'settings' => array(
-        'uri_scheme' => 'public',
-        'default_image' => FALSE,
-      ),
-    );
-    field_create_field($field);
-  }
-
-  if (!field_info_instance('node', 'field_migrate_example_image', 'migrate_example_beer')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_image',
-      'entity_type' => 'node',
-      'label' => 'Image',
-      'bundle' => 'migrate_example_beer',
-      'description' => 'Upload an image to go with this beer.',
-      'settings' => array(
-        'file_directory' => 'field/migrate_example/image',
-        'file_extensions' => 'png gif jpg jpeg',
-        'max_filesize' => '',
-        'max_resolution' => '',
-        'min_resolution' => '',
-        'alt_field' => TRUE,
-        'title_field' => '',
-      ),
-
-      'widget' => array(
-        'type' => 'image_image',
-        'settings' => array(
-          'progress_indicator' => 'throbber',
-          'preview_image_style' => 'thumbnail',
-        ),
-        'weight' => -1,
-      ),
-
-      'display' => array(
-        'full' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'teaser' => array(
-          'label' => 'hidden',
-          'type' => 'image_link_content__medium',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'rss' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'search_index' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'search_results' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-      ),
-    );
-    field_create_instance($instance);
-  }
+  $field = array(
+    'field_name' => 'field_migrate_example_image',
+    'type' => 'filefield',
+    'widget_type' => 'imagefield_widget',
+    'type_name' => 'migrate_example_beer',
+    'label' => t('Image'),
+  );
+  content_field_instance_create($field);
 }
 
 // Create a text field named "Countries", enabled for the 'Beer' content type.

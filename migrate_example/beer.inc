@@ -355,12 +355,12 @@ class BeerCommentMigration extends BasicExampleMigration {
     $this->dependencies = array('BeerUserMigration', 'BeerNodeMigration');
     $this->map = new MigrateSQLMap($this->machineName,
       array('cid' => array(
-              'type' => 'int',
-              'not null' => TRUE,
-             )
-           ),
-        MigrateDestinationComment::getKeySchema()
-      );
+            'type' => 'int',
+            'not null' => TRUE,
+           )
+         ),
+      MigrateDestinationComment::getKeySchema()
+    );
     $query = db_select('migrate_example_beer_comment', 'mec')
              ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
              ->orderBy('cid_parent', 'ASC');

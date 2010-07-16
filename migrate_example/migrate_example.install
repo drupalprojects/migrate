@@ -22,9 +22,9 @@ function migrate_example_install() {
   migrate_example_beer_install();
   migrate_example_wine_install();
   // A simple format for testing migration of format
-  db_insert('filter_formats')
+  db_merge('filter_formats')
+    ->key(array('name' => 'Migrate example format'))
     ->fields(array(
-      'name' => 'Migrate example format',
       'roles' => ',1,',
       'cache' => 1,
     ))
@@ -34,13 +34,8 @@ function migrate_example_install() {
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
   migrate_example_wine_uninstall();
+  db_delete('filter_formats')
+    ->condition('name', 'Migrate example format')
+    ->execute();
   drupal_uninstall_schema('migrate_example');
-  /* TODO: D6 backport
-  $formats = filter_formats();
-  foreach ($formats as $format) {
-    if ($format->name == 'Migrate example format') {
-      filter_format_delete($format);
-      break;
-    }
-  }*/
 }

@@ -319,7 +319,7 @@ abstract class Migration extends MigrationBase {
       }
     }
 
-    $this->map->clearErrors();
+    $this->map->clearMessages();
 
     $this->progressMessage($return);
 

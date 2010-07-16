@@ -485,11 +485,10 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
-   * Clear non-informational messages from the message table.
+   * Clear all messages from the message table.
    */
-  public function clearErrors() {
-    $this->connection->delete($this->messageTable)
-                     ->condition('level', MigrationBase::MESSAGE_INFORMATIONAL, '<>')
+  public function clearMessages() {
+    $this->connection->truncate($this->messageTable)
                      ->execute();
   }
 

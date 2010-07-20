@@ -146,13 +146,24 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Remove any existing mappings for a given destination field.
+   * Remove any existing mappings for a given destination or source field.
    *
-   * @param string $destinationField
+   * @param string $destination_field
    *  Name of the destination field.
+   * @param string $source_field
+   *  Name of the source field.
    */
-  protected function removeFieldMapping($destination_field) {
-    unset($this->fieldMappings[$destination_field]);
+  protected function removeFieldMapping($destination_field, $source_field = NULL) {
+    if (isset($destination_field)) {
+      unset($this->fieldMappings[$destination_field]);
+    }
+    if (isset($source_field)) {
+      foreach ($this->fieldMappings as $key => $mapping) {
+        if ($mapping->getSourceField() == $source_field) {
+          unset($this->fieldMappings[$key]);
+        }
+      }
+    }
   }
 
   /**

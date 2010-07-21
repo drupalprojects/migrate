@@ -70,17 +70,17 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   }
 
   /**
-   * Delete a batch of nodes at once.
+   * Delete a node
    *
    * @param $migration
    *  Controlling migration object. Unused here.
-   * @param $nids
-   *  Array of node IDs to be deleted.
+   * @param $nid
+   *  Array containing the node ID to be deleted.
    */
-  public function bulkRollback(Migration $migration, array $nids) {
-    migrate_instrument_start('node_delete_multiple');
-    node_delete_multiple($nids);
-    migrate_instrument_stop('node_delete_multiple');
+  public function rollback(Migration $migration, array $nid) {
+    migrate_instrument_start('node_delete');
+    node_delete(reset($nid));
+    migrate_instrument_stop('node_delete');
   }
 
   /**

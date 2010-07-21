@@ -27,12 +27,6 @@ function taxonomy_vocabulary_save(&$vocabulary) {
   return taxonomy_save_vocabulary($vocabulary);
 }
 
-function node_delete_multiple($nids) {
-  foreach ($nids as $nid) {
-    node_delete($nid);
-  }
-}
-
 function user_delete_multiple($uids) {
   foreach ($uids as $uid) {
     user_delete(array(), $uid);

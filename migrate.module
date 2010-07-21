@@ -712,13 +712,21 @@ function migrate_content_process_import($mcsid, &$options = array()) {
     db_set_active($viewdb);
   }
 
+  // "Rebuild" build_info like $view->build() does.
+  $view->build_info['query'] = $query; // = $view->query->query();
+  $view->build_info['count_query'] = $view->query->query(TRUE);
+  $view->build_info['query_args'] = $view->query->get_where_args();
+
   //drupal_set_message($query);
   timer_start('execute view query');
-  if ($itemlimit) {
-    $importlist = db_query_range($query, $args, 0, $itemlimit);
-  }
-  else {
-    $importlist = db_query($query, $args);
+  $view->set_items_per_page($itemlimit);
+  $view->render();
+  // Rewrite query results with renderend fields.
+  foreach ($view->style_plugin->rendered_fields as $row_key => $row) {
+    foreach ($row as $field_key => $field) {
+      $field_alias = $view->field[$field_key]->field_alias;
+      $view->result[$row_key]->$field_alias = $field;
+    }
   }
   timer_stop('execute view query');
 
@@ -728,7 +736,7 @@ function migrate_content_process_import($mcsid, &$options = array()) {
 
   $imported = 0;
   timer_start('db_fetch_object');
-  while ($row = db_fetch_object($importlist)) {
+  foreach ($view->result as $row) {
     timer_stop('db_fetch_object');
     // Recheck status - permits dynamic interruption of cron jobs
     $sql = "SELECT status FROM {migrate_content_sets} WHERE mcsid=%d";

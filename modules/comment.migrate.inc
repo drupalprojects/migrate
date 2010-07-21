@@ -167,9 +167,9 @@ function comment_migrate_complete_comment(&$comment, $tblinfo, $row) {
     // comment_save() always saves time() as the timestamp, override if we have a value
     if ($comment['timestamp']) {
       db_query("UPDATE {comments}
-                SET timestamp=%d
+                SET timestamp=%d, uid=%d, hostname='%s'
                 WHERE cid=%d",
-               $comment['timestamp'], $comment['cid']);
+               $comment['timestamp'], $comment['uid'], $comment['hostname'], $comment['cid']);
     }
     $sourcekey = $tblinfo->sourcekey;
     migrate_add_mapping($tblinfo->mcsid, $row->$sourcekey, $comment['cid']);

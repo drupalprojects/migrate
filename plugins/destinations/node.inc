@@ -116,7 +116,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $created = $node->created;
     }
     else {
-      //To keep node_object_prepare() from choking
+      // To keep node_object_prepare() from choking
       $node->created = REQUEST_TIME;
     }
     if (isset($node->changed)) {

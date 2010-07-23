@@ -41,6 +41,12 @@ abstract class MigrateXMLSource extends MigrateSource {
   protected $fields = array();
 
   /**
+   * Keep the current source ID handy
+   * @var string
+   */
+  protected $id;
+
+  /**
    * Simple initialization.
    */
   public function __construct(Migration $migration, $list_url, $fields = array()) {
@@ -125,28 +131,28 @@ abstract class MigrateXMLSource extends MigrateSource {
 
     // get next object (next ID not already in the map, unless needs_update=1)
     migrate_instrument_start('MigrateSourceXML next');
-    while ($id = array_shift($this->idList)) {
+    while ($this->id = array_shift($this->idList)) {
       // Check the map - if it's already mapped, and not marked for update, skip it
-      $map_row = $this->migration->getMap()->getRowBySource(array($id));
+      $map_row = $this->migration->getMap()->getRowBySource(array($this->id));
       if ($map_row && $map_row['needs_update'] == 0) {
         continue;
       }
       // TODO: Also check message table (entries here indicate failed items, we don't
       // want to run through them again)
-      $object_url = $this->constructObjectUrl($id);
+      $object_url = $this->constructObjectUrl($this->id);
       migrate_instrument_start('load object xml');
       // Allow derived class to override for preprocessing of XML
       $xml = $this->loadXmlUrl($object_url);
       migrate_instrument_stop('load object xml');
       if ($xml) {
         $this->numProcessed++;
-        $this->currentKey = array($id);
+        $this->currentKey = array($this->id);
         $this->currentRow = new stdclass;
         $this->currentRow->xml = $xml;
         // Save the ID using the map source key - it will be used for mapping
         $sourceKey = $this->migration->getMap()->getSourceKey();
         $key_name = key($sourceKey);
-        $this->currentRow->$key_name = $id;
+        $this->currentRow->$key_name = $this->id;
         // Add map info to the row, if present
         if ($map_row) {
           foreach ($map_row as $field => $value) {
@@ -162,7 +168,7 @@ abstract class MigrateXMLSource extends MigrateSource {
           $message .= "\n" . $error->message;
         }
         $this->migration->getMap()->saveMessage(
-          array($id), $message, MigrationBase::MESSAGE_ERROR);
+          array($this->id), $message, MigrationBase::MESSAGE_ERROR);
         libxml_clear_errors();
         $this->currentKey = NULL;
       }

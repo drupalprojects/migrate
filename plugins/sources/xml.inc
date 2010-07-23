@@ -19,6 +19,9 @@ abstract class MigrateXMLSource extends MigrateSource {
    * @var string
    */
   protected $listUrl;
+  public function getListUrl() {
+    return $this->listUrl;
+  }
 
   /**
    * List of IDs from the listing URL.
@@ -26,6 +29,9 @@ abstract class MigrateXMLSource extends MigrateSource {
    * @var array
    */
   protected $idList = array();
+  public function getIdList() {
+    return $this->idList;
+  }
 
   /**
    * List of available source fields.

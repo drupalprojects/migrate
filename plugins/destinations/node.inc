@@ -78,8 +78,14 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    *  Array containing the node ID to be deleted.
    */
   public function rollback(Migration $migration, array $nid) {
+    static $count = 0;
     migrate_instrument_start('node_delete');
     node_delete(reset($nid));
+    // Periodically flush the node cache
+    if ($count++ > 500) {
+      $count = 0;
+      node_load(1, NULL, TRUE);
+    }
     migrate_instrument_stop('node_delete');
   }
 

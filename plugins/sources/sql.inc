@@ -108,15 +108,39 @@ class MigrateSourceSQL extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    $queryFields = $this->query->getFields();
     $fields = array();
-    // Not much we can do in terms of describing the fields without manual intervention
-    // TODO: Mechanism for migration developers to document source fields
-    foreach ($queryFields as $field_name => $field_info) {
-      // Lower case, because Drupal forces lowercase on fetch
-      $fields[drupal_strtolower($field_name)] = drupal_strtolower(
-        $field_info['table'] . '.' . $field_info['field']);
+    $queryFields = $this->query->getFields();
+    if ($queryFields) {
+      // Not much we can do in terms of describing the fields without manual intervention
+      // TODO: Mechanism for migration developers to document source fields
+      foreach ($queryFields as $field_name => $field_info) {
+        // Lower case, because Drupal forces lowercase on fetch
+        $fields[drupal_strtolower($field_name)] = drupal_strtolower(
+          $field_info['table'] . '.' . $field_info['field']);
+      }
     }
+
+/*
+ * Handle queries without explicit field lists
+ * TODO: Waiting on http://drupal.org/node/814312
+    $info = Database::getConnectionInfo($query->getConnection());
+    $database = $info['default']['database'];
+    foreach ($this->query->getTables() as $table) {
+      if (isset($table['all_fields']) && $table['all_fields']) {
+
+        $database = 'plants';
+        $table = $table['table'];
+        $sql = 'SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema=:database AND table_name = :table
+                ORDER BY ordinal_position';
+        $result = dbtng_query($sql, array(':database' => $database, ':table' => $table));
+        foreach ($result as $row) {
+          $fields[drupal_strtolower($row->column_name)] = drupal_strtolower(
+            $table . '.' . $row->column_name);
+        }
+      }
+    }*/
     $expressionFields = $this->query->getExpressions();
     foreach ($expressionFields as $field_name => $field_info) {
       // Lower case, because Drupal forces lowercase on fetch

@@ -157,7 +157,8 @@ abstract class MigrateXMLSource extends MigrateSource {
         // Add map info to the row, if present
         if ($map_row) {
           foreach ($map_row as $field => $value) {
-            $data_row->$field = $value;
+            $field = 'migrate_map_' . $field;
+            $this->currentRow->$field = $value;
           }
         }
         // OK, got a valid one, break out and return

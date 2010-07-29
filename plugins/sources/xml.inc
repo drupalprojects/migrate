@@ -125,13 +125,14 @@ abstract class MigrateXMLSource extends MigrateSource {
 
     // Enforce the itemlimit
     $itemlimit = $this->migration->getOption('itemlimit');
-    if ($itemlimit && $this->numProcessed >= $itemlimit) {
-      return;
-    }
 
     // get next object (next ID not already in the map, unless needs_update=1)
     migrate_instrument_start('MigrateSourceXML next');
     while ($this->id = array_shift($this->idList)) {
+      // Enforce the itemlimit
+      if ($itemlimit && $this->numProcessed >= $itemlimit) {
+        return;
+      }
       // Check the map - if it's already mapped, and not marked for update, skip it
       $map_row = $this->migration->getMap()->getRowBySource(array($this->id));
       if ($map_row && $map_row['needs_update'] == 0) {
@@ -144,8 +145,8 @@ abstract class MigrateXMLSource extends MigrateSource {
       // Allow derived class to override for preprocessing of XML
       $xml = $this->loadXmlUrl($object_url);
       migrate_instrument_stop('load object xml');
+      $this->numProcessed++;
       if ($xml) {
-        $this->numProcessed++;
         $this->currentKey = array($this->id);
         $this->currentRow = new stdclass;
         $this->currentRow->xml = $xml;

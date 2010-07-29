@@ -240,6 +240,7 @@ abstract class Migration extends MigrationBase {
    */
   protected function rollback() {
     $return = MigrationBase::RESULT_COMPLETED;
+    $itemlimit = $this->getOption('itemlimit');
 
     if (method_exists($this->destination, 'bulkRollback')) {
       // Too many at once can lead to memory issues, so batch 'em up
@@ -248,6 +249,10 @@ abstract class Migration extends MigrationBase {
       $batch_count = 0;
       foreach ($this->map as $destination_key) {
         if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
+          break;
+        }
+
+        if ($itemlimit && ($this->total_processed + $batch_count >= $itemlimit)) {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();
@@ -303,6 +308,9 @@ abstract class Migration extends MigrationBase {
     else {
       foreach ($this->map as $destination_key) {
         if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
+          break;
+        }
+        if ($itemlimit && ($this->total_processed >= $itemlimit)) {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();

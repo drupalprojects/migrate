@@ -106,6 +106,12 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
       $node->nid = $row->migrate_map_destid1;
+      // Get the existing vid, so updates don't generate notices
+      $node->vid = db_select('node', 'n')
+                   ->fields('n', array('vid'))
+                   ->condition('nid', $node->nid)
+                   ->execute()
+                   ->fetchField();
     }
 
     // Set type before invoking prepare handlers - they may take type-dependent actions.

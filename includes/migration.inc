@@ -610,44 +610,7 @@ abstract class Migration extends MigrationBase {
         // to look up a destination ID from the provided migration
         $source_migration = $mapping->getSourceMigration();
         if ($source_migration && isset($values->$destination)) {
-          $source_migration = Migration::getInstance($source_migration);
-          // Might already be an array, after separator processing
-          if (is_array($values->$destination)) {
-            $source_keys = $values->$destination;
-          }
-          else {
-            $source_keys = array($values->$destination);
-          }
-          $results = array();
-          foreach ($source_keys as $source_key) {
-            $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
-            if (!$destids) {
-              // No match found, give the implementing migration a chance to create
-              // a stub for us to reference (presumably the real object will be
-              // migrated later in the process)
-              $destids = $source_migration->createStubWrapper(array($source_key));
-            }
-            if ($destids) {
-              // Assume that if the destination key is a single value, it
-              // should be passed as such
-              if (count($destids) == 1) {
-                $results[] = reset($destids);
-              }
-              else {
-                $results[] = $destids;
-              }
-            }
-            // If no match found, apply the default value (if any)
-            elseif (!is_null($default)) {
-              $results[] = $default;
-            }
-          }
-          if (is_array($values->$destination) || count($results) > 1) {
-            $values->$destination = $results;
-          }
-          else {
-            $values->$destination = $results[0];
-          }
+          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination);
         }
 
         // Assign any arguments
@@ -678,6 +641,50 @@ abstract class Migration extends MigrationBase {
     }
 
     return $values;
+  }
+
+  /**
+   * Look up a value migrated in another migration.
+   */
+  protected function handleSourceMigration($source_migration, $source_values) {
+    $source_migration = Migration::getInstance($source_migration);
+    // Might already be an array, after separator processing
+    if (is_array($source_values)) {
+      $source_keys = $source_values;
+    }
+    else {
+      $source_keys = array($source_values);
+    }
+    $results = array();
+    foreach ($source_keys as $source_key) {
+      $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
+      if (!$destids) {
+        // No match found, give the implementing migration a chance to create
+        // a stub for us to reference (presumably the real object will be
+        // migrated later in the process)
+        $destids = $source_migration->createStubWrapper(array($source_key));
+      }
+      if ($destids) {
+        // Assume that if the destination key is a single value, it
+        // should be passed as such
+        if (count($destids) == 1) {
+          $results[] = reset($destids);
+        }
+        else {
+          $results[] = $destids;
+        }
+      }
+      // If no match found, apply the default value (if any)
+      elseif (!is_null($default)) {
+        $results[] = $default;
+      }
+    }
+    if (is_array($source_values) || count($results) > 1) {
+      return $results;
+    }
+    else {
+      return $results[0];
+    }
   }
 
   /**

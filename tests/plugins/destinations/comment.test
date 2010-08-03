@@ -15,7 +15,7 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('autoautoload', 'autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
-       /*'image',*/ 'migrate', 'migrate_example', 'comment');
+       'filefield', 'imagefield', 'migrate', 'migrate_example', 'comment');
     autoload_get_lookup(TRUE);
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',

@@ -15,7 +15,8 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('autoautoload', 'autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
-      'date_api', 'date_timezone', 'date', 'migrate', 'migrate_extras', 'migrate_example');
+      'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
+      'migrate', 'migrate_extras', 'migrate_example');
     autoload_get_lookup(TRUE);
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',

@@ -48,7 +48,7 @@ function migrate_ui_requirements($phase) {
             $severity = REQUIREMENT_WARNING;
           }
           $source_fields_keyed[$mapping->getSourceField()] = $mapping->getSourceField();
-          $destination_fields_keyed[$mapping->destinationField] = $mapping->destinationField;
+          $destination_fields_keyed[$mapping->getDestinationField()] = $mapping->getDestinationField();
         }
         $destKey = $migration->getMap()->getDestinationKey();
         foreach ($migration->getDestination()->fields() as $machine_name => $description) {

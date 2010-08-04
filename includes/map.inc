@@ -95,9 +95,9 @@ abstract class MigrateMap implements Iterator {
   abstract public function deleteBulk(array $source_keys);
 
   /**
-   * Clear all non-information messages from the map.
+   * Clear all messages from the map.
    */
-  abstract public function clearErrors();
+  abstract public function clearMessages();
 
   /**
    * Retrieve map data for a given source or destination item

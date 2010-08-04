@@ -146,13 +146,24 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Remove any existing mappings for a given destination field.
+   * Remove any existing mappings for a given destination or source field.
    *
-   * @param string $destinationField
+   * @param string $destination_field
    *  Name of the destination field.
+   * @param string $source_field
+   *  Name of the source field.
    */
-  protected function removeFieldMapping($destination_field) {
-    unset($this->fieldMappings[$destination_field]);
+  protected function removeFieldMapping($destination_field, $source_field = NULL) {
+    if (isset($destination_field)) {
+      unset($this->fieldMappings[$destination_field]);
+    }
+    if (isset($source_field)) {
+      foreach ($this->fieldMappings as $key => $mapping) {
+        if ($mapping->getSourceField() == $source_field) {
+          unset($this->fieldMappings[$key]);
+        }
+      }
+    }
   }
 
   /**
@@ -229,6 +240,7 @@ abstract class Migration extends MigrationBase {
    */
   protected function rollback() {
     $return = MigrationBase::RESULT_COMPLETED;
+    $itemlimit = $this->getOption('itemlimit');
 
     if (method_exists($this->destination, 'bulkRollback')) {
       // Too many at once can lead to memory issues, so batch 'em up
@@ -237,6 +249,10 @@ abstract class Migration extends MigrationBase {
       $batch_count = 0;
       foreach ($this->map as $destination_key) {
         if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
+          break;
+        }
+
+        if ($itemlimit && ($this->total_processed + $batch_count >= $itemlimit)) {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();
@@ -294,6 +310,9 @@ abstract class Migration extends MigrationBase {
         if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
           break;
         }
+        if ($itemlimit && ($this->total_processed >= $itemlimit)) {
+          break;
+        }
         $this->currentSourceKey = $this->map->getCurrentKey();
 
         // Rollback one record
@@ -319,7 +338,7 @@ abstract class Migration extends MigrationBase {
       }
     }
 
-    $this->map->clearErrors();
+    $this->map->clearMessages();
 
     $this->progressMessage($return);
 
@@ -591,38 +610,7 @@ abstract class Migration extends MigrationBase {
         // to look up a destination ID from the provided migration
         $source_migration = $mapping->getSourceMigration();
         if ($source_migration && isset($values->$destination)) {
-          $source_migration = Migration::getInstance($source_migration);
-          // Might already be an array, after separator processing
-          if (is_array($values->$destination)) {
-            $source_keys = $values->$destination;
-          }
-          else {
-            $source_keys = array($values->$destination);
-          }
-          $results = array();
-          foreach ($source_keys as $source_key) {
-            $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
-            if ($destids) {
-              // Assume that if the destination key is a single value, it
-              // should be passed as such
-              if (count($destids) == 1) {
-                $results[] = $destids['destid1'];
-              }
-              else {
-                $results[] = $destids;
-              }
-            }
-            // If no match found, apply the default value (if any)
-            elseif (!is_null($default)) {
-              $results[] = $default;
-            }
-          }
-          if (is_array($values->$destination) || count($results) > 1) {
-            $values->$destination = $results;
-          }
-          else {
-            $values->$destination = $results[0];
-          }
+          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination);
         }
 
         // Assign any arguments
@@ -653,6 +641,73 @@ abstract class Migration extends MigrationBase {
     }
 
     return $values;
+  }
+
+  /**
+   * Look up a value migrated in another migration.
+   */
+  protected function handleSourceMigration($source_migration, $source_values) {
+    $source_migration = Migration::getInstance($source_migration);
+    // Might already be an array, after separator processing
+    if (is_array($source_values)) {
+      $source_keys = $source_values;
+    }
+    else {
+      $source_keys = array($source_values);
+    }
+    $results = array();
+    foreach ($source_keys as $source_key) {
+      $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
+      if (!$destids) {
+        // No match found, give the implementing migration a chance to create
+        // a stub for us to reference (presumably the real object will be
+        // migrated later in the process)
+        $destids = $source_migration->createStubWrapper(array($source_key));
+      }
+      if ($destids) {
+        // Assume that if the destination key is a single value, it
+        // should be passed as such
+        if (count($destids) == 1) {
+          $results[] = reset($destids);
+        }
+        else {
+          $results[] = $destids;
+        }
+      }
+      // If no match found, apply the default value (if any)
+      elseif (!is_null($default)) {
+        $results[] = $default;
+      }
+    }
+    if (is_array($source_values) || count($results) > 1) {
+      return $results;
+    }
+    else {
+      return $results[0];
+    }
+  }
+
+  /**
+   * If stub creation is enabled, try to create a stub and save the mapping.
+   */
+  protected function createStubWrapper(array $source_key) {
+    if (method_exists($this, 'createStub')) {
+      $destids = $this->createStub();
+      if ($destids) {
+        // Fake a data row with the source key in it
+        $map_source_key = $this->map->getSourceKey();
+        $data_row = new stdClass;
+        $i = 0;
+        foreach ($map_source_key as $key => $definition) {
+          $data_row->$key = $source_key[$i++];
+        }
+        $this->map->saveIDMapping($data_row, $destids, TRUE);
+      }
+    }
+    else {
+      $destids = NULL;
+    }
+    return $destids;
   }
 
   /**

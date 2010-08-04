@@ -64,8 +64,10 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     foreach ($result as $row) {
       $rows[$row->subject] = $row;
     }
-    $this->assertEqual(count($comments), count($rows),
-      t('Counts of comments and input rows match'));
+    if (!$this->assertEqual(count($comments), count($rows), t('Counts of comments and input rows match'))) {
+      $this->error(t('!comments comments, should be !rows',
+        array('!comments' => count($comments), '!rows' => count($rows))));
+    }
 
     $comment = $comments['im second'];
     $row = $rows['im second'];

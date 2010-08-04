@@ -56,7 +56,7 @@ class MigrateSQLMap extends MigrateMap {
     $this->messageTable = 'migrate_message_' . drupal_strtolower($machine_name);
     $this->sourceKey = $source_key;
     $this->destinationKey = $destination_key;
-    $this->connection = Database::getConnection($connection_key);
+    $this->connection = Database::getConnection('default', $connection_key);
     // Build the source and destination key maps
     $this->sourceKeyMap = array();
     $count = 1;
@@ -485,11 +485,10 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
-   * Clear non-informational messages from the message table.
+   * Clear all messages from the message table.
    */
-  public function clearErrors() {
-    $this->connection->delete($this->messageTable)
-                     ->condition('level', MigrationBase::MESSAGE_INFORMATIONAL, '<>')
+  public function clearMessages() {
+    $this->connection->truncate($this->messageTable)
                      ->execute();
   }
 

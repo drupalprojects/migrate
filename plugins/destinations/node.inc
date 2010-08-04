@@ -99,6 +99,12 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Handle update case
     if (isset($row->migrate_map_destid1)) {
       $node->nid = $row->migrate_map_destid1;
+      // Get the existing vid, so updates don't generate notices
+      $node->vid = db_select('node', 'n')
+                   ->fields('n', array('vid'))
+                   ->condition('nid', $node->nid)
+                   ->execute()
+                   ->fetchField();
     }
 
     // Set some required properties.
@@ -113,14 +119,14 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // node_object_prepare() will blow these away, so save them here and
     // stuff them in later if need be.
     if (isset($node->created)) {
-      $created = $node->created;
+      $created = MigrationBase::timestamp($node->created);
     }
     else {
       // To keep node_object_prepare() from choking
       $node->created = REQUEST_TIME;
     }
     if (isset($node->changed)) {
-      $changed = $node->changed;
+      $changed = MigrationBase::timestamp($node->changed);;
     }
     if (isset($node->uid)) {
       $uid = $node->uid;

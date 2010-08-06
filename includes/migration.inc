@@ -456,6 +456,15 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Prepares this migration to run as an update - that is, in addition to
+   * unmigrated content (source records not in the map table) being imported,
+   * previously-migrated content will also be updated in place.
+   */
+  public function prepareUpdate() {
+    $this->map->prepareUpdate();
+  }
+
+  /**
    * Outputs a progress message, reflecting the current status of a migration process.
    *
    * @param int $result

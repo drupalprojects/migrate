@@ -385,7 +385,7 @@ class MigrateSQLMap extends MigrateMap {
    * previously-migrated content will also be updated in place.
    */
   public function prepareUpdate() {
-    $this->connection->update($this->mapTableName)
+    $this->connection->update($this->mapTable)
     ->fields(array('needs_update' => 1))
     ->execute();
   }

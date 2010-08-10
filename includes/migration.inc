@@ -456,6 +456,15 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Prepares this migration to run as an update - that is, in addition to
+   * unmigrated content (source records not in the map table) being imported,
+   * previously-migrated content will also be updated in place.
+   */
+  public function prepareUpdate() {
+    $this->map->prepareUpdate();
+  }
+
+  /**
    * Outputs a progress message, reflecting the current status of a migration process.
    *
    * @param int $result
@@ -610,7 +619,7 @@ abstract class Migration extends MigrationBase {
         // to look up a destination ID from the provided migration
         $source_migration = $mapping->getSourceMigration();
         if ($source_migration && isset($values->$destination)) {
-          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination);
+          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination, $default);
         }
 
         // Assign any arguments
@@ -646,7 +655,7 @@ abstract class Migration extends MigrationBase {
   /**
    * Look up a value migrated in another migration.
    */
-  protected function handleSourceMigration($source_migration, $source_values) {
+  protected function handleSourceMigration($source_migration, $source_values, $default = NULL) {
     $source_migration = Migration::getInstance($source_migration);
     // Might already be an array, after separator processing
     if (is_array($source_values)) {

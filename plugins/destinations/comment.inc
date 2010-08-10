@@ -111,16 +111,19 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     }
 
     // Set some default properties.
-    $comment = (array) $comment;
-    $comment = array(
+    $defaults = array(
       'language' => $this->language,
       'node_type' => $this->bundle,
       'subject' => '',
       'uid' => 0,
       'cid' => 0,
       'pid' => 0,
-    ) + $comment;
-    $comment = (object) $comment;
+    );
+    foreach ($defaults as $field => $value) {
+      if (!isset($comment->$field)) {
+        $comment->$field = $value;
+      }
+    }
 
     $this->prepare($migration, $comment, $row);
     // Make sure we have a nid

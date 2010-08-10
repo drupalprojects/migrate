@@ -46,7 +46,13 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Comment import returned RESULT_COMPLETED'));
-
+    $result = db_select('migrate_message_winecomment', 'w')
+              ->fields('w', array('message'))
+              ->execute();
+    foreach ($result as $row) {
+      $this->error($row->message);
+    }
+    
     $result = db_select('migrate_example_wine_comment', 'wc')
               ->fields('wc', array('commentid', 'comment_parent', 'name', 'mail',
                 'accountid', 'body', 'wineid', 'subject', 'commenthost', 'userpage',

@@ -255,41 +255,34 @@ class MigrateSourceSQL extends MigrateSource {
 
     // get next row
     migrate_instrument_start('MigrateSourceSQL next');
-    // TODO: Apply idlist etc. for non-joinable case
-    $this->currentRow = $this->result->fetchObject();
-    if (!is_object($this->currentRow)) {
-      $this->currentRow = NULL;
-    }
-
     $map = $this->migration->getMap();
-
-    if ($this->currentRow) {
-      $this->numProcessed++;
-      $this->currentKey = array();
+    // TODO: Apply idlist etc. for non-joinable case
+    while ($this->currentRow = $this->result->fetchObject()) {
+      if (!is_object($this->currentRow)) {
+        break;
+      }
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
-      // If we couldn't include the map row in the query, query it directly and
-      // add the fields
       if (!$this->mapJoinable) {
-        // TODO: revisit
-//        $map->addDestinationKey($this->currentRow);
-
-        // If we're not using highwater marks, we need to check the map to determine
-        // whether this needs migration
-        if (!isset($this->highwaterField)) {
-          // Needs_update may be NULL (no map table entry), 0 (map entry present
-          // but doesn't need update, or 1 (needs update). The 2nd case is the one
-          // where we skip this entry
-          if (isset($this->currentRow->migrate_destination->needs_update) &&
-              $this->currentRow->migrate_destination->needs_update === 0) {
-            // TODO: Get next
+        // Check the map - if it's already mapped, and not marked for update, skip it
+        $map_row = $this->migration->getMap()->getRowBySource($this->currentKey);
+        if ($map_row && $map_row['needs_update'] == 0) {
+          continue;
+        }
+        // Add map info to the row, if present
+        if ($map_row) {
+          foreach ($map_row as $field => $value) {
+            $field = 'migrate_map_' . $field;
+            $this->currentRow->$field = $value;
           }
-
-          // TODO: Check message table (entries here indicate failed items, we don't
-          // want to run through them again)
         }
       }
+      $this->numProcessed++;
+      break;
+    }
+    if (!is_object($this->currentRow)) {
+      $this->currentRow = NULL;
     }
     migrate_instrument_stop('MigrateSourceSQL next');
   }

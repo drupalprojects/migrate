@@ -109,6 +109,12 @@ abstract class Migration extends MigrationBase {
   protected $currentSourceKey;
 
   /**
+   * The object currently being constructed
+   * @var stdClass
+   */
+  protected $values;
+  
+  /**
    * General initialization of a Migration object.
    */
   public function __construct() {
@@ -364,11 +370,11 @@ abstract class Migration extends MigrationBase {
 
       $this->currentSourceKey = $this->source->getCurrentKey();
 
-      $values = $this->applyMappings($data_row);
+      $this->values = $this->applyMappings($data_row);
 
       try {
         migrate_instrument_start('destination import', TRUE);
-        $ids = $this->destination->import($this, $values, $data_row);
+        $ids = $this->destination->import($this, $this->values, $data_row);
         migrate_instrument_stop('destination import');
         if ($ids) {
           $this->map->saveIDMapping($data_row, $ids, $this->needsUpdate);
@@ -396,7 +402,7 @@ abstract class Migration extends MigrationBase {
       }
 
       // Reset row properties.
-      unset($values);
+      unset($this->values);
       $this->needsUpdate = FALSE;
 
       // TODO: Temporary. Remove when http://drupal.org/node/375494 is committed.

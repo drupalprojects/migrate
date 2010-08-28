@@ -411,28 +411,6 @@ function _migrate_content_set_validate($form_state) {
   if (!is_numeric($weight) || (((int)$weight) != $weight)) {
     form_set_error('weight', t('Weight must be an integer value (positive or negative)'));
   }
-  $view_name = $form_state['values']['view_name'];
-  $view_args = trim($form_state['values']['view_args']);
-  if (isset($form_state['values']['mcsid'])) {
-    $sql = "SELECT mcsid FROM {migrate_content_sets}
-            WHERE view_name='%s' AND view_args='%s' AND mcsid<>%d";
-    $mcsid = db_result(db_query($sql, $view_name, $view_args, $form_state['values']['mcsid']));
-  }
-  else {
-    $sql = "SELECT mcsid FROM {migrate_content_sets}
-            WHERE view_name='%s' AND view_args='%s'";
-    $mcsid = db_result(db_query($sql, $view_name, $view_args));
-  }
-  if ($mcsid) {
-    if ($view_args) {
-      form_set_error('view_name', t('There is already a content set with this
-        combination of source view and view arguments.'));
-    }
-    else {
-      form_set_error('view_name', t('There is already a content set with this
-        source view and no view arguments.'));
-    }
-  }
 }
 
 /**

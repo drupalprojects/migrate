@@ -60,6 +60,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $fields['nid'] = t('Comment: Node (by Drupal ID)');
     $fields['uid'] = t('Comment: User (by Drupal ID)');
     $fields['subject'] = t('Comment: Subject');
+    $fields['comment'] = t('Comment: Body');
     $fields['hostname'] = t('Comment: Hostname/IP address');
     $fields['timestamp'] = t('Comment: Modified timestamp');
     $fields['status'] = t('Comment: Status');
@@ -76,18 +77,30 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
   }
 
   /**
-   * Delete a batch of comments at once.
+   * Delete a comment
    *
    * @param $migration
    *  Controlling migration object. Unused here.
-   * @param $cids
-   *  Array of comment IDs to be deleted.
+   * @param $cid
+   *  Array of comment ID fieldss to be deleted.
    */
-  public function bulkRollback(Migration $migration, array $cids) {
-    migrate_instrument_start('comment_delete_multiple');
-    $result = comment_delete_multiple($cids);
-    migrate_instrument_stop('comment_delete_multiple');
-    return $result;
+  public function rollback(Migration $migration, array $cid) {
+    $path = drupal_get_path('module', 'comment') . '/comment.admin.inc';
+    include_once($path);
+    // Backdoor deletion - query stolen from comment_delete()
+    $form = array();
+    $form_state = array();
+    $comment = db_fetch_object(db_query(
+      'SELECT c.*, u.name AS registered_name, u.uid
+       FROM {comments} c
+       LEFT JOIN {users} u ON u.uid = c.uid
+       WHERE c.cid = %d',
+      reset($cid)));
+    // May have been deleted as the child of a comment previously deleted
+    if ($comment) {
+      $form['#comment'] = $comment;
+      comment_confirm_delete_submit($form, $form_state);
+    }
   }
 
   /**
@@ -112,11 +125,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     // Set some default properties.
     $defaults = array(
       'language' => $this->language,
-      'node_type' => $this->bundle,
       'subject' => '',
       'uid' => 0,
       'cid' => 0,
       'pid' => 0,
+      'format' => filter_fallback_format(),
     );
     foreach ($defaults as $field => $value) {
       if (!isset($comment->$field)) {
@@ -135,9 +148,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     if (isset($comment->hostname)) {
       $hostname = $comment->hostname;
     }
+
     migrate_instrument_start('comment_save');
     $comment = (array)$comment;
-    comment_save($comment);
+    $comment['cid'] = comment_save($comment);
     $comment = (object)$comment;
     migrate_instrument_stop('comment_save');
     if (isset($hostname) && isset($comment->cid) && $comment->cid > 0) {

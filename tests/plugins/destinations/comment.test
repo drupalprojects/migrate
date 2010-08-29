@@ -15,7 +15,8 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('autoautoload', 'autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
-       'filefield', 'imagefield', 'migrate', 'migrate_example', 'comment');
+       'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
+       'migrate', 'migrate_extras', 'migrate_example', 'comment');
     autoload_get_lookup(TRUE);
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',
@@ -87,8 +88,6 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $wine_migration = MigrationBase::getInstance('WineWineMigration');
     $destid = $wine_migration->getMap()->lookupDestinationID(array($row->wineid), $migration);
     $this->assertEqual($comment->nid, reset($destid), t('Nid matches'));
-    $this->error(print_r($comment, TRUE));
-    $this->error(print_r($row, TRUE));
     $this->assertEqual($comment->comment, $row->body, t('Body matches'));
     $this->assertEqual($comment->hostname, $row->commenthost, t('Hostname matches'));
     $this->assertEqual($comment->homepage, $row->userpage, t('Homepage matches'));

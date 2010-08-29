@@ -374,8 +374,9 @@ class BeerCommentMigration extends BasicExampleMigration {
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
 
-    // We preserved bid => nid ids during BeerNodeMigration so simple mapping suffices.
-    $this->addFieldMapping('nid', 'bid');
+    // Map the incoming beer ID to the resulting Drupal nid
+    $this->addFieldMapping('nid', 'bid')
+         ->sourceMigration('BeerNodeMigration');
 
     $this->addFieldMapping('uid', 'aid')
          ->sourceMigration('BeerUserMigration')
@@ -384,7 +385,7 @@ class BeerCommentMigration extends BasicExampleMigration {
          ->sourceMigration('BeerCommentMigration')
          ->description('Parent comment.');
 
-    $this->addFieldMapping('comment_body', 'body');
+    $this->addFieldMapping('comment', 'body');
 
     // No unmapped source fields
 

@@ -156,11 +156,11 @@ abstract class MigrationBase {
    * @var callback
    */
   protected $previousErrorHandler = NULL;
-  
+
   /**
    * Disabling a migration prevents it from running with --all, or individually
    * without --force
-   * 
+   *
    * @var boolean
    */
   protected $enabled = TRUE;
@@ -600,7 +600,7 @@ abstract class MigrationBase {
           $this->endProcess();
           throw $exception;
         }
-  
+
         if ($return == MigrationBase::RESULT_COMPLETED && isset($this->total_successes)) {
           $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
         }

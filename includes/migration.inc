@@ -113,7 +113,7 @@ abstract class Migration extends MigrationBase {
    * @var stdClass
    */
   protected $values;
-  
+
   /**
    * General initialization of a Migration object.
    */
@@ -625,7 +625,7 @@ abstract class Migration extends MigrationBase {
         // to look up a destination ID from the provided migration
         $source_migration = $mapping->getSourceMigration();
         if ($source_migration && isset($values->$destination)) {
-          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination);
+          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination, $default);
         }
 
         // Assign any arguments
@@ -661,7 +661,7 @@ abstract class Migration extends MigrationBase {
   /**
    * Look up a value migrated in another migration.
    */
-  protected function handleSourceMigration($source_migration, $source_values) {
+  protected function handleSourceMigration($source_migration, $source_values, $default = NULL) {
     $source_migration = Migration::getInstance($source_migration);
     // Might already be an array, after separator processing
     if (is_array($source_values)) {

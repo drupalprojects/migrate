@@ -502,13 +502,21 @@ function drush_migrate_get_migrations($args) {
   static $migration_objects;
 
   if (drush_get_option('all')) {
-    return migrate_migrations(); // Already statically cached.
+    $migration_objects = migrate_migrations();
+    foreach ($migration_objects as $name => $migration) {
+      if (!$migration->getEnabled()) {
+        unset($migration_objects[$name]);
+      }
+    }
   }
   else {
     if (!isset($migration_objects)) {
       foreach (explode(',', $args) as $name) {
         $class_name = $name . 'Migration';
-        $migration_objects[$name] = MigrationBase::getInstance($class_name);
+        $migration = MigrationBase::getInstance($class_name);
+        if ($migration->getEnabled()) {
+          $migration_objects[$name] = $migration;
+        }
       }
     }
   }
@@ -766,9 +774,11 @@ function drush_migrate_wipe() {
           ->execute()
           ->fetchCol();
   // TODO: Call node_delete_multiple in batches of 500 or so
+  migrate_instrument_start('node_delete');
   foreach ($nids as $nid) {
     node_delete($nid);
   }
+  migrate_instrument_stop('node_delete');
 }
 
 // Print all timers for the request.

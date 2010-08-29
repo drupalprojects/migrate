@@ -126,6 +126,10 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     migrate_handler_invoke_all('Entity', 'complete', $migration, $entity, $source_row);
     // Then call any entity-specific handlers
     migrate_handler_invoke_all($this->entityType, 'complete', $migration, $entity, $source_row);
+    // Then call any complete handler for this specific Migration.
+    if (method_exists($migration, 'complete')) {
+      $migration->complete($entity, $source_row);
+    }
   }
 
 }

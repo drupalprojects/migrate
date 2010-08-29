@@ -158,6 +158,17 @@ abstract class MigrationBase {
   protected $previousErrorHandler = NULL;
 
   /**
+   * Disabling a migration prevents it from running with --all, or individually
+   * without --force
+   *
+   * @var boolean
+   */
+  protected $enabled = TRUE;
+  public function getEnabled() {
+    return $this->enabled;
+  }
+
+  /**
    * Codes representing the result of a rollback or import process.
    */
   const RESULT_COMPLETED = 1;   // All records have been processed
@@ -167,6 +178,7 @@ abstract class MigrationBase {
                                 // drush migrate-stop)
   const RESULT_FAILED = 4;      // The process had a fatal error
   const RESULT_SKIPPED = 5;     // Dependencies are unfulfilled - skip the process
+  const RESULT_DISABLED = 6;    // This migration is disabled, skipping
 
   /**
    * Codes representing the current status of a migration, and stored in the
@@ -534,25 +546,30 @@ abstract class MigrationBase {
    *  the derived class.
    */
   public function processRollback(array $options = array()) {
-    $return = MigrationBase::RESULT_COMPLETED;
-    if (method_exists($this, 'rollback')) {
-      $this->options = $options;
-      // TODO: Validate dependencies (migrations depending on us have no imported rows)
-  /*    if (!isset($options['force'])) {
-        if (!$this->dependenciesComplete()) {
-          return Migration::RESULT_SKIPPED;
+    if ($this->enabled) {
+      $return = MigrationBase::RESULT_COMPLETED;
+      if (method_exists($this, 'rollback')) {
+        $this->options = $options;
+        // TODO: Validate dependencies (migrations depending on us have no imported rows)
+    /*    if (!isset($options['force'])) {
+          if (!$this->dependenciesComplete()) {
+            return Migration::RESULT_SKIPPED;
+          }
+        }*/
+        $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
+        try {
+          $return = $this->rollback();
         }
-      }*/
-      $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
-      try {
-        $return = $this->rollback();
-      }
-      catch (Exception $exception) {
-        // If something bad happened, make sure we clear the semaphore
+        catch (Exception $exception) {
+          // If something bad happened, make sure we clear the semaphore
+          $this->endProcess();
+          throw $exception;
+        }
         $this->endProcess();
-        throw $exception;
       }
-      $this->endProcess();
+    }
+    else {
+      $return = MigrationBase::RESULT_DISABLED;
     }
     return $return;
   }
@@ -565,31 +582,36 @@ abstract class MigrationBase {
    *  the derived class.
    */
   public function processImport(array $options = array()) {
-    $return = MigrationBase::RESULT_COMPLETED;
-    if (method_exists($this, 'import')) {
-      $this->options = $options;
-      if (!isset($options['force'])) {
-        if (!$this->dependenciesComplete()) {
-          return MigrationBase::RESULT_SKIPPED;
+    if ($this->enabled) {
+      $return = MigrationBase::RESULT_COMPLETED;
+      if (method_exists($this, 'import')) {
+        $this->options = $options;
+        if (!isset($options['force'])) {
+          if (!$this->dependenciesComplete()) {
+            return MigrationBase::RESULT_SKIPPED;
+          }
         }
-      }
-      $this->beginProcess(MigrationBase::STATUS_IMPORTING);
-      try {
-        $return = $this->import();
-      }
-      catch (Exception $exception) {
-        // If something bad happened, make sure we clear the semaphore
-        $this->endProcess();
-        throw $exception;
-      }
+        $this->beginProcess(MigrationBase::STATUS_IMPORTING);
+        try {
+          $return = $this->import();
+        }
+        catch (Exception $exception) {
+          // If something bad happened, make sure we clear the semaphore
+          $this->endProcess();
+          throw $exception;
+        }
 
-      if ($return == MigrationBase::RESULT_COMPLETED && isset($this->total_successes)) {
-        $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
+        if ($return == MigrationBase::RESULT_COMPLETED && isset($this->total_successes)) {
+          $overallThroughput = round(60*$this->total_successes / (microtime(TRUE) - $this->starttime));
+        }
+        else {
+          $overallThroughput = 0;
+        }
+        $this->endProcess($overallThroughput);
       }
-      else {
-        $overallThroughput = 0;
-      }
-      $this->endProcess($overallThroughput);
+    }
+    else {
+      $return = MigrationBase::RESULT_DISABLED;
     }
     return $return;
   }

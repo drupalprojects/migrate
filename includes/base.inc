@@ -373,10 +373,16 @@ abstract class MigrationBase {
    */
   public function getLastImported() {
     $last_imported = db_select('migrate_status', 'ms')
-              ->fields('ms', array('lastimported'))
+              ->fields('ms', array('lastimportedtime'))
               ->condition('machine_name', $this->machineName)
               ->execute()
               ->fetchField();
+    if ($last_imported) {
+      $last_imported = date('Y-m-d H:i:s', $last_imported);
+    }
+    else {
+      $last_imported = '';
+    }
     return $last_imported;
   }
 
@@ -500,7 +506,7 @@ abstract class MigrationBase {
       $this->status = MigrationBase::STATUS_IDLE;
       $fields = array('status' => MigrationBase::STATUS_IDLE);
       if ($overallThroughput) {
-        $fields['lastimported'] = gmdate('Y-m-d H:i:s');
+        $fields['lastimportedtime'] = time();
         $fields['lastthroughput'] = $overallThroughput;
       }
       db_merge('migrate_status')

@@ -191,7 +191,8 @@ class BeerUserMigration extends BasicExampleMigration {
          ->description('See prepare method');
     // We set the timezone here for efficiency - it will be used in the prepare
     // method
-    date_default_timezone_set('US/Mountain');
+    // TODO: Don't set site timezone, affects lastupdatetime
+//    date_default_timezone_set('US/Mountain');
 
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('pass', 'password');

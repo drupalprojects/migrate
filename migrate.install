@@ -30,8 +30,9 @@ function migrate_schema_status() {
         'default' => 0,
         'description' => 'Current status of migration',
       ),
-      'lastimported' => array(
-        'type' => 'datetime',
+      'lastimportedtime' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => FALSE,
         'description' => 'Date and time of last completed import',
       ),
@@ -108,7 +109,7 @@ function migrate_update_7002() {
 }
 
 /**
- * Add lastthrouput column to migrate_status
+ * Add lastthroughput column to migrate_status
  */
 function migrate_update_7003() {
   $ret = array();
@@ -121,5 +122,35 @@ function migrate_update_7003() {
   );
 
   $ret[] = t('Added lastthroughput column to migrate_status table');
+  return $ret;
+}
+
+/**
+ * Convert lastimported datetime field to lastimportedtime int field.
+ */
+function migrate_update_7004() {
+  $ret = array();
+  db_add_field('migrate_status', 'lastimportedtime', array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+      'description' => 'Date and time of last completed import',
+    )
+  );
+
+  $result = db_select('migrate_status', 'ms')
+            ->fields('ms', array('machine_name', 'lastimported'))
+            ->execute();
+  foreach ($result as $row) {
+    $lastimportedtime = strtotime($row->lastimported);
+    db_update('migrate_status')
+      ->fields(array('lastimportedtime' => $lastimportedtime))
+      ->condition('machine_name', $row->machineName)
+      ->execute();
+  }
+
+  db_drop_field('migrate_status', 'lastimported');
+
+  $ret[] = t('Converted lastimported datetime field to lastimportedtime int field');
   return $ret;
 }

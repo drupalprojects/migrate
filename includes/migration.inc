@@ -254,7 +254,7 @@ abstract class Migration extends MigrationBase {
       $sourceids = array();
       $batch_count = 0;
       foreach ($this->map as $destination_key) {
-        if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
+        if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
           break;
         }
 
@@ -313,7 +313,7 @@ abstract class Migration extends MigrationBase {
     }
     else {
       foreach ($this->map as $destination_key) {
-        if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
+        if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
           break;
         }
         if ($itemlimit && ($this->total_processed >= $itemlimit)) {
@@ -364,7 +364,7 @@ abstract class Migration extends MigrationBase {
     $return = MigrationBase::RESULT_COMPLETED;
 
     foreach ($this->source as $data_row) {
-      if ($this->checkStatus() != MigrationBase::RESULT_COMPLETED) {
+      if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
         break;
       }
 

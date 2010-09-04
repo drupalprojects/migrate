@@ -12,7 +12,7 @@ class LegacyURLsMigration extends Migration {
     $this->dependencies = array();
     $this->description = '<p>Copy legacy urls table from as an example of table_copy plugin.</p>';
     $this->team[] = new MigrateTeamMember('Moshe Weitzman', 'weitzman@tejasa.com', 'Implementors');
-    $this->highwaterField = 'modificationdate';
+    $this->highwaterField = 'modificationdatetime';
 
     $query = db_select('migrate_example_legacy_urls', 'lu')->fields('lu');
     $this->source = new MigrateSourceSQL($query, array(

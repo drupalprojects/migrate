@@ -291,8 +291,9 @@ function migrate_example_beer_schema_legacy_urls() {
         'length' => 500,
         'not null' => FALSE,
       ),
-      'modificationdate' => array(
-        'type' => 'datetime',
+      'modificationdatetime' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
       ),
     ),
@@ -458,13 +459,13 @@ function migrate_example_beer_data_topic_node() {
 }
 
 function migrate_example_beer_data_urls() {
-  $fields = array('id', 'migration_name', 'source_id', 'source_uri', 'modificationdate');
+  $fields = array('id', 'migration_name', 'source_id', 'source_uri', 'modificationdatetime');
   $query = db_insert('migrate_example_beer_legacy_urls')
     ->fields($fields);
   $data = array(
-    array(1, 'BeerNode', 99999997, 'the_boddington/main', '2010-04-12 08:32:06'),
-    array(2, 'BeerNode', 99999998, 'Miller Lite taste', '2010-04-12 08:32:05'),
-    array(3, 'BeerNode', 99999999, 'green wonder', '2010-04-12 08:32:03'),
+    array(1, 'BeerNode', 99999997, 'the_boddington/main', strtotime('2010-04-12 08:32:06')),
+    array(2, 'BeerNode', 99999998, 'Miller Lite taste', strtotime('2010-04-12 08:32:05')),
+    array(3, 'BeerNode', 99999999, 'green wonder', strtotime('2010-04-12 08:32:03')),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

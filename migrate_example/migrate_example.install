@@ -39,3 +39,30 @@ function migrate_example_uninstall() {
     ->execute();
   drupal_uninstall_schema('migrate_example');
 }
+
+/**
+ * Convert modificationdate datetime field to modificationdatetime int field.
+ */
+function migrate_example_update_6001() {
+  $ret = array();
+  db_add_field($ret, 'migrate_example_beer_legacy_urls', 'modificationdatetime', array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+    )
+  );
+
+  $result = db_query("SELECT id, modificationdate
+                      FROM {migrate_example_beer_legacy_urls}");
+  while ($row = db_fetch_object($result)) {
+    $modificationdatetime = strtotime($row->modificationdate);
+    db_query("UPDATE {migrate_example_beer_legacy_urls}
+              SET modificationdatetime=%d
+              WHERE id=%d", $modificationdatetime, $row->id);
+  }
+
+  db_drop_field($ret, 'migrate_example_beer_legacy_urls', 'modificationdate');
+
+  $ret[] = t('Converted modificationdate datetime field to modificationdatetime int field');
+  return $ret;
+}

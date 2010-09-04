@@ -30,8 +30,9 @@ function migrate_schema_status() {
         'default' => 0,
         'description' => 'Current status of migration',
       ),
-      'lastimported' => array(
-        'type' => 'datetime',
+      'lastimportedtime' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => FALSE,
         'description' => 'Date and time of last completed import',
       ),
@@ -76,4 +77,32 @@ function migrate_uninstall() {
   }
   */
   drupal_uninstall_schema('migrate');
+}
+
+/**
+ * Convert lastimported datetime field to lastimportedtime int field.
+ */
+function migrate_update_6001() {
+  $ret = array();
+  db_add_field($ret, 'migrate_status', 'lastimportedtime', array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+      'description' => 'Date and time of last completed import',
+    )
+  );
+
+  $result = db_query("SELECT machine_name, lastimported
+                      FROM {migrate_status}");
+  while ($row = db_fetch_object($result)) {
+    $lastimportedtime = strtotime($row->lastimported);
+    db_query("UPDATE {migrate_status}
+              SET lastimportedtime=%d
+              WHERE machine_name='%s'", $lastimportedtime, $row->machine_name);
+  }
+
+  db_drop_field($ret, 'migrate_status', 'lastimported');
+
+  $ret[] = t('Converted lastimported datetime field to lastimportedtime int field');
+  return $ret;
 }

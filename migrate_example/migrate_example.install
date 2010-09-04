@@ -65,7 +65,7 @@ function migrate_example_update_7001() {
             ->execute();
   foreach ($result as $row) {
     $modificationdatetime = strtotime($row->modificationdate);
-    db_update('migrate_status')
+    db_update('migrate_example_beer_legacy_urls')
       ->fields(array('modificationdatetime' => $modificationdatetime))
       ->condition('machine_name', $row->machineName)
       ->execute();

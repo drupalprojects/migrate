@@ -145,7 +145,7 @@ function migrate_update_7004() {
     $lastimportedtime = strtotime($row->lastimported);
     db_update('migrate_status')
       ->fields(array('lastimportedtime' => $lastimportedtime))
-      ->condition('machine_name', $row->machineName)
+      ->condition('machine_name', $row->machine_name)
       ->execute();
   }
 

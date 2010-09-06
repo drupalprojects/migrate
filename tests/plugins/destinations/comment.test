@@ -52,7 +52,7 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     foreach ($result as $row) {
       $this->error($row->message);
     }
-    
+
     $result = db_select('migrate_example_wine_comment', 'wc')
               ->fields('wc', array('commentid', 'comment_parent', 'name', 'mail',
                 'accountid', 'body', 'wineid', 'subject', 'commenthost', 'userpage',
@@ -96,6 +96,32 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $destid = $user_migration->getMap()->lookupDestinationID(array($row->accountid), $migration);
     $this->assertEqual($comment->uid, reset($destid), t('Uid matches'));
     $this->assertEqual($comment->pid, $comments['im parent']->cid, t('Parent matches'));
+
+    // Test updates
+    // Capture original comments
+    $original_comments = comment_load_multiple(FALSE);
+    $update_migration = Migration::getInstance('WineCommentUpdatesMigration');
+    $result = $update_migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine comment updates import returned RESULT_COMPLETED'));
+    $final_comments = comment_load_multiple(FALSE);
+    foreach ($original_comments as $cid => $original_comment) {
+      foreach ($original_comment as $field => $value) {
+        if ($field == 'subject') {
+          if ($value == $final_comments[$cid]->$field) {
+            $this->error(t('Field !field should have changed but did not, value=!value',
+              array('!field' => $field, '!value' => print_r($value, TRUE))));
+          }
+        }
+        else {
+          if ($value != $final_comments[$cid]->$field) {
+            $this->error(t('Field !field mismatch: original !value1, result !value2',
+              array('!field' => $field, '!value1' => print_r($value, TRUE),
+                '!value2' => print_r($final_comments[$cid]->$field, TRUE))));
+          }
+        }
+      }
+    }
 
     // Test rollback
     $result = $migration->processRollback();

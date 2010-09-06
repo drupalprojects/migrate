@@ -82,6 +82,32 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
 
     // TODO: Theme, timezone, language, picture
 
+    // Test updates
+    // Capture original terms
+    $original_users = user_load_multiple(array(), array(), TRUE);
+    $update_migration = Migration::getInstance('WineUserUpdatesMigration');
+    $result = $update_migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine user updates import returned RESULT_COMPLETED'));
+    $final_users = user_load_multiple(array(), array(), TRUE);
+    foreach ($original_users as $uid => $original_user) {
+      foreach ($original_user as $field => $value) {
+        if ($field == 'field_migrate_example_gender') {
+          if ($value == $final_users[$uid]->$field) {
+            $this->error(t('Field !field should have changed but did not, value=!value',
+              array('!field' => $field, '!value' => print_r($value, TRUE))));
+          }
+        }
+        else {
+          if ($value != $final_users[$uid]->$field) {
+            $this->error(t('Field !field mismatch: original !value1, result !value2',
+              array('!field' => $field, '!value1' => print_r($value, TRUE),
+                '!value2' => print_r($final_users[$uid]->$field, TRUE))));
+          }
+        }
+      }
+    }
+
     // Test rollback
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,

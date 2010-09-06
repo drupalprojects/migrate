@@ -7,12 +7,16 @@
  */
 function migrate_example_wine_schema() {
   $schema['migrate_example_wine_account'] = migrate_example_wine_schema_account();
+  $schema['migrate_example_wine_account_updates'] = migrate_example_wine_schema_account_updates();
   $schema['migrate_example_wine_categories'] = migrate_example_wine_schema_categories();
+  $schema['migrate_example_wine_variety_updates'] = migrate_example_wine_schema_variety_updates();
   $schema['migrate_example_wine'] = migrate_example_wine_schema_wine();
+  $schema['migrate_example_wine_updates'] = migrate_example_wine_schema_updates();
   $schema['migrate_example_wine_producer'] = migrate_example_wine_schema_producer();
   $schema['migrate_example_wine_category_wine'] = migrate_example_wine_schema_category_wine();
   $schema['migrate_example_wine_category_producer'] = migrate_example_wine_schema_category_producer();
   $schema['migrate_example_wine_comment'] = migrate_example_wine_schema_comment();
+  $schema['migrate_example_wine_comment_updates'] = migrate_example_wine_schema_comment_updates();
 
   return $schema;
 }
@@ -24,12 +28,16 @@ function migrate_example_wine_install() {
 
   // Populate our tables.
   migrate_example_wine_data_account();
+  migrate_example_wine_data_account_updates();
   migrate_example_wine_data_categories();
+  migrate_example_wine_data_variety_updates();
   migrate_example_wine_data_wine();
+  migrate_example_wine_data_updates();
   migrate_example_wine_data_producer();
   migrate_example_wine_data_category_wine();
   migrate_example_wine_data_category_producer();
   migrate_example_wine_data_comment();
+  migrate_example_wine_data_comment_updates();
 }
 
 function migrate_example_wine_uninstall() {
@@ -121,6 +129,26 @@ function migrate_example_wine_schema_wine() {
     'primary key' => array('wineid'),
   );
 }
+function migrate_example_wine_schema_updates() {
+  return array(
+    'description' => 'Updated wine ratings',
+    'fields' => array(
+      'wineid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Wine ID',
+      ),
+      'rating' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'Rating (100-point scale)',
+      ),
+    ),
+    'primary key' => array('wineid'),
+  );
+}
 
 function migrate_example_wine_schema_producer() {
   return array(
@@ -197,6 +225,26 @@ function migrate_example_wine_schema_categories() {
         'unsigned' => FALSE,
         'not null' => FALSE,
         'description' => 'Order in which to display categories',
+      ),
+    ),
+    'primary key' => array('categoryid'),
+  );
+}
+
+function migrate_example_wine_schema_variety_updates() {
+  return array(
+    'description' => 'Variety updates',
+    'fields' => array(
+      'categoryid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'description' => 'Category ID',
+      ),
+      'details' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
       ),
     ),
     'primary key' => array('categoryid'),
@@ -323,6 +371,26 @@ function migrate_example_wine_schema_comment() {
     'primary key' => array('commentid'),
   );
 }
+function migrate_example_wine_schema_comment_updates() {
+  return array(
+    'description' => 'Wine comment updates',
+    'fields' => array(
+      'commentid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Comment ID',
+      ),
+      'subject' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Comment subject',
+      ),
+    ),
+    'primary key' => array('commentid'),
+  );
+}
 
 function migrate_example_wine_schema_account() {
   return array(
@@ -392,6 +460,25 @@ function migrate_example_wine_schema_account() {
         'length' => 255,
         'not null' => TRUE,
         'description' => 'Signature for comments',
+      ),
+    ),
+    'primary key' => array('accountid'),
+  );
+}
+function migrate_example_wine_schema_account_updates() {
+  return array(
+    'description' => 'Wine account updates',
+    'fields' => array(
+      'accountid'  => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Account ID',
+      ),
+      'sex' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => FALSE,
+        'description' => 'Gender',
       ),
     ),
     'primary key' => array('accountid'),
@@ -695,10 +782,26 @@ function migrate_example_wine_data_wine() {
   $fields = array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image',
     'posted', 'last_changed', 'variety', 'region', 'rating');
   $query = db_insert('migrate_example_wine')
-    ->fields($fields);
+           ->fields($fields);
   $data = array(
     array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9, NULL,
       strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95),
+    array(2, 'Archeo Ruggero di Tasso Nero d\'Avola', 'Lots of berry character', 'Pair with red sauced dishes', 3, NULL,
+      strtotime('2010-09-03 18:23:58'), strtotime('2010-09-03 18:23:58'), 26, 2, 85),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
+function migrate_example_wine_data_updates() {
+  $fields = array('wineid', 'rating');
+  $query = db_insert('migrate_example_wine_updates')
+           ->fields($fields);
+  $data = array(
+    array(1, 93),
+    array(2, NULL),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));
@@ -709,9 +812,10 @@ function migrate_example_wine_data_wine() {
 function migrate_example_wine_data_producer() {
   $fields = array('producerid', 'name', 'body', 'excerpt', 'accountid');
   $query = db_insert('migrate_example_wine_producer')
-    ->fields($fields);
+           ->fields($fields);
   $data = array(
     array(1, 'Montes', 'Fine Chilean winery', 'Great!', 9),
+    array(2, 'Archeo', 'Sicilia!', NULL, 3),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));
@@ -734,6 +838,21 @@ function migrate_example_wine_data_account() {
     array(9, 1, '2004-02-29 10:31:05', '2004-02-29 10:31:05', '2004-02-29 10:31:05',
       'fonzie', NULL, 'bike', 'thefonz@example.com', 'arthur@example.com',
       'Aaay!'),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
+function migrate_example_wine_data_account_updates() {
+  $fields = array('accountid', 'sex');
+  $query = db_insert('migrate_example_wine_account_updates')
+           ->fields($fields);
+  $data = array(
+    array(1, NULL),
+    array(3, 'M'),
+    array(9, 'F'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));
@@ -769,10 +888,27 @@ function migrate_example_wine_data_comment() {
   $query->execute();
 }
 
+function migrate_example_wine_data_comment_updates() {
+  $fields = array('commentid', 'subject');
+  $query = db_insert('migrate_example_wine_comment_updates')
+           ->fields($fields);
+  $data = array(
+    array(1, 'I am first'),
+    array(2, 'I am second'),
+    array(3, 'I am parent'),
+    array(4, ''),
+    array(5, 'I am Spartacus'),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
 function migrate_example_wine_data_categories() {
   $fields = array('categoryid', 'type', 'name', 'category_parent', 'details', 'ordering');
   $query = db_insert('migrate_example_wine_categories')
-    ->fields($fields);
+           ->fields($fields);
   $data = array(
     array(1, 'variety', 'White wine', NULL, 'White wines are generally simpler and sweeter than red', 3),
     array(3, 'variety', 'Red wine', NULL, 'Red wines are generally more complex and "dry" than white', 1),
@@ -781,6 +917,7 @@ function migrate_example_wine_data_categories() {
     array(13, 'variety', 'Merlot', 3, 'Very drinkable', 4),
     array(14, 'variety', 'Syrah', 3, 'A.k.a. shiraz', -3),
     array(25, 'variety', 'Cabernet Sauvignon', 3, 'A basic', -5),
+    array(26, 'variety', "Nero d'Avola", 3, 'Sicilian specialty', 2),
     array(2, 'region', 'Italy', NULL, 'Largest producer of wine', 5),
     array(11, 'region', 'Tuscany', 2, NULL, 2),
     array(18, 'region', 'Chianti', 11, NULL, -1),
@@ -803,6 +940,26 @@ function migrate_example_wine_data_categories() {
   $query->execute();
 }
 
+function migrate_example_wine_data_variety_updates() {
+  $fields = array('categoryid', 'details');
+  $query = db_insert('migrate_example_wine_variety_updates')
+           ->fields($fields);
+  $data = array(
+    array(1, 'White wines are simpler and sweeter than red'),
+    array(3, 'Red wines are generally more complex and dry than white'),
+    array(8, 'Usually associated with Germany'),
+    array(9, NULL),
+    array(13, 'Common, very drinakable'),
+    array(14, 'AKA Shiraz'),
+    array(25, 'Basic'),
+    array(26, 'A specialty of Sicily'),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
 function migrate_example_wine_data_category_wine() {
   $fields = array('wineid', 'categoryid');
   $query = db_insert('migrate_example_wine_category_wine')
@@ -810,6 +967,7 @@ function migrate_example_wine_data_category_wine() {
   $data = array(
     array(1, 12),
     array(1, 15),
+    array(2, 10),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

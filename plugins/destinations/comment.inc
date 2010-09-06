@@ -105,37 +105,68 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $comment, stdClass $row) {
-    // Handle update case
+    // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
-      $comment->cid = $row->migrate_map_destid1;
+      if (isset($comment->cid)) {
+        if ($comment->cid != $row->migrate_map_destid1) {
+          throw new MigrateException(t("Incoming cid !cid and map destination nid !destid1 don't match",
+            array('!cid' => $comment->cid, '!destid1' => $row->migrate_map_destid1)));
+        }
+      }
+      else {
+        $comment->cid = $row->migrate_map_destid1;
+      }
     }
+    if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+      if (!isset($comment->cid)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but no destination cid provided'));
+      }
+      $rawcomment = $comment;
+      $old_comment = comment_load($comment->cid);
+      if (!isset($comment->nid)) {
+        $comment->nid = $old_comment->nid;
+      }
+      if (!isset($comment->created)) {
+        $comment->created = $old_comment->created;
+      }
+      if (!isset($comment->changed)) {
+        $comment->changed = $old_comment->changed;
+      }
+      $this->prepare($migration, $comment, $row);
+      foreach ($rawcomment as $field => $value) {
+        $old_comment->$field = $comment->$field;
+      }
+      $comment = $old_comment;
+    }
+    else {
+      // Set some default properties.
+      $defaults = array(
+        'language' => $this->language,
+        'node_type' => $this->bundle,
+        'subject' => '',
+        'uid' => 0,
+        'cid' => 0,
+        'pid' => 0,
+      );
+      foreach ($defaults as $field => $value) {
+        if (!isset($comment->$field)) {
+          $comment->$field = $value;
+        }
+      }
 
-    // Set some default properties.
-    $defaults = array(
-      'language' => $this->language,
-      'node_type' => $this->bundle,
-      'subject' => '',
-      'uid' => 0,
-      'cid' => 0,
-      'pid' => 0,
-    );
-    foreach ($defaults as $field => $value) {
-      if (!isset($comment->$field)) {
-        $comment->$field = $value;
+      $this->prepare($migration, $comment, $row);
+      // Make sure we have a nid
+      if (!isset($comment->nid) || !$comment->nid) {
+        throw new MigrateException(t('No node ID provided for comment'));
+      }
+
+      // comment_save() hardcodes hostname, so if we're trying to set it we
+      // need to save it and apply it after
+      if (isset($comment->hostname)) {
+        $hostname = $comment->hostname;
       }
     }
 
-    $this->prepare($migration, $comment, $row);
-    // Make sure we have a nid
-    if (!isset($comment->nid) || !$comment->nid) {
-      throw new MigrateException(t('No node ID provided for comment'));
-    }
-
-    // comment_save() hardcodes hostname, so if we're trying to set it we
-    // need to save it and apply it after
-    if (isset($comment->hostname)) {
-      $hostname = $comment->hostname;
-    }
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');

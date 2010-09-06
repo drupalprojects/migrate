@@ -652,6 +652,13 @@ abstract class Migration extends MigrationBase {
             }
           }
         }
+
+        // When we're updating existing nodes, if there is a source mapping but there
+        // was no value for this row, add a null destination value so it gets removed
+        // from the node
+        if ($this->systemOfRecord == Migration::DESTINATION && $source && !isset($values->$destination)) {
+          $values->$destination = NULL;
+        }
       }
     }
 

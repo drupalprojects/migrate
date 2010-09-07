@@ -373,6 +373,9 @@ abstract class Migration extends MigrationBase {
       $this->values = $this->applyMappings($data_row);
 
       try {
+        // Wipe old messages
+        $this->map->delete($this->currentSourceKey, TRUE);
+
         migrate_instrument_start('destination import', TRUE);
         $ids = $this->destination->import($this, $this->values, $data_row);
         migrate_instrument_stop('destination import');

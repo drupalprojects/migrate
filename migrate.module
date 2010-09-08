@@ -133,7 +133,7 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
     $required_classes = array();
 
     // Discover matching class names registered with Drupal
-    $result = db_select('registry', 'r')
+    $result = db_select('autoload_registry', 'r')
               ->fields('r', array('name'))
               ->condition('type', 'class')
               ->condition('name', $class_pattern, 'LIKE')

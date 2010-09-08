@@ -4,8 +4,8 @@ description = "Import content from external sources"
 package = "Development"
 core = 6.x
 php = 5.2
+; Important: requires Autoload 2 (DRUPAL-6--2 branch)
 dependencies[] = autoload
-dependencies[] = autoautoload
 dependencies[] = dbtng
 files[] = migrate.module
 files[] = migrate.install

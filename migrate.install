@@ -54,6 +54,30 @@ function migrate_schema_status() {
 }
 
 /**
+ * Implementation of hook_requirements().
+ */
+function migrate_requirements($phase) {
+  $t = get_t();
+
+  if (function_exists('autoload_registry_rebuild')) {
+    $requirements['migrate'] = array(
+      'title' => $t('Migrate'),
+      'value' => $t('OK'),
+      'severity' => REQUIREMENT_OK,
+    );
+  }
+  else {
+    $requirements['migrate'] = array(
+      'title' => $t('Migrate'),
+      'value' => $t('Incompatible'),
+      'description' => $t('Migrate requires Autoload version 2'),
+      'severity' => REQUIREMENT_ERROR,
+    );
+  }
+  return $requirements;
+}
+
+/**
  * Implementation of hook_install().
  */
 function migrate_install() {

@@ -456,6 +456,19 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
+   * Set the specified row to be updated, if it exists.
+   */
+  public function setUpdate(array $source_key) {
+    $query = $this->connection->update($this->mapTable)
+             ->fields(array('needs_update' => 1));
+    $count = 1;
+    foreach ($source_key as $key_value) {
+      $query->condition('sourceid' . $count++, $key_value);
+    }
+    $query->execute();
+  }
+
+  /**
    * Delete all map and message table entries specified.
    *
    * @param array $source_keys

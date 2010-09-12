@@ -22,13 +22,9 @@ function migrate_example_install() {
   migrate_example_beer_install();
   migrate_example_wine_install();
   // A simple format for testing migration of format
-  db_merge('filter_formats')
-    ->key(array('name' => 'Migrate example format'))
-    ->fields(array(
-      'roles' => ',1,',
-      'cache' => 1,
-    ))
-    ->execute();
+  db_query("INSERT INTO {filter_formats}
+            (name, roles, cache)
+            VALUES('Migrate example format', ',1,', 1)");
 }
 
 function migrate_example_uninstall() {

@@ -635,39 +635,34 @@ function migrate_example_wine_content_type_delete() {
 }
 
 function migrate_example_wine_data_wine() {
-  $fields = array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image',
-    'posted', 'last_changed', 'variety', 'region', 'rating', 'last_reviewed');
-  $query = db_insert('migrate_example_wine')
-    ->fields($fields);
   $data = array(
     array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9, NULL,
       strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95,
       '3/4/10 05:06:07 PM'),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine}
+              (wineid, name, body, excerpt, accountid, image, posted, last_changed,
+                variety, region, rating, last_reviewed)
+              VALUES(%d, '%s', '%s', '%s', %d, '%s',
+                     '%s', '%s', %d, %d, %d, '%s')",
+             $row);
   }
-  $query->execute();
 }
 
 function migrate_example_wine_data_producer() {
-  $fields = array('producerid', 'name', 'body', 'excerpt', 'accountid');
-  $query = db_insert('migrate_example_wine_producer')
-    ->fields($fields);
   $data = array(
     array(1, 'Montes', 'Fine Chilean winery', 'Great!', 9),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine_producer}
+              (producerid, name, body, excerpt, accountid)
+              VALUES(%d, '%s', '%s', '%s', %d)",
+             $row);
   }
-  $query->execute();
 }
 
 function migrate_example_wine_data_account() {
-  $fields = array('accountid', 'status', 'posted', 'last_access', 'last_login',
-    'name', 'sex', 'password', 'mail', 'original_mail', 'sig');
-  $query = db_insert('migrate_example_wine_account')
-    ->fields($fields);
   $data = array(
     array(1, 1, '2010-03-30 10:31:05', '2010-04-30 18:25:24', '2010-04-30 14:01:02',
       'darren', 'M', 'dpass', 'ddarren@example.com', 'darren@example.com',
@@ -680,16 +675,15 @@ function migrate_example_wine_data_account() {
       'Aaay!'),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine_account}
+              (accountid, status, posted, last_access, last_login, name, sex,
+                password, mail, original_mail, sig)
+              VALUES(%d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
+             $row);
   }
-  $query->execute();
 }
 
 function migrate_example_wine_data_comment() {
-  $fields = array('commentid', 'wineid', 'comment_parent', 'subject', 'body',
-    'name', 'mail', 'accountid', 'commenthost', 'userpage', 'posted', 'lastchanged');
-  $query = db_insert('migrate_example_wine_comment')
-    ->fields($fields);
   $data = array(
     array(1, 1, NULL, 'im first', 'Tasty', 'grace', 'grace@example.com', 0,
       '123.456.78.9', 'http:://grace.example.com/',
@@ -708,15 +702,15 @@ function migrate_example_wine_data_comment() {
       strtotime('2010-06-02 03:04:05'), strtotime('2010-06-02 03:04:05')),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine_comment}
+              (commentid, wineid, comment_parent, subject, body, name, mail,
+               accountid, commenthost, userpage, posted, lastchanged)
+              VALUES(%d, %d, %d, '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s')",
+             $row);
   }
-  $query->execute();
 }
 
 function migrate_example_wine_data_categories() {
-  $fields = array('categoryid', 'type', 'name', 'category_parent', 'details', 'ordering');
-  $query = db_insert('migrate_example_wine_categories')
-    ->fields($fields);
   $data = array(
     array(1, 'variety', 'White wine', NULL, 'White wines are generally simpler and sweeter than red', 3),
     array(3, 'variety', 'Red wine', NULL, 'Red wines are generally more complex and "dry" than white', 1),
@@ -742,34 +736,35 @@ function migrate_example_wine_data_categories() {
     array(15, 'best_with', 'Chicken', NULL, NULL, -5),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine_categories}
+              (categoryid, type, name, category_parent, details, ordering)
+              VALUES(%d, '%s', '%s', %d, '%s', %d)",
+             $row);
   }
-  $query->execute();
 }
 
 function migrate_example_wine_data_category_wine() {
   $fields = array('wineid', 'categoryid');
-  $query = db_insert('migrate_example_wine_category_wine')
-    ->fields($fields);
   $data = array(
     array(1, 12),
     array(1, 15),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine_category_wine}
+              (wineid, categoryid)
+              VALUES(%d, %d)",
+             $row);
   }
-  $query->execute();
 }
 
 function migrate_example_wine_data_category_producer() {
-  $fields = array('producerid', 'categoryid');
-  $query = db_insert('migrate_example_wine_category_producer')
-    ->fields($fields);
   $data = array(
     array(1, 17),
   );
   foreach ($data as $row) {
-    $query->values(array_combine($fields, $row));
+    db_query("INSERT INTO {migrate_example_wine_category_producer}
+              (producerid, categoryid)
+              VALUES(%d, %d)",
+             $row);
   }
-  $query->execute();
 }

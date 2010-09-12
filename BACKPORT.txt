@@ -43,7 +43,7 @@ Rollback/wipe need to run as uid 1 in D6
 Class name matching is case-sensitive with D6
 
 migrate.info:
-D6 dependent on autoload/autoautoload/dbtng
+D6 dependent on autoload/dbtng
 
 migrate.install:
 D7 update functions

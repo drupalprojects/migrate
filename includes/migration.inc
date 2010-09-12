@@ -373,6 +373,9 @@ abstract class Migration extends MigrationBase {
       $this->values = $this->applyMappings($data_row);
 
       try {
+        // Wipe old messages
+        $this->map->delete($this->currentSourceKey, TRUE);
+
         migrate_instrument_start('destination import', TRUE);
         $ids = $this->destination->import($this, $this->values, $data_row);
         migrate_instrument_stop('destination import');
@@ -742,5 +745,15 @@ abstract class Migration extends MigrationBase {
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
     $output = $this->map->saveMessage($this->currentSourceKey, $message, $level);
+  }
+
+  /**
+   * Set the specified row to be updated, if it exists.
+   */
+  public function setUpdate(array $source_key = NULL) {
+    if (!$source_key) {
+      $source_key = $this->currentSourceKey;
+    }
+    $this->map->setUpdate($source_key);
   }
 }

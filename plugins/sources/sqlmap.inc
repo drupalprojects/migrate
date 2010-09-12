@@ -435,18 +435,37 @@ class MigrateSQLMap extends MigrateMap {
    *
    * @param array $source_key
    */
-  public function delete(array $source_key) {
-    $map_query = $this->connection->delete($this->mapTable);
+  public function delete(array $source_key, $messages_only = FALSE) {
+    if (!$messages_only) {
+      $map_query = $this->connection->delete($this->mapTable);
+    }
     $message_query = $this->connection->delete($this->messageTable);
     $count = 1;
     foreach ($source_key as $key_value) {
-      $map_query->condition('sourceid' . $count, $key_value);
+      if (!$messages_only) {
+        $map_query->condition('sourceid' . $count, $key_value);
+      }
       $message_query->condition('sourceid' . $count, $key_value);
       $count++;
     }
 
-    $map_query->execute();
+    if (!$messages_only) {
+      $map_query->execute();
+    }
     $message_query->execute();
+  }
+
+  /**
+   * Set the specified row to be updated, if it exists.
+   */
+  public function setUpdate(array $source_key) {
+    $query = $this->connection->update($this->mapTable)
+    ->fields(array('needs_update' => 1));
+    $count = 1;
+    foreach ($source_key as $key_value) {
+      $query->condition('sourceid' . $count++, $key_value);
+    }
+    $query->execute();
   }
 
   /**

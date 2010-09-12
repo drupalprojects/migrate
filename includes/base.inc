@@ -275,7 +275,7 @@ abstract class MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
-    showMessage($message, $level);
+    $this->showMessage($message, $level);
   }
 
   /**

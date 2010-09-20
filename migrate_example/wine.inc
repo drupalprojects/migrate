@@ -524,3 +524,209 @@ class WineFinishMigration extends MigrationBase {
     return Migration::RESULT_COMPLETED;
   }
 }
+
+/**
+ * This demonstrates a migration designed not to import new content, but
+ * to update existing content (in this case, revised wine ratings)
+ */
+class WineUpdatesMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('Update wine ratings');
+    $this->dependencies = array('WineWineMigration');
+    $this->softDependencies = array('WineFinishMigration');
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'wineid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'description' => 'Wine ID',
+          'alias' => 'w',
+        )
+      ),
+      MigrateDestinationNode::getKeySchema()
+    );
+
+    $query = db_select('migrate_example_wine_updates', 'w')
+             ->fields('w', array('wineid', 'rating'));
+
+    $this->source = new MigrateSourceSQL($this, $query);
+    $this->destination = new MigrateDestinationNode('migrate_example_wine');
+
+    // Indicate we're updating existing data. The default, Migration::SOURCE, would
+    // cause existing nodes to be completely replaced by the source data. In this
+    // case, the existing node will be loaded and only the rating altered.
+    $this->systemOfRecord = Migration::DESTINATION;
+
+    // Mapped fields
+    // The destination handler needs the nid to change - since the incoming data
+    // has a source id, not a nid, we need to apply the original wine migration
+    // mapping to populate the nid.
+    $this->addFieldMapping('nid', 'wineid')
+         ->sourceMigration('WineWineMigration');
+    $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
+
+    // No unmapped source fields
+
+    // Unmapped destination fields
+    $this->addFieldMapping('uid');
+    $this->addFieldMapping('migrate_example_wine_varieties');
+    $this->addFieldMapping('migrate_example_wine_regions');
+    $this->addFieldMapping('migrate_example_wine_best_with');
+    $this->addFieldMapping('body');
+    $this->addFieldMapping('field_migrate_example_image');
+    $this->addFieldMapping('sticky');
+    $this->addFieldMapping('created');
+    $this->addFieldMapping('changed');
+    $this->addFieldMapping('is_new')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('status')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('promote')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('revision')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('language')
+         ->issueGroup(t('DNM'));
+  }
+}
+
+class WineCommentUpdatesMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = 'Update wine comments';
+    $this->dependencies = array('WineCommentMigration');
+    $this->softDependencies = array('WineUpdatesMigration');
+    $this->map = new MigrateSQLMap($this->machineName,
+      array('commentid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+             )
+           ),
+        MigrateDestinationComment::getKeySchema()
+      );
+    $query = db_select('migrate_example_wine_comment_updates', 'wc')
+             ->fields('wc', array('commentid', 'subject'));
+    $this->source = new MigrateSourceSQL($this, $query);
+    $this->destination = new MigrateDestinationComment('comment_node_migrate_example_wine');
+    $this->systemOfRecord = Migration::DESTINATION;
+
+    // Mapped fields
+    $this->addFieldMapping('cid', 'commentid')
+         ->sourceMigration('WineCommentMigration');
+    $this->addFieldMapping('subject', 'subject');
+
+    // No unmapped source fields
+
+    // Unmapped destination fields
+    $this->addFieldMapping('name');
+    $this->addFieldMapping('mail');
+    $this->addFieldMapping('status');
+    $this->addFieldMapping('nid');
+    $this->addFieldMapping('uid');
+    $this->addFieldMapping('pid');
+    $this->addFieldMapping('comment_body');
+    $this->addFieldMapping('hostname');
+    $this->addFieldMapping('created');
+    $this->addFieldMapping('changed');
+    $this->addFieldMapping('homepage');
+    $this->addFieldMapping('thread')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('language')
+         ->issueGroup(t('DNM'));
+  }
+}
+
+class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('Migrate varieties from the source database to taxonomy terms');
+    $this->dependencies = array('WineVarietyMigration');
+    $this->softDependencies = array('WineUpdatesMigration');
+    $this->map = new MigrateSQLMap($this->machineName,
+        array(
+          'categoryid' => array('type' => 'int',
+                                'unsigned' => TRUE,
+                                'not null' => TRUE,
+                               )
+        ),
+        MigrateDestinationTerm::getKeySchema()
+      );
+
+    $query = db_select('migrate_example_wine_variety_updates', 'wc')
+             ->fields('wc', array('categoryid', 'details'));
+    $this->source = new MigrateSourceSQL($this, $query);
+    $this->destination = new MigrateDestinationTerm('migrate_example_wine_varieties');
+    $this->systemOfRecord = Migration::DESTINATION;
+
+    // Mapped fields
+    $this->addFieldMapping('tid', 'categoryid')
+         ->sourceMigration('WineVarietyMigration');
+    $this->addFieldMapping('description', 'details');
+
+    // Unmapped source fields
+
+    // Unmapped destination fields
+    $this->addFieldMapping('name');
+    $this->addFieldMapping('parent');
+    $this->addFieldMapping('weight');
+    $this->addFieldMapping('format');
+    $this->addFieldMapping('parent_name')
+         ->issueGroup(t('DNM'));
+  }
+}
+
+
+class WineUserUpdatesMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('Account updates');
+    $this->dependencies = array('WineUserMigration');
+    $this->softDependencies = array('WineUpdatesMigration');
+    $this->map = new MigrateSQLMap($this->machineName,
+        array('accountid' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'description' => 'Account ID.'
+                )
+             ),
+        MigrateDestinationUser::getKeySchema()
+    );
+    $query = db_select('migrate_example_wine_account_updates', 'wa')
+             ->fields('wa', array('accountid', 'sex'));
+    $this->source = new MigrateSourceSQL($this, $query);
+    $this->destination = new MigrateDestinationUser();
+    $this->systemOfRecord = Migration::DESTINATION;
+
+    // Mapped fields
+    $this->addFieldMapping('uid', 'accountid')
+         ->sourceMigration('WineUserMigration');
+
+    // Unmapped source fields
+
+    // Unmapped destination fields
+    $this->addFieldMapping('name');
+    $this->addFieldMapping('status');
+    $this->addFieldMapping('created');
+    $this->addFieldMapping('access');
+    $this->addFieldMapping('login');
+    $this->addFieldMapping('mail');
+    $this->addFieldMapping('pass');
+    $this->addFieldMapping('roles');
+    $this->addFieldMapping('signature');
+    $this->addFieldMapping('signature_format');
+    $this->addFieldMapping('init');
+    $this->addFieldMapping('theme')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('timezone')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('language')
+         ->issueGroup(t('DNM'));
+    $this->addFieldMapping('picture')
+         ->issueGroup(t('DNM'));
+  }
+}

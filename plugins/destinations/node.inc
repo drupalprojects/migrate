@@ -103,9 +103,17 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $node, stdClass $row) {
-    // Handle update case
+    // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
-      $node->nid = $row->migrate_map_destid1;
+      if (isset($node->nid)) {
+        if ($node->nid != $row->migrate_map_destid1) {
+          throw new MigrateException(t("Incoming nid !nid and map destination nid !destid1 don't match",
+            array('!nid' => $node->nid, '!destid1' => $row->migrate_map_destid1)));
+        }
+      }
+      else {
+        $node->nid = $row->migrate_map_destid1;
+      }
       // Get the existing vid, so updates don't generate notices
       $node->vid = db_select('node', 'n')
                    ->fields('n', array('vid'))
@@ -114,6 +122,26 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
                    ->fetchField();
     }
 
+    if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+      if (!isset($node->nid)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but no destination nid provided'));
+      }
+      $old_node = node_load($node->nid);
+      if (!isset($node->created)) {
+        $node->created = $old_node->created;
+      }
+      if (!isset($node->vid)) {
+        $node->vid = $old_node->vid;
+      }
+      if (!isset($node->status)) {
+        $node->status = $old_node->status;
+      }
+      if (!isset($node->uid)) {
+        $node->uid = $old_node->uid;
+      }
+    }
+
+    // Set some required properties.
     // Set type before invoking prepare handlers - they may take type-dependent actions.
     $node->type = $this->bundle;
 

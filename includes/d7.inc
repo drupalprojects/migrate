@@ -27,6 +27,10 @@ function taxonomy_vocabulary_save(&$vocabulary) {
   return taxonomy_save_vocabulary($vocabulary);
 }
 
+function taxonomy_term_load($tid) {
+  return (object)taxonomy_get_term($tid);
+}
+
 function user_delete_multiple($uids) {
   foreach ($uids as $uid) {
     user_delete(array(), $uid);
@@ -38,6 +42,10 @@ function comment_delete_multiple($cids) {
   foreach ($cids as $cid) {
     comment_delete($cid);
   }
+}
+
+function comment_load($cid) {
+  return _comment_load($cid);
 }
 
 function filter_fallback_format() {

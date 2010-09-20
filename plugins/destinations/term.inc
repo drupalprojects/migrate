@@ -88,56 +88,78 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  successful. FALSE on failure.
    */
   public function import(Migration $migration, stdClass $term, stdClass $row) {
-    // Handle update case
+    // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
       $term->tid = $row->migrate_map_destid1;
-    }
-
-    // Default to bundle if no vocabulary machine name provided
-    if (!isset($term->vocabulary_machine_name)) {
-      $term->vocabulary_machine_name = $this->bundle;
-    }
-    // vid is required
-    if (empty($term->vid)) {
-      static $vocab_map = array();
-      if (!isset($vocab_map[$term->vocabulary_machine_name])) {
-        $vid = db_select('vocabulary', 'v')
-               ->fields('v', array('vid'))
-               ->condition('name', $term->vocabulary_machine_name)
-               ->execute()
-               ->fetchField();
-        if ($vid) {
-          $vocab_map[$term->vocabulary_machine_name] = $vid;
-        }
-        else {
-          $migration->saveMessage(t('No vocabulary found with machine_name !name',
-            array('!name' => $term->vocabulary_machine_name)));
-          return FALSE;
+      if (isset($term->tid)) {
+        if ($term->tid != $row->migrate_map_destid1) {
+          throw new MigrateException(t("Incoming tid !tid and map destination nid !destid1 don't match",
+            array('!tid' => $term->tid, '!destid1' => $row->migrate_map_destid1)));
         }
       }
-      $term->vid = $vocab_map[$term->vocabulary_machine_name];
-    }
-    // Look up parent name if provided
-    if (isset($term->parent_name)) {
-      // Look for the name in the same vocabulary.
-      // Note that hierarchies may have multiples of the same name...
-      $terms = taxonomy_get_term_by_name(trim($term->parent_name));
-      foreach ($terms as $candidate) {
-        if ($candidate->vid == $term->vid) {
-          $term->parent = $candidate->tid;
-          break;
-        }
+      else {
+        $term->tid = $row->migrate_map_destid1;
       }
-      unset($term->parent_name);
     }
-    if (!isset($term->parent)) {
-      $term->parent = array(0);
+        if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+      if (!isset($term->tid)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but no destination tid provided'));
+      }
+      $rawterm = $term;
+      $this->prepare($migration, $term, $row);
+      $old_term = taxonomy_term_load($term->tid);
+      foreach ($rawterm as $field => $value) {
+        $old_term->$field = $term->$field;
+      }
+      $term = $old_term;
     }
-    if (!isset($term->format)) {
-      $term->format = $this->textFormat;
-    }
+    else {
+      // Default to bundle if no vocabulary machine name provided
+      if (!isset($term->vocabulary_machine_name)) {
+        $term->vocabulary_machine_name = $this->bundle;
+      }
+      // vid is required
+      if (empty($term->vid)) {
+        static $vocab_map = array();
+        if (!isset($vocab_map[$term->vocabulary_machine_name])) {
+          $vid = db_select('vocabulary', 'v')
+                 ->fields('v', array('vid'))
+                 ->condition('name', $term->vocabulary_machine_name)
+                 ->execute()
+                 ->fetchField();
+          if ($vid) {
+            $vocab_map[$term->vocabulary_machine_name] = $vid;
+          }
+          else {
+            $migration->saveMessage(t('No vocabulary found with machine_name !name',
+              array('!name' => $term->vocabulary_machine_name)));
+            return FALSE;
+          }
+        }
+        $term->vid = $vocab_map[$term->vocabulary_machine_name];
+      }
+      // Look up parent name if provided
+      if (isset($term->parent_name)) {
+        // Look for the name in the same vocabulary.
+        // Note that hierarchies may have multiples of the same name...
+        $terms = taxonomy_get_term_by_name(trim($term->parent_name));
+        foreach ($terms as $candidate) {
+          if ($candidate->vid == $term->vid) {
+            $term->parent = $candidate->tid;
+            break;
+          }
+        }
+        unset($term->parent_name);
+      }
+      if (!isset($term->parent)) {
+        $term->parent = array(0);
+      }
+      if (!isset($term->format)) {
+        $term->format = $this->textFormat;
+      }
 
-    $this->prepare($migration, $term, $row);
+      $this->prepare($migration, $term, $row);
+    }
 
     // Trying to update an existing term
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {

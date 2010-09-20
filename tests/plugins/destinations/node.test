@@ -134,7 +134,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $mapped_tid = $variety_migration->getMap()->lookupDestinationID(
       array($wine_row->variety), $migration);
     if (is_array($mapped_tid)) {
-      $this->assertNotNull($node->taxonomy[reset($mapped_tid)],
+      $this->assertNotNull($wine_node->taxonomy[reset($mapped_tid)],
         t('Single taxonomy_term_reference properly migrated'));
     }
     else {
@@ -154,7 +154,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
 /*    $this->assertEqual(count($best_with), count($mapped_tids),
       t('Counts of Best With match'));*/
     foreach ($mapped_tids as $tid) {
-      $this->assertNotNull($node->taxonomy[$tid],
+      $this->assertNotNull($wine_node->taxonomy[$tid],
         t('Multiple value taxonomy_term_reference properly migrated'));
     }
 

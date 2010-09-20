@@ -9,7 +9,7 @@ Usage
 ----------------
 For now, all we offer is documentation by example. Enable the migrate_example module and browse to 
 admin/migrate to see its dashboard. The data for this migration is in migrate_example/beer.inc.
-Mimic that file in order to specify your own migrations. All imports/rollbacks/etc. are intiated
+Mimic that file in order to specify your own migrations. All imports/rollbacks/etc. are initiated
 by drush commands.
 
 Acknowledgements 

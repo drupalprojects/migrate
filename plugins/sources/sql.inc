@@ -33,6 +33,13 @@ class MigrateSourceSQL extends MigrateSource {
   protected $numProcessed = 0;
 
   /**
+   * List of available source fields.
+   *
+   * @var array
+   */
+  protected $fields = array();
+
+  /**
    * If the map is a MigrateSQLMap, and the table is compatible with the
    * source query, we can join directly to the map and make things much faster
    * and simpler.
@@ -43,11 +50,26 @@ class MigrateSourceSQL extends MigrateSource {
 
   /**
    * Simple initialization.
+   *
+   * @param Migration $migration
+   *  The calling migration - we may need to call back to it.
+   * @param SelectQuery $query
+   *  The query we are iterating over.
+   * @param array $fields
+   *  Optional - keys are field names, values are descriptions. Use to override
+   *  the default descriptions, or to add additional source fields which the
+   *  migration will add via other means (e.g., prepareRow()).
+   * @param SelectQuery $count_query
+   *  Optional - an explicit count query, primarily used when counting the
+   *  primary query is slow.
+   * @param boolean $map_joinable
+   *  Indicates whether the map table can be joined directly to the source query.
    */
   public function __construct(Migration $migration, SelectQuery $query,
-      SelectQuery $count_query = NULL, $map_joinable = NULL) {
+      array $fields = array(), SelectQuery $count_query = NULL, $map_joinable = NULL) {
     parent::__construct($migration);
     $this->query = $query;
+    $this->fields = $fields;
     if (is_null($count_query)) {
       $this->countQuery = clone $query->countQuery();
     }
@@ -147,13 +169,10 @@ class MigrateSourceSQL extends MigrateSource {
       $fields[drupal_strtolower($field_name)] = drupal_strtolower($field_info['alias']);
     }
 
-    // A Migration may manually specify source fields in ->sourceFields. This
-    // allows devs to customize the description of any field, and also to add
-    // fields that don't exist in the source query result (The Migration should
-    // implement prepareRow() to add fields to a source result). We perform a
-    // union with these manually specified fields so they are retained.
-    if (isset($this->migration->sourceFields)) {
-      $fields = $this->migration->sourceFields + $fields;
+    // Any caller-specified fields with the same names as extracted fields will
+    // override them; any others will be added
+    if ($this->fields) {
+      $fields = $this->fields + $fields;
     }
 
     return $fields;

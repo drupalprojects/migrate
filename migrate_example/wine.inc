@@ -360,22 +360,11 @@ class WineProducerXMLMigration extends XMLMigration {
 
 // TODO: Add node_reference field pointing to producer
 class WineWineMigration extends AdvancedExampleMigration {
-  // TIP: By adding a public sourceFields array, we can modify the descriptions
-  // of source fields (which just default, for SQL migrations, to table_alias.column_name),
-  // as well as add additional fields (which may be populated in prepareRow()).
-  public $sourceFields = array();
-
   public function __construct() {
     parent::__construct();
     $this->description = t('Wines of the world');
     $this->dependencies = array('WineVarietyMigration', 'WineRegionMigration',
       'WineBestWithMigration', 'WineUserMigration', 'WineProducerMigration');
-
-    $this->sourceFields = array(
-      'wineid' => t('Wine ID in the old system'),
-      'name' => t('The name of the wine'),
-      'best_vintages' => t('What years were best for this wine?'),
-    );
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -405,7 +394,17 @@ class WineWineMigration extends AdvancedExampleMigration {
     $count_query = db_select('migrate_example_wine', 'w');
     $count_query->addExpression('COUNT(wineid)', 'cnt');
 
-    $this->source = new MigrateSourceSQL($this, $query, $count_query);
+    // TIP: By passing an array of source fields to the MigrateSourceSQL constructor,
+    // we can modify the descriptions of source fields (which just default, for
+    // SQL migrations, to table_alias.column_name), as well as add additional fields
+    // (which may be populated in prepareRow()).
+    $source_fields = array(
+      'wineid' => t('Wine ID in the old system'),
+      'name' => t('The name of the wine'),
+      'best_vintages' => t('What years were best for this wine?'),
+    );
+
+    $this->source = new MigrateSourceSQL($this, $query, $source_fields, $count_query);
     $this->destination = new MigrateDestinationNode('migrate_example_wine');
 
     // Mapped fields

@@ -291,7 +291,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     $count_query = db_select('migrate_example_beer_node', 'b');
     $count_query->addExpression('COUNT(bid)', 'cnt');
 
-    $this->source = new MigrateSourceSQL($this, $query, $count_query);
+    $this->source = new MigrateSourceSQL($this, $query, array(), $count_query);
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');

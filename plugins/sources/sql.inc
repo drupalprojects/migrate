@@ -110,9 +110,9 @@ class MigrateSourceSQL extends MigrateSource {
   public function fields() {
     $fields = array();
     $queryFields = $this->query->getFields();
+
     if ($queryFields) {
       // Not much we can do in terms of describing the fields without manual intervention
-      // TODO: Mechanism for migration developers to document source fields
       foreach ($queryFields as $field_name => $field_info) {
         // Lower case, because Drupal forces lowercase on fetch
         $fields[drupal_strtolower($field_name)] = drupal_strtolower(
@@ -145,6 +145,15 @@ class MigrateSourceSQL extends MigrateSource {
     foreach ($expressionFields as $field_name => $field_info) {
       // Lower case, because Drupal forces lowercase on fetch
       $fields[drupal_strtolower($field_name)] = drupal_strtolower($field_info['alias']);
+    }
+
+    // A Migration may manually specify source fields in ->sourceFields. This
+    // allows devs to customize the description of any field, and also to add
+    // fields that don't exist in the source query result (The Migration should
+    // implement prepareRow() to add fields to a source result). We perform a
+    // union with these manually specified fields so they are retained.
+    if (isset($this->migration->sourceFields)) {
+      $fields = $this->migration->sourceFields + $fields;
     }
 
     return $fields;

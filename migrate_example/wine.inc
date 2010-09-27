@@ -298,10 +298,10 @@ class WineProducerMigration extends AdvancedExampleMigration {
  * directory - index.xml contains a list of IDs to import, and <id>.xml
  * is the data for a given producer.
  *
- * First, you need to extend MigrateXMLSource, implementing count(),
+ * First, you need to extend MigrateSourceXML, implementing count(),
  * populateIdlist(), and constructObjectUrl().
  */
-class WineXMLSource extends MigrateXMLSource {
+class WineSourceXML extends MigrateSourceXML {
   /**
    * Return a count of all available source records.
    */
@@ -358,7 +358,7 @@ class WineProducerXMLMigration extends XMLMigration {
     );
 
     // The key argument for XML source object is the URL of the listing
-    $this->source = new WineXMLSource($this,
+    $this->source = new WineSourceXML($this,
       'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') . '/xml/index.xml');
 
     $this->destination = new MigrateDestinationNode('migrate_example_producer');

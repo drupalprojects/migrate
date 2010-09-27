@@ -12,7 +12,7 @@
  * to import, and the IDs are then used to construct URLs for obtaining specific
  * source objects.
  */
-abstract class MigrateXMLSource extends MigrateSource {
+abstract class MigrateSourceXML extends MigrateSource {
   /**
    * The URL from which to obtain XML data.
    *

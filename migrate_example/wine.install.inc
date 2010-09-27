@@ -129,6 +129,7 @@ function migrate_example_wine_schema_wine() {
     'primary key' => array('wineid'),
   );
 }
+
 function migrate_example_wine_schema_updates() {
   return array(
     'description' => 'Updated wine ratings',
@@ -371,6 +372,7 @@ function migrate_example_wine_schema_comment() {
     'primary key' => array('commentid'),
   );
 }
+
 function migrate_example_wine_schema_comment_updates() {
   return array(
     'description' => 'Wine comment updates',
@@ -465,6 +467,7 @@ function migrate_example_wine_schema_account() {
     'primary key' => array('accountid'),
   );
 }
+
 function migrate_example_wine_schema_account_updates() {
   return array(
     'description' => 'Wine account updates',

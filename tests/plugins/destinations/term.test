@@ -73,20 +73,26 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     $result = $update_migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine variety term updates import returned RESULT_COMPLETED'));
-    $final_terms = taxonomy_get_tree($vid);
+    // We can't use taxonomy_get_tree again, because it cached everything the first
+    // time and there's no way to reset it - we must fetch each term with a cache reset,
+    // and we will ignore the depth and parent fields which are populated by taxonomy_get_tree
     foreach ($original_terms as $tid => $original_term) {
+      $final_term = taxonomy_get_term($original_term->tid, TRUE);
       foreach ($original_term as $field => $value) {
         if ($field == 'description') {
-          if ($value == $final_terms[$tid]->$field) {
+          if ($value == $final_term->$field) {
             $this->error(t('Field !field should have changed but did not, value=!value',
               array('!field' => $field, '!value' => print_r($value, TRUE))));
           }
         }
+        elseif ($field == 'depth' || $field == 'parents') {
+          // Just ignore
+        }
         else {
-          if ($value != $final_terms[$tid]->$field) {
+          if ($value != $final_term->$field) {
             $this->error(t('Field !field mismatch: original !value1, result !value2',
               array('!field' => $field, '!value1' => print_r($value, TRUE),
-                '!value2' => print_r($final_terms[$tid]->$field, TRUE))));
+                '!value2' => print_r($final_term->$field, TRUE))));
           }
         }
       }

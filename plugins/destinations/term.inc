@@ -101,7 +101,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->tid = $row->migrate_map_destid1;
       }
     }
-        if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+    if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       if (!isset($term->tid)) {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination tid provided'));
       }
@@ -110,6 +110,14 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $old_term = taxonomy_term_load($term->tid);
       foreach ($rawterm as $field => $value) {
         $old_term->$field = $term->$field;
+      }
+      $parents = taxonomy_get_parents($term->tid);
+      if ($parents) {
+        $parent = array_pop($parents);
+        $old_term->parent = $parent->tid;
+      }
+      else {
+        $old_term->parent = 0;
       }
       $term = $old_term;
     }
@@ -152,7 +160,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         unset($term->parent_name);
       }
       if (!isset($term->parent)) {
-        $term->parent = array(0);
+        $term->parent = 0;
       }
       if (!isset($term->format)) {
         $term->format = $this->textFormat;

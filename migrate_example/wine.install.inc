@@ -855,6 +855,7 @@ function migrate_example_wine_data_categories() {
     array(13, 'variety', 'Merlot', 3, 'Very drinkable', 4),
     array(14, 'variety', 'Syrah', 3, 'A.k.a. shiraz', -3),
     array(25, 'variety', 'Cabernet Sauvignon', 3, 'A basic', -5),
+    array(26, 'variety', "Nero d'Avola", 3, 'Sicilian specialty', 2),
     array(2, 'region', 'Italy', NULL, 'Largest producer of wine', 5),
     array(11, 'region', 'Tuscany', 2, NULL, 2),
     array(18, 'region', 'Chianti', 11, NULL, -1),

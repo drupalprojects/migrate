@@ -40,11 +40,11 @@ function migrate_example_beer_install() {
 }
 
 function migrate_example_beer_uninstall() {
-  migrate_example_beer_content_type_delete();
   if ($vids = taxonomy_vocabulary_load_multiple(array(), array('machine_name' => 'migrate_example_beer_styles'))) {
     // Grab key of the first returned vocabulary.
     taxonomy_vocabulary_delete(key($vids));
   }
+  migrate_example_beer_content_type_delete();
 }
 
 function migrate_example_beer_schema_node() {

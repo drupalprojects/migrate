@@ -9,6 +9,7 @@ function migrate_example_wine_schema() {
   $schema['migrate_example_wine_account'] = migrate_example_wine_schema_account();
   $schema['migrate_example_wine_account_updates'] = migrate_example_wine_schema_account_updates();
   $schema['migrate_example_wine_categories'] = migrate_example_wine_schema_categories();
+  $schema['migrate_example_wine_vintages'] = migrate_example_wine_schema_vintages();
   $schema['migrate_example_wine_variety_updates'] = migrate_example_wine_schema_variety_updates();
   $schema['migrate_example_wine'] = migrate_example_wine_schema_wine();
   $schema['migrate_example_wine_updates'] = migrate_example_wine_schema_updates();
@@ -30,6 +31,7 @@ function migrate_example_wine_install() {
   migrate_example_wine_data_account();
   migrate_example_wine_data_account_updates();
   migrate_example_wine_data_categories();
+  migrate_example_wine_data_vintages();
   migrate_example_wine_data_variety_updates();
   migrate_example_wine_data_wine();
   migrate_example_wine_data_updates();
@@ -229,6 +231,26 @@ function migrate_example_wine_schema_categories() {
       ),
     ),
     'primary key' => array('categoryid'),
+  );
+}
+
+function migrate_example_wine_schema_vintages() {
+  return array(
+    'description' => 'Wine vintages',
+    'fields' => array(
+      'wineid'  => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Wine ID',
+      ),
+      'vintage'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Vintage (year)',
+      ),
+    ),
+    'primary key' => array('wineid', 'vintage'),
   );
 }
 
@@ -758,6 +780,35 @@ function migrate_example_wine_fields() {
     );
     field_create_instance($instance);
   }
+
+  if (!field_info_field('field_migrate_example_top_vintag')) {
+    $field = array(
+      'field_name' => 'field_migrate_example_top_vintag',
+      'type' => 'number_integer',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'translatable' => TRUE,
+    );
+    field_create_field($field);
+  }
+
+  if (!field_info_instance('node', 'field_migrate_example_top_vintag', 'migrate_example_wine')) {
+    $instance = array(
+      'field_name' => 'field_migrate_example_top_vintag',
+      'entity_type' => 'node',
+      'label' => 'Recommended vintages',
+      'bundle' => 'migrate_example_wine',
+      'description' => '',
+      'settings' => array(
+        'scale' => 0,
+      ),
+
+      'widget' => array(
+        'type' => 'number',
+        'weight' => -1,
+      ),
+    );
+    field_create_instance($instance);
+  }
 }
 
 function migrate_example_wine_content_type_delete() {
@@ -936,6 +987,21 @@ function migrate_example_wine_data_categories() {
     array(10, 'best_with', 'Beef', NULL, NULL, 5),
     array(12, 'best_with', 'Pork', NULL, NULL, -3),
     array(15, 'best_with', 'Chicken', NULL, NULL, -5),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
+function migrate_example_wine_data_vintages() {
+  $fields = array('wineid', 'vintage');
+  $query = db_insert('migrate_example_wine_vintages')
+           ->fields($fields);
+  $data = array(
+    array(1, 2006),
+    array(1, 2007),
+    array(2, 2001),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

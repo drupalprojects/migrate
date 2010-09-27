@@ -162,6 +162,12 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $this->assertEqual($wine_node->field_migrate_example_wine_ratin[0]['value'],
       $wine_row->rating, t('Decimal field (rating) matches'));
 
+    // Test the vintages field (demonstrating prepareRow() works) - we know
+    // the valid vintages for this node are 2006 and 2007
+    $expected = array(array('value' => 2006), array('value' => 2007));
+    $this->assertEqual($wine_node->field_migrate_example_top_vintag, $expected,
+      t('Vintages match (prepareRow works)'));
+
     // Test rollback
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,

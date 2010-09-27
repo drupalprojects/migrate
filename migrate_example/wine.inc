@@ -67,7 +67,7 @@ class WinePrepMigration extends MigrationBase {
     }
   }
   // Implement any action you want to occur during an import process in an
-  // import() process (alternatively, if you have an action which you want to
+  // import() method (alternatively, if you have an action which you want to
   // run during rollbacks, define a rollback() method).
   public function import() {
     if (module_exists('pathauto')) {
@@ -341,7 +341,7 @@ class WineProducerXMLMigration extends XMLMigration {
 
     $this->destination = new MigrateDestinationNode('migrate_example_producer');
 
-    // Note that for XML sources, in addition to the source field passed to
+    // TIP: Note that for XML sources, in addition to the source field passed to
     // addFieldMapping (the name under which it will be saved in the data row
     // passed through the migration process) we specify the Xpath used to retrieve
     // the value from the XML.
@@ -360,11 +360,22 @@ class WineProducerXMLMigration extends XMLMigration {
 
 // TODO: Add node_reference field pointing to producer
 class WineWineMigration extends AdvancedExampleMigration {
+  // TIP: By adding a public sourceFields array, we can modify the descriptions
+  // of source fields (which just default, for SQL migrations, to table_alias.column_name),
+  // as well as add additional fields (which may be populated in prepareRow()).
+  public $sourceFields = array();
+
   public function __construct() {
     parent::__construct();
     $this->description = t('Wines of the world');
     $this->dependencies = array('WineVarietyMigration', 'WineRegionMigration',
       'WineBestWithMigration', 'WineUserMigration', 'WineProducerMigration');
+
+    $this->sourceFields = array(
+      'wineid' => t('Wine ID in the old system'),
+      'name' => t('The name of the wine'),
+      'best_vintages' => t('What years were best for this wine?'),
+    );
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -419,6 +430,7 @@ class WineWineMigration extends AdvancedExampleMigration {
          ->arguments(array('source_type' => 'tid'));
     $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
     $this->addFieldMapping('field_migrate_example_wine_rvw', 'last_reviewed');
+    $this->addFieldMapping('field_migrate_example_top_vintag', 'best_vintages');
     $this->addFieldMapping('body', 'body');
     $this->addFieldMapping('teaser', 'excerpt');
 /*    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
@@ -443,6 +455,26 @@ class WineWineMigration extends AdvancedExampleMigration {
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('language')
          ->issueGroup(t('DNM'));
+  }
+
+  // TIP: Implement a prepareRow() method to manipulate the source row between
+  // retrieval from the database and the automatic applicaton of mappings
+  public function prepareRow($current_row) {
+    // We can only handle a single multi-value source field using GROUP_CONCAT
+    // as we did above - insert others with a query against the related table
+    // with multiple values here, so the values can run through the mapping process
+    $source_id = $current_row->wineid;
+    $result = db_select('migrate_example_wine_vintages', 'v')
+              ->fields('v', array('vintage'))
+              ->condition('wineid', $source_id)
+              ->execute();
+    foreach ($result as $row) {
+      $current_row->best_vintages[] = $row->vintage;
+    }
+    // We could also have used this function to decide to skip a row, in cases
+    // where that couldn't easy be done through the original query. Simply
+    // return FALSE in such cases.
+    return TRUE;
   }
 }
 
@@ -526,7 +558,7 @@ class WineFinishMigration extends MigrationBase {
 }
 
 /**
- * This demonstrates a migration designed not to import new content, but
+ * TIP: This demonstrates a migration designed not to import new content, but
  * to update existing content (in this case, revised wine ratings)
  */
 class WineUpdatesMigration extends AdvancedExampleMigration {

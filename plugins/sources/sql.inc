@@ -267,9 +267,6 @@ class MigrateSourceSQL extends MigrateSource {
     $map = $this->migration->getMap();
     // TODO: Apply idlist etc. for non-joinable case
     while ($this->currentRow = $this->result->fetchObject()) {
-      if (!is_object($this->currentRow)) {
-        break;
-      }
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
@@ -287,8 +284,20 @@ class MigrateSourceSQL extends MigrateSource {
           }
         }
       }
-      $this->numProcessed++;
-      break;
+
+      // Allow the Migration to prepare this row. prepareRow() must return a
+      // boolean TRUE for this row to get processed. To add/modify fields on the
+      // result, pass $row by reference.
+      if (method_exists($this->migration, 'prepareRow')) {
+        $success = $this->migration->prepareRow($this->currentRow);
+      }
+      else {
+        $success = TRUE;
+      }
+      if ($success) {
+        $this->numProcessed++;
+        break;
+      }
     }
     if (!is_object($this->currentRow)) {
       $this->currentRow = NULL;

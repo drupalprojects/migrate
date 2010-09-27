@@ -9,6 +9,7 @@ function migrate_example_wine_schema() {
   $schema['migrate_example_wine_account'] = migrate_example_wine_schema_account();
   $schema['migrate_example_wine_account_updates'] = migrate_example_wine_schema_account_updates();
   $schema['migrate_example_wine_categories'] = migrate_example_wine_schema_categories();
+  $schema['migrate_example_wine_vintages'] = migrate_example_wine_schema_vintages();
   $schema['migrate_example_wine_variety_updates'] = migrate_example_wine_schema_variety_updates();
   $schema['migrate_example_wine'] = migrate_example_wine_schema_wine();
   $schema['migrate_example_wine_updates'] = migrate_example_wine_schema_updates();
@@ -30,6 +31,7 @@ function migrate_example_wine_install() {
   migrate_example_wine_data_account();
   migrate_example_wine_data_account_updates();
   migrate_example_wine_data_categories();
+  migrate_example_wine_data_vintages();
   migrate_example_wine_data_variety_updates();
   migrate_example_wine_data_wine();
   migrate_example_wine_data_updates();
@@ -41,11 +43,11 @@ function migrate_example_wine_install() {
 }
 
 function migrate_example_wine_uninstall() {
-  migrate_example_wine_content_type_delete();
   $vocabs = taxonomy_get_vocabularies('migrate_example_wine');
   foreach ($vocabs as $vocab) {
-    taxonomy_vocabulary_delete($vocab->vid);
+    taxonomy_del_vocabulary($vocab->vid);
   }
+  migrate_example_wine_content_type_delete();
 }
 
 function migrate_example_wine_schema_wine() {
@@ -227,6 +229,26 @@ function migrate_example_wine_schema_categories() {
       ),
     ),
     'primary key' => array('categoryid'),
+  );
+}
+
+function migrate_example_wine_schema_vintages() {
+  return array(
+    'description' => 'Wine vintages',
+    'fields' => array(
+      'wineid'  => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Wine ID',
+      ),
+      'vintage'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Vintage (year)',
+      ),
+    ),
+    'primary key' => array('wineid', 'vintage'),
   );
 }
 
@@ -577,7 +599,7 @@ function migrate_example_wine_fields() {
     'scale' => 0,
   );
   content_field_instance_create($field);
-  $field= array(
+  $field = array(
     'field_name' => 'field_migrate_example_wine_rvw',
     'type' => 'datestamp',
     'type_name' => 'migrate_example_wine',
@@ -637,6 +659,77 @@ function migrate_example_wine_fields() {
       'description' => '',
       'type' => 'date_text',
       'module' => 'date',
+    ),
+  );
+  content_field_instance_create($field);
+
+  $field = array (
+    'label' => 'Recommended vintages',
+    'field_name' => 'field_migrate_example_top_vintag',
+    'type' => 'number_integer',
+    'type_name' => 'migrate_example_wine',
+    'widget_type' => 'number',
+    'change' => 'Change basic information',
+    'weight' => '31',
+    'description' => '',
+    'default_value' =>
+    array (
+      0 =>
+      array (
+        'value' => '',
+        '_error_element' => 'default_value_widget][field_migrate_example_top_vintag][0][value',
+      ),
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => NULL,
+    'group' => false,
+    'required' => 0,
+    'multiple' => '1',
+    'min' => '1472',
+    'max' => '2010',
+    'prefix' => '',
+    'suffix' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'op' => 'Save field settings',
+    'module' => 'number',
+    'widget_module' => 'number',
+    'columns' =>
+    array (
+      'value' =>
+      array (
+        'type' => 'int',
+        'not null' => false,
+        'sortable' => true,
+      ),
+    ),
+    'display_settings' =>
+    array (
+      'label' =>
+      array (
+        'format' => 'above',
+        'exclude' => 0,
+      ),
+      'teaser' =>
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'full' =>
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      4 =>
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'token' =>
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
     ),
   );
   content_field_instance_create($field);
@@ -876,6 +969,20 @@ function migrate_example_wine_data_categories() {
     db_query("INSERT INTO {migrate_example_wine_categories}
               (categoryid, type, name, category_parent, details, ordering)
               VALUES(%d, '%s', '%s', %d, '%s', %d)",
+             $row);
+  }
+}
+
+function migrate_example_wine_data_vintages() {
+  $data = array(
+    array(1, 2006),
+    array(1, 2007),
+    array(2, 2001),
+  );
+  foreach ($data as $row) {
+    db_query("INSERT INTO {migrate_example_wine_vintages}
+              (wineid, vintage)
+              VALUES(%d, %d)",
              $row);
   }
 }

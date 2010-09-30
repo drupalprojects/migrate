@@ -197,5 +197,43 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
               ->execute()
               ->fetchField();
     $this->assertEqual($count, 0, t('Messages cleared'));
+
+    // Test itemlimit (joined map table)
+    $result = $migration->processImport(array('itemlimit' => 1));
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import with itemlimit returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    $this->assertEqual(count($rawnodes), 1, t('One node imported'));
+
+    // Test idlist (joined map table)
+    $result = $migration->processRollback();
+    $result = $migration->processImport(array('idlist' => 2));
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import with idlist returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    $this->assertEqual(count($rawnodes), 1, t('One node imported'));
+    $node = reset($rawnodes);
+    $this->assertEqual($node->title, 'Archeo Ruggero di Tasso Nero d\'Avola',
+      t('Single specified node imported'));
+
+    // Test itemlimit (unjoined map table)
+    $result = $migration->processRollback();
+    $migration->getSource()->setMapJoinable(FALSE);
+    $result = $migration->processImport(array('itemlimit' => 1));
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import with itemlimit returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    $this->assertEqual(count($rawnodes), 1, t('One node imported'));
+
+    // Test idlist (unjoined map table)
+    $result = $migration->processRollback();
+    $result = $migration->processImport(array('idlist' => 2));
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import with idlist returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    $this->assertEqual(count($rawnodes), 1, t('One node imported'));
+    $node = reset($rawnodes);
+    $this->assertEqual($node->title, 'Archeo Ruggero di Tasso Nero d\'Avola',
+      t('Single specified node imported'));
   }
 }

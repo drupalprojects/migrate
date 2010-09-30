@@ -47,6 +47,11 @@ class MigrateSourceSQL extends MigrateSource {
    * @var boolean
    */
   protected $mapJoinable = FALSE;
+  // Dynamically set whether the map is joinable - not really for production use,
+  // this is primarily to support simpletests
+  public function setMapJoinable($map_joinable) {
+    $this->mapJoinable = $map_joinable;
+  }
 
   /**
    * Simple initialization.
@@ -201,25 +206,32 @@ class MigrateSourceSQL extends MigrateSource {
     $this->currentRow = NULL;
     $this->numProcessed = 0;
 
-    // Run query, do first next()
-    // TODO: Support highwater marks
+    // Get the keys, for potential use in joining map/message table, or enforcing
+    // idlist
+    $map = $this->migration->getMap();
+    $keys = array();
+    foreach ($map->getSourceKey() as $field_name => $field_schema) {
+      if (isset($field_schema['alias'])) {
+        $field_name = $field_schema['alias'] . '.' . $field_name;
+      }
+      $keys[] = $field_name;
+    }
 
+    // TODO: Support highwater marks
     if ($this->mapJoinable) {
       // Build the joins to the map and message tables. Because the source key
       // could have multiple fields, we need to build things up.
       // The logic is that we want to include all source rows which have no
       // existing map or message table entries, or which have map table entry
       // marked with needs_update=1.
-      $map = $this->migration->getMap();
       $first = TRUE;
       $map_join = $msg_join = $map_condition = $msg_condition = '';
       $count = 1;
-      $keys = array();
+
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         if (isset($field_schema['alias'])) {
           $field_name = $field_schema['alias'] . '.' . $field_name;
         }
-        $keys[] = $field_name;
         $map_key = 'sourceid' . $count++;
         if ($first) {
           $first = FALSE;
@@ -240,24 +252,26 @@ class MigrateSourceSQL extends MigrateSource {
       $this->query->leftJoin($map->getMessageTable(), 'msg', $msg_join);
       $this->query->where($map_condition);
       $this->query->where($msg_condition);
+
       // And as long as we have the map table, get the destination ID, the
       // import hook will need it to identify the existing destination object.
       // Alias to reduce possible collisions.
-      // TODO: Handle multi-column destination keys
       $count = 1;
       foreach ($map->getDestinationKey() as $field_name => $field_schema) {
         $map_key = 'destid' . $count++;
         $this->query->addField('map', $map_key, "migrate_map_$map_key");
       }
       $this->query->addField('map', 'needs_update');
-      // Only works for single-field key
-      if ($this->migration->getOption('idlist')) {
-        $this->query->condition($keys[0], explode(',', $this->migration->getOption('idlist')), 'IN');
-      }
-      if ($this->migration->getOption('itemlimit')) {
-        $this->query->range(0, $this->migration->getOption('itemlimit'));
-      }
     }
+
+    // Only works for single-field key
+    if ($this->migration->getOption('idlist')) {
+      $this->query->condition($keys[0], explode(',', $this->migration->getOption('idlist')), 'IN');
+    }
+    if ($this->migration->getOption('itemlimit')) {
+      $this->query->range(0, $this->migration->getOption('itemlimit'));
+    }
+
     migrate_instrument_start('MigrateSourceSQL execute');
     $this->result = $this->query->execute();
     migrate_instrument_stop('MigrateSourceSQL execute');
@@ -284,7 +298,6 @@ class MigrateSourceSQL extends MigrateSource {
     // get next row
     migrate_instrument_start('MigrateSourceSQL next');
     $map = $this->migration->getMap();
-    // TODO: Apply idlist etc. for non-joinable case
     while ($this->currentRow = $this->result->fetchObject()) {
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;

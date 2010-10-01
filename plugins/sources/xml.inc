@@ -7,183 +7,155 @@
  */
 
 /**
- * Implementation of MigrateSource, to handle imports from XML feeds. This
- * supports a pattern where there is a URL to XML data listing IDs of content
- * to import, and the IDs are then used to construct URLs for obtaining specific
- * source objects.
+ * Implementation of MigrateList, for retrieving a list of IDs to be migrated
+ * from an XML document.
  */
-abstract class MigrateSourceXML extends MigrateSource {
+class MigrateListXML extends MigrateList {
   /**
-   * The URL from which to obtain XML data.
+   * A URL pointing to an XML document containing a list of IDs to be processed.
    *
    * @var string
    */
   protected $listUrl;
-  public function getListUrl() {
-    return $this->listUrl;
-  }
 
-  /**
-   * List of IDs from the listing URL.
-   *
-   * @var array
-   */
-  protected $idList = array();
-  public function getIdList() {
-    return $this->idList;
-  }
-
-  /**
-   * List of available source fields.
-   *
-   * @var array
-   */
-  protected $fields = array();
-
-  /**
-   * Keep the current source ID handy
-   * @var string
-   */
-  protected $id;
-
-  /**
-   * Simple initialization.
-   */
-  public function __construct(Migration $migration, $list_url, $fields = array()) {
-    parent::__construct($migration);
+  public function __construct($list_url) {
+    parent::__construct();
     $this->listUrl = $list_url;
-    $this->fields = $fields;
     // Suppress errors during parsing, so we can pick them up after
     libxml_use_internal_errors(TRUE);
   }
 
   /**
-   * Return a string representing the source.
+   * Our public face is the URL we're getting items from
    *
    * @return string
    */
   public function __toString() {
-    return (string) $this->listUrl;
+    return $this->listUrl;
   }
 
   /**
-   * Returns a list of fields available to be mapped from the source query.
-   * Since we can't reliably figure out what "source fields" are in the XML source,
-   * it's up to the implementing Migration constructor to fill them in.
+   * Load the XML at the given URL, and return an array of the IDs found within it.
    *
    * @return array
-   *  Keys: machine names of the fields (to be passed to addFieldMapping)
-   *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
-    // The fields are defined in the constructor for this plugin.
-    return $this->fields;
-  }
-
-  /**
-   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
-   */
-  public function rewind() {
-    $this->currentRow = NULL;
-    $this->numProcessed = 0;
-    $idlist = $this->migration->getOption('idlist');
-    if ($idlist) {
-      $this->idList = explode(',', $idlist);
+  public function getIdList() {
+    migrate_instrument_start("Retrieve $this->listUrl");
+    $xml = simplexml_load_file($this->listUrl);
+    migrate_instrument_stop("Retrieve $this->listUrl");
+    if ($xml) {
+      return $this->getIDsFromXML($xml);
     }
     else {
-      // Run query, do first next()
-      migrate_instrument_start('MigrateSourceXML list retrieval');
-
-      // Retrieve the XML listing of object IDs to retrieve
-      $xml = simplexml_load_file($this->listUrl);
-      if ($xml) {
-        // Derived class must implement populateIdlist()
-        $this->populateIdlist($xml);
-      }
-      else {
-        $this->migration->showMessage(t('Loading of !listurl failed:',
+      // TODO: How to handle errors?
+/*      $this->migration->showMessage(t('Loading of !listurl failed:',
           array('!listurl' => $this->listUrl)));
-        foreach (libxml_get_errors() as $error) {
-          $this->migration->showMessage($error);
-        }
-      }
-
-      migrate_instrument_stop('MigrateSourceXML list retrieval');
+      foreach (libxml_get_errors() as $error) {
+        $this->migration->showMessage($error);
+      }*/
+      return NULL;
     }
-
-    // Load up the first row
-    $this->next();
   }
 
   /**
-   * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
-   * as well as explicitly from rewind().
+   * Given an XML object, parse out the IDs for processing and return them as an
+   * array. The default implementation assumes the IDs are simply the values of
+   * the top-level elements - in most cases, you will need to override this to
+   * reflect your particular XML structure.
+   *
+   * @param SimpleXMLElement $xml
+   *
+   * @return array
    */
-  public function next() {
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
-
-    // Enforce the itemlimit
-    $itemlimit = $this->migration->getOption('itemlimit');
-
-    // get next object (next ID not already in the map, unless needs_update=1)
-    migrate_instrument_start('MigrateSourceXML next');
-    while ($this->id = array_shift($this->idList)) {
-      // Enforce the itemlimit
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        return;
-      }
-      // Check the map - if it's already mapped, and not marked for update, skip it
-      $map_row = $this->migration->getMap()->getRowBySource(array($this->id));
-      if ($map_row && $map_row['needs_update'] == 0) {
-        continue;
-      }
-      // TODO: Also check message table (entries here indicate failed items, we don't
-      // want to run through them again)
-      $object_url = $this->constructObjectUrl($this->id);
-      migrate_instrument_start('load object xml');
-      // Allow derived class to override for preprocessing of XML
-      $xml = $this->loadXmlUrl($object_url);
-      migrate_instrument_stop('load object xml');
-      $this->numProcessed++;
-      if ($xml) {
-        $this->currentKey = array($this->id);
-        $this->currentRow = new stdclass;
-        $this->currentRow->xml = $xml;
-        // Save the ID using the map source key - it will be used for mapping
-        $sourceKey = $this->migration->getMap()->getSourceKey();
-        $key_name = key($sourceKey);
-        $this->currentRow->$key_name = $this->id;
-        // Add map info to the row, if present
-        if ($map_row) {
-          foreach ($map_row as $field => $value) {
-            $field = 'migrate_map_' . $field;
-            $this->currentRow->$field = $value;
-          }
-        }
-        // OK, got a valid one, break out and return
-        break;
-      }
-      else {
-        $message =  t('Loading of !objecturl failed:', array('!objecturl' => $object_url));
-        foreach (libxml_get_errors() as $error) {
-          $message .= "\n" . $error->message;
-        }
-        $this->migration->getMap()->saveMessage(
-          array($this->id), $message, MigrationBase::MESSAGE_ERROR);
-        libxml_clear_errors();
-        $this->currentKey = NULL;
-      }
+  protected function getIDsFromXML(SimpleXMLElement $xml) {
+    $ids = array();
+    foreach ($xml as $element) {
+      $ids[] = (string)$element;
     }
-
-    migrate_instrument_stop('MigrateSourceXML next');
+    return $ids;
   }
 
   /**
-   * Default XML loader - just use Simplexml directly
+   * Return a count of all available IDs from the source listing. The default
+   * implementation assumes the count of top-level elements reflects the number
+   * of IDs available - in many cases, you will need to override this to reflect
+   * your particular XML structure.
    */
-  protected function loadXmlUrl($object_url) {
-    return simplexml_load_file($object_url);
+  public function count($refresh = FALSE) {
+    $xml = simplexml_load_file($this->listUrl);
+    // Number of sourceid elements beneath the top-level element
+    $count = count($xml);
+    return $count;
+  }
+}
+
+/**
+ * Implementation of MigrateItem, for retrieving a parsed XML document given
+ * an ID provided by a MigrateList class.
+ */
+class MigrateItemXML extends MigrateItem {
+  /**
+   * A URL pointing to an XML document containing the data for one item to be
+   * migrated.
+   *
+   * @var string
+   */
+  protected $itemUrl;
+
+  public function __construct($item_url) {
+    parent::__construct();
+    $this->itemUrl = $item_url;
+    // Suppress errors during parsing, so we can pick them up after
+    libxml_use_internal_errors(TRUE);
+  }
+
+  /**
+   * Implementors are expected to return an object representing a source item.
+   *
+   * @param mixed $id
+   *
+   * @return stdClass
+   */
+  public function getItem($id) {
+    $item_url = $this->constructItemUrl($id);
+    // Get the XML object at the specified URL;
+    $xml = $this->loadXmlUrl($item_url);
+    if ($xml) {
+      $return = new stdclass;
+      $return->xml = $xml;
+      return $return;
+    }
+    else {
+      // TODO: How to handle errors?
+/*      $message =  t('Loading of !objecturl failed:', array('!objecturl' => $object_url));
+      foreach (libxml_get_errors() as $error) {
+        $message .= "\n" . $error->message;
+      }
+      $this->migration->getMap()->saveMessage(
+        array($this->id), $message, MigrationBase::MESSAGE_ERROR);
+      libxml_clear_errors();*/
+      return NULL;
+    }
+  }
+
+  /**
+   * The default implementation simply replaces the :id token in the URL with
+   * the ID obtained from MigrateListXML. Override if the item URL is not
+   * so easily expressed from the ID.
+   *
+   * @param mixed $id
+   */
+  protected function constructItemUrl($id) {
+    return str_replace(':id', $id, $this->itemUrl);
+  }
+
+  /**
+   * Default XML loader - just use Simplexml directly. This can be overridden for
+   * preprocessing of XML (removal of unwanted elements, caching of XML if the
+   * source service is slow, etc.)
+   */
+  protected function loadXmlUrl($item_url) {
+    return simplexml_load_file($item_url);
   }
 }
 

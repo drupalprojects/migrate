@@ -272,47 +272,6 @@ class WineProducerMigration extends AdvancedExampleMigration {
 }
 
 /**
- * TIP: An example of importing from an XML feed. See the files in the xml
- * directory - index.xml contains a list of IDs to import, and <id>.xml
- * is the data for a given producer.
- *
- * First, you need to extend MigrateSourceXML, implementing count(),
- * populateIdlist(), and constructObjectUrl().
- */
-class WineSourceXML extends MigrateSourceXML {
-  /**
-   * Return a count of all available source records.
-   */
-  public function count($refresh = FALSE) {
-    $xml = simplexml_load_file($this->listUrl);
-    // Number of sourceid elements beneath the top-level element
-    $count = count($xml->sourceid);
-    return $count;
-  }
-
-  /**
-   * Return an array of IDs to be imported.
-   *
-   * @param $xml
-   *  SimpleXMLElement object representing the listing file.
-   */
-  protected function populateIdlist($xml) {
-    $this->idList = (array)$xml->sourceid;
-  }
-
-  /**
-   * Given the ID of an object to import, construct the URL to retrieve it
-   *
-   * @param $id
-   */
-  protected function constructObjectUrl($id) {
-    $object_url = 'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') .
-      "/xml/$id.xml";
-    return $object_url;
-  }
-}
-
-/**
  * Note that, if basing a migration on an XML source, you need to derive it
  * from XMLMigration instead of Migration.
  */
@@ -321,6 +280,15 @@ class WineProducerXMLMigration extends XMLMigration {
     parent::__construct();
     $this->description = t('XML feed of wine producers of the world');
     $this->dependencies = array('WineRegionMigration', 'WineUserMigration');
+
+    // There isn't a consistent way to automatically identify appropriate "fields"
+    // from an XML feed, so we pass an explicit list of source fields
+    $fields = array(
+      'name' => t('Producer name'),
+      'description' => t('Description of producer'),
+      'authorid' => t('Numeric ID of the author'),
+      'region' => t('Name of region'),
+    );
 
     // The source ID here is the one retrieved from the XML listing file, and
     // used to identify the specific object's file
@@ -335,9 +303,20 @@ class WineProducerXMLMigration extends XMLMigration {
       MigrateDestinationNode::getKeySchema()
     );
 
-    // The key argument for XML source object is the URL of the listing
-    $this->source = new WineSourceXML($this,
-      'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') . '/xml/index.xml');
+    $xml_folder = 'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') . '/xml/';
+    $list_url = $xml_folder . 'index.xml';
+    // Each ID retrieved from the list URL will be plugged into :id in the
+    // item URL to fetch the specific objects.
+    $item_url = $xml_folder . ':id.xml';
+
+    // We use the MigrateSourceList class for any source where we obtain the list
+    // of IDs to process separately from the data for each item. The listing
+    // and item are represented by separate classes, so for example we could
+    // replace the XML listing with a file directory listing, or the XML item
+    // with a JSON item.
+    $this->source = new MigrateSourceList($this, new MigrateListXML($list_url),
+      new MigrateItemXML($item_url), $fields);
+
 
     $this->destination = new MigrateDestinationNode('migrate_example_producer');
 

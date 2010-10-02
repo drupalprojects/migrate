@@ -3,7 +3,7 @@
 Migrate 1.1
 ===========
 Features and enhancements
-- Removed requirement for Table Wizard.
+- #896434 - Removed requirement for Table Wizard.
 - #893104 - Relax restriction on reusing views.
 - #800144 - Clarify nid field on node migration.
 - #733042 - Use machine_name in drush commands.
@@ -11,6 +11,7 @@ Features and enhancements
 - #721432 - Update capability added to terms.
 
 Bug fixes
+- #893618 - Lowercase map and message table names.
 - Proper handling of int vs. varchar arguments when running with ID list.
 - #829930 - If view becomes bogus, link to content set so it can be deleted.
 - #790474 - Removed obsolete patch recommendation

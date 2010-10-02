@@ -450,7 +450,7 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
   $args = array();
   if ($idlist) {
     $args = array_map('trim', explode(',', $idlist));
-    if (is_numeric($args[0])) {    
+    if (is_numeric($args[0])) {
       $placeholders = db_placeholders($args, 'int');
     }
     else {
@@ -699,7 +699,7 @@ function migrate_content_process_import($mcsid, &$options = array()) {
   // If running over a selected list of IDs, pass those in to the query
   if ($idlist) {
     $where_args = $idlist_array = array_map('trim', explode(',', $idlist));
-    if (is_numeric($idlist_array[0])) {    
+    if (is_numeric($idlist_array[0])) {
       $placeholders = db_placeholders($idlist_array, 'int');
     }
     else {
@@ -1333,7 +1333,7 @@ function migrate_theme() {
 function migrate_map_table_name($mcsid) {
   $machine_name = db_result(db_query("SELECT machine_name FROM {migrate_content_sets}
                             WHERE mcsid=%d", $mcsid));
-  return "migrate_map_$machine_name";
+  return drupal_strtolower("migrate_map_$machine_name");
 }
 
 /**
@@ -1346,7 +1346,7 @@ function migrate_map_table_name($mcsid) {
 function migrate_message_table_name($mcsid) {
   $machine_name = db_result(db_query("SELECT machine_name FROM {migrate_content_sets}
                             WHERE mcsid=%d", $mcsid));
-  return "migrate_msgs_$machine_name";
+  return drupal_strtolower("migrate_msgs_$machine_name");
 }
 
 /**

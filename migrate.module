@@ -447,8 +447,16 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
   $return = MIGRATE_RESULT_COMPLETED;
 
   $deleted = 0;
+  $args = array();
   if ($idlist) {
-    $sql = "SELECT sourceid,destid FROM {" . $maptable . "} WHERE sourceid IN ($idlist)";
+    $args = array_map('trim', explode(',', $idlist));
+    if (is_numeric($args[0])) {    
+      $placeholders = db_placeholders($args, 'int');
+    }
+    else {
+      $placeholders = db_placeholders($args, 'varchar');
+    }
+    $sql = "SELECT sourceid,destid FROM {" . $maptable . "} WHERE sourceid IN ($placeholders)";
   }
   else {
     $sql = "SELECT sourceid,destid FROM {" . $maptable . "}";
@@ -456,10 +464,10 @@ function migrate_content_process_clear($mcsid, &$options = array()) {
 
   timer_start('delete query');
   if ($itemlimit) {
-    $deletelist = db_query_range($sql, 0, $itemlimit);
+    $deletelist = db_query_range($sql, $args, 0, $itemlimit);
   }
   else {
-    $deletelist = db_query($sql);
+    $deletelist = db_query($sql, $args);
   }
   timer_stop('delete query');
 
@@ -690,8 +698,16 @@ function migrate_content_process_import($mcsid, &$options = array()) {
 
   // If running over a selected list of IDs, pass those in to the query
   if ($idlist) {
-    $view->query->add_where($view->options['group'], $view->base_table . ".$joinkey IN ($idlist)",
-      $view->base_table);
+    $where_args = $idlist_array = array_map('trim', explode(',', $idlist));
+    if (is_numeric($idlist_array[0])) {    
+      $placeholders = db_placeholders($idlist_array, 'int');
+    }
+    else {
+      $placeholders = db_placeholders($idlist_array, 'varchar');
+    }
+    array_unshift($where_args, $view->base_table);
+    $view->query->add_where($view->options['group'], $view->base_table . ".$joinkey IN ($placeholders)",
+      $where_args);
   }
 
   // We can't seem to get $view->build() to rebuild build_info, so go straight into the query object
@@ -699,7 +715,13 @@ function migrate_content_process_import($mcsid, &$options = array()) {
 
   $query = db_rewrite_sql($query, $view->base_table, $view->base_field,
                           array('view' => &$view));
-  $args = $view->build_info['query_args'];
+  if ($idlist) {
+    // Merge idlist into args since build_info hasn't been rebuilt.
+    $args = array_merge($view->build_info['query_args'], $idlist_array);
+  }
+  else {
+    $args = $view->build_info['query_args'];
+  }
   $replacements = module_invoke_all('views_query_substitutions', $view);
   $query = str_replace(array_keys($replacements), $replacements, $query);
   if (is_array($args)) {

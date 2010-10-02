@@ -11,6 +11,7 @@ Features and enhancements
 - #721432 - Update capability added to terms.
 
 Bug fixes
+- Proper handling of int vs. varchar arguments when running with ID list.
 - #829930 - If view becomes bogus, link to content set so it can be deleted.
 - #790474 - Removed obsolete patch recommendation
 - #736998 - Don't pass update to spawned subshells

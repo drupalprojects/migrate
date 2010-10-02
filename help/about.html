@@ -6,18 +6,19 @@ It comes with support for creating most core Drupal objects (nodes, users, comme
 taxonomy terms, roles...) plus support for some contrib modules. Hooks are provided to
 support migration of other types of content.</p>
 
-<p>The combination of the <a href="http://drupal.org/project/tw">Table Wizard</a> and
-<a href="http://drupal.org/project/migrate">Migrate</a> modules is designed to support
+<p>The <a href="http://drupal.org/project/migrate">Migrate</a> module is designed to support
 a migration process along these lines:</p>
 
 <ol>
-<li>Import - Table Wizard can be used to import external data into tables in your
+<li>Import - The <a href="http://drupal.org/project/data">Data module</a> or
+<a href="http://drupal.org/project/tw">Table Wizard module</a>
+can be used to import external data into tables in your
 Drupal database. Any tables in your Drupal database, or in other databases on the
 same server, can be made available to <a href="http://drupal.org/project/views">Views</a>
 for review and migration.</li>
 <li>Analysis - Table Wizard performs analysis of table data (ranges, sizes, etc.), and
 supports collaborative documentation of table fields.</li>
-<li>Content sets - Use the views Table Wizard creates by default for your source tables,
+<li>Content sets - Use the views Data or Table Wizard create for your source tables,
 or create more complex views joining data in multiple tables, as the basis for a
 <strong>content set</strong>. Configure the content set to map fields in the view to
 fields in Drupal objects such as nodes and users.</li>

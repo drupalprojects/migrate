@@ -20,6 +20,10 @@
  * Implementation of hook_views_default_views_alter().
  */
 function migrate_views_default_views_alter(&$views) {
+  // Only do this if Table Wizard is active
+  if (!module_exists('tw')) {
+    return;
+  }
   // Go through each content set and alter the Table Wizard's default view for its message
   // table to add an argument (level), and alter the access permission
   $sql = "SELECT mcsid, view_name, sourcekey FROM {migrate_content_sets}";

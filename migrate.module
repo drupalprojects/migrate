@@ -215,14 +215,18 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       $schema = _migrate_map_table_schema($sourcefield);
       db_create_table($ret, $maptablename, $schema);
       // Expose map table to views
-      tw_add_tables(array($maptablename));
-      tw_add_fk($maptablename, 'destid');
+      if (module_exists('tw')) {
+        tw_add_tables(array($maptablename));
+        tw_add_fk($maptablename, 'destid');
+      }
 
       $schema = _migrate_message_table_schema($sourcefield);
       db_create_table($ret, $msgtablename, $schema);
       // Expose messages table to views
-      tw_add_tables(array($msgtablename));
-      tw_add_fk($msgtablename, 'sourceid');
+      if (module_exists('tw')) {
+        tw_add_tables(array($msgtablename));
+        tw_add_fk($msgtablename, 'sourceid');
+      }
       $schema_change = TRUE;
     }
     else {
@@ -234,7 +238,9 @@ function migrate_save_content_set(&$content_set, $options = array()) {
         db_drop_primary_key($ret, $maptablename);
         db_change_field($ret, $maptablename, 'sourceid', 'sourceid',
           $sourcefield, array('primary key' => array('sourceid')));
-        tw_perform_analysis($maptablename);
+        if (module_exists('tw')) {
+          tw_perform_analysis($maptablename);
+        }
         $schema_change = TRUE;
       }
       $desired_schema = _migrate_message_table_schema($sourcefield);
@@ -244,7 +250,9 @@ function migrate_save_content_set(&$content_set, $options = array()) {
         db_drop_index($ret, $msgtablename, 'sourceid');
         db_change_field($ret, $msgtablename, 'sourceid', 'sourceid',
           $sourcefield, array('indexes' => array('sourceid' => array('sourceid'))));
-        tw_perform_analysis($maptablename);
+        if (module_exists('tw')) {
+          tw_perform_analysis($maptablename);
+        }
         $schema_change = TRUE;
       }
     }
@@ -1618,7 +1626,7 @@ function _migrate_inspect_schema($tablename = '', $tabledb = 'default') {
   // TW can treat external MySQL tables as internal, but we can revert
   // if we find a period in the tablename. Todo: might be better to build
   // this check direcly into schema_mysql.inc
-  if (strpos($tablename, '.')) {
+  if (module_exists('tw') && strpos($tablename, '.')) {
     list($tabledb, $tablename) =  explode('.', $tablename);
     $dbinfo = tw_get_dbinfo();
     foreach($dbinfo as $dbkey => $db_detail) {
@@ -1628,6 +1636,7 @@ function _migrate_inspect_schema($tablename = '', $tabledb = 'default') {
       }
     }
   }
+
   if (!isset($inspect[$tabledb])) {
     db_set_active($tabledb);
     // TODO: schema_mysql_inspect($name = NULL) takes $name [tablename] which
@@ -1635,10 +1644,12 @@ function _migrate_inspect_schema($tablename = '', $tabledb = 'default') {
     $inspect[$tabledb] = schema_invoke('inspect');
     db_set_active('default');
   }
+
   // If a tablename was not given, return the whole schema
   if ($tablename == '') {
     return $inspect[$tabledb];
   }
+
   // Return the schema for just this table.
   return $inspect[$tabledb][$tablename];
 }

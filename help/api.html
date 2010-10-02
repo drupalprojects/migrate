@@ -89,7 +89,9 @@ An array of messages is returned - use migrate_message() to generate a message. 
 
 <p>A content set defines the migration from a set of source data (implemented as a view) into
 a given destination type. Content sets can be defined interactively or programmatically. The
-typical process to create a content set programmatically would be as follows:</p>
+typical process to create a content set programmatically would be as follows (NOTE:
+this describes usage of the Table Wizard module for views-enabling your tables. Usage of
+the Data module (now preferred) is TBD.):</p>
 
 <ul>
 <li><p>Add an update function to the .install file for a custom module (this document calls it

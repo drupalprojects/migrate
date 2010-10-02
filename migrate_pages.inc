@@ -75,30 +75,45 @@ function _migrate_dashboard_form($form_state) {
                                            WHERE level=%d",
                                           MIGRATE_MESSAGE_ERROR));
           if ($numerrors > 0) {
-            $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
-              array('html' => TRUE))
-              . '<br />';
+            if (module_exists('tw')) {
+              $messages .= l(format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors'),
+                "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_ERROR,
+                array('html' => TRUE));
+            }
+            else {
+              $messages .= format_plural($numerrors, '1&nbsp;error', '@count&nbsp;errors');
+            }
+            $messages .= '<br />';
           }
           $numwarnings = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
                                              FROM {" . $msgtablename . "}
                                              WHERE level=%d",
                                             MIGRATE_MESSAGE_WARNING));
           if ($numwarnings > 0) {
-            $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
-              array('html' => TRUE))
-              . '<br />';
+            if (modules_exists('tw')) {
+              $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
+                "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
+                array('html' => TRUE));
+            }
+            else {
+              $messages .= format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings');
+            }
+            $messages .= '<br />';
           }
           $numnotices = db_result(db_query("SELECT COUNT(DISTINCT sourceid)
                                              FROM {" . $msgtablename . "}
                                              WHERE level=%d",
                                             MIGRATE_MESSAGE_NOTICE));
           if ($numnotices > 0) {
-            $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
-              array('html' => TRUE))
-              . '<br />';
+            if (module_exists('tw')) {
+              $messages .= l(format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices'),
+                "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_NOTICE,
+                array('html' => TRUE));
+            }
+            else {
+              $messages .= format_plural($numnotices, '1&nbsp;notice', '@count&nbsp;notices');
+            }
+            $messages .= '<br />';
           }
           if ($messages) {
             $unimported = $messages . " $unimported&nbsp;total";
@@ -110,11 +125,17 @@ function _migrate_dashboard_form($form_state) {
                                              WHERE level=%d",
                                             MIGRATE_MESSAGE_INFORMATIONAL));
           if ($numinformational > 0) {
-            $imported .= '<br />' .
-              l(format_plural($numinformational, '1 informational message', '@count informational messages'),
-              "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_INFORMATIONAL,
-              array('html' => TRUE))
-              . '<br />';
+            $imported .= '<br />';
+            if (module_exists('tw')) {
+              $imported .=
+                l(format_plural($numinformational, '1 informational message', '@count informational messages'),
+                "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_INFORMATIONAL,
+                array('html' => TRUE));
+            }
+            else {
+              $imported .= format_plural($numinformational, '1 informational message', '@count informational messages');
+            }
+            $imported .= '<br />';
           }
         }
       }

@@ -262,14 +262,14 @@ class MigrateSourceSQL extends MigrateSource {
         $this->query->addField('map', $map_key, "migrate_map_$map_key");
       }
       $this->query->addField('map', 'needs_update');
+      if ($this->migration->getOption('itemlimit')) {
+        $this->query->range(0, $this->migration->getOption('itemlimit'));
+      }
     }
 
     // Only works for single-field key
     if ($this->migration->getOption('idlist')) {
       $this->query->condition($keys[0], explode(',', $this->migration->getOption('idlist')), 'IN');
-    }
-    if ($this->migration->getOption('itemlimit')) {
-      $this->query->range(0, $this->migration->getOption('itemlimit'));
     }
 
     migrate_instrument_start('MigrateSourceSQL execute');

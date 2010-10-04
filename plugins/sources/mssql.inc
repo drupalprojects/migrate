@@ -86,8 +86,14 @@ class MigrateSourceMSSQL extends MigrateSource {
    */
   protected function connect() {
     if (!isset($this->connection)) {
+      if (isset($this->configuration['port'])) {
+        $host = $this->configuration['servername'] . ':' . $this->configuration['port'];
+      }
+      else {
+        $host = $this->configuration['servername'];
+      }
       $this->connection = mssql_connect(
-        $this->configuration['servername'],
+        $host,
         $this->configuration['username'],
         $this->configuration['password'],
         TRUE);
@@ -105,7 +111,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    // The fields are defined in the Contructor for this plugin.
+    // The fields are defined in the Constructor for this plugin.
     return $this->fields;
   }
 
@@ -123,7 +129,7 @@ class MigrateSourceMSSQL extends MigrateSource {
     }
 
     $count = cache_get(__METHOD__, 'cache');
-    if ($count === FALSE) {
+    if (!is_object($count)) {
       // Cache miss.
       if ($this->connect()) {
         $result = mssql_query($this->countQuery);
@@ -165,10 +171,11 @@ class MigrateSourceMSSQL extends MigrateSource {
      * considered supporting both but it is not worth the complexity. Run twice
      * instead.
      */
-    if (isset($this->migration->getOption('idlist'))) {
+    $idlist = $this->migration->getOption('idlist');
+    if (isset($idlist)) {
       // TODO: Sanitize. not critical as this is admin supplied data in drush.
       $this->query = str_replace(':criteria',
-        $keys[0] . ' IN (' . $this->migration->getOption('idlist') . ')', $this->query);
+        $keys[0] . ' IN (' . $idlist . ')', $this->query);
     }
     else {
       $highwaterField = $this->migration->getHighwaterField();

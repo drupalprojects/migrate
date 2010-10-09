@@ -56,8 +56,6 @@ class MigrateSourceSQL extends MigrateSource {
   /**
    * Simple initialization.
    *
-   * @param Migration $migration
-   *  The calling migration - we may need to call back to it.
    * @param SelectQuery $query
    *  The query we are iterating over.
    * @param array $fields
@@ -70,9 +68,9 @@ class MigrateSourceSQL extends MigrateSource {
    * @param boolean $map_joinable
    *  Indicates whether the map table can be joined directly to the source query.
    */
-  public function __construct(Migration $migration, SelectQuery $query,
+  public function __construct(SelectQuery $query,
       array $fields = array(), SelectQuery $count_query = NULL, $map_joinable = NULL) {
-    parent::__construct($migration);
+    parent::__construct();
     $this->query = $query;
     $this->fields = $fields;
     if (is_null($count_query)) {
@@ -92,7 +90,7 @@ class MigrateSourceSQL extends MigrateSource {
       $this->mapJoinable = TRUE;
 /*      // To be able to join the map directly, it must be a PDO map on the same
       // connection, or a compatible connection
-      $map = $this->migration->getMap();
+      $map = $migration->getMap();
       if (is_a($map, 'MigrateSQLMap')) {
         $map_options = $map->getConnection()->getConnectionOptions();
         $query_options = $this->query->connection()->getConnectionOptions();
@@ -202,13 +200,14 @@ class MigrateSourceSQL extends MigrateSource {
    * Implementation of Iterator::rewind() - called before beginning a foreach loop.
    */
   public function rewind() {
+    $migration = Migration::currentMigration();
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
 
     // Get the keys, for potential use in joining map/message table, or enforcing
     // idlist
-    $map = $this->migration->getMap();
+    $map = $migration->getMap();
     $keys = array();
     foreach ($map->getSourceKey() as $field_name => $field_schema) {
       if (isset($field_schema['alias'])) {
@@ -262,14 +261,14 @@ class MigrateSourceSQL extends MigrateSource {
         $this->query->addField('map', $map_key, "migrate_map_$map_key");
       }
       $this->query->addField('map', 'needs_update');
-      if ($this->migration->getOption('itemlimit')) {
-        $this->query->range(0, $this->migration->getOption('itemlimit'));
+      if ($migration->getOption('itemlimit')) {
+        $this->query->range(0, $migration->getOption('itemlimit'));
       }
     }
 
     // Only works for single-field key
-    if ($this->migration->getOption('idlist')) {
-      $this->query->condition($keys[0], explode(',', $this->migration->getOption('idlist')), 'IN');
+    if ($migration->getOption('idlist')) {
+      $this->query->condition($keys[0], explode(',', $migration->getOption('idlist')), 'IN');
     }
 
     migrate_instrument_start('MigrateSourceSQL execute');
@@ -285,11 +284,12 @@ class MigrateSourceSQL extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    $migration = Migration::currentMigration();
     $this->currentRow = NULL;
     $this->currentKey = NULL;
     // If we couldn't add the itemlimit to the query directly, enforce it here
     if (!$this->mapJoinable) {
-      $itemlimit = $this->migration->getOption('itemlimit');
+      $itemlimit = $migration->getOption('itemlimit');
       if ($itemlimit && $this->numProcessed >= $itemlimit) {
         return;
       }
@@ -297,14 +297,14 @@ class MigrateSourceSQL extends MigrateSource {
 
     // get next row
     migrate_instrument_start('MigrateSourceSQL next');
-    $map = $this->migration->getMap();
+    $map = $migration->getMap();
     while ($this->currentRow = $this->result->fetchObject()) {
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
       if (!$this->mapJoinable) {
         // Check the map - if it's already mapped, and not marked for update, skip it
-        $map_row = $this->migration->getMap()->getRowBySource($this->currentKey);
+        $map_row = $migration->getMap()->getRowBySource($this->currentKey);
         if ($map_row && $map_row['needs_update'] == 0) {
           continue;
         }
@@ -320,8 +320,8 @@ class MigrateSourceSQL extends MigrateSource {
       // Allow the Migration to prepare this row. prepareRow() must return a
       // boolean TRUE for this row to get processed. To add/modify fields on the
       // result, pass $row by reference.
-      if (method_exists($this->migration, 'prepareRow')) {
-        $success = $this->migration->prepareRow($this->currentRow);
+      if (method_exists($migration, 'prepareRow')) {
+        $success = $migration->prepareRow($this->currentRow);
       }
       else {
         $success = TRUE;

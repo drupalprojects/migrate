@@ -62,9 +62,9 @@ class MigrateSourceMSSQL extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(Migration $migration, array $configuration, $query, $count_query,
+  public function __construct(array $configuration, $query, $count_query,
       array $fields, $batch_size = 500) {
-    parent::__construct($migration);
+    parent::__construct();
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->configuration = $configuration;
@@ -151,10 +151,11 @@ class MigrateSourceMSSQL extends MigrateSource {
    * Implementation of Iterator::rewind() - called before beginning a foreach loop.
    */
   public function rewind() {
+    $migration = Migration::currentMigration();
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
-    $map = $this->migration->getMap();
+    $map = $migration->getMap();
 
     $keys = array();
     foreach ($map->getSourceKey() as $field_name => $field_schema) {
@@ -171,14 +172,14 @@ class MigrateSourceMSSQL extends MigrateSource {
      * considered supporting both but it is not worth the complexity. Run twice
      * instead.
      */
-    $idlist = $this->migration->getOption('idlist');
+    $idlist = $migration->getOption('idlist');
     if (isset($idlist)) {
       // TODO: Sanitize. not critical as this is admin supplied data in drush.
       $this->query = str_replace(':criteria',
         $keys[0] . ' IN (' . $idlist . ')', $this->query);
     }
     else {
-      $highwaterField = $this->migration->getHighwaterField();
+      $highwaterField = $migration->getHighwaterField();
       if (isset($highwaterField['name']) && $highwater = $migration->getHighwater()) {
         if (empty($highwaterField['alias'])) {
           $highwater_name = $highwaterField['name'];
@@ -225,6 +226,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    $migration = Migration::currentMigration();
     migrate_instrument_start('mssql_fetch_object');
     $this->currentRow = mssql_fetch_object($this->result);
     migrate_instrument_stop('mssql_fetch_object');
@@ -244,7 +246,7 @@ class MigrateSourceMSSQL extends MigrateSource {
     }
 
     if ($this->currentRow) {
-      $map = $this->migration->getMap();
+      $map = $migration->getMap();
       $this->numProcessed++;
       $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {

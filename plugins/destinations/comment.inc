@@ -79,12 +79,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
   /**
    * Delete a batch of comments at once.
    *
-   * @param $migration
-   *  Controlling migration object. Unused here.
    * @param $cids
    *  Array of comment IDs to be deleted.
    */
-  public function bulkRollback(Migration $migration, array $cids) {
+  public function bulkRollback(array $cids) {
     migrate_instrument_start('comment_delete_multiple');
     $result = comment_delete_multiple($cids);
     migrate_instrument_stop('comment_delete_multiple');
@@ -94,8 +92,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
   /**
    * Import a single comment.
    *
-   * @param $migration
-   *  Controlling migration object. Passed through to prepare/complete handlers.
    * @param $comment
    *  Comment object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
@@ -104,7 +100,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    *  Array of key fields (cid only in this case) of the comment that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $comment, stdClass $row) {
+  public function import(stdClass $comment, stdClass $row) {
+    $migration = Migration::currentMigration();
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
       if (isset($comment->cid)) {
@@ -132,7 +129,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       if (!isset($comment->changed)) {
         $comment->changed = $old_comment->changed;
       }
-      $this->prepare($migration, $comment, $row);
+      $this->prepare($comment, $row);
       foreach ($rawcomment as $field => $value) {
         $old_comment->$field = $comment->$field;
       }
@@ -154,7 +151,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         }
       }
 
-      $this->prepare($migration, $comment, $row);
+      $this->prepare($comment, $row);
       // Make sure we have a nid
       if (!isset($comment->nid) || !$comment->nid) {
         throw new MigrateException(t('No node ID provided for comment'));
@@ -176,13 +173,13 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         ->condition('cid', $comment->cid)
         ->execute();
     }
-    $this->complete($migration, $comment, $row);
+    $this->complete($comment, $row);
     $return = (isset($comment->cid) && $comment->cid > 0)
       ? array($comment->cid) : FALSE;
     return $return;
   }
 
-  public function preImport(Migration $migration) {
+  public function preImport() {
     // If maintaining node statistics is enabled, temporarily disable it
     $this->maintainNodeStatistics =
       variable_get('comment_maintain_node_statistics', TRUE);
@@ -191,7 +188,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     }
   }
 
-  public function postImport(Migration $migration) {
+  public function postImport() {
     // If originally enabled, re-enable and rebuild the stats
     if ($this->maintainNodeStatistics) {
       $GLOBALS['conf']['comment_maintain_node_statistics'] = TRUE;

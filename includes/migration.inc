@@ -207,12 +207,12 @@ abstract class Migration extends MigrationBase {
     // Call pre-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
       if (method_exists($this->destination, 'preImport')) {
-        $this->destination->preImport($this);
+        $this->destination->preImport();
       }
     }
     else {
       if (method_exists($this->destination, 'preRollback')) {
-        $this->destination->preRollback($this);
+        $this->destination->preRollback();
       }
     }
   }
@@ -229,12 +229,12 @@ abstract class Migration extends MigrationBase {
     // Call post-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
       if (method_exists($this->destination, 'postImport')) {
-        $this->destination->postImport($this);
+        $this->destination->postImport();
       }
     }
     else {
       if (method_exists($this->destination, 'postRollback')) {
-        $this->destination->postRollback($this);
+        $this->destination->postRollback();
       }
     }
 
@@ -272,7 +272,7 @@ abstract class Migration extends MigrationBase {
           try {
             if ($this->systemOfRecord == Migration::SOURCE) {
               migrate_instrument_start('destination bulkRollback');
-              $this->destination->bulkRollback($this, $destids);
+              $this->destination->bulkRollback($destids);
               migrate_instrument_stop('destination bulkRollback');
             }
             // Keep track in case of interruption
@@ -299,7 +299,7 @@ abstract class Migration extends MigrationBase {
       if ($batch_count > 0) {
         if ($this->systemOfRecord == Migration::SOURCE) {
           migrate_instrument_start('destination bulkRollback');
-          $this->destination->bulkRollback($this, $destids);
+          $this->destination->bulkRollback($destids);
           migrate_instrument_stop('destination bulkRollback');
           $this->total_processed += $batch_count;
           $this->total_successes += $batch_count;
@@ -325,7 +325,7 @@ abstract class Migration extends MigrationBase {
         try {
           if ($this->systemOfRecord == Migration::SOURCE) {
             migrate_instrument_start('destination rollback');
-            $this->destination->rollback($this, (array)$destination_key);
+            $this->destination->rollback((array)$destination_key);
             migrate_instrument_stop('destination rollback');
           }
 
@@ -377,7 +377,7 @@ abstract class Migration extends MigrationBase {
         $this->map->delete($this->currentSourceKey, TRUE);
 
         migrate_instrument_start('destination import', TRUE);
-        $ids = $this->destination->import($this, $this->values, $data_row);
+        $ids = $this->destination->import($this->values, $data_row);
         migrate_instrument_stop('destination import');
         if ($ids) {
           $this->map->saveIDMapping($data_row, $ids, $this->needsUpdate);
@@ -682,6 +682,9 @@ abstract class Migration extends MigrationBase {
     }
     $results = array();
     foreach ($source_keys as $source_key) {
+      if (is_null($source_key)) {
+        continue;
+      }
       $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
       if (!$destids) {
         // No match found, give the implementing migration a chance to create

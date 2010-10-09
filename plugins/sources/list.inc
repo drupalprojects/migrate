@@ -106,9 +106,8 @@ class MigrateSourceList extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(Migration $migration, MigrateList $list_class,
-      MigrateItem $item_class, $fields = array()) {
-    parent::__construct($migration);
+  public function __construct(MigrateList $list_class, MigrateItem $item_class, $fields = array()) {
+    parent::__construct();
     $this->listClass = $list_class;
     $this->itemClass = $item_class;
     $this->fields = $fields;
@@ -151,9 +150,10 @@ class MigrateSourceList extends MigrateSource {
    * Implementation of Iterator::rewind() - called before beginning a foreach loop.
    */
   public function rewind() {
+    $migration = Migration::currentMigration();
     migrate_instrument_start('MigrateSourceList rewind');
     $this->numProcessed = 0;
-    $idlist = $this->migration->getOption('idlist');
+    $idlist = $migration->getOption('idlist');
     if ($idlist) {
       $this->idList = explode(',', $idlist);
     }
@@ -170,12 +170,13 @@ class MigrateSourceList extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    $migration = Migration::currentMigration();
     migrate_instrument_start('MigrateSourceList next');
     $this->currentRow = NULL;
     $this->currentKey = NULL;
 
     // Enforce the itemlimit
-    $itemlimit = $this->migration->getOption('itemlimit');
+    $itemlimit = $migration->getOption('itemlimit');
 
     // Get next item (next ID not already in the map, unless needs_update=1)
     while ($this->id = array_shift($this->idList)) {
@@ -184,7 +185,7 @@ class MigrateSourceList extends MigrateSource {
         return;
       }
       // Check the map - if it's already mapped, and not marked for update, skip it
-      $map_row = $this->migration->getMap()->getRowBySource(array($this->id));
+      $map_row = $migration->getMap()->getRowBySource(array($this->id));
       if ($map_row && $map_row['needs_update'] == 0) {
         continue;
       }
@@ -195,7 +196,7 @@ class MigrateSourceList extends MigrateSource {
       if ($this->currentRow) {
         $this->currentKey = array($this->id);
         // Save the ID using the map source key - it will be used for mapping
-        $sourceKey = $this->migration->getMap()->getSourceKey();
+        $sourceKey = $migration->getMap()->getSourceKey();
         $key_name = key($sourceKey);
         $this->currentRow->$key_name = $this->id;
         // Add map info to the row, if present

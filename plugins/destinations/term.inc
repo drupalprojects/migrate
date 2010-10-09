@@ -60,12 +60,10 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   /**
    * Delete a migrated term
    *
-   * @param $migration
-   *  Controlling migration object. Unused here.
    * @param $ids
    *  Array of fields representing the key (in this case, just tid).
    */
-  public function rollback(Migration $migration, array $key) {
+  public function rollback(array $key) {
     $tid = reset($key);
 
     migrate_instrument_start('taxonomy_term_delete');
@@ -77,8 +75,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   /**
    * Import a single term.
    *
-   * @param $migration
-   *  Controlling migration object. Passed through to prepare/complete handlers.
    * @param $term
    *  Term object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
@@ -87,7 +83,8 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    *  Array of key fields (tid only in this case) of the term that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $term, stdClass $row) {
+  public function import(stdClass $term, stdClass $row) {
+    $migration = Migration::currentMigration();
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
       $term->tid = $row->migrate_map_destid1;
@@ -106,7 +103,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination tid provided'));
       }
       $rawterm = $term;
-      $this->prepare($migration, $term, $row);
+      $this->prepare($term, $row);
       $old_term = taxonomy_term_load($term->tid);
       foreach ($rawterm as $field => $value) {
         $old_term->$field = $term->$field;
@@ -166,7 +163,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->format = $this->textFormat;
       }
 
-      $this->prepare($migration, $term, $row);
+      $this->prepare($term, $row);
     }
 
     // Trying to update an existing term
@@ -187,7 +184,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $status = taxonomy_save_term($term);
     $term = (object)$term;
     migrate_instrument_stop('taxonomy_term_save');
-    $this->complete($migration, $term, $row);
+    $this->complete($term, $row);
     $return = isset($term->tid) ? array($term->tid) : FALSE;
     return $return;
   }
@@ -201,7 +198,7 @@ class MigrateTermNodeHandler extends MigrateDestinationHandler {
     $this->registerTypes(array('node'));
   }
 
-  public function prepare(Migration $migration, stdClass $node, stdClass $row) {
+  public function prepare(stdClass $node, stdClass $row) {
     // Identify vocabularies for this node type
     $vocabs = taxonomy_get_vocabularies($node->type);
     foreach ($vocabs as $vid => $vocab) {

@@ -103,7 +103,7 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
              ->condition('type', $type)
              // This sort assures that parents are saved before children.
              ->orderBy('category_parent', 'ASC');
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationTerm($vocabulary_name);
 
     // Mapped fields
@@ -163,7 +163,7 @@ class WineUserMigration extends AdvancedExampleMigration {
              ->fields('wa', array('accountid', 'status', 'posted', 'name',
                 'password', 'mail', 'last_access', 'last_login',
                 'original_mail', 'sig', 'sex'));
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationUser();
 
     // Mapped fields
@@ -232,7 +232,7 @@ class WineProducerMigration extends AdvancedExampleMigration {
       "p.producerid = reg.producerid");
     $query->addField('reg', 'categoryid', 'region');
 
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationNode('migrate_example_producer');
 
     // Mapped fields
@@ -314,7 +314,7 @@ class WineProducerXMLMigration extends XMLMigration {
     // and item are represented by separate classes, so for example we could
     // replace the XML listing with a file directory listing, or the XML item
     // with a JSON item.
-    $this->source = new MigrateSourceList($this, new MigrateListXML($list_url),
+    $this->source = new MigrateSourceList(new MigrateListXML($list_url),
       new MigrateItemXML($item_url), $fields);
 
 
@@ -383,7 +383,7 @@ class WineWineMigration extends AdvancedExampleMigration {
       'best_vintages' => t('What years were best for this wine?'),
     );
 
-    $this->source = new MigrateSourceSQL($this, $query, $source_fields, $count_query);
+    $this->source = new MigrateSourceSQL($query, $source_fields, $count_query);
     $this->destination = new MigrateDestinationNode('migrate_example_wine');
 
     // Mapped fields
@@ -475,7 +475,7 @@ class WineCommentMigration extends AdvancedExampleMigration {
               'accountid', 'body', 'wineid', 'subject', 'commenthost', 'userpage',
               'posted', 'lastchanged'))
              ->orderBy('comment_parent');
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_wine');
 
     // Mapped fields
@@ -562,7 +562,7 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
     $query = db_select('migrate_example_wine_updates', 'w')
              ->fields('w', array('wineid', 'rating'));
 
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationNode('migrate_example_wine');
 
     // Indicate we're updating existing data. The default, Migration::SOURCE, would
@@ -620,7 +620,7 @@ class WineCommentUpdatesMigration extends AdvancedExampleMigration {
       );
     $query = db_select('migrate_example_wine_comment_updates', 'wc')
              ->fields('wc', array('commentid', 'subject'));
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_wine');
     $this->systemOfRecord = Migration::DESTINATION;
 
@@ -668,7 +668,7 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
 
     $query = db_select('migrate_example_wine_variety_updates', 'wc')
              ->fields('wc', array('categoryid', 'details'));
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationTerm('migrate_example_wine_varieties');
     $this->systemOfRecord = Migration::DESTINATION;
 
@@ -708,7 +708,7 @@ class WineUserUpdatesMigration extends AdvancedExampleMigration {
     );
     $query = db_select('migrate_example_wine_account_updates', 'wa')
              ->fields('wa', array('accountid', 'sex'));
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationUser();
     $this->systemOfRecord = Migration::DESTINATION;
 

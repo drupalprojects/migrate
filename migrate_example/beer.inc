@@ -87,9 +87,7 @@ class BeerTermMigration extends BasicExampleMigration {
              ->orderBy('style_parent', 'ASC');
 
     // Create a MigrateSource object, which manages retrieving the input data.
-    // In addition to the query objects we've just created, we pass a pointer to
-    // ourselves - the source will need information from the Migration class.
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
 
     // Set up our destination - terms in the migrate_example_beer_styles vocabulary
     $this->destination = new MigrateDestinationTerm('Migrate Example Beer Styles');
@@ -173,7 +171,7 @@ class BeerUserMigration extends BasicExampleMigration {
     );
     $query = db_select('migrate_example_beer_account', 'mea')
              ->fields('mea', array('aid', 'status', 'posted', 'name', 'nickname', 'password', 'mail', 'sex', 'beers'));
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationUser();
 
     // One good way to organize your mappings is in three groups - mapped fields,
@@ -283,7 +281,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     $count_query = db_select('migrate_example_beer_node', 'b');
     $count_query->addExpression('COUNT(bid)', 'cnt');
 
-    $this->source = new MigrateSourceSQL($this, $query, array(), $count_query);
+    $this->source = new MigrateSourceSQL($query, array(), $count_query);
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');
@@ -365,7 +363,7 @@ class BeerCommentMigration extends BasicExampleMigration {
     $query = db_select('migrate_example_beer_comment', 'mec')
              ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
              ->orderBy('cid_parent', 'ASC');
-    $this->source = new MigrateSourceSQL($this, $query);
+    $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_beer');
 
     // Mapped fields

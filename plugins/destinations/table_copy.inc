@@ -23,12 +23,10 @@ class MigrateDestinationTableCopy extends MigrateDestination {
   /**
    * Delete a batch of rows at once.
    *
-   * @param $migration
-   *  Controlling migration object. Unused here.
    * @param $ids
    *  Array of IDs to be deleted.
    */
-  public function bulkRollback(Migration $migration, array $ids) {
+  public function bulkRollback(array $ids) {
     migrate_instrument_start('table_copy bulkRollback');
     db_delete($this->tableName)
       ->condition(key($this->keySchema), $ids, 'IN')
@@ -39,8 +37,6 @@ class MigrateDestinationTableCopy extends MigrateDestination {
   /**
    * Import a single row.
    *
-   * @param $migration
-   *  Controlling migration object. Passed through to prepare/complete handlers.
    * @param $entity
    *  Object object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
@@ -49,7 +45,7 @@ class MigrateDestinationTableCopy extends MigrateDestination {
    *  Array of key fields of the object that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $entity, stdClass $row) {
+  public function import(stdClass $entity, stdClass $row) {
     $fields = clone $row;
     $key = key($this->keySchema);
     $valkey = $row->$key;

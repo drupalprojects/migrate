@@ -83,7 +83,7 @@ function migrate_handler_invoke_all($destination, $method) {
  *  Array of incoming values, to be transformed into the appropriate structure
  *  for the field type.
  */
-function migrate_field_handler_invoke_all(Migration $migration, stdClass $entity, array $instance,
+function migrate_field_handler_invoke_all(stdClass $entity, array $instance,
     array $values) {
   $return = array();
   $type = $instance['type'];
@@ -92,7 +92,7 @@ function migrate_field_handler_invoke_all(Migration $migration, stdClass $entity
     if ($handler->handlesType($type) && method_exists($handler, 'prepare')) {
       migrate_instrument_start($class_name . '->prepare');
       $result = call_user_func_array(array($handler, 'prepare'),
-        array($migration, $entity, $instance, $values));
+        array($entity, $instance, $values));
       migrate_instrument_stop($class_name . '->prepare');
       if (isset($result) && is_array($result)) {
         $return = array_merge_recursive($return, $result);

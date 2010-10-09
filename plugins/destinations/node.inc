@@ -72,12 +72,10 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   /**
    * Delete a node
    *
-   * @param $migration
-   *  Controlling migration object. Unused here.
    * @param $nid
    *  Array containing the node ID to be deleted.
    */
-  public function rollback(Migration $migration, array $nid) {
+  public function rollback(array $nid) {
     static $count = 0;
     migrate_instrument_start('node_delete');
     node_delete(reset($nid));
@@ -92,8 +90,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   /**
    * Import a single node.
    *
-   * @param $migration
-   *  Controlling migration object. Passed through to prepare/complete handlers.
    * @param $node
    *  Node object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
@@ -102,7 +98,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    *  Array of key fields (nid only in this case) of the node that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $node, stdClass $row) {
+  public function import(stdClass $node, stdClass $row) {
+    $migration = Migration::currentMigration();
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
       if (isset($node->nid)) {
@@ -155,7 +152,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     }
 
     // Invoke migration prepare handlers
-    $this->prepare($migration, $node, $row);
+    $this->prepare($node, $row);
     $node->revision = 0; // Always create a new revision.
     migrate_instrument_start('node_save');
     node_save($node);
@@ -170,7 +167,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         ->execute();
       $node->changed = $changed;
     }
-    $this->complete($migration, $node, $row);
+    $this->complete($node, $row);
 
     // Clear the node cache periodically
     static $count = 0;

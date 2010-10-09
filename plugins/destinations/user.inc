@@ -68,12 +68,10 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
   /**
    * Delete a batch of users at once.
    *
-   * @param $migration
-   *  Controlling migration object. Unused here.
    * @param $uids
    *  Array of user IDs to be deleted.
    */
-  public function bulkRollback(Migration $migration, array $uids) {
+  public function bulkRollback(array $uids) {
     migrate_instrument_start('user_delete_multiple');
     user_delete_multiple($uids);
     migrate_instrument_stop('user_delete_multiple');
@@ -82,8 +80,6 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
   /**
    * Import a single user.
    *
-   * @param $migration
-   *  Controlling migration object. Passed through to prepare/complete handlers.
    * @param $account
    *  Account object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
@@ -92,7 +88,8 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    *  Array of key fields (uid only in this case) of the user that was saved if
    *  successful. FALSE on failure.
    */
-  public function import(Migration $migration, stdClass $account, stdClass $row) {
+  public function import(stdClass $account, stdClass $row) {
+    $migration = Migration::currentMigration();
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
       $account->uid = $row->migrate_map_destid1;
@@ -111,13 +108,19 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination uid provided'));
       }
     }
+    else {
+      // Prevents notice in user_save()
+      if (!isset($account->uid)) {
+        $account->uid = NULL;
+      }
+    }
 
-    $this->prepare($migration, $account, $row);
+    $this->prepare($account, $row);
     migrate_instrument_start('user_save');
     $newaccount = user_save($account, (array)$account);
     migrate_instrument_stop('user_save');
     if ($newaccount) {
-      $this->complete($migration, $newaccount, $row);
+      $this->complete($newaccount, $row);
       $return = isset($newaccount->uid) ? array($newaccount->uid) : FALSE;
     }
     else {

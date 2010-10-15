@@ -14,6 +14,6 @@ table.migrate-dashboard tr.migrate-running {
   border-bottom: 1px solid #aaa;
 }
 
-td.migrate-error {
+#migrate-migration-info td.migrate-error {
   background: #ffc9c9;
 }

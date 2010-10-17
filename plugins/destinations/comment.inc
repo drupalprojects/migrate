@@ -176,6 +176,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     if (isset($comment->hostname)) {
       $hostname = $comment->hostname;
     }
+    
+    // Convert to unix timestamp as needed
+    if (isset($comment->timestamp)) {
+      $comment->timestamp = MigrationBase::timestamp($comment->timestamp);
+    }
 
     migrate_instrument_start('comment_save');
     $comment = (array)$comment;

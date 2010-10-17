@@ -60,6 +60,17 @@ class MigrateSourceMSSQL extends MigrateSource {
   protected $batchSize;
 
   /**
+   * If the map is a MigrateMSSQLMap, and the table is compatible with the
+   * source query, we can join directly to the map and make things much faster
+   * and simpler.
+   *
+   * @todo: No MigrateMSSQL exists and probably D7 will use PDO MSSQL instead.
+   *
+   * @var boolean
+   */
+  protected $mapJoinable = FALSE;
+
+  /**
    * Simple initialization.
    */
   public function __construct(array $configuration, $query, $count_query,
@@ -84,7 +95,7 @@ class MigrateSourceMSSQL extends MigrateSource {
   /**
    * Connect lazily to the DB server.
    */
-  protected function connect() {
+  public function connect() {
     if (!isset($this->connection)) {
       if (isset($this->configuration['port'])) {
         $host = $this->configuration['servername'] . ':' . $this->configuration['port'];
@@ -119,32 +130,16 @@ class MigrateSourceMSSQL extends MigrateSource {
    * Return a count of all available source records.
    *
    * @param boolean $refresh
-   *  If TRUE, or if there is no cached count, perform a SQL COUNT query to
-   *  retrieve and cache the number of rows in the query. Otherwise, return
-   *  the last cached value.
+   *   @todo: Not implemented.
    */
   public function count($refresh = FALSE) {
-    if ($refresh) {
-      cache_clear_all(__METHOD__, 'cache');
-    }
-
-    $count = cache_get(__METHOD__, 'cache');
-    if (!is_object($count)) {
-      // Cache miss.
-      if ($this->connect()) {
-        $result = mssql_query($this->countQuery);
-        $count = reset(mssql_fetch_object($result));
-        $return = cache_set(__METHOD__, $count, 'cache');
-      }
-      else {
-        // Do something else?
-        return FALSE;
-      }
+    if ($this->connect()) {
+      $result = mssql_query($this->countQuery);
+      return reset(mssql_fetch_object($result));
     }
     else {
-      $count = $count->data;
+      return FALSE;
     }
-    return $count;
   }
 
   /**
@@ -196,6 +191,12 @@ class MigrateSourceMSSQL extends MigrateSource {
       }
     }
 
+    // @todo: can't do this when not map is non joinable.
+    // Assume query starts with SELECT.
+    // if ($itemlimit = $this->migration->getOption('itemlimit')) {
+    //  $this->query = substr_replace($this->query, "SELECT TOP $itemlimit", 0, 6);
+    // }
+
     migrate_instrument_start('mssql_query');
     $this->connect();
     $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
@@ -216,6 +217,8 @@ class MigrateSourceMSSQL extends MigrateSource {
    * Implementation of Iterator::key - called when entering a loop iteration, returning
    * the key of the current row. It must be a scalar - we will serialize
    * to fulfill the requirement, but using getCurrentKey() is preferable.
+   *
+   * @todo: sql.inc does not implement this method.
    */
   public function key() {
     return serialize($this->currentKey);
@@ -226,33 +229,71 @@ class MigrateSourceMSSQL extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    $this->currentRow = NULL;
+    $this->currentKey = NULL;
     $migration = Migration::currentMigration();
-    migrate_instrument_start('mssql_fetch_object');
-    $this->currentRow = mssql_fetch_object($this->result);
-    migrate_instrument_stop('mssql_fetch_object');
-    // Might be totally out of data, or just out of this batch - request another
-    // batch and see
-    if (!is_object($this->currentRow)) {
-      migrate_instrument_start('mssql_fetch_batch');
-      mssql_fetch_batch($this->result);
-      migrate_instrument_stop('mssql_fetch_batch');
 
-      migrate_instrument_start('mssql_fetch_object');
+    // If we couldn't add the itemlimit to the query directly, enforce it here
+    if (!$this->mapJoinable) {
+      $itemlimit = $migration->getOption('itemlimit');
+      if ($itemlimit && $this->numProcessed >= $itemlimit) {
+        return;
+      }
+    }
+
+    // get next row
+    migrate_instrument_start('MigrateSourceMSSQL next');
+    $map = $migration->getMap();
+    // TODO: Apply idlist etc. for non-joinable case
+    while (TRUE) {
       $this->currentRow = mssql_fetch_object($this->result);
-      migrate_instrument_stop('mssql_fetch_object');
-    }
-    if (!is_object($this->currentRow)) {
-      $this->currentRow = NULL;
-    }
+      if (!is_object($this->currentRow)) {
+        // Might be totally out of data, or just out of this batch - request another batch and see.
+        migrate_instrument_start('mssql_fetch_batch');
+        mssql_fetch_batch($this->result);
+        migrate_instrument_stop('mssql_fetch_batch');
+        if (!$this->currentRow = mssql_fetch_object($this->result)) {
+          break;
+        }
+      }
 
-    if ($this->currentRow) {
-      $map = $migration->getMap();
-      $this->numProcessed++;
-      $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
+      if (!$this->mapJoinable) {
+        // Check the map - if it's already mapped, and not marked for update, skip it
+        $map_row = $migration->getMap()->getRowBySource($this->currentKey);
+        if ($map_row && $map_row['needs_update'] == 0) {
+          continue;
+        }
+        // Add map info to the row, if present
+        if ($map_row) {
+          foreach ($map_row as $field => $value) {
+            $field = 'migrate_map_' . $field;
+            $this->currentRow->$field = $value;
+          }
+        }
+      }
+
+      // Allow the Migration to prepare this row. prepareRow() must return a
+      // boolean TRUE for this row to get processed. To add/modify fields on the
+      // result, modify $row by reference.
+      if (method_exists($migration, 'prepareRow')) {
+        $success = $migration->prepareRow($this->currentRow);
+      }
+      else {
+        $success = TRUE;
+      }
+      if ($success) {
+        $this->numProcessed++;
+        break;
+      }
     }
+
+    if (!is_object($this->currentRow)) {
+      $this->currentRow = NULL;
+    }
+    migrate_instrument_stop('MigrateSourceMSSQL next');
   }
 
   /**

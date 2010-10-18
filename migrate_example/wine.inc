@@ -40,12 +40,12 @@ abstract class AdvancedExampleMigration extends Migration {
  * TIP: While usually you'll create true migrations - processes that copy data
  * from some source into Drupal - you can also define processing steps for either
  * the import or rollback stages that take other actions. In this case, we want
- * to disable pathauto while the migration steps run.
+ * to disable auto_nodetitle while the migration steps run.
  */
 class WinePrepMigration extends MigrationBase {
   public function __construct() {
     parent::__construct();
-    $this->description = t('If pathauto is present, disable it for the duration');
+    $this->description = t('If auto_nodetitle is present, disable it for the duration');
     // TIP: Regular dependencies, besides enforcing (in the absence of --force)
     // the run order of migrations, affect the sorting of migrations on display.
     // You can use soft dependencies to affect just the display order when the
@@ -59,7 +59,7 @@ class WinePrepMigration extends MigrationBase {
   // migrations may proceed
   public function isComplete() {
     // If pathauto is disabled, other migrations are free to go
-    if (module_exists('pathauto')) {
+    if (module_exists('auto_nodetitle')) {
       return FALSE;
     }
     else {
@@ -70,12 +70,12 @@ class WinePrepMigration extends MigrationBase {
   // import() method (alternatively, if you have an action which you want to
   // run during rollbacks, define a rollback() method).
   public function import() {
-    if (module_exists('pathauto')) {
-      module_disable(array('pathauto'));
-      $this->showMessage(t('Disabled pathauto module'), 'success');
+    if (module_exists('auto_nodetitle')) {
+      module_disable(array('auto_nodetitle'));
+      $this->showMessage(t('Disabled auto_nodetitle module'), 'success');
     }
     else {
-      $this->showMessage(t('Pathauto is already disabled'), 'success');
+      $this->showMessage(t('Auto_nodetitle is already disabled'), 'success');
     }
     // Must return one of the MigrationBase RESULT constants
     return MigrationBase::RESULT_COMPLETED;
@@ -510,12 +510,12 @@ class WineCommentMigration extends AdvancedExampleMigration {
 class WineFinishMigration extends MigrationBase {
   public function __construct() {
     parent::__construct();
-    $this->description = t('If pathauto is present and was previously enabled,
+    $this->description = t('If auto_nodetitle is present and was previously enabled,
       re-enable it');
     $this->dependencies = array('WineCommentMigration');
   }
   public function isComplete() {
-    if (module_exists('pathauto')) {
+    if (module_exists('auto_nodetitle')) {
       return TRUE;
     }
     else {
@@ -523,13 +523,13 @@ class WineFinishMigration extends MigrationBase {
     }
   }
   public function import() {
-    if (!module_exists('pathauto')) {
+    if (!module_exists('auto_nodetitle')) {
       // TODO: Really should keep track of whether it was originally enabled
-      module_enable(array('pathauto'));
-      $this->showMessage(t('Re-enabled pathauto module'), 'success');
+      module_enable(array('auto_nodetitle'));
+      $this->showMessage(t('Re-enabled auto_nodetitle module'), 'success');
     }
     else {
-      $this->showMessage(t('Pathauto module already enabled', 'success'));
+      $this->showMessage(t('Auto_nodetitle module already enabled', 'success'));
     }
     return Migration::RESULT_COMPLETED;
   }

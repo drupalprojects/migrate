@@ -222,6 +222,21 @@ function migrate_watchdog($log_entry) {
 }
 
 /**
+ * Implementation of hook_user()
+ */
+function migrate_user($op, &$edit, &$account, $category = NULL) {
+  switch ($op) {
+    case 'insert':
+    case 'update':
+      if (isset($edit['migrate'])) {
+        // Prevent from saving in users.data
+        $edit['migrate'] = NULL;
+      }
+      break;
+  }
+}
+
+/**
  * Save memory usage with the specified name. If you start and stop the same
  * memory name multiple times, the measured differences will be accumulated.
  *

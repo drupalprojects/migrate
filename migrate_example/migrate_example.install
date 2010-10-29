@@ -22,6 +22,7 @@ function migrate_example_install() {
   migrate_example_wine_install();
   // A simple format for testing migration of format
   $example_format = array(
+    'format' => 'migrate_example',
     'name' => 'Migrate example format',
     'weight' => 20,
     'filters' => array(
@@ -39,12 +40,8 @@ function migrate_example_install() {
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
   migrate_example_wine_uninstall();
-  $formats = filter_formats();
-  foreach ($formats as $format) {
-    if ($format->name == 'Migrate example format') {
-      filter_format_delete($format);
-      break;
-    }
+  if ($format = filter_format_load('migrate_example')) {
+    filter_format_disable($format);
   }
 }
 

@@ -26,13 +26,7 @@ abstract class AdvancedExampleMigration extends Migration {
     $this->issuePattern = 'http://drupal.org/node/:id:';
 
     // A format of our own, for testing migration of formats
-    $formats = filter_formats();
-    foreach ($formats as $format) {
-      if ($format->name == 'Migrate example format') {
-        $this->basicFormat = $format->format;
-        break;
-      }
-    }
+    $this->basicFormat = filter_format_load('migrate_example');
   }
 }
 
@@ -329,7 +323,7 @@ class WineProducerXMLMigration extends XMLMigration {
       MigrateDestinationNode::getKeySchema()
     );
 
-    $xml_folder = 'http://127.0.0.1/' . drupal_get_path('module', 'migrate_example') . '/xml/';
+    $xml_folder = url(drupal_get_path('module', 'migrate_example') . '/xml/');
     $list_url = $xml_folder . 'index.xml';
     // Each ID retrieved from the list URL will be plugged into :id in the
     // item URL to fetch the specific objects.

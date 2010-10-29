@@ -256,7 +256,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
           break;
         case 'file_move':
           // file_move() does a copy then delete which slow. So we implement our own.
-          if (file_prepare_directory($destination_dir)) {
+          if (file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY)) {
             if (rename($source->uri, $real_destination_file)) {
               $file = clone $source;
               $file->fid = NULL;

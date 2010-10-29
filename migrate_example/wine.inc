@@ -323,7 +323,8 @@ class WineProducerXMLMigration extends XMLMigration {
       MigrateDestinationNode::getKeySchema()
     );
 
-    $xml_folder = url(drupal_get_path('module', 'migrate_example') . '/xml/');
+    // This can also be an URL instead of a file path.
+    $xml_folder = DRUPAL_ROOT . '/' . drupal_get_path('module', 'migrate_example') . '/xml/';
     $list_url = $xml_folder . 'index.xml';
     // Each ID retrieved from the list URL will be plugged into :id in the
     // item URL to fetch the specific objects.

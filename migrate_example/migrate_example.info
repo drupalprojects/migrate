@@ -7,6 +7,8 @@ dependencies[] = taxonomy
 dependencies[] = image
 dependencies[] = comment
 dependencies[] = migrate
+dependencies[] = list
+dependencies[] = number
 
 ;node_reference is useful but not required
 ;dependencies[] = node_reference

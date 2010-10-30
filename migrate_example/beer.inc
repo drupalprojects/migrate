@@ -201,13 +201,15 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->addFieldMapping('roles')
          ->defaultValue(drupal_map_assoc(array(2)));
     $this->addFieldMapping('field_migrate_example_gender', 'sex');
-    // Need to have node_reference module enabled for this
+
     // The source field has beer names separated by a pipe character ('|'). By
     // adding ->separator('|'), the migration will automatically break them out,
     // look up the node with each title, and assign the node reference to this
     // user.
-    $this->addFieldMapping('field_migrate_example_favbeers', 'beers')
-         ->separator('|');
+    if (module_exists('node_reference')) {
+      $this->addFieldMapping('field_migrate_example_favbeers', 'beers')
+           ->separator('|');
+    }
 
     // Unmapped source fields
     $this->addFieldMapping(NULL, 'nickname')

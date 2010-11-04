@@ -102,7 +102,7 @@ function migrate_drush_command() {
     // We will bootstrap to login from within the command callback.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     'arguments' => array(
-      'migration' => 'Name of migration to roll back',
+      'migration' => 'Name of migration(s) to roll back. Delimit multiple using commas.',
     ),
     'examples' => array(
       'migrate-rollback Article' => 'Roll back the article migration',
@@ -125,7 +125,7 @@ function migrate_drush_command() {
     'description' => 'Perform one or more migration processes',
     'options' => $migration_options,
     'arguments' => array(
-      'migration' => 'Name of migration to import',
+      'migration' => 'Name of migration(s) to import. Delimit multiple using commas.',
     ),
     'examples' => array(
       'migrate-import Article' => 'Import new articles',

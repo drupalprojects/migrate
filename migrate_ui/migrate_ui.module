@@ -22,14 +22,14 @@ function migrate_ui_perm() {
 function migrate_menu() {
   $items = array();
 
-  $items['admin/migrate'] = array(
+  $items['admin/content/migrate'] = array(
     'title' => 'Migrate',
     'description' => 'Monitor the creation of Drupal content from source data',
     'page callback' => 'migrate_ui_dashboard',
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui/migrate_ui.pages.inc',
   );
-  $items['admin/migrate/messages/%migration'] = array(
+  $items['admin/content/migrate/messages/%migration'] = array(
     'title callback' => 'migration_title',
     'title arguments' => array(3),
     'description' => 'View messages from a migration',
@@ -38,7 +38,7 @@ function migrate_menu() {
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui/migrate_ui.pages.inc',
   );
-  $items['admin/migrate/%migration'] = array(
+  $items['admin/content/migrate/%migration'] = array(
     'title callback' => 'migration_title',
     'title arguments' => array(2),
     'page callback' => 'drupal_get_form',

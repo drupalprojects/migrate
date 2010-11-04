@@ -170,8 +170,12 @@ class MigrateSourceMSSQL extends MigrateSource {
     $idlist = $migration->getOption('idlist');
     if (isset($idlist)) {
       // TODO: Sanitize. not critical as this is admin supplied data in drush.
+        // Quote values. Works fine for numeric keys as well.
+      foreach (explode(',', $idlist) as $id) {
+        $quoted[] = "'$id'";
+      }
       $this->query = str_replace(':criteria',
-        $keys[0] . ' IN (' . $idlist . ')', $this->query);
+        $keys[0] . ' IN (' . implode(', ', $quoted) . ')', $this->query);
     }
     else {
       $highwaterField = $migration->getHighwaterField();
@@ -244,7 +248,6 @@ class MigrateSourceMSSQL extends MigrateSource {
     // get next row
     migrate_instrument_start('MigrateSourceMSSQL next');
     $map = $migration->getMap();
-    // TODO: Apply idlist etc. for non-joinable case
     while (TRUE) {
       $this->currentRow = mssql_fetch_object($this->result);
       if (!is_object($this->currentRow)) {

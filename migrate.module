@@ -228,9 +228,13 @@ function migrate_user($op, &$edit, &$account, $category = NULL) {
   switch ($op) {
     case 'insert':
     case 'update':
+      // Prevent from saving in users.data
       if (isset($edit['migrate'])) {
-        // Prevent from saving in users.data
         $edit['migrate'] = NULL;
+      }
+      if (isset($edit['pathauto_perform_alias'])) {
+        // Prevent from saving in users.data
+        $edit['pathauto_perform_alias'] = NULL;
       }
       break;
   }

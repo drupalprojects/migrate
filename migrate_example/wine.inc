@@ -58,7 +58,7 @@ class WinePrepMigration extends MigrationBase {
   // Define isComplete(), returning a boolean, to indicate whether dependent
   // migrations may proceed
   public function isComplete() {
-    // If pathauto is disabled, other migrations are free to go
+    // If Auto Node Title is disabled, other migrations are free to go
     if (module_exists('auto_nodetitle')) {
       return FALSE;
     }

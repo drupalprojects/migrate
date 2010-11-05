@@ -170,7 +170,7 @@ class MigrateSourceMSSQL extends MigrateSource {
     $idlist = $migration->getOption('idlist');
     if (isset($idlist)) {
       // TODO: Sanitize. not critical as this is admin supplied data in drush.
-        // Quote values. Works fine for numeric keys as well.
+      // Quote values. Works fine for numeric keys as well.
       foreach (explode(',', $idlist) as $id) {
         $quoted[] = "'$id'";
       }

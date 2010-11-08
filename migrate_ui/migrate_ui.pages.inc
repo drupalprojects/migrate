@@ -84,14 +84,14 @@ function _migrate_ui_dashboard_form() {
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
     $row['machinename'] =
-      l($machine_name, 'admin/migrate/' . $machine_name);
+      l($machine_name, 'admin/content/migrate/' . $machine_name);
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     $row['unimported'] = $unimported;
 
     if (is_subclass_of($migration, 'Migration')) {
       $num_messages = $migration->messageCount();
-      $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $machine_name) : 0;
+      $row['messages'] = $num_messages ? l($num_messages, 'admin/content/migrate/messages/' . $machine_name) : 0;
     }
     else {
       $row['messages'] = t('N/A');

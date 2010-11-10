@@ -158,22 +158,32 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     node_save($node);
     migrate_instrument_stop('node_save');
 
-    // Unfortunately, http://drupal.org/node/722688 was not accepted, so fix
-    // the changed timestamp here
-    if (isset($changed) && isset($node->nid)) {
-      db_update('node')
-        ->fields(array('changed' => $changed))
-        ->condition('nid', $node->nid)
-        ->execute();
-      $node->changed = $changed;
-    }
-    
-    // Fix node_revisions.uid which otherwise would be $GLOBALS['user']->uid.
-    if ($node->uid != $GLOBALS['user']->uid) {
-      db_update('node_revisions')
-      ->fields(array('uid' => $node->uid))
-      ->condition('vid', $node->vid)
-      ->execute();
+    if (isset($node->nid)) {
+      
+      // Unfortunately, http://drupal.org/node/722688 was not accepted, so fix
+      // the changed timestamp
+      if (isset($changed)) {
+        db_update('node')
+          ->fields(array('changed' => $changed))
+          ->condition('nid', $node->nid)
+          ->execute();
+        $node->changed = $changed;
+      }
+      
+      // Potentially fix uid and timestamp in node_revisions.
+      $query = db_update('node_revisions')
+                 ->condition('vid', $node->vid);
+      if (isset($changed)) {
+        $fields['timestamp'] = $changed;
+      }
+      if ($node->uid != $GLOBALS['user']->uid) {
+        $fields['uid'] = $node->uid;
+      }
+      if (!empty($fields)) {
+        // We actually have something to update.
+        $query->fields($fields);
+        $query->execute();
+      }
     }
     
     $this->complete($node, $row);

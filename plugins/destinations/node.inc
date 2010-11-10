@@ -183,6 +183,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         // We actually have something to update.
         $query->fields($fields);
         $query->execute();
+        $node->timestamp = $changed;
       }
     }
     

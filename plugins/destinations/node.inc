@@ -167,6 +167,15 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         ->execute();
       $node->changed = $changed;
     }
+    
+    // Fix node_revisions.uid which otherwise would be $GLOBALS['user']->uid.
+    if ($node->uid != $GLOBALS['user']->uid) {
+      db_update('node_revisions')
+      ->fields(array('uid' => $node->uid))
+      ->condition('vid', $node->vid)
+      ->execute();
+    }
+    
     $this->complete($node, $row);
 
     // Clear the node cache periodically

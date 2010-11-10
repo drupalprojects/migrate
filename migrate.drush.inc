@@ -42,7 +42,7 @@ function migrate_drush_command() {
     '--itemlimit' => 'The maximum number of items to migrate. If unspecified, all are migrated',
     '--feedback' => 'Frequency of progress messages, in seconds or items processed',
     '--idlist' => 'A comma delimited list of ids to import or rollback. If unspecified, migrate imports all pending items or rolls back all items for the content set.',
-    '--all' => 'Process all migrations',
+    '--all' => 'Process all migrations that come after the specified migration. If no value is supplied, all migrations are processed.',
     '--instrument' => 'Capture performance information (timer, memory, or all)',
     '--force' => 'Force an operation to run, even if all dependencies are not satisfied',
   );
@@ -135,6 +135,7 @@ function migrate_drush_command() {
         'Import up to 50 items after stopping and rolling back the Article migration.',
       'migrate-import User --feedback="60 seconds"' => 'Display a progress message every 60 seconds or less',
       'migrate-import User --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
+      'migrate-import --all=User' => 'Perform User migrations and all that follow it.',
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mi'),
@@ -500,11 +501,19 @@ function drush_migrate_rollback($args = NULL) {
 
 function drush_migrate_get_migrations($args) {
   static $migration_objects;
-
-  if (drush_get_option('all')) {
+  
+  if ($start = drush_get_option('all')) {
+    // Handle custom first migration when --all=foo is supplied.
+    $seen = $start === TRUE ? TRUE : FALSE;
+    
     $migration_objects = migrate_migrations();
     foreach ($migration_objects as $name => $migration) {
-      if (!$migration->getEnabled()) {
+      if (!$seen && (strtolower($start) . 'migration' == strtolower($name))) {
+        // We found our starting migration. $seen is always TRUE now.
+        $seen = TRUE;
+      }
+      if (!$migration->getEnabled() || !$seen) {
+        // This migration is disabled or is before our starting migration.
         unset($migration_objects[$name]);
       }
     }

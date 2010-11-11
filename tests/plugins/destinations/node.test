@@ -14,7 +14,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('taxonomy', 'image', 'migrate', 'migrate_example');
+    parent::setUp('list', 'number', 'taxonomy', 'image', 'migrate', 'migrate_example');
   }
 
   function testNodeImport() {
@@ -179,6 +179,49 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       }
     }
 
+    // Test highwater marks - add new wines, modify an old one, and see what changes
+    $fields = array('wineid', 'name', 'body', 'excerpt', 'accountid', 'image',
+      'posted', 'last_changed', 'variety', 'region', 'rating');
+    $query = db_insert('migrate_example_wine')
+             ->fields($fields);
+    $data = array(
+      // Timestamps 1284008523, 1284120550
+      array(3, 'Schloss Muhlenhof Dornfelder', 'Juicy black & red berry fruits', 'Pretty good', 9, NULL,
+        strtotime('2010-09-09 01:02:03'), strtotime('2010-09-10 08:09:10'), 25, 17, 95),
+      // Timestamps 1286122209, 1286122209
+      array(4, 'Gachot-Monot Bourgogne Rge 06', 'Funky', 'Pair with white sauced dishes', 3, NULL,
+        strtotime('2010-10-03 12:10:09'), strtotime('2010-10-03 12:10:09'), 26, 2, 85),
+    );
+    foreach ($data as $row) {
+      $query->values(array_combine($fields, $row));
+    }
+    $query->execute();
+
+    db_update('migrate_example_wine')
+             ->fields(array(
+              'body' => 'Not so much berry character',
+              // Timestamp 1285058521
+              'last_changed' => strtotime('2010-10-21 04:42:01'),
+             ))
+             ->condition('wineid', 2)
+             ->execute();
+
+    $migration = Migration::getInstance('WineWineMigration');
+    $result = $migration->processImport();
+
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    if (!$this->assertEqual(count($rawnodes), 4, t('Now 4 wine nodes exist'))) {
+      $this->error(t('There are now !count nodes', array('!count' => count($rawnodes))));
+    }
+    $nodes = node_load_multiple(FALSE, array('title' => 'Archeo Ruggero di Tasso Nero d\'Avola'), TRUE);
+    $node = reset($nodes);
+    $body = $node->body[LANGUAGE_NONE][0]['value'];
+    if (!$this->assertEqual($body, 'Not so much berry character', t('Body updated'))) {
+      $this->error(t('Actual body !body', array('!body' => $body)));
+    }
+
     // Test rollback
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
@@ -198,7 +241,34 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
               ->fetchField();
     $this->assertEqual($count, 0, t('Messages cleared'));
 
+    // Now test highwater with unjoined map table
+    $migration->getSource()->setMapJoinable(FALSE);
+    $result = $migration->processImport(array('itemlimit' => 2));
+    $query = db_update('migrate_example_wine')
+             ->fields(array(
+              'body' => 'Very berry',
+              // Timestamp 1286008921
+              'last_changed' => strtotime('2010-10-02 04:42:01'),
+             ))
+             ->condition('wineid', 1)
+             ->execute();
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine node import returned RESULT_COMPLETED'));
+    $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
+    if (!$this->assertEqual(count($rawnodes), 4, t('Now 4 wine nodes exist'))) {
+      $this->error(t('There are now !count nodes', array('!count' => count($rawnodes))));
+    }
+    $nodes = node_load_multiple(FALSE, array('title' => 'Montes Classic Cabernet Sauvignon'), TRUE);
+    $node = reset($nodes);
+    $body = $node->body[LANGUAGE_NONE][0]['value'];
+    if (!$this->assertEqual($body, 'Very berry', t('Body updated'))) {
+      $this->error(t('Actual body !body', array('!body' => $body)));
+    }
+
     // Test itemlimit (joined map table)
+    $result = $migration->processRollback();
+    $migration->getSource()->setMapJoinable(TRUE);
     $result = $migration->processImport(array('itemlimit' => 1));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));

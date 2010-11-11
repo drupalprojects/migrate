@@ -49,7 +49,7 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
       t('Descriptions match'));
     $this->assertEqual($terms['Merlot']->weight, $rows['Merlot']->ordering,
       t('Weights match'));
-    $this->assertEqual($terms['Merlot']->format, $migration->basicFormat,
+    $this->assertEqual($terms['Merlot']->format, $migration->basicFormat->format,
       t('Formats match'));
     $parents = taxonomy_get_parents($terms['White wine']->tid);
     $this->assertEqual(count($parents), 0, t('Term without parent properly migrated'));

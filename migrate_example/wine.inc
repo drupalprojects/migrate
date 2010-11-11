@@ -107,7 +107,7 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
          ->sourceMigration(get_class($this));
     $this->addFieldMapping('weight', 'ordering');
     $this->addFieldMapping('format')
-         ->defaultValue($this->basicFormat);
+         ->defaultValue($this->basicFormat->format);
 
     // Unmapped source fields
 
@@ -175,7 +175,7 @@ class WineUserMigration extends AdvancedExampleMigration {
          ->defaultValue(drupal_map_assoc(array(2)));
     $this->addFieldMapping('signature', 'sig');
     $this->addFieldMapping('signature_format')
-         ->defaultValue($this->basicFormat);
+         ->defaultValue($this->basicFormat->format);
     $this->addFieldMapping('init', 'original_mail');
     $this->addFieldMapping('field_migrate_example_gender', 'sex')
          ->description(t('Map from M/F to 0/1 in prepare method'));
@@ -386,7 +386,7 @@ class WineWineMigration extends AdvancedExampleMigration {
     $query->leftJoin('migrate_example_wine_categories', 'bw',
       "cwbw.categoryid = bw.categoryid AND bw.type = 'best_with'");
     // Gives a single comma-separated list of related terms
-    $query->groupBy('cwbw.wineid');
+    $query->groupBy('w.wineid');
     $query->addExpression('GROUP_CONCAT(bw.categoryid)', 'best_with');
 
     $count_query = db_select('migrate_example_wine', 'w');
@@ -401,6 +401,19 @@ class WineWineMigration extends AdvancedExampleMigration {
       'name' => t('The name of the wine'),
       'best_vintages' => t('What years were best for this wine?'),
     );
+
+    // TIP: By default, each time a migration is run, any previously unimported source items
+    // are imported (along with any previously-imported items marked for update). If the
+    // source data contains a timestamp that is set to the creation time of each new item,
+    // as well as set to the update time for any existing items that are updated, then
+    // you can have those updated items automatically reimported by setting the field as
+    // your highwater field.
+    $this->highwaterField = array(
+      'name' => 'last_changed', // Column to be used as highwater mark
+      'alias' => 'w',           // Table alias containing that column
+    );
+    // Note that it is important to process rows in the order of the highwater mark
+    $query->orderBy('last_changed');
 
     $this->source = new MigrateSourceSQL($query, $source_fields, $count_query);
     $this->destination = new MigrateDestinationNode('migrate_example_wine');

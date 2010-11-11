@@ -71,7 +71,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
       t('Init mails match'));
     $this->assertEqual($users['darren']->signature, $rows['darren']->sig,
       t('Signatures match'));
-    $this->assertEqual($users['darren']->signature_format, $migration->basicFormat,
+    $this->assertEqual($users['darren']->signature_format, $migration->basicFormat->format,
       t('Signature formats match'));
     $this->assertEqual($users['darren']->field_migrate_example_gender[LANGUAGE_NONE][0]['value'],
       0, t('Male gender migrated'));

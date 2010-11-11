@@ -14,10 +14,10 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('dbtng', 'autoload', 'taxonomy', 'content', 'text', 'number',
+    parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
        'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
        'migrate', 'migrate_extras', 'migrate_example', 'comment');
-    autoload_flush_caches();
+    autoload_registry_update();
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',
       'administer nodes', 'create page content', 'delete any page content',

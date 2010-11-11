@@ -50,7 +50,7 @@ class MigrateSQLMap extends MigrateMap {
   protected $ensured;
 
   public function __construct($machine_name, array $source_key,
-      array $destination_key, $connection_key = 'default') {
+      array $destination_key, $connection_key = 'default', $migration = NULL) {
     // Default generated table names
     $this->mapTable = 'migrate_map_' . drupal_strtolower($machine_name);
     $this->messageTable = 'migrate_message_' . drupal_strtolower($machine_name);
@@ -68,13 +68,17 @@ class MigrateSQLMap extends MigrateMap {
     foreach ($destination_key as $field => $schema) {
       $this->destinationKeyMap[$field] = 'destid' . $count++;
     }
-    $this->ensureTables();
+
+    $this->ensureTables($migration);
   }
 
   /**
    * Create the map and message tables if they don't already exist.
    */
-  protected function ensureTables() {
+  protected function ensureTables($migration = NULL) {
+    if (!$migration) {
+      $migration = Migration::currentMigration();
+    }
     if (!$this->ensured) {
       if (!dbtng_table_exists($this->mapTable)) {
         // Generate appropriate schema info for the map and message tables,

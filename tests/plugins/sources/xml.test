@@ -17,7 +17,7 @@ class MigrateXMLUnitTest extends DrupalWebTestCase {
     parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
       'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
       'migrate', 'migrate_extras', 'migrate_example');
-    autoload_flush_caches();
+    autoload_registry_update();
 
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',

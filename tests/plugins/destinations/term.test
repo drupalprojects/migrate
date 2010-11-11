@@ -17,7 +17,7 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
       'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
       'migrate', 'migrate_extras', 'migrate_example');
-    autoload_flush_caches();
+    autoload_registry_update();
   }
 
   function testTermImport() {
@@ -47,7 +47,10 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     foreach ($result as $row) {
       $rows[$row->name] = $row;
     }
-    $this->assertEqual(count($terms), count($rows), t('Counts of variety terms and input rows match'));
+    if (!$this->assertEqual(count($terms), count($rows), t('Counts of variety terms and input rows match'))) {
+      $this->error(t('!terms of !rows rows successfully migrated',
+        array('!terms' => count($terms), '!rows' => count($rows))));
+    }
 
     // Test each base term field
     $this->assert(isset($terms['Merlot']) && isset($rows['Merlot']),
@@ -68,11 +71,12 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     foreach ($tempterms as $tid => $term) {
       $original_terms[$tid] = clone $term;
     }
-
     $update_migration = Migration::getInstance('WineVarietyUpdatesMigration');
+
     $result = $update_migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine variety term updates import returned RESULT_COMPLETED'));
+
     // We can't use taxonomy_get_tree again, because it cached everything the first
     // time and there's no way to reset it - we must fetch each term with a cache reset,
     // and we will ignore the depth and parent fields which are populated by taxonomy_get_tree

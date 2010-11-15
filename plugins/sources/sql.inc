@@ -244,7 +244,7 @@ class MigrateSourceSQL extends MigrateSource {
     }
     else {
       $highwaterField = $migration->getHighwaterField();
-      $this->usingHighwater = isset($highwaterField['name']) && $highwater = $migration->getHighwater();
+      $this->usingHighwater = isset($highwaterField['name']);
       if ($this->usingHighwater) {
         $this->mapJoinable = FALSE;
       }

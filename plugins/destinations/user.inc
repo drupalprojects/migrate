@@ -113,6 +113,19 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       if (!isset($account->uid)) {
         $account->uid = NULL;
       }
+      if (!isset($account->status)) {
+        $account->status = 1;
+      }
+    }
+    
+    // Convert core date columns to unix timestamp as needed.
+    foreach (array('created', 'access', 'login') as $property) {
+      if (isset($account->$property)) {
+        $account->$property = MigrationBase::timestamp($node->$property);
+      }
+      else {
+        $account->$property = $_SERVER['REQUEST_TIME'];
+      }
     }
 
     $this->prepare($account, $row);

@@ -352,7 +352,7 @@ abstract class Migration extends MigrationBase {
     // TODO: What about partial rollbacks? Probably little we can do to make
     // that work cleanly...
     if ($this->highwaterField) {
-      $this->saveHighwater('');
+      $this->saveHighwater('', TRUE);
     }
     return $return;
   }

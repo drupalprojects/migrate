@@ -405,14 +405,19 @@ abstract class MigrationBase {
    * Save the highwater mark for this migration (but not when using an idlist).
    *
    * @param mixed $highwater
+   *  Highwater mark to save
+   * @param boolean $force
+   *  If TRUE, save even if it's lower than the previous value.
    */
-  protected function saveHighwater($highwater) {
+  protected function saveHighwater($highwater, $force = FALSE) {
     if (!isset($this->options['idlist'])) {
-      db_update('migrate_status')
-      ->fields(array('highwater' => $highwater))
-      ->condition('machine_name', $this->machineName)
-      ->condition('highwater', $highwater, '<')
-      ->execute();
+      $query = db_update('migrate_status')
+               ->fields(array('highwater' => $highwater))
+               ->condition('machine_name', $this->machineName);
+      if (!$force) {
+        $query->condition('highwater', $highwater, '<');
+      }
+      $query->execute();
     }
   }
 

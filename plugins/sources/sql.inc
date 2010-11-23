@@ -302,7 +302,7 @@ class MigrateSourceSQL extends MigrateSource {
         }
       }
     }
-$migration->messages[] = (string)$this->query;
+
     migrate_instrument_start('MigrateSourceSQL execute');
     $this->result = $this->query->execute();
     migrate_instrument_stop('MigrateSourceSQL execute');
@@ -330,9 +330,7 @@ $migration->messages[] = (string)$this->query;
     // get next row
     migrate_instrument_start('MigrateSourceSQL next');
     $map = $migration->getMap();
-    $migration->messages[] = 'fetching first object';
     while ($this->currentRow = $this->result->fetchObject()) {
-      $migration->messages[] = 'currentRow: '.print_r($this->currentRow, TRUE);
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }

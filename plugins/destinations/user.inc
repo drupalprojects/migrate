@@ -119,14 +119,14 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     }
 
     // Convert core date columns to unix timestamp as needed.
-/*    foreach (array('created', 'access', 'login') as $property) {
+    foreach (array('created', 'access', 'login') as $property) {
       if (isset($account->$property)) {
         $account->$property = MigrationBase::timestamp($account->$property);
       }
       else {
         $account->$property = $_SERVER['REQUEST_TIME'];
       }
-    }*/
+    }
 
     $this->prepare($account, $row);
     migrate_instrument_start('user_save');

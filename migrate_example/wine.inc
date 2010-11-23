@@ -169,12 +169,9 @@ class WineUserMigration extends AdvancedExampleMigration {
     // Mapped fields
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('status', 'status');
-    $this->addFieldMapping('created', 'posted')
-         ->description('See prepare method');
-    $this->addFieldMapping('access', 'last_access')
-         ->description('See prepare method');
-    $this->addFieldMapping('login', 'last_login')
-         ->description('See prepare method');
+    $this->addFieldMapping('created', 'posted');
+    $this->addFieldMapping('access', 'last_access');
+    $this->addFieldMapping('login', 'last_login');
     $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('pass', 'password');
     $this->addFieldMapping('roles')
@@ -195,15 +192,6 @@ class WineUserMigration extends AdvancedExampleMigration {
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('picture')
          ->issueGroup(t('DNM'));
-  }
-
-  public function prepare(stdClass $account, stdClass $row) {
-    // Source dates are in ISO format.
-    // Because the mappings above have been applied, $account->created contains
-    // the date/time string now - we could also pass $row->posted here.
-    $account->created = strtotime($account->created);
-    $account->access = strtotime($account->access);
-    $account->login = strtotime($account->login);
   }
 }
 

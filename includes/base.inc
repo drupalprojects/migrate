@@ -411,6 +411,7 @@ abstract class MigrationBase {
       db_update('migrate_status')
       ->fields(array('highwater' => $highwater))
       ->condition('machine_name', $this->machineName)
+      ->condition('highwater', $highwater, '<')
       ->execute();
     }
   }

@@ -53,7 +53,7 @@ class MigrateListXML extends MigrateList {
       foreach (libxml_get_errors() as $error) {
         $migration->showMessage($error);
       }
-      return NULL;
+      return array();
     }
   }
 

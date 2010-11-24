@@ -73,8 +73,6 @@ function migrate_handler_invoke_all($destination, $method) {
  * If any handlers have dependencies defined, they will be invoked after
  * the specified handlers.
  *
- * @param $migration
- *  Migration object representing the current migration
  * @param $entity
  *  The object we are building up before calling example_save().
  * @param $instance

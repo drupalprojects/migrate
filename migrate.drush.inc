@@ -26,7 +26,7 @@ function migrate_drush_help($section) {
     case 'drush:migrate-fields-source':
       return dt('List the fields available for mapping from a source');
     case 'drush:migrate-descriptions':
-      return db('View descriptions for a migration and all its mappings');
+      return dt('View descriptions for a migration and all its mappings');
     case 'drush:migrate-wipe':
       return dt('Delete all nodes from specified content types.');
   }
@@ -501,11 +501,11 @@ function drush_migrate_rollback($args = NULL) {
 
 function drush_migrate_get_migrations($args) {
   static $migration_objects;
-  
+
   if ($start = drush_get_option('all')) {
     // Handle custom first migration when --all=foo is supplied.
     $seen = $start === TRUE ? TRUE : FALSE;
-    
+
     $migration_objects = migrate_migrations();
     foreach ($migration_objects as $name => $migration) {
       if (!$seen && (strtolower($start) . 'migration' == strtolower($name))) {
@@ -567,7 +567,7 @@ function drush_migrate_validate_common($args) {
     if (empty($args)) {
       return drush_set_error(NULL, dt('You must specify either a migration name or the -all option'));
     }
-    $machine_names = explode(',', $args);
+    $machine_names = explode(',', strtolower($args));
 
     foreach ($machine_names as $machine_name) {
       if (!class_exists($machine_name . 'Migration')) {

@@ -1,16 +1,11 @@
 Differences visible to users/implementors:
 
-Migration names (BeerUser etc.) must be typed case-sensitively in drush commands
-in D6 - D7 is case-insensitive.
-
 Field handlers have no $field_info parameter in D6
 
 D6 has no machine names for vocabularies - the D6 migrate module will basically
 generate one from the the user-visible name (lower-case, spaces=>underscores),
 there is a small risk of collision as a result if vocabulary names differ only
 in punctuation and/or case.
-
-migrate_ui does not support vertical tabs on migration detail pages on D6.
 
 
 Conventions to make porting changes between Drupal 6 and Drupal 7 easier:
@@ -37,10 +32,10 @@ Core/PHP requirements
 
 *.install:
 D6 requires explicit install/uninstall of schema
+D6 implements hook_requirements() to verify autoload 2 is present.
 
 migrate.drush.inc:
 Rollback/wipe need to run as uid 1 in D6
-Class name matching is case-sensitive with D6
 
 migrate.info:
 D6 dependent on autoload/dbtng
@@ -54,8 +49,7 @@ migrate_field_handler_invoke_all() has no $field_info parameter in D6
 migrate_watchdog() disabled in D6 (review)
 
 includes/base.inc:
-Class name matching is case-sensitive with D6
-No second chance (drupal_static_reset) in D6
+No second chance (drupal_static_reset) on low memory in D6
 
 plugins/destinations/comment.inc:
 Field differences: timestamp vs. created/changed

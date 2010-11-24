@@ -40,7 +40,7 @@ abstract class MigrateDestination {
    * items.
    *
    * $ids is an array of single-field keys to be deleted
-   * abstract public function bulkRollback(Migration array $ids);
+   * abstract public function bulkRollback(array $ids);
    *
    * $key is an array of fields keying a single entry to delete
    * abstract public function rollback(array $key);

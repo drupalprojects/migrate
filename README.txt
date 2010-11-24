@@ -1,25 +1,41 @@
 $Id$
 
-The Migrate module provides a flexible framework for migrating content into Drupal from other
-sources (e.g., when converting a web site from another CMS to Drupal). Out-of-the-box, support 
-for creating Drupal nodes, fields, comments, url aliases, users+profiles and roles are included. 
-Plugins permit migration of other types of content.
+The Migrate module provides a flexible framework for migrating content into Drupal 
+from other sources (e.g., when converting a web site from another CMS to Drupal). 
+Out-of-the-box, support for creating Drupal nodes, taxonomy terms, comments, and 
+users are included. Plugins permit migration of other types of content.
+
+Requirements
+------------
+Migrate 2 on Drupal 6 requires the autoload (version 2.x) and dbtng modules.
 
 Usage
-----------------
+-----
 For now, all we offer is documentation by example. Enable the migrate_example module and browse to 
 admin/migrate to see its dashboard. The data for this migration is in migrate_example/beer.inc.
 Mimic that file in order to specify your own migrations. All imports/rollbacks/etc. are initiated
 by drush commands.
 
+The Migrate module itself has support for migration into core objects. Support
+for migration involving contrib modules is in the migrate_extras module. The exceptions
+to this is CCK - because the equivalent (Field API) is implemented in core for
+Drupal 7, to ease maintaining both D6 and D7 implementations of Migrate 2 the
+CCK support is builtin under Drupal 6.
+
+Upgrading
+---------
+Do not attempt to upgrade directly from Migrate 1 to Migrate 2! There is no
+automated path to upgrade - you migrations (formerly known as "content sets")
+must be reimplemented from scratch. It is recommended that projects using
+Migrate 1 stay with Migrate 1, and that Migrate 2 be used for any new migration
+projects.
+
 Acknowledgements 
 ----------------
-
 Much of the Migrate module functionality was sponsored by Cyrve, for its clients GenomeWeb 
 (http://www.genomeweb.com), The Economist (http://www.economist.com), and Examiner.com 
-(http://www.examiner.com). The original code was based on node_import.
+(http://www.examiner.com). 
 
 Author
 ------
-
 Mike Ryan - http://drupal.org/user/4420

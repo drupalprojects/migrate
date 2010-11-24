@@ -257,8 +257,8 @@ abstract class MigrationBase {
    * Return the instance of the given class.
    */
   static public function getInstance($class_name) {
-    // With D6 autoload module, we need case to match exactly
-//    $class_name = strtolower($class_name);
+    // Otherwise might miss cache hit on case difference
+    $class_name = strtolower($class_name);
      if (!isset(self::$migrations[$class_name])) {
       self::$migrations[$class_name] = new $class_name;
     }

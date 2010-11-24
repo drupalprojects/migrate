@@ -19,6 +19,7 @@ files[] = includes/map.inc
 files[] = includes/source.inc
 files[] = includes/team.inc
 files[] = plugins/destinations/entity.inc
+files[] = plugins/destinations/fields.inc
 files[] = plugins/destinations/term.inc
 files[] = plugins/destinations/user.inc
 files[] = plugins/destinations/node.inc

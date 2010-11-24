@@ -141,6 +141,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Set some required properties.
     // Set type before invoking prepare handlers - they may take type-dependent actions.
     $node->type = $this->bundle;
+    $type_info = node_get_types('type', $node->type);
 
     // Save changed timestamp and set it later, node_save sets it unconditionally
     if (isset($node->changed)) {
@@ -149,6 +150,11 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
     if (isset($node->created)) {
       $node->created = MigrationBase::timestamp($node->created);
+    }
+    
+    // Generate teaser from Body if teaser not specified and Body is in use.
+    if ($type_info->has_body && empty($node->teaser) && !empty($node->body)) {
+      $node->teaser = node_teaser($node->body);
     }
 
     // Invoke migration prepare handlers

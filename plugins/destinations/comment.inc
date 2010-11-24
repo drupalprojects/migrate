@@ -136,12 +136,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       if (!isset($comment->nid)) {
         $comment->nid = $old_comment->nid;
       }
-      if (!isset($comment->created)) {
-        $comment->created = $old_comment->created;
-      }
-      if (!isset($comment->changed)) {
-        $comment->changed = $old_comment->changed;
-      }
       $this->prepare($comment, $row);
       foreach ($rawcomment as $field => $value) {
         $old_comment->$field = $comment->$field;
@@ -176,7 +170,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     if (isset($comment->hostname)) {
       $hostname = $comment->hostname;
     }
-    
+
     // Convert to unix timestamp as needed
     if (isset($comment->timestamp)) {
       $comment->timestamp = MigrationBase::timestamp($comment->timestamp);

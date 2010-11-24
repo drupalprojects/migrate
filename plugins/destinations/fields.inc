@@ -217,9 +217,22 @@ class MigrateDateFieldHandler extends MigrateFieldHandler {
   }
 }
 
-// Just inherit everything from text.
-class MigrateEmailFieldHandler extends MigrateTextFieldHandler {
+class MigrateEmailFieldHandler extends MigrateFieldHandler {
   public function __construct() {
     $this->registerTypes(array('email'));
+  }
+  
+  // Copied from ValueFieldHandler::prepare except the propname is email.
+  public function prepare(stdClass $entity, array $instance, array $values) {
+    // Setup the standard Field API array for saving.
+    $delta = 0;
+    foreach ($values as $value) {
+      $return[$delta]['email'] = $value;
+      $delta++;
+    }
+    if (!isset($return)) {
+      $return = NULL;
+    }
+    return $return;
   }
 }

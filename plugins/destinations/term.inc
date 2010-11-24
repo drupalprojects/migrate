@@ -157,7 +157,12 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         }
         unset($term->parent_name);
       }
-      if (!isset($term->parent)) {
+      if (is_array($term->parent['arguments'])) {
+        // Unset arguments here to avoid duplicate entries in the
+        // term_hierarchy table.
+        unset($term->parent['arguments']);
+      }
+      if (empty($term->parent)) {
         $term->parent = 0;
       }
       if (!isset($term->format)) {

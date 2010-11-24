@@ -501,11 +501,11 @@ function drush_migrate_rollback($args = NULL) {
 
 function drush_migrate_get_migrations($args) {
   static $migration_objects;
-  
+
   if ($start = drush_get_option('all')) {
     // Handle custom first migration when --all=foo is supplied.
     $seen = $start === TRUE ? TRUE : FALSE;
-    
+
     $migration_objects = migrate_migrations();
     foreach ($migration_objects as $name => $migration) {
       if (!$seen && (strtolower($start) . 'migration' == strtolower($name))) {

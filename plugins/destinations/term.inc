@@ -158,6 +158,11 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->parent = $tids[0];
         unset($term->parent_name);
       }
+      if (is_array($term->parent['arguments'])) {
+        // Unset arguments here to avoid duplicate entries in the
+        // term_hierarchy table.
+        unset($term->parent['arguments']);
+      }
       if (!isset($term->parent)) {
         $term->parent = array(0);
       }

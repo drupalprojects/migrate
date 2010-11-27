@@ -90,7 +90,7 @@ function _migrate_dashboard_form($form_state) {
                                              WHERE level=%d",
                                             MIGRATE_MESSAGE_WARNING));
           if ($numwarnings > 0) {
-            if (modules_exists('tw')) {
+            if (module_exists('tw')) {
               $messages .= l(format_plural($numwarnings, '1&nbsp;warning', '@count&nbsp;warnings'),
                 "admin/content/tw/view/$msgtablename/" . MIGRATE_MESSAGE_WARNING,
                 array('html' => TRUE));

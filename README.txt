@@ -17,7 +17,7 @@ Mimic that file in order to specify your own migrations. All imports/rollbacks/e
 by drush commands.
 
 The Migrate module itself has support for migration into core objects. Support
-for migration involving contrib modules is in the migrate_extras module. The exceptions
+for migration involving contrib modules is in the migrate_extras module. The exception
 to this is CCK - because the equivalent (Field API) is implemented in core for
 Drupal 7, to ease maintaining both D6 and D7 implementations of Migrate 2 the
 CCK support is builtin under Drupal 6.
@@ -25,7 +25,7 @@ CCK support is builtin under Drupal 6.
 Upgrading
 ---------
 Do not attempt to upgrade directly from Migrate 1 to Migrate 2! There is no
-automated path to upgrade - you migrations (formerly known as "content sets")
+automated path to upgrade - your migrations (formerly known as "content sets")
 must be reimplemented from scratch. It is recommended that projects using
 Migrate 1 stay with Migrate 1, and that Migrate 2 be used for any new migration
 projects.

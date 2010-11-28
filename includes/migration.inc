@@ -220,12 +220,8 @@ abstract class Migration extends MigrationBase {
   /**
    * Override MigrationBase::endProcess, to call post hooks. Note that it must
    * be public to be callable as the shutdown function.
-   *
-   * @param integer $overallThroughput
-   *  Throughput for the entire import. Should be 0 except
-   *  at final completion of an import process.
    */
-  public function endProcess($overallThroughput = 0) {
+  public function endProcess() {
     // Call post-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
       if (method_exists($this->destination, 'postImport')) {
@@ -238,7 +234,7 @@ abstract class Migration extends MigrationBase {
       }
     }
 
-    parent::endProcess($overallThroughput);
+    parent::endProcess();
   }
 
   /**

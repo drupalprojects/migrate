@@ -9,6 +9,7 @@
 function migrate_schema() {
   $schema = array();
   $schema['migrate_status'] = migrate_schema_status();
+  $schema['migrate_log'] = migrate_schema_log();
   return $schema;
 }
 
@@ -30,12 +31,6 @@ function migrate_schema_status() {
         'default' => 0,
         'description' => 'Current status of migration',
       ),
-      'lastimportedtime' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => FALSE,
-        'description' => 'Date and time of last completed import',
-      ),
       'highwater' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -43,13 +38,68 @@ function migrate_schema_status() {
         'default' => '',
         'description' => 'Highwater mark for detecting updated content',
       ),
-      'lastthroughput' => array(
-        'type' => 'int',
-        'not null' => FALSE,
-        'description' => 'Rate of success during most recent completed import (# per minute)',
-      ),
     ),
     'primary key' => array('machine_name'),
+  );
+}
+
+function migrate_schema_log() {
+  return array(
+    'description' => 'History of migration processes',
+    'fields' => array(
+      'mlid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key for migrate_log table',
+      ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique machine name for migration',
+      ),
+      'process_type' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Type of migration process - 1 for import, 2 for rollback',
+      ),
+      'starttime' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Begin time of a migration process, times 1000',
+      ),
+      'endtime' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'End time of a migration process, times 1000',
+      ),
+      'initialhighwater' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Initial highwater mark',
+      ),
+      'finalhighwater' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Final highwater mark',
+      ),
+      'numprocessed' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'Number of items processed',
+      ),
+    ),
+    'primary key' => array('mlid'),
   );
 }
 
@@ -130,5 +180,16 @@ function migrate_update_6001() {
   db_drop_field($ret, 'migrate_status', 'lastimported');
 
   $ret[] = t('Converted lastimported datetime field to lastimportedtime int field');
+  return $ret;
+}
+
+/**
+ * Add support for history logging
+ */
+function migrate_update_6002() {
+  $ret = array();
+  db_create_table($ret, 'migrate_log', migrate_schema_log());
+  db_drop_field($ret, 'migrate_status', 'lastthroughput');
+  db_drop_field($ret, 'migrate_status', 'lastimportedtime');
   return $ret;
 }

@@ -86,6 +86,29 @@ abstract class MigrationBase {
   protected $starttime;
 
   /**
+   * Whether to maintain a history of migration processes in migrate_log
+   *
+   * @var boolean
+   */
+  protected $logHistory = TRUE;
+
+  /**
+   * Primary key of the current history record (inserted at the beginning of
+   * a process, to be updated at the end)
+   *
+   * @var int
+   */
+  protected $logID;
+
+  /**
+   * Number of "items" processed in the current migration process (whatever that
+   * means for the type of process)
+   *
+   * @var int
+   */
+  protected $total_processed = 0;
+
+  /**
    * List of other Migration classes which should be imported before this one.
    * E.g., a comment migration class would typically have node and user migrations
    * as dependencies.
@@ -372,13 +395,15 @@ abstract class MigrationBase {
    *  Date/time string, formatted... How? Default DB server format?
    */
   public function getLastImported() {
-    $last_imported = db_select('migrate_status', 'ms')
-              ->fields('ms', array('lastimportedtime'))
+    $last_imported = db_select('migrate_log', 'ml')
+              ->fields('ml', array('endtime'))
               ->condition('machine_name', $this->machineName)
+              ->isNotNull('endtime')
+              ->orderBy('endtime', 'DESC')
               ->execute()
               ->fetchField();
     if ($last_imported) {
-      $last_imported = date('Y-m-d H:i:s', $last_imported);
+      $last_imported = date('Y-m-d H:i:s', $last_imported/1000);
     }
     else {
       $last_imported = '';
@@ -426,11 +451,21 @@ abstract class MigrationBase {
    * @return integer
    */
   public function getLastThroughput() {
-    $last_throughput = db_select('migrate_status', 'ms')
-              ->fields('ms', array('lastthroughput'))
+    $last_throughput = 0;
+    $row = db_select('migrate_log', 'ml')
+              ->fields('ml', array('starttime', 'endtime', 'numprocessed'))
               ->condition('machine_name', $this->machineName)
+              ->condition('process_type', 1)
+              ->isNotNull('endtime')
+              ->orderBy('starttime', 'DESC')
               ->execute()
-              ->fetchField();
+              ->fetchObject();
+    if ($row) {
+      $elapsed = ($row->endtime - $row->starttime)/1000;
+      if ($elapsed > 0) {
+        $last_throughput = round(($row->numprocessed / $elapsed) * 60);
+      }
+    }
     return $last_throughput;
   }
 
@@ -490,6 +525,18 @@ abstract class MigrationBase {
       $this->previousErrorHandler = set_error_handler(array($this, 'errorHandler'));
     }
 
+    // Save the initial history record
+    if ($this->logHistory) {
+      $this->logID = db_insert('migrate_log')
+                     ->fields(array(
+                       'machine_name' => $this->machineName,
+                       'process_type' => $newStatus,
+                       'starttime' => microtime(TRUE) * 1000,
+                       'initialHighwater' => $this->getHighwater(),
+                       ))
+                     ->execute();
+    }
+
     // And capture anything the DB tries to log to the watchdog
     // TODO: Broken by http://drupal.org/node/711108 - what to do?
     //Database::setLoggingCallback(array($this, 'loggingCallback'), WATCHDOG_NOTICE, WATCHDOG_ERROR);
@@ -498,10 +545,6 @@ abstract class MigrationBase {
   /**
    * End a rollback or import process, releasing the semaphore. Note that it must
    * be public to be callable as the shutdown function.
-   *
-   * @param integer $overallThroughput
-   *  Throughput for the entire import. Should be 0 except
-   *  at final completion of an import process.
    */
   public function endProcess($overallThroughput = 0) {
     if ($this->previousErrorHandler) {
@@ -511,14 +554,23 @@ abstract class MigrationBase {
     if ($this->processing) {
       $this->status = MigrationBase::STATUS_IDLE;
       $fields = array('status' => MigrationBase::STATUS_IDLE);
-      if ($overallThroughput) {
-        $fields['lastimportedtime'] = time();
-        $fields['lastthroughput'] = $overallThroughput;
-      }
       db_merge('migrate_status')
         ->key(array('machine_name' => $this->machineName))
         ->fields($fields)
         ->execute();
+
+      // Complete the log record
+      if ($this->logHistory) {
+        db_merge('migrate_log')
+          ->key(array('mlid' => $this->logID))
+          ->fields(array(
+            'endtime' => microtime(TRUE) * 1000,
+            'finalhighwater' => $this->getHighwater(),
+            'numprocessed' => $this->total_processed,
+          ))
+          ->execute();
+      }
+
       $this->processing = FALSE;
     }
     self::$currentMigration = NULL;

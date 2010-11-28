@@ -18,7 +18,7 @@ for migration involving contrib modules is in the migrate_extras module.
 Upgrading
 ---------
 Do not attempt to upgrade directly from Migrate 1 to Migrate 2! There is no
-automated path to upgrade - you migrations (formerly known as "content sets")
+automated path to upgrade - your migrations (formerly known as "content sets")
 must be reimplemented from scratch. It is recommended that projects using
 Migrate 1 stay with Migrate 1, and that Migrate 2 be used for any new migration
 projects.

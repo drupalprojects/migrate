@@ -76,14 +76,14 @@ function migrate_ui_dashboard() {
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
     $row['machinename'] =
-      l($machine_name, 'admin/migrate/' . $machine_name);
+      l($machine_name, 'admin/content/migrate/' . $machine_name);
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     $row['unimported'] = $unimported;
 
     if (is_subclass_of($migration, 'Migration')) {
       $num_messages = $migration->messageCount();
-      $row['messages'] = $num_messages ? l($num_messages, 'admin/migrate/messages/' . $machine_name) : 0;
+      $row['messages'] = $num_messages ? l($num_messages, 'admin/content/migrate/messages/' . $machine_name) : 0;
     }
     else {
       $row['messages'] = t('N/A');
@@ -175,7 +175,6 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
 
   $has_mappings = method_exists($migration, 'getFieldMappings');
-
   $form = array();
 
   if ($has_mappings) {
@@ -202,7 +201,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     );
   }
 
-  $form['detail']['overview'] = array(
+  $form['overview'] = array(
     '#type' => 'fieldset',
     '#title' => t('Overview'),
     '#group' => 'detail',
@@ -216,7 +215,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
 
   foreach ($team as $group => $list) {
-    $form['detail']['overview'][$group] = array(
+    $form['overview'][$group] = array(
       '#theme' => 'item_list',
       '#title' => $group,
       '#attributes' => array('id' => 'team'),
@@ -226,7 +225,7 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   $dependencies = $migration->getHardDependencies();
   if (count($dependencies) > 0) {
-    $form['detail']['overview']['dependencies'] = array(
+    $form['overview']['dependencies'] = array(
       '#prefix' => '<div>',
       '#markup' => '<strong>' . t('Dependencies: ') . '</strong>' .
          implode(', ', $dependencies),
@@ -235,7 +234,7 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
   $soft_dependencies = $migration->getSoftDependencies();
   if (count($soft_dependencies) > 0) {
-    $form['detail']['overview']['soft_dependencies'] = array(
+    $form['overview']['soft_dependencies'] = array(
       '#prefix' => '<div>',
       '#markup' => '<strong>' . t('Soft Dependencies: ') . '</strong>' .
          implode(', ', $soft_dependencies),
@@ -255,14 +254,14 @@ function migrate_migration_info($form, $form_state, $migration) {
         $system_of_record = t('Unknown');
         break;
     }
-    $form['detail']['overview']['system_of_record'] = array(
+    $form['overview']['system_of_record'] = array(
       '#prefix' => '<div>',
       '#markup' => '<strong>' . t('System of record: ') . '</strong>' . $system_of_record,
       '#suffix' => '</div>',
     );
   }
 
-  $form['detail']['overview']['description'] = array(
+  $form['overview']['description'] = array(
     '#prefix' => '<div>',
     '#markup' => $migration->getDescription(),
     '#suffix' => '</div>',
@@ -270,7 +269,7 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   if ($has_mappings) {
     // Destination field information
-    $form['detail']['destination'] = array(
+    $form['destination'] = array(
       '#type' => 'fieldset',
       '#title' => t('Destination'),
       '#group' => 'detail',
@@ -281,7 +280,7 @@ function migrate_migration_info($form, $form_state, $migration) {
            class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
     );
     $destination = $migration->getDestination();
-    $form['detail']['destination']['type'] = array(
+    $form['destination']['type'] = array(
       '#type' => 'item',
       '#title' => t('Type'),
       '#markup' => (string)$destination,
@@ -303,7 +302,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     }
     $classes = array();
 
-    $form['detail']['destination']['fields'] = array(
+    $form['destination']['fields'] = array(
       '#theme' => 'table',
       '#header' => $header,
       '#rows' => $rows,
@@ -311,7 +310,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     );
 
     // TODO: Get source_fields from arguments
-    $form['detail']['source'] = array(
+    $form['source'] = array(
       '#type' => 'fieldset',
       '#title' => t('Source'),
       '#group' => 'detail',
@@ -322,7 +321,7 @@ function migrate_migration_info($form, $form_state, $migration) {
            class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
     );
     $source = $migration->getSource();
-    $form['detail']['source']['query'] = array(
+    $form['source']['query'] = array(
       '#type' => 'item',
       '#title' => t('Query'),
       '#markup' => '<pre>' . $source . '</pre>',
@@ -343,7 +342,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     }
     $classes = array();
 
-    $form['detail']['source']['fields'] = array(
+    $form['source']['fields'] = array(
       '#theme' => 'table',
       '#header' => $header,
       '#rows' => $rows,
@@ -378,7 +377,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     $rows = array();
     $count = 0;
     foreach ($descriptions as $group => $mappings) {
-      $form['detail'][$group] = array(
+      $form[$group] = array(
         '#type' => 'fieldset',
         '#title' => t('Mapping: ') . $group,
         '#group' => 'detail',
@@ -418,7 +417,7 @@ function migrate_migration_info($form, $form_state, $migration) {
         $rows[] = $row;
         $classes = array();
       }
-      $form['detail'][$group]['table'] = array(
+      $form[$group]['table'] = array(
         '#theme' => 'table',
         '#header' => $header,
         '#rows' => $rows,

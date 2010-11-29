@@ -8,7 +8,7 @@
 
 class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
   public function __construct() {
-    $this->registerTypes(array('entity'));
+    $this->registerTypes(array('entity', 'node', 'user', 'comment', 'taxonomy_term'));
   }
 
   public function fields($entity_type, $bundle) {

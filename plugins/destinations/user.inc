@@ -109,10 +109,6 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       }
     }
     else {
-      // Prevents notice in user_save()
-      if (!isset($account->uid)) {
-        $account->uid = NULL;
-      }
       if (!isset($account->status)) {
         $account->status = 1;
       }

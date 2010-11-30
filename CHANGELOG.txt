@@ -1,6 +1,13 @@
 //$Id$
 
+Migrate 2.0 Beta 2
+==================
+Features and enhancements
+
+Bug fixes
+- #940984 - Migrate Example BeerUser is broken -- tries to insert '' into users.uid
+
 Migrate 2.0 Beta 1
-===========
+==================
 Version 2 of the Migrate module is an entirely new implementation - it is 
 pointless to list changes since Migrate 1.

@@ -226,3 +226,15 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     }
   }
 }
+
+class MigrateCommentNodeHandler extends MigrateDestinationHandler {
+  public function __construct() {
+    $this->registerTypes(array('node'));
+  }
+
+  public function fields($entity_type, $bundle) {
+    $fields = array();
+    $fields['comment'] = t('Whether comments may be posted to the node');
+    return $fields;
+  }
+}

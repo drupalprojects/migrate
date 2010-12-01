@@ -156,10 +156,24 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     if ($type_info->has_body && empty($node->teaser) && !empty($node->body)) {
       $node->teaser = node_teaser($node->body);
     }
+    
+    // Set defaults as per content type settings. Can't call node_object_prepare()
+    // since that clobbers existing values.
+    $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
+    foreach (array('status', 'promote', 'sticky') as $key) {
+      if (!isset($node->$key)) {
+        $node->$key = in_array($key, $node_options);
+      }
+    }
+    if (!isset($node->comment) && module_exists('comment')) {
+      $node->comment = variable_get("comment_$node->type", COMMENT_NODE_READ_WRITE);
+    }
+    if (!isset($node->revision)) {
+      $node->revision = 0; // Saves disk space and writes. Can be overridden.
+    }
 
     // Invoke migration prepare handlers
     $this->prepare($node, $row);
-    $node->revision = 0; // Always create a new revision.
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');

@@ -173,7 +173,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     migrate_instrument_stop('node_save');
 
     if (isset($node->nid)) {
-      
+
       // Unfortunately, http://drupal.org/node/722688 was not accepted, so fix
       // the changed timestamp
       if (isset($changed)) {
@@ -183,7 +183,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
           ->execute();
         $node->changed = $changed;
       }
-      
+
       // Potentially fix uid and timestamp in node_revisions.
       $query = db_update('node_revision')
                  ->condition('vid', $node->vid);
@@ -200,7 +200,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         $node->timestamp = $changed;
       }
     }
-        
+
     $this->complete($node, $row);
     $return = isset($node->nid) ? array($node->nid) : FALSE;
     return $return;

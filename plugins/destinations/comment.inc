@@ -71,6 +71,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $fields['language'] = t('Comment: Language');
 
     // Then add in anything provided by handlers
+    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);
     $fields += migrate_handler_invoke_all('Comment', 'fields', $this->entityType, $this->bundle);
 
     return $fields;

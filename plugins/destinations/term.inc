@@ -52,6 +52,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $fields['parent'] = t('Term: Parent (by Drupal term ID)');
 
     // Then add in anything provided by handlers
+    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);
     $fields += migrate_handler_invoke_all('Term', 'fields', $this->entityType, $this->bundle);
 
     return $fields;

@@ -147,9 +147,11 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       // Nothing to do. We have tids already.
       $tids = $values;
     }
-    else {
+    elseif ($values) {
       // Get the vocabulary for this term
-      $vid = $field_info['settings']['allowed_values'][0]['vid'];
+      $name = $field_info['settings']['allowed_values'][0]['vocabulary'];
+      $names = taxonomy_vocabulary_get_names();
+      $vid = $names[$name]->vid;
 
       // Cannot use taxonomy_term_load_multiple() since we have an array of names.
       // It wants a singular value.
@@ -159,6 +161,9 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
         ->condition('td.vid', $vid)
         ->execute()
         ->fetchAllKeyed(0, 0);
+    }
+    else {
+      $tids = array();
     }
     $language = isset($arguments['language']) ?
       $arguments['language'] : $migration->getDestination()->getLanguage();

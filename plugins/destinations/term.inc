@@ -150,7 +150,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->vid = $vocab_map[$term->vocabulary_machine_name];
       }
       // Look up parent name if provided
-      if (isset($term->parent_name)) {
+      if (isset($term->parent_name) && trim($term->parent_name)) {
         // Look for the name in the same vocabulary.
         // Note that hierarchies may have multiples of the same name...
         $terms = taxonomy_term_load_multiple(array(),
@@ -159,7 +159,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->parent = $tids[0];
         unset($term->parent_name);
       }
-      if (is_array($term->parent['arguments'])) {
+      if (isset($term->parent) && is_array($term->parent['arguments'])) {
         // Unset arguments here to avoid duplicate entries in the
         // term_hierarchy table.
         unset($term->parent['arguments']);

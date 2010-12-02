@@ -236,4 +236,12 @@ class MigrateTermNodeHandler extends MigrateDestinationHandler {
       }
     }
   }
+  
+  /*
+   * @param
+   *   Can be 'tid'. Otherwise, 'name' is assumed.
+   */
+  static function arguments($source_type = NULL) {
+    return get_defined_vars();
+  }
 }

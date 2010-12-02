@@ -116,7 +116,7 @@ function migrate_drush_command() {
     'aliases' => array('mr'),
   );
   $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
-  $migration_options['--needs_update'] =
+  $migration_options['--needs-update'] =
     'Reimport up to 10K records where needs_update=1. This option is only needed when your Drupal DB is on a different DB server from your source data. Otherwise, these records get migrated with just migrate-import.';
   $migration_options['--stop'] = 'Stop specified migration(s) if applicable.';
   $migration_options['--rollback'] = 'Rollback specified migration(s) if applicable.';
@@ -656,7 +656,7 @@ function drush_migrate_import($args = NULL) {
       if (drush_get_option('update')) {
         $migration->prepareUpdate();
       }
-      if (drush_get_option('needs_update')) {
+      if (drush_get_option('needs-update')) {
         $needs_update = db_select('migrate_map_' . strtolower($machine_name), 'map')
                           ->fields('map', array('sourceid1'))
                           ->condition('needs_update', 1)

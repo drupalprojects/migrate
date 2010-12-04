@@ -1,9 +1,18 @@
 //$Id$
 
-Migrate 2.0 Beta 2
+Migrate 2.0 Beta 3
 ==================
 Features and enhancements
+Inherit default settings for promote, sticky, status, status from content type 
+  configuration. Already done in D7.
+Add arguments method for MigrateTermNodeHandler class
 
+Bug fixes
+- #984294 - Make migrate dashbard a local task.
+needs_update => needs-update to match drush conventions.
+
+Migrate 2.0 Beta 2
+==================
 Bug fixes
 - #940984 - Migrate Example BeerUser is broken -- tries to insert '' into users.uid
 

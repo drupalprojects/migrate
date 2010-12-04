@@ -1,12 +1,20 @@
 //$Id$
 
-Migrate 2.0 Beta 2
+Migrate 2.0 Beta 3
 ==================
 Features and enhancements
+Allow migration of comment enable/disable.
 
 Bug fixes
+- #984294 - Make migrate dashbard a local task.
+needs_update => needs-update to match drush conventions.
+- #959400 - Better way to get vid for vocabulary.
+
+Migrate 2.0 Beta 2
+==================
+Bug fixes
 - #984294 - Migration info pages are blank
-- #984336 - Additional fields and vocabularies not reported on migration info page.
+- #984336 - Additional fields and vocabularies not reported on migration info page
 
 Migrate 2.0 Beta 1
 ==================

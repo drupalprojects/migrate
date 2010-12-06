@@ -142,6 +142,10 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Set type before invoking prepare handlers - they may take type-dependent actions.
     $node->type = $this->bundle;
     $type_info = node_get_types('type', $node->type);
+    if (empty($node->nid)) {
+      // Avoids notice in forum module and maybe more - http://drupal.org/node/839770 is similar.
+      $node->nid = NULL; 
+    }
 
     // Save changed timestamp and set it later, node_save sets it unconditionally
     if (isset($node->changed)) {

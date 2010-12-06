@@ -195,6 +195,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
                  ->condition('vid', $node->vid);
       if (isset($changed)) {
         $fields['timestamp'] = $changed;
+        $node->timestamp = $changed;
       }
       if ($node->uid != $GLOBALS['user']->uid) {
         $fields['uid'] = $node->uid;
@@ -203,7 +204,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         // We actually have something to update.
         $query->fields($fields);
         $query->execute();
-        $node->timestamp = $changed;
       }
     }
     

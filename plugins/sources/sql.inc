@@ -304,6 +304,7 @@ class MigrateSourceSQL extends MigrateSource {
     }
 
     migrate_instrument_start('MigrateSourceSQL execute');
+    $migration->showMessage(dpq($this->query), 'debug');
     $this->result = $this->query->execute();
     migrate_instrument_stop('MigrateSourceSQL execute');
 

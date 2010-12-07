@@ -203,6 +203,7 @@ class MigrateSourceMSSQL extends MigrateSource {
 
     migrate_instrument_start('mssql_query');
     $this->connect();
+    $migration->showMessage($this->query, 'debug');
     $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
     migrate_instrument_stop('mssql_query');
 

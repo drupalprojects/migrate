@@ -8,6 +8,7 @@ Inherit default settings for promote, sticky, status, status from content type
 Add arguments method for MigrateTermNodeHandler class
 
 Bug fixes
+- #990960- Initialize fields array for profiles
 - #984294 - Make migrate dashbard a local task.
 needs_update => needs-update to match drush conventions.
 

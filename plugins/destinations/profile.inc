@@ -39,6 +39,7 @@ class MigrateProfileUserHandler extends MigrateDestinationHandler {
     if (module_exists('profile')) {
       static $fields;
       if (!isset($fields)) {
+        $fields = array();
         foreach (profile_categories() as $category) {
           $result = _profile_get_fields($category['name'], FALSE);
           while ($field = db_fetch_object($result)) {

@@ -123,6 +123,11 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         $account->$property = $_SERVER['REQUEST_TIME'];
       }
     }
+    
+    // Avoid a notice
+    if (!isset($account->uid)) {
+      $account->uid = NULL;
+    }
 
     $this->prepare($account, $row);
     migrate_instrument_start('user_save');

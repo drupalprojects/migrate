@@ -47,7 +47,7 @@ class WinePrepMigration extends MigrationBase {
     // case, we want the wine migrations to appear after the beer migrations -
     // without this line, they would be intermingled due to their lack of
     // (formal) interdependencies.
-    $this->softDependencies = array('BeerCommentMigration');
+    $this->softDependencies = array('BeerComment');
   }
   // Define isComplete(), returning a boolean, to indicate whether dependent
   // migrations may proceed
@@ -81,7 +81,7 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
   public function __construct($type, $vocabulary_name, $description) {
     parent::__construct();
     $this->description = $description;
-    $this->dependencies = array('WinePrepMigration');
+    $this->dependencies = array('WinePrep');
     $this->map = new MigrateSQLMap($this->machineName,
         array(
           'categoryid' => array('type' => 'int',
@@ -104,7 +104,7 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('description', 'details');
     $this->addFieldMapping('parent', 'category_parent')
-         ->sourceMigration(get_class($this));
+         ->sourceMigration($this->getMachineName());
     $this->addFieldMapping('weight', 'ordering');
     $this->addFieldMapping('format')
          ->defaultValue($this->basicFormat->format);
@@ -142,7 +142,7 @@ class WineUserMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine Drinkers of the world');
-    $this->dependencies = array('WinePrepMigration');
+    $this->dependencies = array('WinePrep');
     $this->map = new MigrateSQLMap($this->machineName,
         array('accountid' => array(
                 'type' => 'int',
@@ -225,7 +225,7 @@ class WineProducerMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine producers of the world');
-    $this->dependencies = array('WineRegionMigration', 'WineUserMigration');
+    $this->dependencies = array('WineRegion', 'WineUser');
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -253,10 +253,10 @@ class WineProducerMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('title', 'name')
          ->description(t('Mapping producer name in source to node title'));
     $this->addFieldMapping('uid', 'accountid')
-         ->sourceMigration('WineUserMigration')
+         ->sourceMigration('WineUser')
          ->defaultValue(1);
     $this->addFieldMapping('migrate_example_wine_regions', 'region')
-         ->sourceMigration('WineRegionMigration')
+         ->sourceMigration('WineRegion')
          ->arguments(array('source_type' => 'tid'));
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
     $this->addFieldMapping('body', 'body')
@@ -299,7 +299,7 @@ class WineProducerXMLMigration extends XMLMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('XML feed of wine producers of the world');
-    $this->dependencies = array('WineRegionMigration', 'WineUserMigration');
+    $this->dependencies = array('WineRegion', 'WineUser');
 
     // There isn't a consistent way to automatically identify appropriate "fields"
     // from an XML feed, so we pass an explicit list of source fields
@@ -348,7 +348,7 @@ class WineProducerXMLMigration extends XMLMigration {
          ->xpath('/producer/name');
     $this->addFieldMapping('uid', 'authorid')
          ->xpath('/producer/authorid')
-         ->sourceMigration('WineUserMigration')
+         ->sourceMigration('WineUser')
          ->defaultValue(1);
     $this->addFieldMapping('migrate_example_wine_regions', 'region')
          ->xpath('/producer/region');
@@ -362,8 +362,8 @@ class WineWineMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wines of the world');
-    $this->dependencies = array('WineVarietyMigration', 'WineRegionMigration',
-      'WineBestWithMigration', 'WineUserMigration', 'WineProducerMigration');
+    $this->dependencies = array('WineVariety', 'WineRegion',
+      'WineBestWith', 'WineUser', 'WineProducer');
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -422,21 +422,21 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('title', 'name')
          ->description(t('Mapping wine name in source to node title'));
     $this->addFieldMapping('uid', 'accountid')
-         ->sourceMigration('WineUserMigration')
+         ->sourceMigration('WineUser')
          ->defaultValue(1);
     // TIP: By default, term relationship are assumed to be passed by name.
     // In this case, the source values are IDs, so we specify the relevant
     // migration (so the tid can be looked up in the map), and tell the term
     // field handler that it is receiving tids instead of names
     $this->addFieldMapping('migrate_example_wine_varieties', 'variety')
-         ->sourceMigration('WineVarietyMigration')
+         ->sourceMigration('WineVariety')
          ->arguments(array('source_type' => 'tid'));
     $this->addFieldMapping('migrate_example_wine_regions', 'region')
-         ->sourceMigration('WineRegionMigration')
+         ->sourceMigration('WineRegion')
          ->arguments(array('source_type' => 'tid'));
     $this->addFieldMapping('migrate_example_wine_best_with', 'best_with')
          ->separator(',')
-         ->sourceMigration('WineBestWithMigration')
+         ->sourceMigration('WineBestWith')
          ->arguments(array('source_type' => 'tid'));
     $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
     $this->addFieldMapping('field_migrate_example_top_vintag', 'best_vintages');
@@ -493,7 +493,7 @@ class WineCommentMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about wines';
-    $this->dependencies = array('WineUserMigration', 'WineWineMigration');
+    $this->dependencies = array('WineUser', 'WineWine');
     $this->map = new MigrateSQLMap($this->machineName,
       array('commentid' => array(
               'type' => 'int',
@@ -518,12 +518,12 @@ class WineCommentMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
     $this->addFieldMapping('nid', 'wineid')
-         ->sourceMigration('WineWineMigration');
+         ->sourceMigration('WineWine');
     $this->addFieldMapping('uid', 'accountid')
-         ->sourceMigration('WineUserMigration')
+         ->sourceMigration('WineUser')
          ->defaultValue(0);
     $this->addFieldMapping('pid', 'comment_parent')
-         ->sourceMigration('WineCommentMigration')
+         ->sourceMigration('WineComment')
          ->description('Parent comment');
     $this->addFieldMapping('comment_body', 'body');
     $this->addFieldMapping('hostname', 'commenthost');
@@ -546,7 +546,7 @@ class WineFinishMigration extends MigrationBase {
     parent::__construct();
     $this->description = t('If auto_nodetitle is present and was previously enabled,
       re-enable it');
-    $this->dependencies = array('WineCommentMigration');
+    $this->dependencies = array('WineComment');
   }
   public function isComplete() {
     if (module_exists('auto_nodetitle')) {
@@ -577,8 +577,8 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Update wine ratings');
-    $this->dependencies = array('WineWineMigration');
-    $this->softDependencies = array('WineFinishMigration');
+    $this->dependencies = array('WineWine');
+    $this->softDependencies = array('WineFinish');
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -609,7 +609,7 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
     // has a source id, not a nid, we need to apply the original wine migration
     // mapping to populate the nid.
     $this->addFieldMapping('nid', 'wineid')
-         ->sourceMigration('WineWineMigration');
+         ->sourceMigration('WineWine');
     $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
 
     // No unmapped source fields
@@ -641,8 +641,8 @@ class WineCommentUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Update wine comments';
-    $this->dependencies = array('WineCommentMigration');
-    $this->softDependencies = array('WineUpdatesMigration');
+    $this->dependencies = array('WineComment');
+    $this->softDependencies = array('WineUpdates');
     $this->map = new MigrateSQLMap($this->machineName,
       array('commentid' => array(
               'type' => 'int',
@@ -660,7 +660,7 @@ class WineCommentUpdatesMigration extends AdvancedExampleMigration {
 
     // Mapped fields
     $this->addFieldMapping('cid', 'commentid')
-         ->sourceMigration('WineCommentMigration');
+         ->sourceMigration('WineComment');
     $this->addFieldMapping('subject', 'subject');
 
     // No unmapped source fields
@@ -688,8 +688,8 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Migrate varieties from the source database to taxonomy terms');
-    $this->dependencies = array('WineVarietyMigration');
-    $this->softDependencies = array('WineUpdatesMigration');
+    $this->dependencies = array('WineVariety');
+    $this->softDependencies = array('WineUpdates');
     $this->map = new MigrateSQLMap($this->machineName,
         array(
           'categoryid' => array('type' => 'int',
@@ -708,7 +708,7 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
 
     // Mapped fields
     $this->addFieldMapping('tid', 'categoryid')
-         ->sourceMigration('WineVarietyMigration');
+         ->sourceMigration('WineVariety');
     $this->addFieldMapping('description', 'details');
 
     // Unmapped source fields
@@ -728,8 +728,8 @@ class WineUserUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Account updates');
-    $this->dependencies = array('WineUserMigration');
-    $this->softDependencies = array('WineUpdatesMigration');
+    $this->dependencies = array('WineUser');
+    $this->softDependencies = array('WineUpdates');
     $this->map = new MigrateSQLMap($this->machineName,
         array('accountid' => array(
                 'type' => 'int',
@@ -748,7 +748,7 @@ class WineUserUpdatesMigration extends AdvancedExampleMigration {
 
     // Mapped fields
     $this->addFieldMapping('uid', 'accountid')
-         ->sourceMigration('WineUserMigration');
+         ->sourceMigration('WineUser');
     $this->addFieldMapping('field_migrate_example_gender', 'sex')
          ->description(t('Map from M/F to 0/1 in prepare method'));
 

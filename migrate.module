@@ -27,7 +27,21 @@
  *  Array of migration objects, keyed by the class name.
  */
 function migrate_migrations($refresh = FALSE) {
-  return _migrate_class_list('%Migration', 'MigrationBase', $refresh);
+  // First, get a list of all Migration classes as a starting point. Note
+  // we set up PHP errors to be handled by throwing exceptions, so we can deal
+  // with migrations that have parameters and thus can't be instantiated here.
+  $error_handler = set_error_handler('migrate_exception_error_handler');
+  $migrations = _migrate_class_list('%Migration', 'MigrationBase', $refresh);
+  set_error_handler($error_handler);
+
+  // Then, let modules add instances of dynamic migrations, and perhaps remove
+  // the classes underlying them
+  drupal_alter('migrations', $migrations);
+  return $migrations;
+}
+
+function migrate_exception_error_handler($errno, $errstr, $errfile, $errline ) {
+  throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 
 /**
@@ -146,17 +160,26 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
           $object = Migration::getInstance($record->name);
         }
         else {
-          $object = new $record->name;
+          // If the constructor has required parameters, this may fail. We will
+          // silently ignore - it is up to the implementor of such a class to
+          // instantiate it in hook_migrations_alter().
+          try {
+            $object = new $record->name;
+          }
+          catch (Exception $e) {
+          }
         }
-        $dependencies = $object->getDependencies();
-        if (count($dependencies) > 0) {
-          // Set classes with dependencies aside for reordering
-          $dependent_classes[$record->name] = $object;
-          $required_classes += $dependencies;
-        }
-        else {
-          // No dependencies, just add
-          $class_lists[$class_pattern][$record->name] = $object;
+        if (isset($object)) {
+          $dependencies = $object->getDependencies();
+          if (count($dependencies) > 0) {
+            // Set classes with dependencies aside for reordering
+            $dependent_classes[$record->name] = $object;
+            $required_classes += $dependencies;
+          }
+          else {
+            // No dependencies, just add
+            $class_lists[$class_pattern][$record->name] = $object;
+          }
         }
       }
     }

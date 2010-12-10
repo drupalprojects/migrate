@@ -3,6 +3,13 @@
 Migrate 2.0 Beta 3
 ==================
 Features and enhancements
+- #989200 - Support "dynamic" migrations. Changes to be aware of:
+  MigrationBase::getInstance now takes a machine name rather than a class name. This
+    means that dependencies and sourceMigrations must now be expressed in terms of 
+    machine name (remove "Migration" from the end).
+  All migration constructors now take a single parameter, $arguments. Add
+    "array $arguments = array()" as the parameter to all your migration constructors,
+    and pass it to the parent:  parent::__constructor($arguments);
 Allow migration of comment enable/disable.
 
 Bug fixes

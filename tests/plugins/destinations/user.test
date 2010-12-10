@@ -21,7 +21,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function testUserImport() {
-    $migration = Migration::getInstance('WineUserMigration');
+    $migration = Migration::getInstance('WineUser');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
@@ -85,7 +85,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     // Test updates
     // Capture original terms
     $original_users = user_load_multiple(array(), array(), TRUE);
-    $update_migration = Migration::getInstance('WineUserUpdatesMigration');
+    $update_migration = Migration::getInstance('WineUserUpdates');
     $result = $update_migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine user updates import returned RESULT_COMPLETED'));

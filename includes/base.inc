@@ -242,11 +242,24 @@ abstract class MigrationBase {
   /**
    * General initialization of a MigrationBase object.
    */
-  public function __construct() {
-    // Construct the machine name by stripping Migration from our class name
-    $class = get_class($this);
-    $this->machineName = substr($class, 0, strlen($class) - strlen('Migration'));
+  public function __construct(array $arguments = array()) {
+    $this->machineName = $this->generateMachineName();
 
+    // Make sure migrate_status record exists
+    $class_name = db_select('migrate_status', 'ms')
+                  ->fields('ms', array('class_name'))
+                  ->condition('machine_name', $this->machineName)
+                  ->execute()
+                  ->fetchField();
+    if (!$class_name) {
+      db_insert('migrate_status')
+        ->fields(array(
+          'machine_name' => $this->machineName,
+          'class_name' => get_class($this),
+          'arguments' => serialize($arguments),
+        ))
+        ->execute();
+    }
     // Record the memory limit in bytes
     $limit = trim(ini_get('memory_limit'));
     $last = strtolower($limit[strlen($limit)-1]);
@@ -277,15 +290,39 @@ abstract class MigrationBase {
   }
 
   /**
-   * Return the instance of the given class.
+   * By default, construct the machine name by stripping Migration from our class name
    */
-  static public function getInstance($class_name) {
-    // Otherwise might miss cache hit on case difference
-    $class_name = strtolower($class_name);
-     if (!isset(self::$migrations[$class_name])) {
-      self::$migrations[$class_name] = new $class_name;
+  protected function generateMachineName() {
+    $class = get_class($this);
+    return substr($class, 0, strlen($class) - strlen('Migration'));
+  }
+
+  /**
+   * Return the single instance of the given class.
+   *
+   * @param string $machine_name
+   */
+  static public function getInstance($machine_name) {
+    $row = db_select('migrate_status', 'ms')
+             ->fields('ms', array('class_name', 'arguments'))
+             ->condition('machine_name', $machine_name)
+             ->execute()
+             ->fetchObject();
+    if ($row) {
+      $class_name = $row->class_name;
+      $arguments = unserialize($row->arguments);
     }
-    return self::$migrations[$class_name];
+    else {
+      $class_name = $machine_name . 'Migration';
+      $arguments = array();
+    }
+
+    // Otherwise might miss cache hit on case difference
+    $machine_name = strtolower($machine_name);
+     if (!isset(self::$migrations[$machine_name])) {
+      self::$migrations[$machine_name] = new $class_name($arguments);
+    }
+    return self::$migrations[$machine_name];
   }
 
   /**
@@ -517,7 +554,7 @@ abstract class MigrationBase {
     $this->status = $newStatus;
     db_merge('migrate_status')
       ->key(array('machine_name' => $this->machineName))
-      ->fields(array('status' => $newStatus))
+      ->fields(array('class_name' => get_class($this), 'status' => $newStatus))
       ->execute();
 
     // Set an error handler for imports
@@ -553,7 +590,7 @@ abstract class MigrationBase {
     }
     if ($this->processing) {
       $this->status = MigrationBase::STATUS_IDLE;
-      $fields = array('status' => MigrationBase::STATUS_IDLE);
+      $fields = array('class_name' => get_class($this), 'status' => MigrationBase::STATUS_IDLE);
       db_merge('migrate_status')
         ->key(array('machine_name' => $this->machineName))
         ->fields($fields)

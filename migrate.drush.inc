@@ -229,7 +229,7 @@ function drush_migrate_status($name = NULL) {
 
     // Validate input and load Migration(s).
     if ($name) {
-        if ($migration = MigrationBase::getInstance($name . 'Migration')) {
+        if ($migration = MigrationBase::getInstance($name)) {
           $migrations = array($migration);
         }
         else {
@@ -298,27 +298,15 @@ function drush_migrate_fields_destination() {
   try {
     $args = func_get_args();
     $machine_name = array_shift($args);
-    // First, see if it matches a migration class
-    $class_name = $machine_name . 'Migration';
-    if (class_exists($class_name)) {
-      $migration = MigrationBase::getInstance($class_name);
+    $migration = MigrationBase::getInstance($machine_name);
+    if ($migration) {
       $destination = $migration->getDestination();
     }
     else {
-      // No match, try a destination class
-      // TODO: Client implementations won't follow this naming convention - look
-      // for subclasses of MigrateDestinationEntity and match entityType?
-      $class_name = 'MigrateDestination' . $machine_name;
-      if (class_exists($class_name)) {
-        $bundle = array_shift($args);
-        $destination = new $class_name($bundle);
-      }
-      else {
-        drush_log(dt('No class found matching !machine_name',
-                     array('!machine_name' => $machine_name)),
-                  'error');
-        return;
-      }
+      drush_log(dt('No migration found matching !machine_name',
+                   array('!machine_name' => $machine_name)),
+                'error');
+      return;
     }
     if (method_exists($destination, fields)) {
       $table = array();
@@ -341,14 +329,12 @@ function drush_migrate_fields_source() {
   try {
     $args = func_get_args();
     $machine_name = array_shift($args);
-    // See if it matches a migration class
-    $class_name = $machine_name . 'Migration';
-    if (class_exists($class_name)) {
-      $migration = MigrationBase::getInstance($class_name);
+    $migration = MigrationBase::getInstance($machine_name);
+    if ($migration) {
       $source = $migration->getSource();
     }
     else {
-      drush_log(dt('No class found matching !machine_name',
+      drush_log(dt('No migration found matching !machine_name',
                    array('!machine_name' => $machine_name)),
                 'error');
       return;
@@ -374,12 +360,8 @@ function drush_migrate_descriptions() {
   try {
     $args = func_get_args();
     $machine_name = array_shift($args);
-    // See if it matches a migration class
-    $class_name = $machine_name . 'Migration';
-    if (class_exists($class_name)) {
-      $migration = MigrationBase::getInstance($class_name);
-    }
-    else {
+    $migration = MigrationBase::getInstance($machine_name);
+    if (!$migration) {
       return drush_set_error(dt('No class found matching !machine_name',
                    array('!machine_name' => $machine_name)));
     }
@@ -502,11 +484,12 @@ function drush_migrate_rollback($args = NULL) {
 function drush_migrate_get_migrations($args) {
   static $migration_objects;
 
+  $migration_objects = migrate_migrations();
+
   if ($start = drush_get_option('all')) {
     // Handle custom first migration when --all=foo is supplied.
     $seen = $start === TRUE ? TRUE : FALSE;
 
-    $migration_objects = migrate_migrations();
     foreach ($migration_objects as $name => $migration) {
       if (!$seen && (strtolower($start) . 'migration' == strtolower($name))) {
         // We found our starting migration. $seen is always TRUE now.
@@ -519,15 +502,14 @@ function drush_migrate_get_migrations($args) {
     }
   }
   else {
-    if (!isset($migration_objects)) {
-      foreach (explode(',', $args) as $name) {
-        $class_name = $name . 'Migration';
-        $migration = MigrationBase::getInstance($class_name);
-        if ($migration->getEnabled()) {
-          $migration_objects[$name] = $migration;
-        }
+    $named_migrations = array();
+    foreach (explode(',', $args) as $name) {
+      $migration = $migration_objects[$name];
+      if ($migration->getEnabled()) {
+        $named_migrations[$name] = $migration;
       }
     }
+    $migration_objects = $named_migrations;
   }
   return $migration_objects;
 }
@@ -562,10 +544,15 @@ function drush_migrate_validate_common($args) {
     if (empty($args)) {
       return drush_set_error(NULL, dt('You must specify either a migration name or the -all option'));
     }
-    $machine_names = explode(',', strtolower($args));
+    $machine_names = explode(',', $args);
 
     foreach ($machine_names as $machine_name) {
-      if (!class_exists($machine_name . 'Migration')) {
+      $class_name = db_select('migrate_status', 'ms')
+                    ->fields('ms', array('class_name'))
+                    ->condition('machine_name', $machine_name)
+                    ->execute()
+                    ->fetchField();
+      if (!$class_name || !class_exists($class_name)) {
         drush_set_error(dt('Unrecognized migration: !name', array('!name' => $machine_name)));
       }
     }

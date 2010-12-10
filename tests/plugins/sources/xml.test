@@ -18,15 +18,15 @@ class MigrateXMLUnitTest extends DrupalWebTestCase {
   }
 
   function testNodeImport() {
-    $migration = Migration::getInstance('WineRegionMigration');
+    $migration = Migration::getInstance('WineRegion');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Region term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineUserMigration');
+    $migration = Migration::getInstance('WineUser');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineProducerXMLMigration');
+    $migration = Migration::getInstance('WineProducerXML');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Producer node import returned RESULT_COMPLETED'));
@@ -44,7 +44,7 @@ class MigrateXMLUnitTest extends DrupalWebTestCase {
 
     // Test each base node field
     $producer_node = $producer_nodes['Lolonis Winery'];
-    $user_migration = MigrationBase::getInstance('WineUserMigration');
+    $user_migration = MigrationBase::getInstance('WineUser');
 
     $mapped_uid = $user_migration->getMap()->lookupDestinationID(
       array(3), $migration);

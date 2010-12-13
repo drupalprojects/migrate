@@ -64,6 +64,21 @@ class MigrateFieldMapping {
   public function getSourceMigration() {
     return $this->sourceMigration;
   }
+  
+  /**
+   * An associative array with keys:
+   *   - table: The table for querying for a duplicate.
+   *   - column: The column for querying for a duplicate.
+   *
+   * @todo: Let fields declare this data and a replacement pattern. Then
+   * developers won't have to specify this.
+   *
+   * @var string
+   */
+  protected $dedupe;
+  public function getDedupe() {
+    return $this->dedupe;
+  }
 
   /**
    * Argument overrides. If present this will be an array, keyed by
@@ -134,6 +149,11 @@ class MigrateFieldMapping {
 
   public function sourceMigration($source_migration) {
     $this->sourceMigration = $source_migration;
+    return $this;
+  }
+  
+  public function dedupe($table, $column) {
+    $this->dedupe = array('table' => $table, 'column' => $column);
     return $this;
   }
 

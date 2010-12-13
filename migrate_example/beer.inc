@@ -178,8 +178,12 @@ class BeerUserMigration extends BasicExampleMigration {
     // unmapped source fields, and unmapped destination fields
 
     // Mapped fields
-    $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('status', 'status');
+    
+    // Dedupe assures that value is unique. Use it when source data is non-unique.
+    // Pass the Drupal table and column for determining uniqueness.
+    $this->addFieldMapping('name', 'name')
+         ->dedupe('users', 'name');
 
     // Here we have a special case - we want to transform a date/time string
     // into a UNIX timestamp, and also apply a specific timezone. The
@@ -192,7 +196,9 @@ class BeerUserMigration extends BasicExampleMigration {
     // TODO: Don't set site timezone, affects lastupdatetime
 //    date_default_timezone_set('US/Mountain');
 
-    $this->addFieldMapping('mail', 'mail');
+    // TODO Add dedupe with custom replacement pattern.
+    $this->addFieldMapping('mail', 'mail'); 
+    
     $this->addFieldMapping('pass', 'password');
     // Instead of mapping a source field to a destination field, you can
     // hardcode a default value. You can also use both together - if a default

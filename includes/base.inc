@@ -151,6 +151,22 @@ abstract class MigrationBase {
   protected $memoryLimit;
 
   /**
+   * The fraction of the time limit at which an operation will be interrupted.
+   * Can be overridden by a Migration subclass if one would like to push the
+   * envelope. Defaults to 90%.
+   *
+   * @var float
+   */
+  protected $timeThreshold = 0.90;
+
+  /**
+   * The PHP max_execution_time.
+   *
+   * @var int
+   */
+  protected $timeLimit;
+
+  /**
    * MigrateTeamMember objects representing people involved with this
    * migration.
    *
@@ -276,6 +292,9 @@ abstract class MigrationBase {
           array('!limit' => $limit)));
     }
     $this->memoryLimit = $limit;
+
+    // Record the time limit
+    $this->timeLimit = ini_get('max_execution_time');
 
     // Default the outputFunction based on context
     if (function_exists('drush_get_option')) {
@@ -779,6 +798,32 @@ abstract class MigrationBase {
           'warning');
         return FALSE;
       }
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Test whether we've exceeded the desired time threshold. If so, output a message.
+   *
+   * @return boolean
+   *  TRUE if the threshold is exceeded, FALSE if not.
+   */
+  protected function timeExceeded() {
+    if ($this->timeLimit == 0) {
+      return FALSE;
+    }
+    $time_elapsed = time() - REQUEST_TIME;
+    $pct_time = $time_elapsed / $this->timeLimit;
+    if ($pct_time > $this->timeThreshold) {
+      $this->showMessage(
+        t('Time limit approaching, starting new batch',
+          array('!pct' => round($pct_time*100),
+                '!usage' => format_size($time_elapsed),
+                '!limit' => format_size($this->timeLimit))),
+        'warning');
+      return TRUE;
     }
     else {
       return FALSE;

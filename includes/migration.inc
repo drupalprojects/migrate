@@ -581,6 +581,9 @@ abstract class Migration extends MigrationBase {
     if ($this->memoryExceeded()) {
       return MigrationBase::RESULT_INCOMPLETE;
     }
+    if ($this->timeExceeded()) {
+      return MigrationBase::RESULT_INCOMPLETE;
+    }
     if ($this->getStatus() == Migration::STATUS_STOPPING) {
       return MigrationBase::RESULT_STOPPED;
     }

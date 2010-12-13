@@ -13,6 +13,8 @@ Features and enhancements
     "array $arguments = array()" as the parameter to all your migration constructors,
     and pass it to the parent:  parent::__constructor($arguments);
 Allow migration of comment enable/disable.
+Check max_execution_time as well as memory_limit, for graceful exit when
+  max_execution_time is in play.
 
 Bug fixes
 

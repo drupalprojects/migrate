@@ -294,7 +294,13 @@ abstract class MigrationBase {
    */
   protected function generateMachineName() {
     $class = get_class($this);
-    return substr($class, 0, strlen($class) - strlen('Migration'));
+    if (preg_match('/Migration$/i', $class)) {
+      $machine_name = substr($class, 0, strlen($class) - strlen('Migration'));
+    }
+    else {
+      $machine_name = $class;
+    }
+    return $machine_name;
   }
 
   /**
@@ -313,7 +319,13 @@ abstract class MigrationBase {
       $arguments = unserialize($row->arguments);
     }
     else {
-      $class_name = $machine_name . 'Migration';
+      // See if the machine name is a class name in itself
+      if (class_exists($machine_name)) {
+        $class_name = $machine_name;
+      }
+      else {
+        $class_name = $machine_name . 'Migration';
+      }
       $arguments = array();
     }
 

@@ -12,7 +12,6 @@ Features and enhancements
   All migration constructors now take a single parameter, $arguments. Add
     "array $arguments = array()" as the parameter to all your migration constructors,
     and pass it to the parent:  parent::__constructor($arguments);
-  Migration classes no longer need to end in 'Migration'.
 Allow migration of comment enable/disable.
 
 Bug fixes

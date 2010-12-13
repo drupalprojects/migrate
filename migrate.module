@@ -156,8 +156,9 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
       // Validate it's an implemented subclass of the parent class
       $class = new ReflectionClass($record->name);
       if (!$class->isAbstract() && $class->isSubclassOf($parent_class)) {
-        if ($parent_class == 'Migration') {
-          $object = Migration::getInstance($record->name);
+        if ($parent_class == 'MigrationBase') {
+          $machine_name = substr($record->name, 0, strlen($record->name) - strlen('Migration'));
+          $object = Migration::getInstance($machine_name);
         }
         else {
           // If the constructor has required parameters, this may fail. We will
@@ -186,6 +187,8 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
 
     // Validate that each depended-on class at least exists
     foreach ($required_classes as $class_name) {
+      // Dependencies expressed as machine names, restore class name
+      $class_name .= 'Migration';
       if ((!isset($dependent_classes[$class_name])) && !isset($class_lists[$class_pattern][$class_name])) {
         throw new MigrateException(t('Dependency on non-existent class !class - make sure ' .
             'you have added the file defining !class to the .info file.',
@@ -208,6 +211,8 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
         // Scan all the dependencies for this class and make sure they're all
         // in the final list
         foreach ($object->getDependencies() as $dependency) {
+          // Convert machine name to class name
+          $dependency .= 'Migration';
           if (!isset($class_lists[$class_pattern][$dependency])) {
             $ready = FALSE;
             break;

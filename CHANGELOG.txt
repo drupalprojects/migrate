@@ -2,7 +2,9 @@
 
 Migrate 2.0 Beta 3
 ==================
+
 Features and enhancements
+
 - #989200 - Support "dynamic" migrations. Changes to be aware of:
   MigrationBase::getInstance now takes a machine name rather than a class name. This
     means that dependencies and sourceMigrations must now be expressed in terms of 
@@ -13,6 +15,8 @@ Features and enhancements
 Allow migration of comment enable/disable.
 
 Bug fixes
+
+- #989622 - Fix undefined variable in MigrateDestinationNode::import().
 - #984294 - Make migrate dashbard a local task.
 needs_update => needs-update to match drush conventions.
 - #959400 - Better way to get vid for vocabulary.

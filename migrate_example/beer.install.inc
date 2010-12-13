@@ -395,9 +395,12 @@ function migrate_example_beer_data_node() {
   }
 }
 
+// Note that alice has duplicate username. Tests our dedupe().
+// @TODO duplicate email also.
 function migrate_example_beer_data_account() {
   $data = array(
     array(1, '2010-03-30 10:31:05', 'alice', 'alice hot pants', 'alicepass', 'alice@example.com', '1', '99999999|99999998|99999997'),
+    array(1, '2010-04-04 10:31:05', 'alice', 'alice duplicate pants', 'alicepass', 'alice2@example.com', '1', '99999999|99999998|99999997'),
     array(0, '2007-03-15 10:31:05', 'bob', 'rebob', 'bobpass', 'bob@example.com', '1', '99999999|99999997'),
     array(1, '2004-02-29 10:31:05', 'charlie', 'charlie chocolate', 'mykids', 'charlie@example.com', '0', '99999999|99999998'),
   );

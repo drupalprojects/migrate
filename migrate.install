@@ -108,6 +108,7 @@ function migrate_schema_log() {
  */
 function migrate_requirements($phase) {
   $t = get_t();
+  $requirements = array();
 
   if ($phase == 'runtime') {
     if (function_exists('autoload_registry_rebuild')) {
@@ -125,8 +126,8 @@ function migrate_requirements($phase) {
         'severity' => REQUIREMENT_ERROR,
       );
     }
-    return $requirements;
   }
+  return $requirements;
 }
 
 /**

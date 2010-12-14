@@ -93,7 +93,6 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $migration = Migration::currentMigration();
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
-      $account->uid = $row->migrate_map_destid1;
       if (isset($account->uid)) {
         if ($account->uid != $row->migrate_map_destid1) {
           throw new MigrateException(t("Incoming uid !uid and map destination uid !destid1 don't match",

@@ -309,17 +309,10 @@ abstract class MigrationBase {
   }
 
   /**
-   * By default, construct the machine name by stripping Migration from our class name
+   * By default, the machine name is the class name.
    */
   protected function generateMachineName() {
-    $class = get_class($this);
-    if (preg_match('/Migration$/i', $class)) {
-      $machine_name = substr($class, 0, strlen($class) - strlen('Migration'));
-    }
-    else {
-      $machine_name = $class;
-    }
-    return $machine_name;
+    return get_class($this);
   }
 
   /**
@@ -328,29 +321,24 @@ abstract class MigrationBase {
    * @param string $machine_name
    */
   static public function getInstance($machine_name) {
-    $row = db_select('migrate_status', 'ms')
-             ->fields('ms', array('class_name', 'arguments'))
-             ->condition('machine_name', $machine_name)
-             ->execute()
-             ->fetchObject();
-    if ($row) {
-      $class_name = $row->class_name;
-      $arguments = unserialize($row->arguments);
-    }
-    else {
-      // See if the machine name is a class name in itself
-      if (class_exists($machine_name)) {
-        $class_name = $machine_name;
-      }
-      else {
-        $class_name = $machine_name . 'Migration';
-      }
-      $arguments = array();
-    }
-
     // Otherwise might miss cache hit on case difference
     $machine_name = strtolower($machine_name);
-     if (!isset(self::$migrations[$machine_name])) {
+    if (!isset(self::$migrations[$machine_name])) {
+      // See if we know about this migration
+      $row = db_select('migrate_status', 'ms')
+               ->fields('ms', array('class_name', 'arguments'))
+               ->condition('machine_name', $machine_name)
+               ->execute()
+               ->fetchObject();
+      if ($row) {
+        $class_name = $row->class_name;
+        $arguments = unserialize($row->arguments);
+      }
+      else {
+        // Not previously know, just assume the machine name is the class name
+        $class_name = $machine_name;
+        $arguments = array();
+      }
       self::$migrations[$machine_name] = new $class_name($arguments);
     }
     return self::$migrations[$machine_name];

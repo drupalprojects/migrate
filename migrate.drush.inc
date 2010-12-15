@@ -188,14 +188,14 @@ function migrate_drush_command() {
 
 /**
  * Get the value of all migrate related options. Used when spawning a subshell.
- * Don't pass along stop and rollback options.
+ * Don't pass along stop, update, and rollback options.
  *
  * @return
  *   An array of command specific options and their values.
  */
 function drush_migrate_get_options() {
   $options = array();
-  $blacklist = array('stop', 'rollback');
+  $blacklist = array('stop', 'rollback', 'update');
   $command = drush_parse_command();
   foreach ($command['options'] as $key => $value) {
     // Strip leading --
@@ -229,12 +229,12 @@ function drush_migrate_status($name = NULL) {
 
     // Validate input and load Migration(s).
     if ($name) {
-        if ($migration = MigrationBase::getInstance($name)) {
-          $migrations = array($migration);
-        }
-        else {
-          return drush_set_error(dt('Unrecognized migration: !cn', array('!cn' => $name)));
-        }
+      if ($migration = MigrationBase::getInstance($name)) {
+        $migrations = array($migration);
+      }
+      else {
+        return drush_set_error(dt('Unrecognized migration: !cn', array('!cn' => $name)));
+      }
     }
     else {
       $migrations = migrate_migrations($refresh);
@@ -482,8 +482,6 @@ function drush_migrate_rollback($args = NULL) {
 }
 
 function drush_migrate_get_migrations($args) {
-  static $migration_objects;
-
   $migration_objects = migrate_migrations();
 
   if ($start = drush_get_option('all')) {
@@ -547,6 +545,7 @@ function drush_migrate_validate_common($args) {
     $machine_names = explode(',', $args);
 
     foreach ($machine_names as $machine_name) {
+      $machine_name = trim($machine_name);
       $class_name = db_select('migrate_status', 'ms')
                     ->fields('ms', array('class_name'))
                     ->condition('machine_name', $machine_name)
@@ -586,7 +585,7 @@ function drush_migrate_pre_migrate_import($args = NULL) {
 }
 
 /**
- * Import one specified Migration.
+ * Perform import on one or more migrations.
  *
  * @param $machine_names
  *  A comma delimited list of machine names, or the special name 'all'
@@ -636,8 +635,7 @@ function drush_migrate_import($args = NULL) {
     }
 
     $stop = FALSE;
-    foreach ($migrations as $name => $migration) {
-      $machine_name = $migration->getMachineName();
+    foreach ($migrations as $machine_name => $migration) {
       drush_log(dt("Importing '!description' migration",
         array('!description' => $machine_name)));
       if (drush_get_option('update')) {
@@ -662,7 +660,7 @@ function drush_migrate_import($args = NULL) {
         if ($return == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
               use the --force option to run it anyway',
-            array('!name' => $migration->getMachineName())), 'warning');
+            array('!name' => $machine_name)), 'warning');
         }
         elseif ($return == MigrationBase::RESULT_STOPPED) {
           break;
@@ -678,7 +676,7 @@ function drush_migrate_import($args = NULL) {
           $return = $return['object'];
           if ($return == MigrationBase::RESULT_SKIPPED) {
             drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
-              array('!name' => $migration->getMachineName())), 'warning');
+              array('!name' => $machine_name)), 'warning');
           }
           elseif ($return == MigrationBase::RESULT_STOPPED) {
             $stop = TRUE;
@@ -692,12 +690,12 @@ function drush_migrate_import($args = NULL) {
         $return = $migration->processImport($options);
         if ($return == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
-            array('!name' => $migration->getMachineName())), 'warning');
+            array('!name' => $machine_name)), 'warning');
         }
         drush_backend_set_result($return);
       }
       if ($i > 1) {
-        drush_log(dt('Completed import of !name in !i passes.', array('!name' => $name, '!i' => $i)), 'debug');
+        drush_log(dt('Completed import of !name in !i passes.', array('!name' => $machine_name, '!i' => $i)), 'debug');
       }
       if ($stop) {
         break;

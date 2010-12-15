@@ -6,9 +6,13 @@ Migrate 2.0 Beta 3
 Features and enhancements
 
 - #989200 - Support "dynamic" migrations. Changes to be aware of:
+  Migration class names are no longer required to end in 'Migration'.
+  By default, machine names and class names are now the same. Formerly, class
+    name BeerTermMigration would have the machine name BeerTerm. Now, you
+    define class BeerTerm with machine name BeerTerm.
   MigrationBase::getInstance now takes a machine name rather than a class name. This
     means that dependencies and sourceMigrations must now be expressed in terms of 
-    machine name (remove "Migration" from the end).
+    machine name.
   All migration constructors now take a single parameter, $arguments. Add
     "array $arguments = array()" as the parameter to all your migration constructors,
     and pass it to the parent:  parent::__constructor($arguments);

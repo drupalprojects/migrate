@@ -73,3 +73,22 @@ function migrate_example_update_7001() {
   $ret[] = t('Converted modificationdate datetime field to modificationdatetime int field');
   return $ret;
 }
+
+/**
+ * Fix migrate_status rows for example migrations to reflect changes
+ * in machine name/class name relationship.
+ */
+function migrate_example_update_7002() {
+  $ret = array();
+  db_query("UPDATE {migrate_status}
+            SET class_name=machine_name
+            WHERE machine_name IN (:names)",
+           array(':names' =>
+            array('BeerComment', 'BeerNode', 'BeerTerm', 'BeerUser', 'WineBestWith',
+              'WineComment', 'WineCommentUpdates', 'WineFinish', 'WinePrep', 'WineProducer',
+              'WineProducerXML', 'WineRegion', 'WineUpdates', 'WineUser', 'WineUserUpdates',
+              'WineVariety', 'WineVarietyUpdates', 'WineWine')
+           )
+          );
+  return $ret;
+}

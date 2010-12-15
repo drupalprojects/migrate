@@ -10,9 +10,8 @@
  * To define a migration process from a set of source data to a particular
  * kind of Drupal object (for example, a specific node type), you define
  * a class derived from Migration. You must define a constructor to initialize
- * your migration object. The name of the class must end in "Migration", and the
- * portion of the name before "Migration" will be the "machine name" of your migration -
- * this is the name you will use in drush commands.
+ * your migration object. By default, your class name will be the "machine name"
+ * of the migration, by which you refer to it.
  *
  * In any serious migration project, you will find there are some options
  * which are common to the individual migrations you're implementing. You can
@@ -54,7 +53,7 @@ abstract class BasicExampleMigration extends Migration {
  *    fields correspond to what destination fields, and additional information
  *    associated with the mappings.
  */
-class BeerTermMigration extends BasicExampleMigration {
+class BeerTerm extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     // Human-friendly description of your migration process. Be as detailed as you
@@ -120,7 +119,7 @@ class BeerTermMigration extends BasicExampleMigration {
 
     // Open mapping issues can be assigned priorities (the default is
     // MigrateFieldMapping::ISSUE_PRIORITY_OK). If you're using an issue
-    // tracking system, and have defined issuePattern (see ExampleMigration
+    // tracking system, and have defined issuePattern (see BasicExampleMigration
     // above), you can specify a ticket/issue number in the system on the
     // mapping and migrate_ui will link directory to it.
     $this->addFieldMapping(NULL, 'region')
@@ -155,7 +154,7 @@ class BeerTermMigration extends BasicExampleMigration {
  * through static mappings - you will frequently need to do some run-time
  * transformations of the data.
  */
-class BeerUserMigration extends BasicExampleMigration {
+class BeerUser extends BasicExampleMigration {
   public function __construct() {
     // The basic setup is similar to BeerTermMigraiton
     parent::__construct();
@@ -179,11 +178,11 @@ class BeerUserMigration extends BasicExampleMigration {
 
     // Mapped fields
     $this->addFieldMapping('status', 'status');
-    
+
     // Dedupe assures that value is unique. Use it when source data is non-unique.
     // Pass the Drupal table and column for determining uniqueness.
-    $this->addFieldMapping('name', 'name')
-         ->dedupe('users', 'name');
+    $this->addFieldMapping('name', 'name')/*
+         ->dedupe('users', 'name')*/;
 
     // Here we have a special case - we want to transform a date/time string
     // into a UNIX timestamp, and also apply a specific timezone. The
@@ -197,8 +196,8 @@ class BeerUserMigration extends BasicExampleMigration {
 //    date_default_timezone_set('US/Mountain');
 
     // TODO Add dedupe with custom replacement pattern.
-    $this->addFieldMapping('mail', 'mail'); 
-    
+    $this->addFieldMapping('mail', 'mail');
+
     $this->addFieldMapping('pass', 'password');
     // Instead of mapping a source field to a destination field, you can
     // hardcode a default value. You can also use both together - if a default
@@ -258,7 +257,7 @@ class BeerUserMigration extends BasicExampleMigration {
   }
 }
 
-class BeerNodeMigration extends BasicExampleMigration {
+class BeerNode extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Beers of the world');
@@ -378,7 +377,7 @@ class BeerNodeMigration extends BasicExampleMigration {
   }
 }
 
-class BeerCommentMigration extends BasicExampleMigration {
+class BeerComment extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about beers';
@@ -404,7 +403,7 @@ class BeerCommentMigration extends BasicExampleMigration {
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
 
-    // We preserved bid => nid ids during BeerNodeMigration so simple mapping suffices.
+    // We preserved bid => nid ids during BeerNode import so simple mapping suffices.
     $this->addFieldMapping('nid', 'bid');
 
     $this->addFieldMapping('uid', 'aid')

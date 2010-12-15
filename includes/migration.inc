@@ -629,11 +629,11 @@ abstract class Migration extends MigrationBase {
         if ($source_migration && isset($values->$destination)) {
           $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination, $default);
         }
-        
+
         // If specified, assure a unique value for this property.
         $dedupe = $mapping->getDedupe();
         if ($dedupe && isset($values->$destination)) {
-          $values->$destination = $this->handlededupe($dedupe, $values->$destination, $mapping);
+          $values->$destination = $this->handleDedupe($dedupe, $values->$destination, $mapping);
         }
 
         // Assign any arguments
@@ -719,7 +719,7 @@ abstract class Migration extends MigrationBase {
       return $results[0];
     }
   }
-  
+
   /**
    * Assign a non-existing value for current mapping.
    */

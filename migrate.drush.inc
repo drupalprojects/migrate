@@ -166,12 +166,6 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mrs'),
   );
-  if (!$commands) {
-    $commands = TRUE;
-    $commands = drush_get_commands();
-    unset($commands['migrate-import']['options']['--rollback']);
-  }
-
   $items['migrate-wipe'] = array(
     'description' => 'Delete all nodes from specified content types.',
     'examples' => array(

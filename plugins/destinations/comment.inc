@@ -25,12 +25,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
   }
 
   /**
-   * Save the original setting of comment_maintain_node_statistics
-   * @var boolean
-   */
-  protected $maintainNodeStatistics;
-
-  /**
    * Basic initialization
    *
    * @param string $bundle
@@ -191,51 +185,5 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $return = (isset($comment->cid) && $comment->cid > 0)
       ? array($comment->cid) : FALSE;
     return $return;
-  }
-
-  public function preImport() {
-    // If maintaining node statistics is enabled, temporarily disable it
-    $this->maintainNodeStatistics =
-      variable_get('comment_maintain_node_statistics', TRUE);
-    if ($this->maintainNodeStatistics) {
-      $GLOBALS['conf']['comment_maintain_node_statistics'] = FALSE;
-    }
-  }
-
-  public function postImport() {
-    // If originally enabled, re-enable and rebuild the stats
-    if ($this->maintainNodeStatistics) {
-      $GLOBALS['conf']['comment_maintain_node_statistics'] = TRUE;
-
-      // Copied from devel_rebuild_node_comment_statistics
-
-      // Empty table
-      db_truncate('node_comment_statistics')->execute();
-
-      // TODO: DBTNG. Ignore keyword is Mysql only? Is only used in the rare case when
-      // two comments on the same node share same timestamp.
-      $sql = "
-        INSERT IGNORE INTO {node_comment_statistics} (nid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) (
-          SELECT c.nid, c.timestamp, c.name, c.uid, c2.comment_count FROM comments c
-          JOIN (
-            SELECT c.nid, MAX(c.timestamp) AS timestamp, COUNT(*) AS comment_count FROM comments c WHERE status=:published GROUP BY c.nid
-          ) AS c2 ON c.nid = c2.nid AND c.timestamp=c2.timestamp
-        )";
-      dbtng_query($sql, array(':published' => COMMENT_PUBLISHED));
-
-      // Insert records into the node_comment_statistics for nodes that are missing.
-      $query = db_select('node', 'n');
-      $query->leftJoin('node_comment_statistics', 'ncs', 'ncs.nid = n.nid');
-      $query->addField('n', 'changed', 'last_comment_timestamp');
-      $query->addField('n', 'uid', 'last_comment_uid');
-      $query->addField('n', 'nid');
-      $query->addExpression('0', 'comment_count');
-      $query->addExpression('NULL', 'last_comment_name');
-      $query->isNull('ncs.comment_count');
-
-      db_insert('node_comment_statistics')
-        ->from($query)
-        ->execute();
-    }
   }
 }

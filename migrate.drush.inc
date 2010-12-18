@@ -231,7 +231,7 @@ function drush_migrate_status($name = NULL) {
       }
     }
     else {
-      $migrations = migrate_migrations($refresh);
+      $migrations = migrate_migrations();
     }
 
     $table[] = array(dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'),

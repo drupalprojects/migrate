@@ -104,4 +104,9 @@ abstract class MigrateMap implements Iterator {
    */
   abstract public function getRowBySource(array $source_id);
   abstract public function getRowByDestination(array $destination_id);
+
+  /**
+   * Remove any persistent storage used by this map (e.g., map and message tables)
+   */
+  abstract public function destroy();
 }

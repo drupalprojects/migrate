@@ -6,16 +6,13 @@ Migrate 2.0 Beta 3
 Features and enhancements
 
 - #989200 - Support "dynamic" migrations. Changes to be aware of:
+  All modules implementing migration classes must now implement hook_migrate_api()
+    (see migrate_migrate_api() for an example).
+  Dependencies and sourceMigrations must now be expressed in terms of 
+    machine name rather than class name.
+  MigrationBase::getInstance now takes a machine name rather than a class name. 
   Migration class names are no longer required to end in 'Migration'.
-  By default, machine names and class names are now the same. Formerly, class
-    name BeerTermMigration would have the machine name BeerTerm. Now, you
-    define class BeerTerm with machine name BeerTerm.
-  MigrationBase::getInstance now takes a machine name rather than a class name. This
-    means that dependencies and sourceMigrations must now be expressed in terms of 
-    machine name.
-  All migration constructors now take a single parameter, $arguments. Add
-    "array $arguments = array()" as the parameter to all your migration constructors,
-    and pass it to the parent:  parent::__constructor($arguments);
+
 Allow migration of comment enable/disable.
 Check max_execution_time as well as memory_limit, for graceful exit when
   max_execution_time is in play.

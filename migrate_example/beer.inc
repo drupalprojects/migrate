@@ -53,7 +53,7 @@ abstract class BasicExampleMigration extends Migration {
  *    fields correspond to what destination fields, and additional information
  *    associated with the mappings.
  */
-class BeerTerm extends BasicExampleMigration {
+class BeerTermMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     // Human-friendly description of your migration process. Be as detailed as you
@@ -154,7 +154,7 @@ class BeerTerm extends BasicExampleMigration {
  * through static mappings - you will frequently need to do some run-time
  * transformations of the data.
  */
-class BeerUser extends BasicExampleMigration {
+class BeerUserMigration extends BasicExampleMigration {
   public function __construct() {
     // The basic setup is similar to BeerTermMigraiton
     parent::__construct();
@@ -257,7 +257,7 @@ class BeerUser extends BasicExampleMigration {
   }
 }
 
-class BeerNode extends BasicExampleMigration {
+class BeerNodeMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Beers of the world');
@@ -377,7 +377,7 @@ class BeerNode extends BasicExampleMigration {
   }
 }
 
-class BeerComment extends BasicExampleMigration {
+class BeerCommentMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about beers';

@@ -258,24 +258,9 @@ abstract class MigrationBase {
   /**
    * General initialization of a MigrationBase object.
    */
-  public function __construct(array $arguments = array()) {
+  public function __construct() {
     $this->machineName = $this->generateMachineName();
 
-    // Make sure migrate_status record exists
-    $class_name = db_select('migrate_status', 'ms')
-                  ->fields('ms', array('class_name'))
-                  ->condition('machine_name', $this->machineName)
-                  ->execute()
-                  ->fetchField();
-    if (!$class_name) {
-      db_insert('migrate_status')
-        ->fields(array(
-          'machine_name' => $this->machineName,
-          'class_name' => get_class($this),
-          'arguments' => serialize($arguments),
-        ))
-        ->execute();
-    }
     // Record the memory limit in bytes
     $limit = trim(ini_get('memory_limit'));
     $last = strtolower($limit[strlen($limit)-1]);
@@ -297,7 +282,7 @@ abstract class MigrationBase {
     $this->timeLimit = ini_get('max_execution_time');
 
     // Default the outputFunction based on context
-    if (function_exists('drush_get_option')) {
+    if (function_exists('drush_log')) {
       $this->outputFunction = 'drush_log';
     }
     else {
@@ -309,39 +294,110 @@ abstract class MigrationBase {
   }
 
   /**
-   * By default, the machine name is the class name.
+   * Register a new migration process in the migrate_status table. This will
+   * generally be used in two contexts - by the class detection code for
+   * static (one instance per class) migrations, and by the module implementing
+   * dynamic (parameterized class) migrations.
+   *
+   * @param string $class_name
+   * @param string $machine_name
+   * @param array $arguments
    */
-  protected function generateMachineName() {
-    return get_class($this);
+  static public function registerMigration($class_name, $machine_name = NULL, array $arguments = array()) {
+    if (!$machine_name) {
+      $machine_name = self::machineFromClass($class_name);
+    }
+
+    // See if this migration is already registered
+    $migration_row = db_select('migrate_status', 'ms')
+                     ->fields('ms', array('class_name', 'arguments'))
+                     ->condition('machine_name', $machine_name)
+                     ->execute()
+                     ->fetchObject();
+    if (!$migration_row) {
+      db_insert('migrate_status')
+        ->fields(array(
+          'machine_name' => $machine_name,
+          'class_name' => $class_name,
+          'arguments' => serialize($arguments),
+        ))
+        ->execute();
+    }
+    else {
+      // TODO: What, if anything, should we do if the pre-existing class_name or
+      // arguments don't match?
+    }
   }
 
   /**
-   * Return the single instance of the given class.
+   * Deregister a migration - remove all traces of it from the database (without
+   * touching any content which was created by this migration).
    *
    * @param string $machine_name
    */
-  static public function getInstance($machine_name) {
+  static public function deregisterMigration($machine_name) {
+    $rows_deleted = db_delete('migrate_status')
+                    ->condition('machine_name', $machine_name)
+                    ->execute();
+  }
+
+  /**
+   * By default, the migration machine name is the class name (with the
+   * Migration suffix, if present, stripped).
+   */
+  protected function generateMachineName() {
+    $class_name = get_class($this);
+    return self::machineFromClass($class_name);
+  }
+
+  protected static function machineFromClass($class_name) {
+    if (preg_match('/Migration$/', $class_name)) {
+      $machine_name = substr($class_name, 0, strlen($class_name) - strlen('Migration'));
+    }
+    else {
+      $machine_name = $class_name;
+    }
+    return $machine_name;
+  }
+
+  /**
+   * Return the single instance of the given migration.
+   *
+   * @param string $machine_name
+   */
+  static public function getInstance($machine_name, $class_name = NULL, array $arguments = array()) {
     // Otherwise might miss cache hit on case difference
     $machine_name = strtolower($machine_name);
     if (!isset(self::$migrations[$machine_name])) {
-      // See if we know about this migration
-      $row = db_select('migrate_status', 'ms')
-               ->fields('ms', array('class_name', 'arguments'))
-               ->condition('machine_name', $machine_name)
-               ->execute()
-               ->fetchObject();
-      if ($row) {
-        $class_name = $row->class_name;
-        $arguments = unserialize($row->arguments);
-      }
-      else {
-        // Not previously know, just assume the machine name is the class name
-        $class_name = $machine_name;
-        $arguments = array();
+      // Skip the query if our caller already made it
+      if (!$class_name) {
+        // See if we know about this migration
+        $row = db_select('migrate_status', 'ms')
+                 ->fields('ms', array('class_name', 'arguments'))
+                 ->condition('machine_name', $machine_name)
+                 ->execute()
+                 ->fetchObject();
+        if ($row) {
+          $class_name = $row->class_name;
+          $arguments = unserialize($row->arguments);
+        }
+        else {
+          // Can't find a migration with this name
+          self::$migrations[$machine_name] = NULL;
+        }
       }
       self::$migrations[$machine_name] = new $class_name($arguments);
     }
     return self::$migrations[$machine_name];
+  }
+
+  /**
+   * Identifies whether this migration is "dynamic" (that is, allows multiple
+   * instances distinguished by differing parameters). A dynamic class should
+   * override this with a return value of TRUE.
+   */
+  static public function isDynamic() {
+    return FALSE;
   }
 
   /**

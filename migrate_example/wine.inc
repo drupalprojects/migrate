@@ -36,7 +36,7 @@ abstract class AdvancedExampleMigration extends Migration {
  * the import or rollback stages that take other actions. In this case, we want
  * to disable auto_nodetitle while the migration steps run.
  */
-class WinePrep extends MigrationBase {
+class WinePrepMigration extends MigrationBase {
   public function __construct() {
     parent::__construct();
     $this->description = t('If auto_nodetitle is present, disable it for the duration');
@@ -77,7 +77,7 @@ class WinePrep extends MigrationBase {
 }
 
 // The term migrations are very similar - implement the commonalities here
-abstract class WineTerm extends AdvancedExampleMigration {
+abstract class WineTermMigration extends AdvancedExampleMigration {
   public function __construct($type, $vocabulary_name, $description) {
     parent::__construct();
     $this->description = $description;
@@ -117,28 +117,28 @@ abstract class WineTerm extends AdvancedExampleMigration {
   }
 }
 
-class WineVariety extends WineTerm {
+class WineVarietyMigration extends WineTermMigration {
   public function __construct() {
     parent::__construct('variety', 'migrate_example_wine_varieties',
       t('Migrate varieties from the source database to taxonomy terms'));
   }
 }
 
-class WineRegion extends WineTerm {
+class WineRegionMigration extends WineTermMigration {
   public function __construct() {
     parent::__construct('region', 'migrate_example_wine_regions',
       t('Migrate regions from the source database to taxonomy terms'));
   }
 }
 
-class WineBestWith extends WineTerm {
+class WineBestWithMigration extends WineTermMigration {
   public function __construct() {
     parent::__construct('best_with', 'migrate_example_wine_best_with',
       t('Migrate "Best With" from the source database to taxonomy terms'));
   }
 }
 
-class WineUser extends AdvancedExampleMigration {
+class WineUserMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine Drinkers of the world');
@@ -221,7 +221,7 @@ class WineUser extends AdvancedExampleMigration {
   }
 }
 
-class WineProducer extends AdvancedExampleMigration {
+class WineProducerMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine producers of the world');
@@ -295,7 +295,7 @@ class WineProducer extends AdvancedExampleMigration {
  * Note that, if basing a migration on an XML source, you need to derive it
  * from XMLMigration instead of Migration.
  */
-class WineProducerXML extends XMLMigration {
+class WineProducerXMLMigration extends XMLMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('XML feed of wine producers of the world');
@@ -358,7 +358,7 @@ class WineProducerXML extends XMLMigration {
 }
 
 // TODO: Add node_reference field pointing to producer
-class WineWine extends AdvancedExampleMigration {
+class WineWineMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wines of the world');
@@ -489,7 +489,7 @@ class WineWine extends AdvancedExampleMigration {
   }
 }
 
-class WineComment extends AdvancedExampleMigration {
+class WineCommentMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about wines';
@@ -541,7 +541,7 @@ class WineComment extends AdvancedExampleMigration {
   }
 }
 
-class WineFinish extends MigrationBase {
+class WineFinishMigration extends MigrationBase {
   public function __construct() {
     parent::__construct();
     $this->description = t('If auto_nodetitle is present and was previously enabled,
@@ -573,7 +573,7 @@ class WineFinish extends MigrationBase {
  * TIP: This demonstrates a migration designed not to import new content, but
  * to update existing content (in this case, revised wine ratings)
  */
-class WineUpdates extends AdvancedExampleMigration {
+class WineUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Update wine ratings');
@@ -637,7 +637,7 @@ class WineUpdates extends AdvancedExampleMigration {
   }
 }
 
-class WineCommentUpdates extends AdvancedExampleMigration {
+class WineCommentUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Update wine comments';
@@ -684,7 +684,7 @@ class WineCommentUpdates extends AdvancedExampleMigration {
   }
 }
 
-class WineVarietyUpdates extends AdvancedExampleMigration {
+class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Migrate varieties from the source database to taxonomy terms');
@@ -724,7 +724,7 @@ class WineVarietyUpdates extends AdvancedExampleMigration {
 }
 
 
-class WineUserUpdates extends AdvancedExampleMigration {
+class WineUserUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Account updates');

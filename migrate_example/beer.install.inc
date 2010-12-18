@@ -47,6 +47,13 @@ function migrate_example_beer_uninstall() {
   migrate_example_beer_content_type_delete();
 }
 
+function migrate_example_beer_disable() {
+  Migration::deregisterMigration('BeerTerm');
+  Migration::deregisterMigration('BeerUser');
+  Migration::deregisterMigration('BeerNode');
+  Migration::deregisterMigration('BeerComment');
+}
+
 function migrate_example_beer_schema_node() {
   return array(
     'description' => 'Beers of the world.',

@@ -24,7 +24,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function testUserImport() {
-    $migration = Migration::getInstance('WineUserMigration');
+    $migration = Migration::getInstance('WineUser');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));

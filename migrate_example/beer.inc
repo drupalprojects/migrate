@@ -256,7 +256,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     // You may optionally declare dependencies for your migration - other migrations
     // which should run first. In this case, terms assigned to our nodes and
     // the authors of the nodes should be migrated before the nodes themselves.
-    $this->dependencies = array('BeerTermMigration', 'BeerUserMigration');
+    $this->dependencies = array('BeerTerm', 'BeerUser');
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -309,7 +309,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     // find a corresponding uid for the aid, the owner will be the administrative
     // account.
     $this->addFieldMapping('uid', 'aid')
-         ->sourceMigration('BeerUserMigration')
+         ->sourceMigration('BeerUser')
          ->defaultValue(1);
 
     // This is a multi-value text field
@@ -357,7 +357,7 @@ class BeerCommentMigration extends BasicExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = 'Comments about beers';
-    $this->dependencies = array('BeerUserMigration', 'BeerNodeMigration');
+    $this->dependencies = array('BeerUser', 'BeerNode');
     $this->map = new MigrateSQLMap($this->machineName,
       array('cid' => array(
             'type' => 'int',
@@ -381,13 +381,13 @@ class BeerCommentMigration extends BasicExampleMigration {
 
     // Map the incoming beer ID to the resulting Drupal nid
     $this->addFieldMapping('nid', 'bid')
-         ->sourceMigration('BeerNodeMigration');
+         ->sourceMigration('BeerNode');
 
     $this->addFieldMapping('uid', 'aid')
-         ->sourceMigration('BeerUserMigration')
+         ->sourceMigration('BeerUser')
          ->defaultValue(0);
     $this->addFieldMapping('pid', 'cid_parent')
-         ->sourceMigration('BeerCommentMigration')
+         ->sourceMigration('BeerComment')
          ->description('Parent comment.');
 
     $this->addFieldMapping('comment', 'body');

@@ -29,7 +29,21 @@ require_once drupal_get_path('module', 'migrate') . '/includes/d7.inc';
  *  Array of migration objects, keyed by the class name.
  */
 function migrate_migrations($refresh = FALSE) {
-  return _migrate_class_list('%Migration', 'MigrationBase', $refresh);
+  // First, get a list of all Migration classes as a starting point. Note
+  // we set up PHP errors to be handled by throwing exceptions, so we can deal
+  // with migrations that have parameters and thus can't be instantiated here.
+//  $error_handler = set_error_handler('migrate_exception_error_handler');
+  $migrations = _migrate_class_list('%Migration', 'MigrationBase', $refresh);
+//  set_error_handler($error_handler);
+
+  // Then, let modules add instances of dynamic migrations, and perhaps remove
+  // the classes underlying them
+  drupal_alter('migrations', $migrations);
+  return $migrations;
+}
+
+function migrate_exception_error_handler($errno, $errstr, $errfile, $errline ) {
+  throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 
 /**
@@ -142,27 +156,39 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
       // Validate it's an implemented subclass of the parent class
       $class = new ReflectionClass($record->name);
       if (!$class->isAbstract() && $class->isSubclassOf($parent_class)) {
-        if ($parent_class == 'Migration') {
-          $object = Migration::getInstance($record->name);
+        if ($parent_class == 'MigrationBase') {
+          $machine_name = substr($record->name, 0, strlen($record->name) - strlen('Migration'));
+          $object = Migration::getInstance($machine_name);
         }
         else {
-          $object = new $record->name;
+          // If the constructor has required parameters, this may fail. We will
+          // silently ignore - it is up to the implementor of such a class to
+          // instantiate it in hook_migrations_alter().
+          try {
+            $object = new $record->name;
+          }
+          catch (Exception $e) {
+          }
         }
-        $dependencies = $object->getDependencies();
-        if (count($dependencies) > 0) {
-          // Set classes with dependencies aside for reordering
-          $dependent_classes[$record->name] = $object;
-          $required_classes += $dependencies;
-        }
-        else {
-          // No dependencies, just add
-          $class_lists[$class_pattern][$record->name] = $object;
+        if (isset($object)) {
+          $dependencies = $object->getDependencies();
+          if (count($dependencies) > 0) {
+            // Set classes with dependencies aside for reordering
+            $dependent_classes[$record->name] = $object;
+            $required_classes += $dependencies;
+          }
+          else {
+            // No dependencies, just add
+            $class_lists[$class_pattern][$record->name] = $object;
+          }
         }
       }
     }
 
     // Validate that each depended-on class at least exists
     foreach ($required_classes as $class_name) {
+      // Dependencies expressed as machine names, restore class name
+      $class_name .= 'Migration';
       if ((!isset($dependent_classes[$class_name])) && !isset($class_lists[$class_pattern][$class_name])) {
         throw new MigrateException(t('Dependency on non-existent class !class - make sure ' .
             'you have added the file defining !class to the .info file.',
@@ -185,6 +211,8 @@ function _migrate_class_list($class_pattern, $parent_class, $refresh = FALSE) {
         // Scan all the dependencies for this class and make sure they're all
         // in the final list
         foreach ($object->getDependencies() as $dependency) {
+          // Convert machine name to class name
+          $dependency .= 'Migration';
           if (!isset($class_lists[$class_pattern][$dependency])) {
             $ready = FALSE;
             break;

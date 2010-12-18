@@ -2,15 +2,40 @@
 
 Migrate 2.0 Beta 3
 ==================
+
 Features and enhancements
+
+- #989200 - Support "dynamic" migrations. Changes to be aware of:
+  All modules implementing migration classes must now implement hook_migrate_api()
+    (see migrate_migrate_api() for an example).
+  Dependencies and sourceMigrations must now be expressed in terms of 
+    machine name rather than class name.
+  MigrationBase::getInstance now takes a machine name rather than a class name. 
+  Migration class names are no longer required to end in 'Migration'.
+
+Add logging of fetch queries and dqp() function to translate DBTNG query object into full SQL.
 Inherit default settings for promote, sticky, status, status from content type 
   configuration. Already done in D7.
 Add arguments method for MigrateTermNodeHandler class
+Add dedupe() method for a field mapping.
+maintainStatistics business removed from comment import.
+Default comments to published status
 
 Bug fixes
-- #990960- Initialize fields array for profiles
+
+Avoid notice in user.inc
+- #990960 - Initialize fields array for profiles
+- #839770 - Notice: Undefined property: stdClass:: in forum_node_presave() when 
+  generating forum nodes.
 - #984294 - Make migrate dashbard a local task.
 needs_update => needs-update to match drush conventions.
+Inherit default settings for promote, sticky, status, status from content type 
+  configuration. Already done in D7.
+- #898622 - Undefined variable in MigrateDestinationNode::import()
+- #839770 - Notice: Undefined property: stdClass:: in forum_node_presave() when 
+  generating forum nodes.
+- #990960 - Initialize fields array for profiles
+- #983968 - Bogus settings of ->uid
 
 Migrate 2.0 Beta 2
 ==================

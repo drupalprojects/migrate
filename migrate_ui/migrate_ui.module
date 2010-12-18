@@ -58,8 +58,7 @@ function migrate_menu() {
 // A menu load callback.
 function migration_load($machine_name) {
   if ($machine_name) {
-    $class_name = $machine_name . 'Migration';
-    return Migration::getInstance($class_name);
+    return Migration::getInstance($machine_name);
   }
 }
 

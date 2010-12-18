@@ -25,27 +25,27 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
   }
 
   function testNodeImport() {
-    $migration = Migration::getInstance('WineVarietyMigration');
+    $migration = Migration::getInstance('WineVariety');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Variety term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineRegionMigration');
+    $migration = Migration::getInstance('WineRegion');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Region term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineBestWithMigration');
+    $migration = Migration::getInstance('WineBestWith');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('"Best With" term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineUserMigration');
+    $migration = Migration::getInstance('WineUser');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineProducerMigration');
+    $migration = Migration::getInstance('WineProducer');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Producer node import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineWineMigration');
+    $migration = Migration::getInstance('WineWine');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import returned RESULT_COMPLETED'));
@@ -109,7 +109,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $producer_row = $producer_rows['Montes'];
     $wine_node = $wine_nodes['Montes Classic Cabernet Sauvignon'];
     $wine_row = $wine_rows['Montes Classic Cabernet Sauvignon'];
-    $user_migration = MigrationBase::getInstance('WineUserMigration');
+    $user_migration = MigrationBase::getInstance('WineUser');
 
     $mapped_uid = $user_migration->getMap()->lookupDestinationID(
       array($producer_row->accountid), $migration);
@@ -130,7 +130,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       t('teaser properly migrated'));
 
     // Taxonomy terms - single and multiple
-    $variety_migration = MigrationBase::getInstance('WineVarietyMigration');
+    $variety_migration = MigrationBase::getInstance('WineVariety');
     $mapped_tid = $variety_migration->getMap()->lookupDestinationID(
       array($wine_row->variety), $migration);
     if (is_array($mapped_tid)) {
@@ -141,7 +141,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       $this->error(t('Variety !var not migrated', array('!var' => $wine_row->variety)));
     }
 
-    $best_with_migration = MigrationBase::getInstance('WineBestWithMigration');
+    $best_with_migration = MigrationBase::getInstance('WineBestWith');
     $source_ids = explode(',', $wine_row->best_with);
     $mapped_tids = array();
     foreach ($source_ids as $source_id) {
@@ -195,7 +195,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
              ->condition('wineid', 2)
              ->execute();
 
-    $migration = Migration::getInstance('WineWineMigration');
+    $migration = Migration::getInstance('WineWine');
     $result = $migration->processImport();
 
     $this->assertEqual($result, Migration::RESULT_COMPLETED,

@@ -21,7 +21,7 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
   }
 
   function testTermImport() {
-    $migration = Migration::getInstance('WineVarietyMigration');
+    $migration = Migration::getInstance('WineVariety');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Variety term import returned RESULT_COMPLETED'));
@@ -71,7 +71,7 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
     foreach ($tempterms as $tid => $term) {
       $original_terms[$tid] = clone $term;
     }
-    $update_migration = Migration::getInstance('WineVarietyUpdatesMigration');
+    $update_migration = Migration::getInstance('WineVarietyUpdates');
 
     $result = $update_migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,

@@ -117,8 +117,8 @@ abstract class Migration extends MigrationBase {
   /**
    * General initialization of a Migration object.
    */
-  public function __construct() {
-    parent::__construct();
+  public function __construct(array $arguments = array()) {
+    parent::__construct($arguments);
   }
 
   ////////////////////////////////////////////////////////////////////

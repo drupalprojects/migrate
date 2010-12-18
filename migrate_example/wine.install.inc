@@ -50,6 +50,23 @@ function migrate_example_wine_uninstall() {
   migrate_example_wine_content_type_delete();
 }
 
+function migrate_example_wine_disable() {
+  MigrationBase::deregisterMigration('WinePrep');
+  Migration::deregisterMigration('WineRegion');
+  Migration::deregisterMigration('WineUser');
+  Migration::deregisterMigration('WineVariety');
+  Migration::deregisterMigration('WineBestWith');
+  Migration::deregisterMigration('WineProducer');
+  Migration::deregisterMigration('WineProducerXML');
+  Migration::deregisterMigration('WineWine');
+  Migration::deregisterMigration('WineComment');
+  MigrationBase::deregisterMigration('WineFinish');
+  Migration::deregisterMigration('WineUpdates');
+  Migration::deregisterMigration('WineUserUpdates');
+  Migration::deregisterMigration('WineVarietyUpdates');
+  Migration::deregisterMigration('WineCommentUpdates');
+}
+
 function migrate_example_wine_schema_wine() {
   return array(
     'description' => 'Wines of the world',

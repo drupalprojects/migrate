@@ -511,6 +511,14 @@ class MigrateSQLMap extends MigrateMap {
                      ->execute();
   }
 
+  /**
+   * Remove the associated map and message tables.
+   */
+  public function destroy() {
+    $this->connection->schema()->dropTable($this->mapTable);
+    $this->connection->schema()->dropTable($this->messageTable);
+  }
+
   protected $result = NULL;
   protected $currentRow = NULL;
   protected $currentKey = array();

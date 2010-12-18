@@ -10,9 +10,8 @@
  * To define a migration process from a set of source data to a particular
  * kind of Drupal object (for example, a specific node type), you define
  * a class derived from Migration. You must define a constructor to initialize
- * your migration object. The name of the class must end in "Migration", and the
- * portion of the name before "Migration" will be the "machine name" of your migration -
- * this is the name you will use in drush commands.
+ * your migration object. By default, your class name will be the "machine name"
+ * of the migration, by which you refer to it.
  *
  * In any serious migration project, you will find there are some options
  * which are common to the individual migrations you're implementing. You can
@@ -34,9 +33,9 @@ abstract class BasicExampleMigration extends Migration {
 
     // Individual mappings in a migration can be linked to a ticket or issue
     // in an external tracking system. Define the URL pattern here in the shared
-    // class with ':id' representing the position of the issue number, then add
+    // class with ':id:' representing the position of the issue number, then add
     // ->issueNumber(1234) to a mapping.
-    $this->issuePattern = 'http://drupal.org/node/:id';
+    $this->issuePattern = 'http://drupal.org/node/:id:';
   }
 }
 
@@ -120,7 +119,7 @@ class BeerTermMigration extends BasicExampleMigration {
 
     // Open mapping issues can be assigned priorities (the default is
     // MigrateFieldMapping::ISSUE_PRIORITY_OK). If you're using an issue
-    // tracking system, and have defined issuePattern (see ExampleMigration
+    // tracking system, and have defined issuePattern (see BasicExampleMigration
     // above), you can specify a ticket/issue number in the system on the
     // mapping and migrate_ui will link directory to it.
     $this->addFieldMapping(NULL, 'region')
@@ -179,7 +178,7 @@ class BeerUserMigration extends BasicExampleMigration {
 
     // Mapped fields
     $this->addFieldMapping('status', 'status');
-    
+
     // Dedupe assures that value is unique. Use it when source data is non-unique.
     // Pass the Drupal table and column for determining uniqueness.
     $this->addFieldMapping('name', 'name')
@@ -197,8 +196,8 @@ class BeerUserMigration extends BasicExampleMigration {
 //    date_default_timezone_set('US/Mountain');
 
     // TODO Add dedupe with custom replacement pattern.
-    $this->addFieldMapping('mail', 'mail'); 
-    
+    $this->addFieldMapping('mail', 'mail');
+
     $this->addFieldMapping('pass', 'password');
     // Instead of mapping a source field to a destination field, you can
     // hardcode a default value. You can also use both together - if a default

@@ -110,7 +110,7 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('name', 'name');
     $this->addFieldMapping('description', 'details');
     $this->addFieldMapping('parent', 'category_parent')
-         ->sourceMigration(get_class($this));
+         ->sourceMigration($this->getMachineName());
     $this->addFieldMapping('weight', 'ordering');
     $this->addFieldMapping('format')
          ->defaultValue($this->basicFormat);
@@ -260,6 +260,10 @@ class WineProducerMigration extends AdvancedExampleMigration {
 }
 
 /**
+ * TIP: An example of importing from an XML feed. See the files in the xml
+ * directory - index.xml contains a list of IDs to import, and <id>.xml
+ * is the data for a given producer.
+ *
  * Note that, if basing a migration on an XML source, you need to derive it
  * from XMLMigration instead of Migration.
  */
@@ -279,7 +283,7 @@ class WineProducerXMLMigration extends XMLMigration {
     );
 
     // The source ID here is the one retrieved from the XML listing file, and
-    // used to identify the specific object's file
+    // used to identify the specific item's file
     $this->map = new MigrateSQLMap($this->machineName,
       array(
         'sourceid' => array(
@@ -305,14 +309,13 @@ class WineProducerXMLMigration extends XMLMigration {
     $this->source = new MigrateSourceList(new MigrateListXML($list_url),
       new MigrateItemXML($item_url), $fields);
 
-
     $this->destination = new MigrateDestinationNode('migrate_example_producer');
 
     // TIP: Note that for XML sources, in addition to the source field passed to
     // addFieldMapping (the name under which it will be saved in the data row
     // passed through the migration process) we specify the Xpath used to retrieve
     // the value from the XML.
-    $this->addFieldMapping('title', 'title')
+    $this->addFieldMapping('title', 'name')
          ->xpath('/producer/name');
     $this->addFieldMapping('uid', 'authorid')
          ->xpath('/producer/authorid')
@@ -664,11 +667,11 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
                                 'not null' => TRUE,
                                )
         ),
-        MigrateDestinationTerm::getKeySchema(), 'default', $this
+        MigrateDestinationTerm::getKeySchema()
       );
+
     $query = db_select('migrate_example_wine_variety_updates', 'wc')
              ->fields('wc', array('categoryid', 'details'));
-
     $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationTerm('migrate_example_wine_varieties');
     $this->systemOfRecord = Migration::DESTINATION;

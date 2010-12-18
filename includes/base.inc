@@ -151,6 +151,22 @@ abstract class MigrationBase {
   protected $memoryLimit;
 
   /**
+   * The fraction of the time limit at which an operation will be interrupted.
+   * Can be overridden by a Migration subclass if one would like to push the
+   * envelope. Defaults to 90%.
+   *
+   * @var float
+   */
+  protected $timeThreshold = 0.90;
+
+  /**
+   * The PHP max_execution_time.
+   *
+   * @var int
+   */
+  protected $timeLimit;
+
+  /**
    * MigrateTeamMember objects representing people involved with this
    * migration.
    *
@@ -245,21 +261,6 @@ abstract class MigrationBase {
   public function __construct() {
     $this->machineName = $this->generateMachineName();
 
-    // Make sure migrate_status record exists
-    $class_name = db_select('migrate_status', 'ms')
-                  ->fields('ms', array('class_name'))
-                  ->condition('machine_name', $this->machineName)
-                  ->execute()
-                  ->fetchField();
-    if (!$class_name) {
-      db_insert('migrate_status')
-        ->fields(array(
-          'machine_name' => $this->machineName,
-          'class_name' => get_class($this),
-          'arguments' => serialize($arguments),
-        ))
-        ->execute();
-    }
     // Record the memory limit in bytes
     $limit = trim(ini_get('memory_limit'));
     $last = strtolower($limit[strlen($limit)-1]);
@@ -277,8 +278,11 @@ abstract class MigrationBase {
     }
     $this->memoryLimit = $limit;
 
+    // Record the time limit
+    $this->timeLimit = ini_get('max_execution_time');
+
     // Default the outputFunction based on context
-    if (function_exists('drush_get_option')) {
+    if (function_exists('drush_log')) {
       $this->outputFunction = 'drush_log';
     }
     else {
@@ -290,32 +294,110 @@ abstract class MigrationBase {
   }
 
   /**
-   * By default, construct the machine name by stripping Migration from our class name
+   * Register a new migration process in the migrate_status table. This will
+   * generally be used in two contexts - by the class detection code for
+   * static (one instance per class) migrations, and by the module implementing
+   * dynamic (parameterized class) migrations.
+   *
+   * @param string $class_name
+   * @param string $machine_name
+   * @param array $arguments
    */
-  protected function generateMachineName() {
-    $class = get_class($this);
-    return substr($class, 0, strlen($class) - strlen('Migration'));
+  static public function registerMigration($class_name, $machine_name = NULL, array $arguments = array()) {
+    if (!$machine_name) {
+      $machine_name = self::machineFromClass($class_name);
+    }
+
+    // See if this migration is already registered
+    $migration_row = db_select('migrate_status', 'ms')
+                     ->fields('ms', array('class_name', 'arguments'))
+                     ->condition('machine_name', $machine_name)
+                     ->execute()
+                     ->fetchObject();
+    if (!$migration_row) {
+      db_insert('migrate_status')
+        ->fields(array(
+          'machine_name' => $machine_name,
+          'class_name' => $class_name,
+          'arguments' => serialize($arguments),
+        ))
+        ->execute();
+    }
+    else {
+      // TODO: What, if anything, should we do if the pre-existing class_name or
+      // arguments don't match?
+    }
   }
 
   /**
-   * Return the single instance of the given class.
+   * Deregister a migration - remove all traces of it from the database (without
+   * touching any content which was created by this migration).
    *
    * @param string $machine_name
    */
-  static public function getInstance($machine_name) {
-    $row = db_select('migrate_status', 'ms')
-             ->fields('ms', array('class_name', 'arguments'))
-             ->condition('machine_name', $machine_name)
-             ->execute()
-             ->fetchObject();
-    if ($row) {
-      $class_name = $row->class_name;
-      $arguments = unserialize($row->arguments);
+  static public function deregisterMigration($machine_name) {
+    $rows_deleted = db_delete('migrate_status')
+                    ->condition('machine_name', $machine_name)
+                    ->execute();
+  }
+
+  /**
+   * By default, the migration machine name is the class name (with the
+   * Migration suffix, if present, stripped).
+   */
+  protected function generateMachineName() {
+    $class_name = get_class($this);
+    return self::machineFromClass($class_name);
+  }
+
+  protected static function machineFromClass($class_name) {
+    if (preg_match('/Migration$/', $class_name)) {
+      $machine_name = substr($class_name, 0, strlen($class_name) - strlen('Migration'));
     }
     else {
-      $class_name = $machine_name . 'Migration';
-      $arguments = array();
+      $machine_name = $class_name;
     }
+    return $machine_name;
+  }
+
+  /**
+   * Return the single instance of the given migration.
+   *
+   * @param string $machine_name
+   */
+  static public function getInstance($machine_name, $class_name = NULL, array $arguments = array()) {
+    // Otherwise might miss cache hit on case difference
+    $machine_name = strtolower($machine_name);
+    if (!isset(self::$migrations[$machine_name])) {
+      // Skip the query if our caller already made it
+      if (!$class_name) {
+        // See if we know about this migration
+        $row = db_select('migrate_status', 'ms')
+                 ->fields('ms', array('class_name', 'arguments'))
+                 ->condition('machine_name', $machine_name)
+                 ->execute()
+                 ->fetchObject();
+        if ($row) {
+          $class_name = $row->class_name;
+          $arguments = unserialize($row->arguments);
+        }
+        else {
+          // Can't find a migration with this name
+          self::$migrations[$machine_name] = NULL;
+        }
+      }
+      self::$migrations[$machine_name] = new $class_name($arguments);
+    }
+    return self::$migrations[$machine_name];
+  }
+
+  /**
+   * Identifies whether this migration is "dynamic" (that is, allows multiple
+   * instances distinguished by differing parameters). A dynamic class should
+   * override this with a return value of TRUE.
+   */
+  static public function isDynamic() {
+    return FALSE;
   }
 
   /**
@@ -576,7 +658,7 @@ abstract class MigrationBase {
    * End a rollback or import process, releasing the semaphore. Note that it must
    * be public to be callable as the shutdown function.
    */
-  public function endProcess($overallThroughput = 0) {
+  public function endProcess() {
     if ($this->previousErrorHandler) {
       set_error_handler($this->previousErrorHandler);
       $this->previousErrorHandler = NULL;
@@ -733,6 +815,32 @@ abstract class MigrationBase {
         t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
           array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
             'warning');
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Test whether we've exceeded the desired time threshold. If so, output a message.
+   *
+   * @return boolean
+   *  TRUE if the threshold is exceeded, FALSE if not.
+   */
+  protected function timeExceeded() {
+    if ($this->timeLimit == 0) {
+      return FALSE;
+    }
+    $time_elapsed = time() - $_SERVER['REQUEST_TIME'];
+    $pct_time = $time_elapsed / $this->timeLimit;
+    if ($pct_time > $this->timeThreshold) {
+      $this->showMessage(
+        t('Time limit approaching, starting new batch',
+          array('!pct' => round($pct_time*100),
+                '!usage' => format_size($time_elapsed),
+                '!limit' => format_size($this->timeLimit))),
+        'warning');
       return TRUE;
     }
     else {

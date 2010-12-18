@@ -36,6 +36,11 @@ function migrate_example_uninstall() {
   drupal_uninstall_schema('migrate_example');
 }
 
+function migrate_example_disable() {
+  migrate_example_beer_disable();
+  migrate_example_wine_disable();
+}
+
 /**
  * Convert modificationdate datetime field to modificationdatetime int field.
  */

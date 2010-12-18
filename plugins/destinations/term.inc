@@ -236,7 +236,7 @@ class MigrateTermNodeHandler extends MigrateDestinationHandler {
       }
     }
   }
-  
+
   /*
    * @param
    *   Can be 'tid'. Otherwise, 'name' is assumed.

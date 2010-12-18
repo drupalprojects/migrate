@@ -142,6 +142,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         'language' => $this->language,
         'subject' => '',
         'uid' => 0,
+        'status' => COMMENT_PUBLISHED,
         'cid' => 0,
         'pid' => 0,
         'format' => filter_fallback_format(),

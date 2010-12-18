@@ -16,6 +16,7 @@ Features and enhancements
 Allow migration of comment enable/disable.
 Check max_execution_time as well as memory_limit, for graceful exit when
   max_execution_time is in play.
+Add dedupe() method for a field mapping.
 
 Bug fixes
 
@@ -23,12 +24,15 @@ Bug fixes
 - #984294 - Make migrate dashbard a local task.
 needs_update => needs-update to match drush conventions.
 - #959400 - Better way to get vid for vocabulary.
+- #984336 - Additional fields and vocabularies not reported on migration info page
+- #990960 - Initialize fields array for profiles
+- #993684 - hook_requirements should always return array.
+- #983968 - Bogus settings of ->uid
 
 Migrate 2.0 Beta 2
 ==================
 Bug fixes
 - #984294 - Migration info pages are blank
-- #984336 - Additional fields and vocabularies not reported on migration info page
 
 Migrate 2.0 Beta 1
 ==================

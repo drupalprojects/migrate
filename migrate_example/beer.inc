@@ -181,8 +181,8 @@ class BeerUserMigration extends BasicExampleMigration {
 
     // Dedupe assures that value is unique. Use it when source data is non-unique.
     // Pass the Drupal table and column for determining uniqueness.
-    $this->addFieldMapping('name', 'name')/*
-         ->dedupe('users', 'name')*/;
+    $this->addFieldMapping('name', 'name')
+         ->dedupe('users', 'name');
 
     // Here we have a special case - we want to transform a date/time string
     // into a UNIX timestamp, and also apply a specific timezone. The
@@ -384,12 +384,12 @@ class BeerCommentMigration extends BasicExampleMigration {
     $this->dependencies = array('BeerUser', 'BeerNode');
     $this->map = new MigrateSQLMap($this->machineName,
       array('cid' => array(
-              'type' => 'int',
-              'not null' => TRUE,
-             )
-           ),
-        MigrateDestinationComment::getKeySchema()
-      );
+            'type' => 'int',
+            'not null' => TRUE,
+           )
+         ),
+      MigrateDestinationComment::getKeySchema()
+    );
     $query = db_select('migrate_example_beer_comment', 'mec')
              ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid', 'body', 'bid', 'subject'))
              ->orderBy('cid_parent', 'ASC');

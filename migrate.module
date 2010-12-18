@@ -59,9 +59,9 @@ function migrate_migrations() {
   while (count($dependent_migrations) > 0) {
     if ($iterations++ > 20) {
       $migration_names = implode(',', array_keys($dependent_migrations));
-      throw new MigrateException(t('Failure to sort class list - most likely due ' .
-            'to circular dependencies involving !class_names.',
-      array('!class_names' => $migration_names)));
+      throw new MigrateException(t('Failure to sort migration list - most likely due ' .
+            'to circular dependencies involving !migration_names',
+      array('!migration_names' => $migration_names)));
     }
     foreach ($dependent_migrations as $name => $migration) {
       $ready = TRUE;

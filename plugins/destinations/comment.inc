@@ -141,6 +141,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       $defaults = array(
         'language' => $this->language,
         'subject' => '',
+        'comment' => '',
         'uid' => 0,
         'status' => COMMENT_PUBLISHED,
         'cid' => 0,

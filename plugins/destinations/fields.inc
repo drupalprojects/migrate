@@ -149,7 +149,14 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     }
     elseif ($values) {
       // Get the vocabulary for this term
-      $vid = $field_info['settings']['allowed_values'][0]['vid'];
+      if (isset($field_info['settings']['allowed_values'][0]['vid'])) {
+        $vid = $field_info['settings']['allowed_values'][0]['vid'];
+      }
+      else {
+        $vocab_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
+        $names = taxonomy_vocabulary_get_names();
+        $vid = $names[$vocab_name]->vid;
+      }
 
       // Cannot use taxonomy_term_load_multiple() since we have an array of names.
       // It wants a singular value.

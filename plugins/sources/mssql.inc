@@ -247,11 +247,17 @@ class MigrateSourceMSSQL extends MigrateSource {
 
     if ($this->currentRow) {
       $map = $migration->getMap();
-      $this->numProcessed++;
       $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
+      
+      // Add some debugging, just for the first row.
+      if (empty($this->numProcessed)) {
+        $migration->showMessage(print_r($this->currentRow), TRUE);
+      }
+      
+      $this->numProcessed++;
     }
   }
 

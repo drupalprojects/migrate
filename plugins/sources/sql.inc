@@ -369,6 +369,11 @@ class MigrateSourceSQL extends MigrateSource {
           }
         }
       }
+      
+      // Add some debugging, just for the first row. Requires --debug
+      if (empty($this->numProcessed)) {
+        $migration->showMessage(print_r($this->currentRow), TRUE);
+      }
 
       // Allow the Migration to prepare this row. prepareRow() must return a
       // boolean TRUE for this row to get processed.

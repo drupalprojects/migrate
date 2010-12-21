@@ -278,6 +278,11 @@ class MigrateSourceMSSQL extends MigrateSource {
           }
         }
       }
+      
+      // Add some debugging, just for the first row.
+      if (empty($this->numProcessed)) {
+        $migration->showMessage(print_r($this->currentRow), TRUE);
+      }
 
       // Allow the Migration to prepare this row. prepareRow() must return a
       // boolean TRUE for this row to get processed. To add/modify fields on the

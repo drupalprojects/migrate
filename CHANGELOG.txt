@@ -2,7 +2,6 @@
 
 Migrate 2.0 Beta 3
 ==================
-
 Features and enhancements
 
 - #989200 - Support "dynamic" migrations. Changes to be aware of:
@@ -23,6 +22,7 @@ Default comments to published status
 
 Bug fixes
 
+prepareRow() skips current row only if boolean FALSE is returned.
 Avoid notice in user.inc
 - #990960 - Initialize fields array for profiles
 - #839770 - Notice: Undefined property: stdClass:: in forum_node_presave() when 

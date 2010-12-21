@@ -284,16 +284,15 @@ class MigrateSourceMSSQL extends MigrateSource {
         $migration->showMessage(print_r($this->currentRow), TRUE);
       }
 
-      // Allow the Migration to prepare this row. prepareRow() must return a
-      // boolean TRUE for this row to get processed. To add/modify fields on the
+      // Allow the Migration to prepare this row. prepareRow() can return boolean 
+      // FALSE to stop processing this row. To add/modify fields on the
       // result, modify $row by reference.
+      $return = TRUE;
       if (method_exists($migration, 'prepareRow')) {
-        $success = $migration->prepareRow($this->currentRow);
+        $return = $migration->prepareRow($this->currentRow);
       }
-      else {
-        $success = TRUE;
-      }
-      if ($success) {
+      
+      if ($return !== FALSE) {
         $this->numProcessed++;
         break;
       }

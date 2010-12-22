@@ -31,17 +31,27 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
   protected $maintainNodeStatistics;
 
   /**
+   * Return an options array for comment destinations.
+   *
+   * @param string $language
+   *  Default language for comments created via this destination class.
+   * @param string $text_format
+   *  Default text format for comments created via this destination class.
+   */
+  static public function options($language, $text_format) {
+    return compact('language', 'text_format');
+  }
+
+  /**
    * Basic initialization
    *
    * @param string $bundle
    *  A.k.a. the content type (page, article, etc.) of the ... comment?.
-   * @param string $language
-   *  Language of the node content.
-   * @param string $text_format
-   *  Default text format for fields on this comment. Can be overridden.
+   * @param array $options
+   *  Options applied to comments.
    */
-  public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    parent::__construct('comment', $bundle, $language, $text_format);
+  public function __construct($bundle, array $options = array()) {
+    parent::__construct('comment', $bundle, $options);
   }
 
   /**

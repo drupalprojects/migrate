@@ -25,15 +25,27 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   }
 
   /**
+   * Return an options array for node destinations.
+   *
+   * @param string $language
+   *  Default language for nodes created via this destination class.
+   * @param string $text_format
+   *  Default text format for nodes created via this destination class.
+   */
+  static public function options($language, $text_format) {
+    return compact('language', 'text_format');
+  }
+
+  /**
    * Basic initialization
    *
    * @param string $bundle
    *  A.k.a. the content type (page, article, etc.) of the node.
-   * @param string $language
-   *  Default language for nodes created via this destination class.
+   * @param array $options
++   *  Options applied to nodes.
    */
-  public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    parent::__construct('node', $bundle, $language, $text_format);
+  public function __construct($bundle, array $options = array()) {
+    parent::__construct('node', $bundle, $options);
   }
 
   /**

@@ -60,16 +60,26 @@ class MigrateSourceMSSQL extends MigrateSource {
   protected $batchSize;
 
   /**
+   * Return an options array for MS SQL sources.
+   *
+   * @param int $batch_size
+   *  Number of rows to pull at once (defaults to 500).
+   */
+  static public function options($batch_size) {
+    return compact('batch_size');
+  }
+
+  /**
    * Simple initialization.
    */
   public function __construct(array $configuration, $query, $count_query,
-      array $fields, $batch_size = 500) {
+      array $fields, array $options = array()) {
     parent::__construct();
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->configuration = $configuration;
     $this->fields = $fields;
-    $this->batchSize = $batch_size;
+    $this->batchSize = isset($options['batch_size']) ? $options['batch_size'] : 500;
   }
 
   /**

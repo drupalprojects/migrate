@@ -56,13 +56,12 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *
    * @param array $key_schema
    */
-  public function __construct($entity_type, $bundle,
-      $language = NULL, $text_format = NULL) {
+  public function __construct($entity_type, $bundle, array $options = array()) {
     parent::__construct();
     $this->entityType = $entity_type;
     $this->bundle = $bundle;
-    $this->language = isset($language) ? $language : LANGUAGE_NONE;
-    $this->textFormat = isset($text_format) ? $text_format : filter_fallback_format();
+    $this->language = isset($options['language']) ? $options['language'] : LANGUAGE_NONE;
+    $this->textFormat = isset($options['text_format']) ? $options['text_format'] : filter_fallback_format();
   }
 
   public function __toString() {

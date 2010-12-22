@@ -62,6 +62,16 @@ class MigrateSourceSQL extends MigrateSource {
   protected $usingHighwater = FALSE;
 
   /**
+   * Return an options array for PDO sources.
+   *
+   * @param boolean $map_joinable
+   *  Indicates whether the map table can be joined directly to the source query.
+   */
+  static public function options($map_joinable) {
+    return compact('map_joinable');
+  }
+
+  /**
    * Simple initialization.
    *
    * @param SelectQuery $query
@@ -73,11 +83,11 @@ class MigrateSourceSQL extends MigrateSource {
    * @param SelectQuery $count_query
    *  Optional - an explicit count query, primarily used when counting the
    *  primary query is slow.
-   * @param boolean $map_joinable
-   *  Indicates whether the map table can be joined directly to the source query.
+   * @param boolean $options
+   *  Options applied to this source.
    */
-  public function __construct(SelectQuery $query,
-      array $fields = array(), SelectQuery $count_query = NULL, $map_joinable = NULL) {
+  public function __construct(SelectQuery $query, array $fields = array(),
+       SelectQuery $count_query = NULL, array $options = array()) {
     parent::__construct();
     $this->originalQuery = $query;
     $this->query = clone $query;
@@ -89,8 +99,8 @@ class MigrateSourceSQL extends MigrateSource {
       $this->countQuery = $count_query;
     }
 
-    if (!is_null($map_joinable)) {
-      $this->mapJoinable = $map_joinable;
+    if (isset($options['map_joinable'])) {
+      $this->mapJoinable = $options['map_joinable'];
     }
     else {
       // TODO: We want to automatically determine if the map table can be joined

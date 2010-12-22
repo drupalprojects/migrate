@@ -228,14 +228,10 @@ abstract class Migration extends MigrationBase {
 
     // Call pre-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
-      if (method_exists($this->destination, 'preImport')) {
-        $this->destination->preImport();
-      }
+      $this->preImport();
     }
     else {
-      if (method_exists($this->destination, 'preRollback')) {
-        $this->destination->preRollback();
-      }
+      $this->preRollback();
     }
   }
 
@@ -246,17 +242,42 @@ abstract class Migration extends MigrationBase {
   public function endProcess() {
     // Call post-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
-      if (method_exists($this->destination, 'postImport')) {
-        $this->destination->postImport();
-      }
+      $this->postImport();
     }
     else {
-      if (method_exists($this->destination, 'postRollback')) {
-        $this->destination->postRollback();
-      }
+      $this->postRollback();
     }
 
     parent::endProcess();
+  }
+
+  /**
+   * Default implementations of pre/post import/rollback methods. These call
+   * the destination methods (if they exist) - when overriding, always
+   * call parent::preImport() etc.
+   */
+  protected function preImport() {
+    if (method_exists($this->destination, 'preRollback')) {
+      $this->destination->preImport();
+    }
+  }
+
+  protected function preRollback() {
+    if (method_exists($this->destination, 'preRollback')) {
+      $this->destination->preRollback();
+    }
+  }
+
+  protected function postImport() {
+    if (method_exists($this->destination, 'postImport')) {
+      $this->destination->postImport();
+    }
+  }
+
+  protected function postRollback() {
+    if (method_exists($this->destination, 'postRollback')) {
+      $this->destination->postRollback();
+    }
   }
 
   /**

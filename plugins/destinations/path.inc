@@ -12,6 +12,7 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
   }
 
   public function fields() {
+    // TODO: Only surface when path module is enabled, and for appropriate entities
     return array('path' => t('Node: Path alias'));
   }
 

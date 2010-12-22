@@ -22,6 +22,7 @@ Default comments to published status
 
 Bug fixes
 
+- #1004268 - Don't munge date separators
 prepareRow() skips current row only if boolean FALSE is returned.
 Avoid notice in user.inc
 - #990960 - Initialize fields array for profiles

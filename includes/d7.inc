@@ -44,10 +44,6 @@ function comment_delete_multiple($cids) {
   }
 }
 
-function comment_load($cid) {
-  return _comment_load($cid);
-}
-
 function filter_fallback_format() {
   return FILTER_FORMAT_DEFAULT;
 }

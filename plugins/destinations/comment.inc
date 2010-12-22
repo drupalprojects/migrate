@@ -126,7 +126,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination cid provided'));
       }
       $rawcomment = $comment;
-      $old_comment = comment_load($comment->cid);
+      $old_comment = _comment_load($comment->cid);
       if (!isset($comment->nid)) {
         $comment->nid = $old_comment->nid;
       }

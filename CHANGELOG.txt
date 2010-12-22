@@ -22,6 +22,7 @@ Default comments to published status
 
 Bug fixes
 
+- #1002500 - Remove conflicting comment_load() wrapper.
 - #1004268 - Don't munge date separators
 prepareRow() skips current row only if boolean FALSE is returned.
 Avoid notice in user.inc

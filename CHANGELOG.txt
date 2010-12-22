@@ -20,6 +20,7 @@ Add dedupe() method for a field mapping.
 
 Bug fixes
 
+- #1004268 - Don't munge date separators
 - prepareRow() hook skips current row only if boolean FALSE is returned.
 - #989622 - Fix undefined variable in MigrateDestinationNode::import().
 - #984294 - Make migrate dashbard a local task.

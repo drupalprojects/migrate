@@ -891,9 +891,6 @@ abstract class MigrationBase {
       return $value;
     }
 
-    // strtotime() doesn't recognize dashes as separators, change to slashes
-    $value = str_replace('-', '/', $value);
-
     $time = strtotime($value);
     if ($time == FALSE) {
       // Handles form YYYY-MM-DD HH:MM:SS.garbage

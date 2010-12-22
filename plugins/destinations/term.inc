@@ -26,10 +26,25 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   }
 
   /**
-   * Basic initialization
+   * Return an options array for term destinations.
+   *
+   * @param string $language
+   *  Default language for terms created via this destination class.
+   * @param string $text_format
+   *  Default text format for terms created via this destination class.
    */
-  public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    parent::__construct('taxonomy_term', $bundle, $language, $text_format);
+  static public function options($language, $text_format) {
+    return compact('language', 'text_format');
+  }
+
+  /**
+   * Basic initialization
+   *
+   * @param array $options
+   *  Options applied to terms.
+   */
+  public function __construct($bundle, array $options = array()) {
+    parent::__construct('taxonomy_term', $bundle, $options);
   }
 
   /**

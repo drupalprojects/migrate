@@ -25,15 +25,27 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   }
 
   /**
+   * Return an options array for node destinations.
+   *
+   * @param string $language
+   *  Default language for nodes created via this destination class.
+   * @param string $text_format
+   *  Default text format for nodes created via this destination class.
+   */
+  static public function options($language, $text_format) {
+    return compact('language', 'text_format');
+  }
+
+  /**
    * Basic initialization
    *
    * @param string $bundle
    *  A.k.a. the content type (page, article, etc.) of the node.
-   * @param string $language
-   *  Default language for nodes created via this destination class.
+   * @param array $options
+   *  Options applied to nodes.
    */
-  public function __construct($bundle, $language = NULL, $text_format = NULL) {
-    parent::__construct('node', $bundle, $language, $text_format);
+  public function __construct($bundle, array $options = array()) {
+    parent::__construct('node', $bundle, $options);
   }
 
   /**
@@ -144,7 +156,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $type_info = node_get_types('type', $node->type);
     if (empty($node->nid)) {
       // Avoids notice in forum module and maybe more - http://drupal.org/node/839770 is similar.
-      $node->nid = NULL; 
+      $node->nid = NULL;
     }
 
     // Save changed timestamp and set it later, node_save sets it unconditionally
@@ -155,12 +167,12 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     if (isset($node->created)) {
       $node->created = MigrationBase::timestamp($node->created);
     }
-    
+
     // Generate teaser from Body if teaser not specified and Body is in use.
     if ($type_info->has_body && empty($node->teaser) && !empty($node->body)) {
       $node->teaser = node_teaser($node->body);
     }
-    
+
     // Set defaults as per content type settings. Can't call node_object_prepare()
     // since that clobbers existing values.
     $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
@@ -183,7 +195,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     migrate_instrument_stop('node_save');
 
     if (isset($node->nid)) {
-      
+
       // Unfortunately, http://drupal.org/node/722688 was not accepted, so fix
       // the changed timestamp
       if (isset($changed)) {
@@ -193,7 +205,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
           ->execute();
         $node->changed = $changed;
       }
-      
+
       // Potentially fix uid and timestamp in node_revisions.
       $query = db_update('node_revisions')
                  ->condition('vid', $node->vid);
@@ -210,7 +222,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         $query->execute();
       }
     }
-    
+
     $this->complete($node, $row);
 
     // Clear the node cache periodically

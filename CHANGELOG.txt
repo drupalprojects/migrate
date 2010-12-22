@@ -11,7 +11,7 @@ Features and enhancements
     machine name rather than class name.
   MigrationBase::getInstance now takes a machine name rather than a class name. 
   Migration class names are no longer required to end in 'Migration'.
-
+- #992898 - Pass options to source and destination constructors as arrays.
 Add logging of fetch queries and dqp() function to translate DBTNG query object into full SQL.
 Inherit default settings for promote, sticky, status, status from content type 
   configuration. Already done in D7.

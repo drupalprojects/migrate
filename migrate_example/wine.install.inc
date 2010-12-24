@@ -442,7 +442,6 @@ function migrate_example_wine_schema_account() {
       ),
       'status'  => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => TRUE,
         'description' => 'Blocked_Allowed',
       ),

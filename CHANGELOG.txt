@@ -22,6 +22,7 @@ Add dedupe() method for a field mapping.
 
 Bug fixes
 
+- #1005360 - Tests in .info file causes errors when simpletest is not enabled.
 - #1004268 - Don't munge date separators
 - prepareRow() hook skips current row only if boolean FALSE is returned.
 - #989622 - Fix undefined variable in MigrateDestinationNode::import().

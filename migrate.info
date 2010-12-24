@@ -28,8 +28,4 @@ files[] = plugins/sources/sql.inc
 files[] = plugins/sources/sqlmap.inc
 files[] = plugins/sources/mssql.inc
 files[] = plugins/sources/xml.inc
-files[] = tests/plugins/destinations/comment.test
-files[] = tests/plugins/destinations/node.test
-files[] = tests/plugins/destinations/term.test
-files[] = tests/plugins/destinations/user.test
-files[] = tests/plugins/sources/xml.test
+

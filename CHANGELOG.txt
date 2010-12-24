@@ -24,7 +24,7 @@ Bug fixes
 
 - #1006272 - Remove lengths on int fields in schema (breaks Postgres)
 - #1005030 - Replace eval() with proper call_user_func().
-- #1005360 - Tests in .info file causes errors when simpletest is not enabled.
+- #1005360 - Skip .test files in registry scan
 - #1002500 - Remove conflicting comment_load() wrapper.
 - #1004268 - Don't munge date separators
 prepareRow() skips current row only if boolean FALSE is returned.

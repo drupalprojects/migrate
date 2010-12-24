@@ -110,6 +110,7 @@ function migrate_flush_caches() {
             ->fields('r', array('name'))
             ->condition('type', 'class')
             ->condition('module', $modules, 'IN')
+            ->condition('filename', '%.test', 'NOT LIKE')
             ->execute();
 
   foreach ($result as $record) {
@@ -240,6 +241,7 @@ function _migrate_class_list($parent_class, array $existing = array()) {
               ->fields('r', array('name'))
               ->condition('type', 'class')
               ->condition('module', $modules, 'IN')
+              ->condition('filename', '%.test', 'NOT LIKE')
               ->execute();
 
     foreach ($result as $record) {

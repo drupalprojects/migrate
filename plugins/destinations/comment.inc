@@ -168,9 +168,9 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
           $comment->$field = $value;
         }
       }
+      $this->prepare($comment, $row);
     }
 
-    $this->prepare($comment, $row);
     // Make sure we have a nid
     if (!isset($comment->nid) || !$comment->nid) {
       throw new MigrateException(t('No node ID provided for comment'));

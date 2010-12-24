@@ -22,6 +22,7 @@ Default comments to published status
 
 Bug fixes
 
+- #1004992 - Double call to prepare() on comment import (systemOfRecord DESTINATION)
 - #1006272 - Remove lengths on int fields in schema (breaks Postgres)
 - #1005030 - Replace eval() with proper call_user_func().
 - #1005360 - Skip .test files in registry scan

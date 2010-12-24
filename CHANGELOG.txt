@@ -22,6 +22,7 @@ Add dedupe() method for a field mapping.
 
 Bug fixes
 
+- #1006272 - Remove lengths on int fields in schema (breaks Postgres)
 - #1005030 - Replace eval() with proper call_user_func().
 - #1005360 - Tests in .info file causes errors when simpletest is not enabled.
 - #1004268 - Don't munge date separators

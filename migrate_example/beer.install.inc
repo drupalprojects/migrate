@@ -88,7 +88,6 @@ function migrate_example_beer_schema_node() {
       ),
       'aid' => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => FALSE,
         'description' => 'Account Id of the author.',
       ),
@@ -171,13 +170,11 @@ function migrate_example_beer_schema_comment() {
       ),
       'bid'  => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => TRUE,
         'description' => 'Beer ID that is being commented upon',
       ),
       'cid_parent' => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => FALSE,
         'description' => 'Parent comment ID in case of comment replies.',
       ),
@@ -207,7 +204,6 @@ function migrate_example_beer_schema_comment() {
       ),
       'aid' => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => FALSE,
         'description' => 'Account ID (if any).',
       ),
@@ -227,7 +223,6 @@ function migrate_example_beer_schema_account() {
       ),
       'status'  => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => TRUE,
         'description' => 'Blocked_Allowed',
       ),
@@ -294,7 +289,6 @@ function migrate_example_beer_schema_legacy_urls() {
       ),
       'source_id' => array(
         'type' => 'int',
-        'length' => 11,
         'not null' => FALSE,
       ),
       'source_uri' => array(

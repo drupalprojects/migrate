@@ -127,11 +127,8 @@ function migrate_flush_caches() {
     }
     if (!$class->isAbstract() && $class->isSubclassOf('MigrationBase')) {
       // Verify that it's not a dynamic class (the implementor will be responsible
-      // for registering those). Note that in PHP 5.2 static methods can't be
-      // invoked using a variable - because it's a syntax error, we can't even
-      // use version_compare() to use the clean method on PHP_VERSION >= 5.3,
-      // so we have to use the hack in all cases.
-      eval("\$dynamic = $class_name::isDynamic();");
+      // for registering those).
+      $dynamic = call_user_func(array($class_name,'isDynamic'));
       if (!$dynamic) {
         // OK, this is a new non-dynamic migration class, register it
         MigrationBase::registerMigration($class_name);

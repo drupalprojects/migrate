@@ -131,6 +131,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       }
     }
 
+    // Fix up timestamps
+    if (isset($comment->timestamp)) {
+      $comment->timestamp = MigrationBase::timestamp($comment->timestamp);
+    }
+
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       if (!isset($comment->cid)) {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination cid provided'));

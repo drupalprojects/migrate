@@ -7,8 +7,7 @@ php = 5.2
 ; Important: requires Autoload 2 (DRUPAL-6--2 branch)
 dependencies[] = autoload
 dependencies[] = dbtng
-files[] = migrate.module
-files[] = migrate.install
+
 files[] = includes/base.inc
 files[] = includes/field_mapping.inc
 files[] = includes/migration.inc
@@ -32,3 +31,8 @@ files[] = plugins/sources/sql.inc
 files[] = plugins/sources/sqlmap.inc
 files[] = plugins/sources/mssql.inc
 files[] = plugins/sources/xml.inc
+files[] = tests/plugins/destinations/comment.test   
+files[] = tests/plugins/destinations/node.test    
+files[] = tests/plugins/destinations/term.test    
+files[] = tests/plugins/destinations/user.test    
+files[] = tests/plugins/sources/xml.test

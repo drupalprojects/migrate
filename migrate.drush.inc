@@ -534,7 +534,7 @@ function drush_migrate_validate_common($args) {
   }
   else {
     if (empty($args)) {
-      return drush_set_error(NULL, dt('You must specify either a migration name or the -all option'));
+      return drush_set_error(NULL, dt('You must specify either a migration name or the --all option'));
     }
     $machine_names = explode(',', $args);
 

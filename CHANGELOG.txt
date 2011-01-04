@@ -7,6 +7,7 @@ Features and enhancements
 
 Bug fixes
 - #1013844 - Better error handling in getInstance().
+- #1008228 - migrate_example broken by list changes in D7 RC3.
 
 Migrate 2.0 Beta 3
 ==================

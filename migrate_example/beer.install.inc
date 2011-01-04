@@ -489,7 +489,7 @@ function migrate_example_beer_gender() {
   if (!field_info_field('field_migrate_example_gender')) {
     $field = array(
       'field_name' => 'field_migrate_example_gender',
-      'type' => 'list',
+      'type' => 'list_integer',
       'settings' => array(
       'allowed_values' =>
         "0|Male\n".

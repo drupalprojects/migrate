@@ -1,5 +1,13 @@
 //$Id$
 
+Migrate 2.0 Beta 4
+==================
+
+Features and enhancements
+
+Bug fixes
+- #1013844 - Better error handling in getInstance().
+
 Migrate 2.0 Beta 3
 ==================
 Features and enhancements

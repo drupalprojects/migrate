@@ -367,8 +367,8 @@ abstract class MigrationBase {
    */
   static public function getInstance($machine_name, $class_name = NULL, array $arguments = array()) {
     // Otherwise might miss cache hit on case difference
-    $machine_name = strtolower($machine_name);
-    if (!isset(self::$migrations[$machine_name])) {
+    $machine_name_key = strtolower($machine_name);
+    if (!isset(self::$migrations[$machine_name_key])) {
       // Skip the query if our caller already made it
       if (!$class_name) {
         // See if we know about this migration
@@ -383,12 +383,13 @@ abstract class MigrationBase {
         }
         else {
           // Can't find a migration with this name
-          self::$migrations[$machine_name] = NULL;
+          throw new MigrateException(t('No migration found with machine name !machine',
+            array('!machine' => $machine_name)));
         }
       }
-      self::$migrations[$machine_name] = new $class_name($arguments);
+      self::$migrations[$machine_name_key] = new $class_name($arguments);
     }
-    return self::$migrations[$machine_name];
+    return self::$migrations[$machine_name_key];
   }
 
   /**

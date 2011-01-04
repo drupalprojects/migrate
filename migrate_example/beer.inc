@@ -326,7 +326,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     // find a corresponding uid for the aid, the owner will be the administrative
     // account.
     $this->addFieldMapping('uid', 'aid')
-         ->sourceMigration('BeerUser')
+         ->sourceMigration('BeerUserMigration')
          ->defaultValue(1);
 
     // This is a multi-value text field

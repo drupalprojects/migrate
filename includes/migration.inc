@@ -697,27 +697,45 @@ abstract class Migration extends MigrationBase {
 
   /**
    * Look up a value migrated in another migration.
+   *
+   * @param mixed $source_migrations
+   *   An array of source migrations, or string for a single migration.
+   * @param mixed $source_values
+   *   An array of source values, or string for a single value.
+   * @param mixed $default
+   *   The default value, if no ID was found.
    */
-  protected function handleSourceMigration($source_migration, $source_values, $default = NULL) {
-    $source_migration = Migration::getInstance($source_migration);
-    // Might already be an array, after separator processing
-    if (is_array($source_values)) {
-      $source_keys = $source_values;
+  protected function handleSourceMigration($source_migrations, $source_values, $default = NULL) {
+    // Ensure source migrations and source keys are arrays.
+    $source_migrations = (array) $source_migrations;
+    $source_keys = (array) $source_values;
+
+    // Instantiate each migration, and store back in the array.
+    foreach ($source_migrations as $key => $source_migration) {
+      $source_migrations[$key] = Migration::getInstance($source_migration);
     }
-    else {
-      $source_keys = array($source_values);
-    }
+
     $results = array();
     foreach ($source_keys as $source_key) {
       if (is_null($source_key)) {
         continue;
       }
-      $destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this);
+      // Loop through each source migration, checking for an existing dest ID.
+      foreach ($source_migrations as $source_migration) {
+        // Break out of the loop as soon as a destination ID is found.
+        if ($destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this)) {
+          break;
+        }
+      }
+      // If no destination ID was found, give each source migration a chance to
+      // create a stub.
       if (!$destids) {
-        // No match found, give the implementing migration a chance to create
-        // a stub for us to reference (presumably the real object will be
-        // migrated later in the process)
-        $destids = $source_migration->createStubWrapper(array($source_key));
+        foreach ($source_migrations as $source_migration) {
+          // Break out of the loop if a stub was successfully created.
+          if ($destids = $source_migration->createStubWrapper(array($source_key))) {
+            break;
+          }
+        }
       }
       if ($destids) {
         // Assume that if the destination key is a single value, it

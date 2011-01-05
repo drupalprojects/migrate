@@ -4,6 +4,7 @@ Migrate 2.0 Beta 4
 ==================
 
 Features and enhancements
+- #946350 - Accept arrays in sourceMigration();
 
 Bug fixes
 - #1013844 - Better error handling in getInstance().

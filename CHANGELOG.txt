@@ -9,6 +9,7 @@ Features and enhancements
 Bug fixes
 - #1017744 - Term references need to be explicitly added to fields list; example
     needs to use vocabulary name (no machine name in D6).
+- #1017256 - Document case-sensitivity in beer.inc.
 - #1013844 - Better error handling in getInstance().
 
 Migrate 2.0 Beta 3

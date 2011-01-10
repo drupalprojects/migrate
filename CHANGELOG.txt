@@ -1,12 +1,14 @@
 //$Id$
 
-Migrate 2.0 Beta 4
+Migrate 2.0 dev
 ==================
 
 Features and enhancements
 - #946350 - Accept arrays in sourceMigration();
 
 Bug fixes
+- #1017744 - Term references need to be explicitly added to fields list; example
+    needs to use vocabulary name (no machine name in D6).
 - #1013844 - Better error handling in getInstance().
 
 Migrate 2.0 Beta 3

@@ -259,4 +259,14 @@ class MigrateTermNodeHandler extends MigrateDestinationHandler {
   static function arguments($source_type = NULL) {
     return get_defined_vars();
   }
+
+  public function fields($entity_type, $bundle) {
+    $fields = array();
+    $vocabs = taxonomy_get_vocabularies($bundle);
+    foreach ($vocabs as $vid => $vocab) {
+      $vocab_name = $vocab->name;
+      $fields[$vocab_name] = $vocab_name;
+    }
+    return $fields;
+  }
 }

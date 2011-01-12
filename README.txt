@@ -8,7 +8,7 @@ users are included. Plugins permit migration of other types of content.
 Usage
 -----
 For now, all we offer is documentation by example. Enable the migrate_example module and browse to 
-admin/migrate to see its dashboard. The data for this migration is in migrate_example/beer.inc.
+admin/content/migrate to see its dashboard. The data for this migration is in migrate_example/beer.inc.
 Mimic that file in order to specify your own migrations. All imports/rollbacks/etc. are initiated
 by drush commands.
 

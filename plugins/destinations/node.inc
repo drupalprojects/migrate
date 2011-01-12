@@ -61,6 +61,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields['nid'] = t('Node: Existing node ID');
     $fields['is_new'] = t('Node: Indicates a new node with the specified nid should be created');
     $fields['uid'] = t('Node: Authored by (uid)');
+    $fields['revision_uid'] = t('Node: Modified (uid)');
     $fields['created'] = t('Node: Created timestamp');
     $fields['changed'] = t('Node: Modified timestamp');
     $fields['status'] = t('Node: Published');
@@ -203,8 +204,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       if (isset($changed)) {
         $fields['timestamp'] = $changed;
       }
-      if ($node->uid != $GLOBALS['user']->uid) {
-        $fields['uid'] = $node->uid;
+      $revision_uid = isset($node->revision_uid) ? $node->revision_uid : $node->uid;
+      if ($revision_uid != $GLOBALS['user']->uid) {
+        $fields['uid'] = $revision_uid;
       }
       if (!empty($fields)) {
         // We actually have something to update.

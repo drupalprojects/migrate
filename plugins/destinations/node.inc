@@ -60,6 +60,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // First the core (node table) properties
     $fields['nid'] = t('Node: Existing node ID');
     $fields['uid'] = t('Node: Authored by (uid)');
+    $fields['revision_uid'] = t('Node: Modified (uid)');
     $fields['created'] = t('Node: Created timestamp');
     $fields['changed'] = t('Node: Modified timestamp');
     $fields['body'] = t('Node: Body');
@@ -213,8 +214,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         $fields['timestamp'] = $changed;
         $node->timestamp = $changed;
       }
-      if ($node->uid != $GLOBALS['user']->uid) {
-        $fields['uid'] = $node->uid;
+      $revision_uid = isset($node->revision_uid) ? $node->revision_uid : $node->uid;
+      if ($revision_uid != $GLOBALS['user']->uid) {
+        $fields['uid'] = $revision_uid;
       }
       if (!empty($fields)) {
         // We actually have something to update.

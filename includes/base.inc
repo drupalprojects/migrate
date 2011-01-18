@@ -227,6 +227,7 @@ abstract class MigrationBase {
   const STATUS_IMPORTING = 1;
   const STATUS_ROLLING_BACK = 2;
   const STATUS_STOPPING = 3;
+  const STATUS_DISABLED = 4;
 
   /**
    * Message types to be passed to saveMessage() and saved in message tables.
@@ -491,6 +492,9 @@ abstract class MigrationBase {
    *  One of the MigrationBase::STATUS_* constants
    */
   public function getStatus() {
+    if (!$this->enabled) {
+      return MigrationBase::STATUS_DISABLED;
+    }
     $status = db_select('migrate_status', 'ms')
               ->fields('ms', array('status'))
               ->condition('machine_name', $this->machineName)

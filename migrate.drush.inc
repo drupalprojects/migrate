@@ -272,6 +272,9 @@ function drush_migrate_status($name = NULL) {
         case MigrationBase::STATUS_STOPPING:
           $status = dt('Stopping');
           break;
+        case MigrationBase::STATUS_DISABLED:
+          $status = dt('Disabled');
+          break;
         default:
           $status = dt('Unknown');
           break;
@@ -499,6 +502,9 @@ function drush_migrate_get_migrations($args) {
       $migration = $migration_objects[$name];
       if ($migration->getEnabled()) {
         $named_migrations[$name] = $migration;
+      }
+      else {
+        drush_print(dt('Migration !name is disabled', array('!name' => $name)));
       }
     }
     $migration_objects = $named_migrations;

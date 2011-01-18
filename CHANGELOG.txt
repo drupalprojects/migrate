@@ -7,6 +7,7 @@ Features and enhancements
 - #946350 - Accept arrays in sourceMigration();
 
 Bug fixes
+- #962120 - Support idlist on rollback.
 - #1017256 - Document case-sensitivity in beer.inc.
 - #1013844 - Better error handling in getInstance().
 - #1008228 - migrate_example broken by list changes in D7 RC3.

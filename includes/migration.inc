@@ -286,6 +286,11 @@ abstract class Migration extends MigrationBase {
   protected function rollback() {
     $return = MigrationBase::RESULT_COMPLETED;
     $itemlimit = $this->getOption('itemlimit');
+    $idlist = $this->getOption('idlist');
+    if ($idlist) {
+      // Make the IDs keys, to more easily identify them
+      $idlist = array_flip(explode(',', $idlist));
+    }
 
     if (method_exists($this->destination, 'bulkRollback')) {
       // Too many at once can lead to memory issues, so batch 'em up
@@ -301,6 +306,11 @@ abstract class Migration extends MigrationBase {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();
+
+        // If there's an idlist, skip anything not in the list
+        if ($idlist && !isset($idlist[$this->currentSourceKey['sourceid1']])) {
+          continue;
+        }
 
         // Note that bulk rollback is only supported for single-column keys
         $sourceids[] = $this->currentSourceKey;
@@ -359,6 +369,11 @@ abstract class Migration extends MigrationBase {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();
+
+        // If there's an idlist, skip anything not in the list
+        if ($idlist && !isset($idlist[$this->currentSourceKey['sourceid1']])) {
+          continue;
+        }
 
         // Rollback one record
         try {

@@ -7,6 +7,7 @@ Features and enhancements
 - #946350 - Accept arrays in sourceMigration();
 
 Bug fixes
+- #998586 - Improved feedback for disabled migrations.
 - #972382 - Fix MigrateDestinationTableCopy.
 - #962120 - Support idlist on rollback.
 - #1017256 - Document case-sensitivity in beer.inc.

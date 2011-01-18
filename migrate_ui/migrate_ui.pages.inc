@@ -68,6 +68,9 @@ function migrate_ui_dashboard() {
       case MigrationBase::STATUS_STOPPING:
         $status = t('Stopping');
         break;
+      case MigrationBase::STATUS_DISABLED:
+        $status = t('Disabled');
+        break;
       default:
         $status = t('Unknown');
         break;

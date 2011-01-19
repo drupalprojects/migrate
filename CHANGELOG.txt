@@ -8,6 +8,7 @@ Features and enhancements
 Let a node migration set node_revisions.uid. Thats the 'last edited by' user
 
 Bug fixes
+- #990640 - Help people trying to upgrade from Migrate V1.
 - #998586 - Improved feedback for disabled migrations.
 - #972382 - Fix MigrateDestinationTableCopy.
 - #962120 - Support idlist on rollback.

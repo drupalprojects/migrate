@@ -239,3 +239,20 @@ function migrate_update_6003() {
 
   return $ret;
 }
+
+/**
+ * We messed up, by starting Migrate V2 update functions at 6001 - Migrate V1 on D6
+ * was up to 6016. We restart at 6020 making sure the V2 tables get created and
+ * giving some advice on upgrading.
+ */
+function migrate_update_6020() {
+  $ret = array();
+  if (!db_table_exists('migrate_status')) {
+    $ret = drupal_install_schema('migrate');
+    drupal_set_message(st('You are upgrading from Migrate V1 to Migrate V2. There is no automated
+      mechanism for content sets you created under Migrate V1 to become Migrate V2
+      Migration classes. Please refer to !doc for help in upgrading',
+      array('!doc' => l('the documentation', 'http://drupal.org/node/1007000'))));
+  }
+  return $ret;
+}

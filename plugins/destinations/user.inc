@@ -29,7 +29,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    * Return an options array for user destinations.
    *
    * @param string $language
-   *  Default language for usrs created via this destination class.
+   *  Default language for users created via this destination class.
    * @param string $text_format
    *  Default text format for users created via this destination class.
    */

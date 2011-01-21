@@ -800,10 +800,14 @@ abstract class Migration extends MigrationBase {
    * Assign a non-existing value for current mapping.
    */
   protected function handleDedupe($dedupe, $original, $mapping) {
-    $sql = "SELECT 1 FROM {%s} WHERE %s='%s'";
     $i = 1;
     $candidate = $original;
-    while ($count = db_result(db_query_range($sql, $dedupe['table'], $dedupe['column'], $candidate, 0, 1))) {
+    while ($candidate_found = db_select($dedupe['table'], 't')
+                      ->fields('t', array($dedupe['column']))
+                      ->range(0, 1)
+                      ->condition('t.' . $dedupe['column'], $candidate)
+                      ->execute()
+                      ->fetchField()) {
       // We already have the candidate value. Find a non-existing value.
       $i++;
       // @TODO: support custom replacement pattern instead of just append.

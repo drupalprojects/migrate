@@ -5,8 +5,10 @@ Migrate 2.0 dev
 
 Features and enhancements
 - #946350 - Accept arrays in sourceMigration();
+Let a node migration set node_revisions.uid. That's the 'last edited by' user
 
 Bug fixes
+- #998604 - Fixed dedupe.
 - #998586 - Improved feedback for disabled migrations.
 - #972382 - Fix MigrateDestinationTableCopy.
 - #962120 - Support idlist on rollback.

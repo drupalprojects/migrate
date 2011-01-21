@@ -235,17 +235,6 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->addFieldMapping('int')
          ->issueGroup(t('DNM'));
   }
-
-  // If you define a prepare() method in your migration, it will be called
-  // after the mappings have been applied and before the destination object is
-  // saved. The first argument is the destination object as built up using
-  // the mappings; the second argument is the raw source data.
-  public function prepare(stdClass $account, stdClass $row) {
-    // Source dates are in ISO format.
-    // Because the mappings above have been applied, $account->created contains
-    // the date/time string now - we could also pass $row->posted here.
-    $account->created = strtotime($account->created);
-  }
 }
 
 class BeerNodeMigration extends BasicExampleMigration {

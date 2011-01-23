@@ -29,7 +29,7 @@ function migrate_migrations() {
   $migrations = array();
   $dependent_migrations = array();
   $required_migrations = array();
-
+$foo = $bar;
   $result = db_select('migrate_status', 'ms')
             ->fields('ms', array('machine_name', 'class_name', 'arguments'))
             ->execute();
@@ -357,22 +357,31 @@ function migrate_get_module_apis($reset = FALSE) {
 }
 
 /**
- * Resource functions modeled on Drupal's timer functions
- */
-
-/**
  * Implementation of hook_watchdog().
  * Find the migration that is currently running and notify it.
  *
  * @param array $log_entry
  */
 function migrate_watchdog($log_entry) {
-/*  if ($migration = Migration::currentMigration()) {
-    // TODO: set appropriate level
-    $migration->saveMessage(t($log_entry['message'], $log_entry['variables']));
-    return;
-  }*/
+  // Validate that Migration is registered (if we get called due to an error
+  // during the registry build, we're screwed)
+  $name = db_select('autoload_registry', 'r')
+          ->fields('r', array('name'))
+          ->condition('name', 'Migration')
+          ->condition('type', 'class')
+          ->execute()
+          ->fetchField();
+  if ($name) {
+    if ($migration = Migration::currentMigration()) {
+      // TODO: set appropriate level
+      $migration->saveMessage(t($log_entry['message'], $log_entry['variables']));
+    }
+  }
 }
+
+/**
+ * Resource functions modeled on Drupal's timer functions
+ */
 
 /**
  * Implementation of hook_user()

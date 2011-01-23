@@ -8,6 +8,7 @@ Features and enhancements
 Let a node migration set node_revisions.uid. That's the 'last edited by' user
 
 Bug fixes
+- #1028824 - Errors during registry rebuild trigger fatal error.
 - #998604 - Fixed dedupe.
 - #998586 - Improved feedback for disabled migrations.
 - #972382 - Fix MigrateDestinationTableCopy.

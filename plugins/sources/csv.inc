@@ -67,6 +67,9 @@ class MigrateSourceCSV extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
+    foreach ($this->csvcolumns as $int => $values) {
+      $fields[$values[0]] = $values[1];
+    }
     return $fields;
   }
 

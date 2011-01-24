@@ -79,8 +79,8 @@ class GameBaseball extends DynamicMigration {
     $columns[17] = array('attendance', 'Attendance');
     $columns[18] = array('duration', 'Duration in minutes');
     for ($i=1; $i <= 9; $i++ ) {
-      $columns[103+3*$i] = array("visiting_batter_$i", "Visiting batter $1");
-      $columns[130+3*$i] = array("home_batter_$i", "Home batter $1");
+      $columns[103+3*$i] = array("visiting_batter_$i", "Visiting batter $i");
+      $columns[130+3*$i] = array("home_batter_$i", "Home batter $i");
     }
     $columns[102] = array('visiting_pitcher', 'Visiting starting pitcher');
     $columns[104] = array('home_pitcher', 'Home starting pitcher');

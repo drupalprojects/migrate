@@ -23,6 +23,13 @@ class MigrateSourceCSV extends MigrateSource {
    * @var array
    */
   protected $fields = array();
+  
+  /**
+   * Parameters for the fgetcsv() call.
+   *
+   * @var array
+   */
+  protected $fgetcsv = array();
 
   protected $mapJoinable = FALSE;
 
@@ -37,12 +44,17 @@ class MigrateSourceCSV extends MigrateSource {
    *  Keys are integers. values are array(field name, description).
    * @param array $options
    *  Options applied to this source.
+   * @param array $fields
+   *  Optional - keys are field names, values are descriptions. Use to override
+   *  the default descriptions, or to add additional source fields which the
+   *  migration will add via other means (e.g., prepareRow()).
    */
-  public function __construct($path, array $csvcolumns = array(), array $options = array()) {
+  public function __construct($path, array $csvcolumns = array(), array $options = array(), array $fields = array()) {
     parent::__construct();
     $this->file = $path;
     $this->csvcolumns = $csvcolumns;
     $this->options = $options;
+    $this->fields = $fields;
     // fgetcsv specific options
     foreach (array('length' => NULL, 'delimiter' => ',', 'enclosure' => '"', 'escape' => '\\') as $key => $default) {
       $this->fgetcsv[$key] = isset($options[$key]) ? $options[$key] : $default;
@@ -70,6 +82,13 @@ class MigrateSourceCSV extends MigrateSource {
     foreach ($this->csvcolumns as $int => $values) {
       $fields[$values[0]] = $values[1];
     }
+    
+    // Any caller-specified fields with the same names as extracted fields will
+    // override them; any others will be added
+    if ($this->fields) {
+      $fields = $this->fields + $fields;
+    }
+    
     return $fields;
   }
 

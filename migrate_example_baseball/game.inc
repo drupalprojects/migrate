@@ -38,7 +38,7 @@ class GameBaseball extends DynamicMigration {
       );
 
     // Create a MigrateSource object, which manages retrieving the input data.
-    $this->source = new MigrateSourceCSV($arguments['source_file'], $this->csvcolumns());
+    $this->source = new MigrateSourceCSV($arguments['source_file'], $this->csvcolumns(), array(), $this->fields());
 
     $this->destination = new MigrateDestinationNode('migrate_example_baseball');
 
@@ -109,5 +109,13 @@ class GameBaseball extends DynamicMigration {
    */
   protected function generateMachineName($class_name = NULL) {
     return strtolower(pathinfo($this->arguments['source_file'], PATHINFO_FILENAME));  
+  }
+  
+  function fields() {
+    return array(
+      'title' => 'A composite field made during prepareRow().',
+      'home_batters' => 'An array of batters, populated during prepareRow().',
+      'visiting_batters' => 'An array of batters, populated during prepareRow().',
+    );
   }
 }

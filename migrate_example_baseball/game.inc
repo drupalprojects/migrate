@@ -55,15 +55,20 @@ class GameBaseball extends DynamicMigration {
     $this->addFieldMapping('field_attendance', 'attendance');
     $this->addFieldMapping('field_duration', 'duration')
          ->defaultValue(NULL);
+    $this->addFieldMapping('field_home_pitcher', 'home_pitcher');
+    $this->addFieldMapping('field_visiting_pitcher', 'visiting_pitcher');
     $this->addFieldMapping('field_home_batters', 'home_batters')
          ->separator(',')
          ->description('See prepareRow().');
     $this->addFieldMapping('field_visiting_batters', 'visiting_batters')
          ->separator(',')
          ->description('See prepareRow().');
-    $this->addFieldMapping('field_home_pitcher', 'home_pitcher');
-    $this->addFieldMapping('field_visiting_pitcher', 'visiting_pitcher');
-
+    for ($i=1; $i <= 9; $i++ ) {
+      $this->addFieldMapping(NULL, "visiting_batter_$i")
+           ->description('Not needed since we use the multi-value field: visiting_batters.');
+      $this->addFieldMapping(NULL, "home_batter_$i")
+           ->description('Not needed since we use the multi-value field: home_batters.');
+    }
   }
   
   function csvcolumns() {

@@ -3,7 +3,7 @@
 
 /**
  * @file
- * A baseball game migration example.
+ *   A baseball game migration example.
  */
 
 /**

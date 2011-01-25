@@ -120,7 +120,7 @@ class MigrateSourceCSV extends MigrateSource {
 
     migrate_instrument_start('MigrateSourceCSV execute');
     $this->result = fopen($this->file, 'r');
-    migrate_instrument_stop('MigrateSourceSQL execute');
+    migrate_instrument_stop('MigrateSourceCSV execute');
 
     // Load up the first row
     $this->next();
@@ -145,7 +145,8 @@ class MigrateSourceCSV extends MigrateSource {
     // get next row
     migrate_instrument_start('MigrateSourceCSV next');
     $map = $migration->getMap();
-    while ($row = fgetcsv($this->result, $this->fgetcsv['length'], $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'], $this->fgetcsv['escape'])) {
+    // @todo $this->fgetcsv['escape'] not used as it gives warning in 5.2 - http://drupal.org/node/1039808.
+    while ($row = fgetcsv($this->result, $this->fgetcsv['length'], $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'])) {
       // Set meaningful keys for the columns mentioned in $this->csvcolumns().
       foreach ($this->csvcolumns as $int => $values) {
         list($key, $description) = $values;

@@ -112,7 +112,13 @@ abstract class Migration extends MigrationBase {
    * The object currently being constructed
    * @var stdClass
    */
-  protected $values;
+  protected $destinationValues;
+
+  /**
+   * The current data row retrieved from the source.
+   * @var stdClass
+   */
+  protected $sourceValues;
 
   /**
    * General initialization of a Migration object.
@@ -404,17 +410,18 @@ abstract class Migration extends MigrationBase {
 
       $this->currentSourceKey = $this->source->getCurrentKey();
 
-      $this->values = $this->applyMappings($data_row);
+      $this->sourceValues = $data_row;
+      $this->applyMappings();
 
       try {
         // Wipe old messages
         $this->map->delete($this->currentSourceKey, TRUE);
 
         migrate_instrument_start('destination import', TRUE);
-        $ids = $this->destination->import($this->values, $data_row);
+        $ids = $this->destination->import($this->destinationValues, $this->sourceValues);
         migrate_instrument_stop('destination import');
         if ($ids) {
-          $this->map->saveIDMapping($data_row, $ids, $this->needsUpdate);
+          $this->map->saveIDMapping($this->sourceValues, $ids, $this->needsUpdate);
           $this->successes_since_feedback++;
           $this->total_successes++;
         }
@@ -435,11 +442,11 @@ abstract class Migration extends MigrationBase {
       $this->total_processed++;
       $this->processed_since_feedback++;
       if ($this->highwaterField) {
-        $this->saveHighwater($data_row->{$this->highwaterField['name']});
+        $this->saveHighwater($this->sourceValues->{$this->highwaterField['name']});
       }
 
       // Reset row properties.
-      unset($this->values);
+      unset($this->sourceValues, $this->destinationValues);
       $this->needsUpdate = FALSE;
 
       // TODO: Temporary. Remove when http://drupal.org/node/375494 is committed.
@@ -632,12 +639,10 @@ abstract class Migration extends MigrationBase {
   /**
    * Apply field mappings to a data row received from the source, returning
    * a populated destination object.
-   *
-   * @param stdClass $data_row
    */
-  protected function applyMappings(stdClass $data_row) {
+  protected function applyMappings() {
     // Apply mappings.
-    $values = new stdClass;
+    $this->destinationValues = new stdClass;
     foreach ($this->fieldMappings as $mapping) {
       $destination = $mapping->getDestinationField();
       // Skip mappings with no destination (source fields marked DNM)
@@ -646,54 +651,54 @@ abstract class Migration extends MigrationBase {
         $default = $mapping->getDefaultValue();
         // If there's a source mapping, and a source value in the data row, copy
         // to the destination
-        if ($source && isset($data_row->$source)) {
-          $values->$destination = $data_row->$source;
+        if ($source && isset($this->sourceValues->$source)) {
+          $this->destinationValues->$destination = $this->sourceValues->$source;
         }
         // Otherwise, apply the default value (if any)
         elseif (!is_null($default)) {
-          $values->$destination = $default;
+          $this->destinationValues->$destination = $default;
         }
 
         // If there's a separator specified for this destination, then it
         // will be populated as an array exploded from the source value
         $separator = $mapping->getSeparator();
-        if ($separator && isset($values->$destination)) {
-          $values->$destination = explode($separator, $values->$destination);
+        if ($separator && isset($this->destinationValues->$destination)) {
+          $this->destinationValues->$destination = explode($separator, $this->destinationValues->$destination);
         }
 
         // If a source migration is supplied, use the current value for this field
         // to look up a destination ID from the provided migration
         $source_migration = $mapping->getSourceMigration();
-        if ($source_migration && isset($values->$destination)) {
-          $values->$destination = $this->handleSourceMigration($source_migration, $values->$destination, $default);
+        if ($source_migration && isset($this->destinationValues->$destination)) {
+          $this->destinationValues->$destination = $this->handleSourceMigration($source_migration, $this->destinationValues->$destination, $default, $this);
         }
 
         // If specified, assure a unique value for this property.
         $dedupe = $mapping->getDedupe();
-        if ($dedupe && isset($values->$destination)) {
-          $values->$destination = $this->handleDedupe($dedupe, $values->$destination, $mapping);
+        if ($dedupe && isset($this->destinationValues->$destination)) {
+          $this->destinationValues->$destination = $this->handleDedupe($dedupe, $this->destinationValues->$destination, $mapping);
         }
 
         // Assign any arguments
-        if (isset($values->$destination)) {
+        if (isset($this->destinationValues->$destination)) {
           $arguments = $mapping->getArguments();
           if ($arguments) {
-            if (!is_array($values->$destination)) {
-              $values->$destination = array($values->$destination);
+            if (!is_array($this->destinationValues->$destination)) {
+              $this->destinationValues->$destination = array($this->destinationValues->$destination);
             }
             // TODO: Stuffing arguments into the destination field is gross - can
             // we come up with a better way to communicate them to the field
             // handlers?
-            $values->{$destination}['arguments'] = array();
+            $this->destinationValues->{$destination}['arguments'] = array();
             foreach ($arguments as $argname => $destarg) {
-              if (is_array($destarg) && isset($destarg['source_field']) && isset($data_row->$destarg['source_field'])) {
-                $values->{$destination}['arguments'][$argname] = $data_row->$destarg['source_field'];
+              if (is_array($destarg) && isset($destarg['source_field']) && isset($this->sourceValues->$destarg['source_field'])) {
+                $this->destinationValues->{$destination}['arguments'][$argname] = $this->sourceValues->$destarg['source_field'];
               }
               elseif (is_array($destarg) && isset($destarg['default_value'])) {
-                $values->{$destination}['arguments'][$argname] = $destarg['default_value'];
+                $this->destinationValues->{$destination}['arguments'][$argname] = $destarg['default_value'];
               }
               else {
-                $values->{$destination}['arguments'][$argname] = $destarg;
+                $this->destinationValues->{$destination}['arguments'][$argname] = $destarg;
               }
             }
           }
@@ -702,13 +707,11 @@ abstract class Migration extends MigrationBase {
         // When we're updating existing nodes, if there is a source mapping but there
         // was no value for this row, add a null destination value so it gets removed
         // from the node
-        if ($this->systemOfRecord == Migration::DESTINATION && $source && !isset($values->$destination)) {
-          $values->$destination = NULL;
+        if ($this->systemOfRecord == Migration::DESTINATION && $source && !isset($this->destinationValues->$destination)) {
+          $this->destinationValues->$destination = NULL;
         }
       }
     }
-
-    return $values;
   }
 
   /**
@@ -720,8 +723,10 @@ abstract class Migration extends MigrationBase {
    *   An array of source values, or string for a single value.
    * @param mixed $default
    *   The default value, if no ID was found.
+   * @param $migration
+   *   The implementing migration.
    */
-  protected function handleSourceMigration($source_migrations, $source_values, $default = NULL) {
+  protected function handleSourceMigration($source_migrations, $source_values, $default = NULL, $migration) {
     // Ensure source migrations and source keys are arrays.
     $source_migrations = (array) $source_migrations;
     $source_keys = (array) $source_values;
@@ -748,7 +753,7 @@ abstract class Migration extends MigrationBase {
       if (!$destids) {
         foreach ($source_migrations as $source_migration) {
           // Break out of the loop if a stub was successfully created.
-          if ($destids = $source_migration->createStubWrapper(array($source_key))) {
+          if ($destids = $source_migration->createStubWrapper(array($source_key), $migration)) {
             break;
           }
         }
@@ -807,9 +812,9 @@ abstract class Migration extends MigrationBase {
   /**
    * If stub creation is enabled, try to create a stub and save the mapping.
    */
-  protected function createStubWrapper(array $source_key) {
+  protected function createStubWrapper(array $source_key, $migration) {
     if (method_exists($this, 'createStub')) {
-      $destids = $this->createStub();
+      $destids = $this->createStub($migration);
       if ($destids) {
         // Fake a data row with the source key in it
         $map_source_key = $this->map->getSourceKey();

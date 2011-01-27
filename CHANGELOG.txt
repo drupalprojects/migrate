@@ -4,7 +4,9 @@ Migrate 2.0 dev
 ==================
 
 Features and enhancements
-- #1039882 - Pass client migration to stub creation.
+- #1039882 - Pass client migration to stub creation. Note that $migration->values
+  (the destination object being built) is now $migration->destinationValues - any
+  migrations referencing this member will need to change.
 - #946350 - Accept arrays in sourceMigration();
 Let a node migration set node_revisions.uid. That's the 'last edited by' user
 

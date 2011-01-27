@@ -221,10 +221,8 @@ abstract class XMLMigration extends Migration {
    * case, however, the data is embedded within a SimpleXMLElement object in
    * $data_row->xml. Explode that out to the normal form, and pass on to the
    * normal implementation.
-   *
-   * @param stdClass $data_row
    */
-  protected function applyMappings(stdClass $data_row) {
+  protected function applyMappings() {
     // We only know what data to pull from the xpaths in the mappings.
     foreach ($this->fieldMappings as $mapping) {
       $source = $mapping->getSourceField();
@@ -232,11 +230,11 @@ abstract class XMLMigration extends Migration {
         $xpath = $mapping->getXpath();
         if ($xpath) {
           // Derived class may override applyXpath()
-          $data_row->$source = $this->applyXpath($data_row, $xpath);
+          $this->sourceValues->$source = $this->applyXpath($this->sourceValues, $xpath);
         }
       }
     }
-    return parent::applyMappings($data_row);
+    parent::applyMappings();
   }
 
   /**

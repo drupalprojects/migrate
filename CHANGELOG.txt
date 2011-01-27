@@ -4,6 +4,7 @@ Migrate 2.0 dev
 ==================
 
 Features and enhancements
+- #1039882 - Pass client migration to stub creation.
 - #946350 - Accept arrays in sourceMigration();
 Let a node migration set node_revisions.uid. That's the 'last edited by' user
 

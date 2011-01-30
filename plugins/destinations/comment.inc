@@ -100,8 +100,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       reset($cid)));
     // May have been deleted as the child of a comment previously deleted
     if ($comment) {
+      $this->prepareRollback($cid);
       $form['#comment'] = $comment;
       comment_confirm_delete_submit($form, $form_state);
+      $this->completeRollback($cid);
     }
   }
 

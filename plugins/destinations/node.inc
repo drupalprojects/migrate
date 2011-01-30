@@ -91,12 +91,14 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   public function rollback(array $nid) {
     static $count = 0;
     migrate_instrument_start('node_delete');
+    $this->prepareRollback($nid);
     node_delete(reset($nid));
     // Periodically flush the node cache
     if ($count++ > 500) {
       $count = 0;
       node_load(1, NULL, TRUE);
     }
+    $this->completeRollback($nid);
     migrate_instrument_stop('node_delete');
   }
 

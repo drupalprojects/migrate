@@ -82,7 +82,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $tid = reset($key);
 
     migrate_instrument_start('taxonomy_term_delete');
+    $this->prepareRollback($tid);
     $result = (bool) taxonomy_del_term($tid);
+    $this->completeRollback($tid);
     migrate_instrument_stop('taxonomy_term_delete');
     return $result == SAVED_DELETED;
   }

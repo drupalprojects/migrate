@@ -95,7 +95,9 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    */
   public function bulkRollback(array $cids) {
     migrate_instrument_start('comment_delete_multiple');
+    $this->prepareRollback($cids);
     $result = comment_delete_multiple($cids);
+    $this->completeRollback($cids);
     migrate_instrument_stop('comment_delete_multiple');
     return $result;
   }

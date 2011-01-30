@@ -90,7 +90,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    */
   public function bulkRollback(array $nids) {
     migrate_instrument_start('node_delete_multiple');
+    $this->prepareRollback($nids);
     node_delete_multiple($nids);
+    $this->completeRollback($nids);
     migrate_instrument_stop('node_delete_multiple');
   }
 

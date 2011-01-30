@@ -78,6 +78,46 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
   }
 
   /**
+   * Give handlers a shot at cleaning up before an entity has been rolled back.
+   *
+   * @param $entity_id
+   *  ID of the entity about to be deleted..
+   */
+  public function prepareRollback($entity_id) {
+    $migration = Migration::currentMigration();
+    $entity->migrate = array(
+      'machineName' => $migration->getMachineName(),
+    );
+
+    // Call any general entity handlers (in particular, the builtin field handler)
+    migrate_handler_invoke_all('Entity', 'prepareRollback', $entity_id);
+    // Then call any entity-specific handlers
+    migrate_handler_invoke_all($this->entityType, 'prepareRollback', $entity_id);
+    // Then call any prepare handler for this specific Migration.
+    if (method_exists($migration, 'prepareRollback')) {
+      $migration->prepareRollback($entity_id);
+    }
+  }
+
+  /**
+   * Give handlers a shot at cleaning up after an entity has been rolled back.
+   *
+   * @param $entity_id
+   *  ID of the entity which has been deleted.
+   */
+  public function completeRollback($entity_id) {
+    $migration = Migration::currentMigration();
+    // Call any general entity handlers (in particular, the builtin field handler)
+    migrate_handler_invoke_all('Entity', 'completeRollback', $entity_id);
+    // Then call any entity-specific handlers
+    migrate_handler_invoke_all($this->entityType, 'completeRollback', $entity_id);
+    // Then call any complete handler for this specific Migration.
+    if (method_exists($migration, 'completeRollback')) {
+      $migration->completeRollback($entity_id);
+    }
+  }
+
+  /**
    * Give handlers a shot at modifying the object before saving it.
    *
    * @param $entity

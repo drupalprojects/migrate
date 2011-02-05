@@ -12,6 +12,7 @@ Features and enhancements
 Let a node migration set node_revisions.uid. That's the 'last edited by' user
 
 Bug fixes
+- #1045646 - Handle PHP memory_limit of -1
 - #1050348 - Check map table existence in correct DB.
 - #1028824 - Errors during registry rebuild trigger fatal error.
 Fix highwater handling to deal with duplicate values.

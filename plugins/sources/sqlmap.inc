@@ -51,9 +51,11 @@ class MigrateSQLMap extends MigrateMap {
 
   public function __construct($machine_name, array $source_key,
       array $destination_key, $connection_key = 'default') {
-    // Default generated table names
+    // Default generated table names, limited to 63 characters
     $this->mapTable = 'migrate_map_' . drupal_strtolower($machine_name);
+    $this->mapTable = substr($this->mapTable, 0, 63);
     $this->messageTable = 'migrate_message_' . drupal_strtolower($machine_name);
+    $this->messageTable = substr($this->messageTable, 0, 63);
     $this->sourceKey = $source_key;
     $this->destinationKey = $destination_key;
     $this->connection = Database::getConnection('default', $connection_key);

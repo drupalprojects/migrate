@@ -29,7 +29,7 @@ function migrate_migrations() {
   $migrations = array();
   $dependent_migrations = array();
   $required_migrations = array();
-$foo = $bar;
+
   $result = db_select('migrate_status', 'ms')
             ->fields('ms', array('machine_name', 'class_name', 'arguments'))
             ->execute();

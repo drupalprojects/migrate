@@ -264,20 +264,25 @@ abstract class MigrationBase {
 
     // Record the memory limit in bytes
     $limit = trim(ini_get('memory_limit'));
-    $last = strtolower($limit[strlen($limit)-1]);
-    switch ($last) {
-      case 'g':
-        $limit *= 1024;
-      case 'm':
-        $limit *= 1024;
-      case 'k':
-        $limit *= 1024;
-        break;
-      default:
-        throw new Exception(t('Invalid PHP memory_limit !limit',
-          array('!limit' => $limit)));
+    if ($limit == '-1') {
+      $this->memoryLimit = PHP_INT_MAX;
     }
-    $this->memoryLimit = $limit;
+    else {
+      $last = strtolower($limit[strlen($limit)-1]);
+      switch ($last) {
+        case 'g':
+          $limit *= 1024;
+        case 'm':
+          $limit *= 1024;
+        case 'k':
+          $limit *= 1024;
+          break;
+        default:
+          throw new Exception(t('Invalid PHP memory_limit !limit',
+            array('!limit' => $limit)));
+      }
+      $this->memoryLimit = $limit;
+    }
 
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');

@@ -12,6 +12,7 @@ Features and enhancements
 Let a node migration set node_revisions.uid. Thats the 'last edited by' user
 
 Bug fixes
+- #919706 - Fix drush migrate-descriptions command.
 - #1027468 - Limit map/message table name lengths.
 - #1045646 - Handle PHP memory_limit of -1.
 - #1050348 - Check map table existence in correct DB.

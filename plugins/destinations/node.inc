@@ -111,6 +111,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Updating previously-migrated content?
     $migration = Migration::currentMigration();
     if (isset($row->migrate_map_destid1)) {
+      // Make sure is_new is off
+      $node->is_new = FALSE;
       if (isset($node->nid)) {
         if ($node->nid != $row->migrate_map_destid1) {
           throw new MigrateException(t("Incoming nid !nid and map destination nid !destid1 don't match",
@@ -214,7 +216,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         // We actually have something to update.
         $query->fields($fields);
         $query->execute();
-        $node->timestamp = $changed;
+        if (isset($changed)) {
+          $node->timestamp = $changed;
+        }
       }
     }
 

@@ -13,6 +13,7 @@ Features and enhancements
 Let a node migration set node_revisions.uid. That's the 'last edited by' user
 
 Bug fixes
+- #914440 - Enhance multilingual support. 
 - #1014648 - Defaulting of file field subfields.
 - #1037872 - Make sure is_new is off for previously migrated content.
 - #919706 - Fix drush migrate-descriptions command.

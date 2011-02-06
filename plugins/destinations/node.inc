@@ -122,12 +122,14 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       else {
         $node->nid = $row->migrate_map_destid1;
       }
-      // Get the existing vid, so updates don't generate notices
-      $node->vid = db_select('node', 'n')
-                   ->fields('n', array('vid'))
+      // Get the existing vid, tnid so updates don't generate notices
+      $values = db_select('node', 'n')
+                   ->fields('n', array('vid', 'tnid'))
                    ->condition('nid', $node->nid)
                    ->execute()
-                   ->fetchField();
+                   ->fetchAssoc();
+      $node->vid = $values['vid'];
+      $node->tnid = $values['tnid'];
     }
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       if (!isset($node->nid)) {

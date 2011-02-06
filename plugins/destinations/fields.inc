@@ -50,6 +50,29 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
 abstract class MigrateFieldHandler extends MigrateHandler {
   // abstract function arguments(...)
   abstract public function prepare(stdClass $entity, array $field_info, array $instance, array $values);
+
+  /**
+   * Determine the language of the field
+   *
+   * @param $entity
+   * @param $field_info
+   * @param $arguments
+   * @return string language code
+   */
+  function getFieldLanguage(stdClass $entity, $field_info, array $arguments) {
+    $migration = Migration::currentMigration();
+    switch (TRUE) {
+      case !field_is_translatable($migration->getDestination()->getEntityType(), $field_info):
+          return LANGUAGE_NONE;
+      case isset($arguments['language']):
+        return $arguments['language'];
+      case $entity->language != LANGUAGE_NONE:
+        return $entity->language;
+        break;
+      default:
+        return $migration->getDestination()->getLanguage();
+    }
+  }
 }
 
 class MigrateTextFieldHandler extends MigrateFieldHandler {
@@ -82,8 +105,8 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
 
     $migration = Migration::currentMigration();
     $destination = $migration->getDestination();
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $destination->getLanguage();
+    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
+
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -113,9 +136,8 @@ class MigrateValueFieldHandler extends MigrateFieldHandler {
 
   public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
     $migration = Migration::currentMigration();
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
-
+    $arguments = (isset($values['arguments']))? $values['arguments']: array();
+    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
@@ -170,8 +192,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $tids = array();
     }
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
+    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
     $result = array();
     $i = 0;
     foreach ($tids as $tid) {
@@ -199,8 +220,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     unset($values['arguments']);
     $migration = Migration::currentMigration();
 
-    $language = isset($arguments['language']) ? $arguments['language'] :
-      $migration->getDestination()->getLanguage();
+    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
+
     $return = array();
 
     if (empty($arguments['separator'])) {
@@ -410,8 +431,8 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    $language = isset($arguments['language']) ? $arguments['language'] :
-      $migration->getDestination()->getLanguage();
+
+    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -441,8 +462,7 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    $language = isset($arguments['language']) ?
-      $arguments['language'] : $migration->getDestination()->getLanguage();
+    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
 
     // Setup the standard Field API array for saving.
     $delta = 0;

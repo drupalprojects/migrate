@@ -275,7 +275,7 @@ class BeerNodeMigration extends BasicExampleMigration {
     // each node? One way (demonstrated for MySQL) is to pull them into a single
     // comma-separated list.
     $query = db_select('migrate_example_beer_node', 'b')
-             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image', 'file'));
+             ->fields('b', array('bid', 'name', 'body', 'excerpt', 'aid', 'countries', 'image'));
     $query->leftJoin('migrate_example_beer_topic_node', 'tb', 'b.bid = tb.bid');
     // Gives a single comma-separated list of related terms
     $query->groupBy('tb.bid');
@@ -340,9 +340,6 @@ class BeerNodeMigration extends BasicExampleMigration {
     // Copy an image file, write DB record to files table, and save in Field storage.
     $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
     $this->addFieldMapping('field_migrate_example_image', 'image')
-         ->arguments($arguments);
-    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
-    $this->addFieldMapping('field_test_file', 'file')
          ->arguments($arguments);
 
     // Oops, we've added a second mapping for sticky... Fortunately, the

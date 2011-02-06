@@ -340,10 +340,30 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;
-      $object_field['alt'] = isset($arguments['source_alt_name']) ? $values[$arguments['source_alt_name']] : NULL;
-      $object_field['title'] = isset($arguments['source_title_name']) ? $values[$arguments['source_title_name']] : NULL;
-      $object_field['description'] = isset($arguments['source_description_name']) ? $values[$arguments['source_description_name']] : NULL;
-      $object_field['display'] = isset($arguments['source_display_name']) ? $values[$arguments['source_display_name']] : NULL;
+      if (isset($arguments['source_alt_name']) && isset($values[$arguments['source_alt_name']])) {
+        $object_field['alt'] = $values[$arguments['source_alt_name']];
+      }
+      else {
+        $object_field['alt'] = '';
+      }
+      if (isset($arguments['source_title_name']) && isset($values[$arguments['source_title_name']])) {
+        $object_field['title'] = $values[$arguments['source_title_name']];
+      }
+      else {
+        $object_field['title'] = '';
+      }
+      if (isset($arguments['source_description_name']) && isset($values[$arguments['source_description_name']])) {
+        $object_field['description'] = $values[$arguments['source_description_name']];
+      }
+      else {
+        $object_field['description'] = '';
+      }
+      if (isset($arguments['source_display_name']) && isset($values[$arguments['source_display_name']])) {
+        $object_field['display'] = $values[$arguments['source_display_name']];
+      }
+      else {
+        $object_field['display'] = TRUE;
+      }
       return $object_field;
     }
     else {

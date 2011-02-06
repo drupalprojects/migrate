@@ -367,7 +367,7 @@ function drush_migrate_descriptions() {
       // First group the mappings
       $descriptions = array();
       foreach ($migration->getFieldMappings() as $mapping) {
-        $descriptions[$mapping->issueGroup][] = $mapping;
+        $descriptions[$mapping->getIssueGroup()][] = $mapping;
       }
       // Put out each group header
       $table = array();
@@ -386,14 +386,14 @@ function drush_migrate_descriptions() {
         $group_header = '--- ' . strtoupper($group) . ' ---';
         $table[] = array('', $group_header);
         foreach ($mappings as $mapping) {
-          if (is_array($mapping->defaultValue)) {
-            $default = implode(',', $mapping->defaultValue);
+          if (is_array($mapping->getDefaultValue())) {
+            $default = implode(',', $mapping->getDefaultValue());
           }
           else {
-            $default = $mapping->defaultValue;
+            $default = $mapping->getDefaultValue();
           }
-          $table[] = array($mapping->destinationField, $mapping->sourceField,
-            $default, $mapping->descriptionText);
+          $table[] = array($mapping->getDestinationField(), $mapping->getSourceField(),
+            $default, $mapping->getDescription());
         }
       }
 

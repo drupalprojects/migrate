@@ -67,7 +67,7 @@ abstract class Migration extends MigrationBase {
    *
    * @var boolean
    */
-  protected $needsUpdate = FALSE;
+  public $needsUpdate = FALSE;
 
   /**
    * Simple mappings between destination fields (keys) and source fields (values).

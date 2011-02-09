@@ -24,7 +24,11 @@ define('MIGRATE_API_VERSION', 2);
  *  Array of migration objects, keyed by the machine name.
  */
 function migrate_migrations() {
-  $migrations = array();
+  static $migrations = array();
+  if (!empty($migrations)) {
+    return $migrations;
+  }
+
   $dependent_migrations = array();
   $required_migrations = array();
 

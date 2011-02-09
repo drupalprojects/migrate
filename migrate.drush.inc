@@ -499,12 +499,21 @@ function drush_migrate_get_migrations($args) {
   else {
     $named_migrations = array();
     foreach (explode(',', $args) as $name) {
-      $migration = $migration_objects[$name];
-      if ($migration->getEnabled()) {
-        $named_migrations[$name] = $migration;
+      $found = FALSE;
+      foreach ($migration_objects as $machine_name => $migration) {
+        if (strtolower($name) == strtolower($machine_name)) {
+          if ($migration->getEnabled()) {
+            $named_migrations[$name] = $migration;
+            $found = TRUE;
+            break;
+          }
+          else {
+            drush_log(dt('Migration !name is disabled', array('!name' => $name)), 'warning');
+          }
+        }
       }
-      else {
-        drush_print(dt('Migration !name is disabled', array('!name' => $name)));
+      if (!$found) {
+        drush_log(dt('No migration with machine name !name found', array('!name' => $name)), 'error');
       }
     }
     $migration_objects = $named_migrations;

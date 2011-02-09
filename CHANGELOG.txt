@@ -4,6 +4,7 @@ Migrate 2.0 Release Candidate 1
 ===============================
 
 Features and enhancements
+- #919108 - Add deleteDestination() for maps; cache migration list.
 - #996086 - Add prepareRollback and completeRollback methods for entities.
 - #1039882 - Pass client migration to stub creation. Note that $migration->values
   (the destination object being built) is now $migration->destinationValues - any

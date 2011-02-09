@@ -88,6 +88,13 @@ abstract class MigrateMap implements Iterator {
   abstract public function delete(array $source_key);
 
   /**
+   * Delete the map and message entries for a given destination record
+   *
+   * @param array $destination_key
+   */
+  abstract public function deleteDestination(array $destination_key);
+
+  /**
    * Delete the map and message entries for a set of given source records.
    *
    * @param array $source_keys

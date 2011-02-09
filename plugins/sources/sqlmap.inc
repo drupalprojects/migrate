@@ -458,6 +458,31 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
+   * Delete the map entry and any message table entries for the specified destination row.
+   *
+   * @param array $destination_key
+   */
+  public function deleteDestination(array $destination_key) {
+    $map_query = $this->connection->delete($this->mapTable);
+    $message_query = $this->connection->delete($this->messageTable);
+    $source_key = $this->lookupSourceID($destination_key);
+    if (!empty($source_key)) {
+      $count = 1;
+      foreach ($destination_key as $key_value) {
+        $map_query->condition('destid' . $count, $key_value);
+        $count++;
+      }
+      $map_query->execute();
+      $count = 1;
+      foreach ($source_key as $key_value) {
+        $message_query->condition('sourceid' . $count, $key_value);
+        $count++;
+      }
+      $message_query->execute();
+    }
+  }
+
+  /**
    * Set the specified row to be updated, if it exists.
    */
   public function setUpdate(array $source_key) {

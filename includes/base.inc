@@ -417,6 +417,21 @@ abstract class MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
+    switch ($level) {
+      case MigrationBase::MESSAGE_ERROR:
+        $level = 'error';
+        break;
+      case MigrationBase::MESSAGE_WARNING:
+        $level = 'warning';
+        break;
+      case MigrationBase::MESSAGE_NOTICE:
+        $level = 'notice';
+        break;
+      case MigrationBase::MESSAGE_INFORMATIONAL:
+        $level = 'status';
+        break;
+    }
+
     $this->showMessage($message, $level);
   }
 
@@ -426,9 +441,10 @@ abstract class MigrationBase {
    * @param string $message
    *  The message to output.
    * @param int $level
-   *  Optional message severity (defaults to MESSAGE_ERROR).
+   *  Optional message severity as understood by drupal_set_message and drush_log
+   *  (defaults to 'error').
    */
-  public function showMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
+  public function showMessage($message, $level = 'error') {
     call_user_func($this->outputFunction, $message, $level);
   }
 

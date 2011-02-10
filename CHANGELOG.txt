@@ -1,5 +1,11 @@
 //$Id$
 
+Migrate 2.0 Release Candidate 2
+===============================
+
+Bug fixes
+- #1053798 - Missing 'debug' on showMessage.
+
 Migrate 2.0 Release Candidate 1
 ===============================
 

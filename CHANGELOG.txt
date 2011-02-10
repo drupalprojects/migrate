@@ -10,6 +10,7 @@ Features and enhancements
   (the destination object being built) is now $migration->destinationValues - any
   migrations referencing this member will need to change.
 - #946350 - Accept arrays in sourceMigration();
+Moved filefield support from migrate_extras to migrate, for consistency with D7.
 Let a node migration set node_revisions.uid. Thats the 'last edited by' user
 
 Bug fixes

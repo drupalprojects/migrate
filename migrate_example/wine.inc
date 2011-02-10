@@ -43,6 +43,10 @@ abstract class AdvancedExampleMigration extends Migration {
  * to disable auto_nodetitle while the migration steps run.
  */
 class WinePrepMigration extends MigrationBase {
+  // Remember whether the auto_nodetitle was originally enabled, so we know whether
+  // to re-enable it
+  public static $wasEnabled = FALSE;
+
   public function __construct() {
     parent::__construct();
     $this->description = t('If auto_nodetitle is present, disable it for the duration');
@@ -71,10 +75,12 @@ class WinePrepMigration extends MigrationBase {
   // run during rollbacks, define a rollback() method).
   public function import() {
     if (module_exists('auto_nodetitle')) {
+      self::$wasEnabled = TRUE;
       module_disable(array('auto_nodetitle'));
       $this->showMessage(t('Disabled auto_nodetitle module'), 'success');
     }
     else {
+      self::$wasEnabled = FALSE;
       $this->showMessage(t('Auto_nodetitle is already disabled'), 'success');
     }
     // Must return one of the MigrationBase RESULT constants
@@ -528,12 +534,16 @@ class WineFinishMigration extends MigrationBase {
   }
   public function import() {
     if (!module_exists('auto_nodetitle')) {
-      // TODO: Really should keep track of whether it was originally enabled
-      module_enable(array('auto_nodetitle'));
-      $this->showMessage(t('Re-enabled auto_nodetitle module'), 'success');
+      if (WinePrepMigration::$wasEnabled) {
+        module_enable(array('auto_nodetitle'));
+        $this->showMessage(t('Re-enabled auto_nodetitle module'), 'success');
+      }
+      else {
+        $this->showMessage(t('auto_nodetitle was not originally enabled'), 'success');
+      }
     }
     else {
-      $this->showMessage(t('Auto_nodetitle module already enabled', 'success'));
+      $this->showMessage(t('Auto_nodetitle module already enabled'), 'success');
     }
     return Migration::RESULT_COMPLETED;
   }

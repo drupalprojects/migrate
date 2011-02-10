@@ -14,6 +14,7 @@ Moved filefield support from migrate_extras to migrate, for consistency with D7.
 Let a node migration set node_revisions.uid. Thats the 'last edited by' user
 
 Bug fixes
+- #1053798 - Consistent use of error codes.
 - #1053526 - Machine names in drush commands now case-insensitive.
 - #919706 - Fix drush migrate-descriptions command.
 - #1027468 - Limit map/message table name lengths.

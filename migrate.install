@@ -151,6 +151,14 @@ function migrate_install() {
 }
 
 /**
+ * Implementation of hook_enable().
+ */
+function migrate_enable() {
+  // Make sure autoload registers our classes
+  cache_clear_all();
+}
+
+/**
  * Implementation of hook_uninstall().
  * Drop map/message tables, in case implementing classes did not.
  */

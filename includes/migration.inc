@@ -138,15 +138,20 @@ abstract class Migration extends MigrationBase {
    * @param string $machine_name
    */
   static public function deregisterMigration($machine_name) {
-    // Remove map and message tables
-    $migration = self::getInstance($machine_name);
-    $migration->map->destroy();
+    try {
+      // Remove map and message tables
+      $migration = self::getInstance($machine_name);
+      $migration->map->destroy();
 
-    // TODO: Clear log entries? Or keep for historical purposes?
+      // TODO: Clear log entries? Or keep for historical purposes?
 
-    // Call the parent deregistration (which clears migrate_status) last, the
-    // above will reference it.
-    parent::deregisterMigration($machine_name);
+      // Call the parent deregistration (which clears migrate_status) last, the
+      // above will reference it.
+      parent::deregisterMigration($machine_name);
+    }
+    catch (Exception $e) {
+      // Fail silently if it's already gone
+    }
   }
 
   ////////////////////////////////////////////////////////////////////
@@ -234,14 +239,10 @@ abstract class Migration extends MigrationBase {
 
     // Call pre-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
-      if (method_exists($this->destination, 'preImport')) {
-        $this->destination->preImport();
-      }
+      $this->preImport();
     }
     else {
-      if (method_exists($this->destination, 'preRollback')) {
-        $this->destination->preRollback();
-      }
+      $this->preRollback();
     }
   }
 
@@ -252,17 +253,42 @@ abstract class Migration extends MigrationBase {
   public function endProcess() {
     // Call post-process methods
     if ($this->status == Migration::STATUS_IMPORTING) {
-      if (method_exists($this->destination, 'postImport')) {
-        $this->destination->postImport();
-      }
+      $this->postImport();
     }
     else {
-      if (method_exists($this->destination, 'postRollback')) {
-        $this->destination->postRollback();
-      }
+      $this->postRollback();
     }
 
     parent::endProcess();
+  }
+
+  /**
+   * Default implementations of pre/post import/rollback methods. These call
+   * the destination methods (if they exist) - when overriding, always
+   * call parent::preImport() etc.
+   */
+  protected function preImport() {
+    if (method_exists($this->destination, 'preRollback')) {
+      $this->destination->preImport();
+    }
+  }
+
+  protected function preRollback() {
+    if (method_exists($this->destination, 'preRollback')) {
+      $this->destination->preRollback();
+    }
+  }
+
+  protected function postImport() {
+    if (method_exists($this->destination, 'postImport')) {
+      $this->destination->postImport();
+    }
+  }
+
+  protected function postRollback() {
+    if (method_exists($this->destination, 'postRollback')) {
+      $this->destination->postRollback();
+    }
   }
 
   /**
@@ -787,12 +813,12 @@ abstract class Migration extends MigrationBase {
   protected function handleDedupe($dedupe, $original, $mapping) {
     $i = 1;
     $candidate = $original;
-    while ($unused = db_select($dedupe['table'], 't')
-                          ->fields('t', array($dedupe['column']))
-                          ->range(0, 1)
-                          ->condition('t.' . $dedupe['column'], $candidate)
-                          ->execute()
-                          ->fetchField()) {
+    while ($candidate_found = db_select($dedupe['table'], 't')
+                      ->fields('t', array($dedupe['column']))
+                      ->range(0, 1)
+                      ->condition('t.' . $dedupe['column'], $candidate)
+                      ->execute()
+                      ->fetchField()) {
       // We already have the candidate value. Find a non-existing value.
       $i++;
       // @TODO: support custom replacement pattern instead of just append.

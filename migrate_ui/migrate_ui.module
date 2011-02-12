@@ -24,6 +24,7 @@ function migrate_menu() {
 
   $items['admin/content/migrate'] = array(
     'title' => 'Migrate',
+    'type' => MENU_LOCAL_TASK,
     'description' => 'Monitor the creation of Drupal content from source data',
     'page callback' => 'migrate_ui_dashboard',
     'access arguments' => array(MIGRATE_ACCESS_BASIC),

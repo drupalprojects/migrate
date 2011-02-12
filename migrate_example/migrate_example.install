@@ -27,6 +27,14 @@ function migrate_example_install() {
             VALUES('Migrate example format', ',1,', 1)");
 }
 
+/**
+ * Implementation of hook_enable().
+ */
+function migrate_example_enable() {
+  // Make sure autoload registers our classes
+  autoload_registry_rebuild();
+}
+
 function migrate_example_uninstall() {
   migrate_example_beer_uninstall();
   migrate_example_wine_uninstall();

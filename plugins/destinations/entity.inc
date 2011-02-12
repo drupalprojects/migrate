@@ -160,12 +160,12 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    *  Raw source data object - passed through to complete handlers.
    */
   public function complete(stdClass $entity, stdClass $source_row) {
-    $migration = Migration::currentMigration();
     // Call any general entity handlers (in particular, the builtin field handler)
     migrate_handler_invoke_all('Entity', 'complete', $entity, $source_row);
     // Then call any entity-specific handlers
     migrate_handler_invoke_all($this->entityType, 'complete', $entity, $source_row);
     // Then call any complete handler for this specific Migration.
+    $migration = Migration::currentMigration();
     if (method_exists($migration, 'complete')) {
       $migration->complete($entity, $source_row);
     }

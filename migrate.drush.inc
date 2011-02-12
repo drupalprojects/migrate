@@ -295,7 +295,7 @@ function drush_migrate_fields_destination() {
   try {
     $args = func_get_args();
     $machine_name = array_shift($args);
-    $migration = MigrationBase::getInstance($class_name);
+    $migration = MigrationBase::getInstance($machine_name);
     if ($migration) {
       $destination = $migration->getDestination();
     }

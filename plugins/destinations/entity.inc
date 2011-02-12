@@ -168,5 +168,4 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
       $migration->complete($entity, $source_row);
     }
   }
-
 }

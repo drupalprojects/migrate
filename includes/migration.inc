@@ -138,15 +138,20 @@ abstract class Migration extends MigrationBase {
    * @param string $machine_name
    */
   static public function deregisterMigration($machine_name) {
-    // Remove map and message tables
-    $migration = self::getInstance($machine_name);
-    $migration->map->destroy();
+    try {
+      // Remove map and message tables
+      $migration = self::getInstance($machine_name);
+      $migration->map->destroy();
 
-    // TODO: Clear log entries? Or keep for historical purposes?
+      // TODO: Clear log entries? Or keep for historical purposes?
 
-    // Call the parent deregistration (which clears migrate_status) last, the
-    // above will reference it.
-    parent::deregisterMigration($machine_name);
+      // Call the parent deregistration (which clears migrate_status) last, the
+      // above will reference it.
+      parent::deregisterMigration($machine_name);
+    }
+    catch (Exception $e) {
+      // Fail silently if it's already gone
+    }
   }
 
   ////////////////////////////////////////////////////////////////////
@@ -311,6 +316,7 @@ abstract class Migration extends MigrationBase {
         if ($itemlimit && ($this->total_processed + $batch_count >= $itemlimit)) {
           break;
         }
+
         $this->currentSourceKey = $this->map->getCurrentKey();
 
         // If there's an idlist, skip anything not in the list

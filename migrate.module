@@ -95,19 +95,13 @@ function migrate_migrations() {
  */
 function migrate_flush_caches() {
   // Get list of modules implementing Migrate API
-  static $modules;
-  if (!isset($modules)) {
-    $modules = array_keys(migrate_get_module_apis());
-  }
+  $modules = array_keys(migrate_get_module_apis(TRUE));
 
   // Get list of classes we already know about
-  static $existing_classes;
-  if (!isset($existing_classes)) {
-    $existing_classes = db_select('migrate_status', 'ms')
-                        ->fields('ms', array('class_name'))
-                        ->execute()
-                        ->fetchCol();
-  }
+  $existing_classes = db_select('migrate_status', 'ms')
+                      ->fields('ms', array('class_name'))
+                      ->execute()
+                      ->fetchCol();
 
   // Discover class names registered with Drupal by modules implementing our API
   $result = db_select('autoload_registry', 'r')

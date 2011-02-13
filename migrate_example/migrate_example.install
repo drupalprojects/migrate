@@ -32,7 +32,7 @@ function migrate_example_install() {
  */
 function migrate_example_enable() {
   // Make sure autoload registers our classes
-  autoload_registry_rebuild();
+  drupal_flush_all_caches();
 }
 
 function migrate_example_uninstall() {

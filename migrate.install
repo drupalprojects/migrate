@@ -155,7 +155,7 @@ function migrate_install() {
  */
 function migrate_enable() {
   // Make sure autoload registers our classes
-  cache_clear_all();
+  drupal_flush_all_caches();
 }
 
 /**

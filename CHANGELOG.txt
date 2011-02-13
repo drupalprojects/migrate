@@ -4,6 +4,7 @@ Migrate 2.0 Release Candidate 2
 ===============================
 
 Bug fixes
+- #1058942 - Flush cache on enable to make sure classes get registered.
 - migrate_example error when auto_nodetitle module not present.
 - #1053798 - Missing 'debug' on showMessage.
 

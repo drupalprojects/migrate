@@ -371,8 +371,26 @@ function migrate_watchdog($log_entry) {
           ->fetchField();
   if ($name) {
     if ($migration = Migration::currentMigration()) {
-      // TODO: set appropriate level
-      $migration->saveMessage(t($log_entry['message'], $log_entry['variables']));
+      switch ($log_entry['severity']) {
+        case WATCHDOG_EMERGENCY:
+        case WATCHDOG_ALERT:
+        case WATCHDOG_CRITICAL:
+        case WATCHDOG_ERROR:
+          $severity = MigrationBase::MESSAGE_ERROR;
+          break;
+        case WATCHDOG_WARNING:
+          $severity = MigrationBase::MESSAGE_WARNING;
+          break;
+        case WATCHDOG_NOTICE:
+          $severity = MigrationBase::MESSAGE_NOTICE;
+          break;
+        case WATCHDOG_DEBUG:
+        case WATCHDOG_INFO:
+        default:
+          $severity = MigrationBase::MESSAGE_INFORMATIONAL;
+          break;
+      }
+      $migration->saveMessage(t($log_entry['message'], $log_entry['variables']), $severity);
     }
   }
 }

@@ -245,6 +245,9 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->addFieldMapping('int')
          ->issueGroup(t('DNM'));
   }
+  public function prepare($node, $row) {
+    watchdog(WATCHDOG_INFO, 'hello');
+  }
 }
 
 class BeerNodeMigration extends BasicExampleMigration {

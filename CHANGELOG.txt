@@ -4,6 +4,7 @@ Next release
 ============
 
 Bug fixes
+- #1062200 - Validate arguments for getFieldLanguage().
 - #1061284 - Appropriately translate watchdog severities to migrate severities.
 
 Migrate 2.0 Release Candidate 2

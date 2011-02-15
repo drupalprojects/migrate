@@ -216,8 +216,13 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *  Field API array suitable for inserting in the destination object.
    */
   public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
-    $arguments = $values['arguments'];
-    unset($values['arguments']);
+    if (isset($values['arguments'])) {
+      $arguments = $values['arguments'];
+      unset($values['arguments']);
+    }
+    else {
+      $arguments = array();
+    }
     $migration = Migration::currentMigration();
 
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);

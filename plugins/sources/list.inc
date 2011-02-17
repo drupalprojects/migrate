@@ -192,7 +192,6 @@ class MigrateSourceList extends MigrateSource {
       // TODO: Also check message table (non-informational entries here indicate failed items, we don't
       // want to run through them again)
       $this->currentRow = $this->itemClass->getItem($this->id);
-      $this->numProcessed++;
       if ($this->currentRow) {
         $this->currentKey = array($this->id);
         // Save the ID using the map source key - it will be used for mapping

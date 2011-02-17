@@ -192,7 +192,6 @@ class MigrateSourceList extends MigrateSource {
       // TODO: Also check message table (non-informational entries here indicate failed items, we don't
       // want to run through them again)
       $this->currentRow = $this->itemClass->getItem($this->id);
-      $this->numProcessed++;
       if ($this->currentRow) {
         $this->currentKey = array($this->id);
         // Save the ID using the map source key - it will be used for mapping
@@ -206,8 +205,19 @@ class MigrateSourceList extends MigrateSource {
             $this->currentRow->$field = $value;
           }
         }
-        // OK, got a valid one, break out and return
-        break;
+        // Allow the Migration to prepare this row. prepareRow() can return boolean
+        // FALSE to stop processing this row. To add/modify fields on the
+        // result, modify $row by reference.
+        $return = TRUE;
+        if (method_exists($migration, 'prepareRow')) {
+          $return = $migration->prepareRow($this->currentRow);
+        }
+
+        if ($return !== FALSE) {
+          // OK, got a valid one, break out and return
+          $this->numProcessed++;
+          break;
+        }
       }
       else {
         $this->currentKey = NULL;

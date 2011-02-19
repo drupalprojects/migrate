@@ -23,7 +23,7 @@ class MigrateSourceCSV extends MigrateSource {
    * @var array
    */
   protected $fields = array();
-  
+
   /**
    * Parameters for the fgetcsv() call.
    *
@@ -82,13 +82,13 @@ class MigrateSourceCSV extends MigrateSource {
     foreach ($this->csvcolumns as $int => $values) {
       $fields[$values[0]] = $values[1];
     }
-    
+
     // Any caller-specified fields with the same names as extracted fields will
     // override them; any others will be added
     if ($this->fields) {
       $fields = $this->fields + $fields;
     }
-    
+
     return $fields;
   }
 
@@ -116,7 +116,7 @@ class MigrateSourceCSV extends MigrateSource {
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
-    
+
 
     migrate_instrument_start('MigrateSourceCSV execute');
     $this->result = fopen($this->file, 'r');
@@ -155,7 +155,7 @@ class MigrateSourceCSV extends MigrateSource {
         unset($row[$int]);
       }
       $this->currentRow = (object) $row;
-      
+
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
@@ -196,7 +196,7 @@ class MigrateSourceCSV extends MigrateSource {
 
       // Add some debugging, just for the first row.
       if (empty($this->numProcessed)) {
-        $migration->showMessage(print_r($this->currentRow, TRUE));
+        $migration->showMessage(print_r($this->currentRow, TRUE), 'debug');
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean

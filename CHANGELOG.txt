@@ -4,6 +4,7 @@ Next release
 ============
 
 Bug fixes
+- #1067918 - Static cache of migrations messes up simpletests.
 - #1053798 - Message meant for debug not marked 'debug'.
 - #1063926 - prepareRow() call missing from MigrateSourceList.
 - #1062200 - Validate arguments for getFieldLanguage().

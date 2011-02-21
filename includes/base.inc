@@ -15,14 +15,11 @@
  */
 abstract class MigrationBase {
   /**
-   * Singleton-lite implementation - callers should call static getInstance() so
-   * only one copy of a given Migration class is instantiated.
+   * Track the migration currently running, so handlers can easily determine it
+   * without having to pass a Migration object everywhere.
    *
-   * @var array
-   *  List of migration objects keys by class name.
+   * @var Migration
    */
-  protected static $migrations = array();
-
   protected static $currentMigration;
   public static function currentMigration() {
     return self::$currentMigration;
@@ -372,9 +369,10 @@ abstract class MigrationBase {
    * @param string $machine_name
    */
   static public function getInstance($machine_name, $class_name = NULL, array $arguments = array()) {
+    $migrations = &drupal_static(__FUNCTION__, array());
     // Otherwise might miss cache hit on case difference
     $machine_name_key = strtolower($machine_name);
-    if (!isset(self::$migrations[$machine_name_key])) {
+    if (!isset($migrations[$machine_name_key])) {
       // Skip the query if our caller already made it
       if (!$class_name) {
         // See if we know about this migration
@@ -393,9 +391,9 @@ abstract class MigrationBase {
             array('!machine' => $machine_name)));
         }
       }
-      self::$migrations[$machine_name_key] = new $class_name($arguments);
+      $migrations[$machine_name_key] = new $class_name($arguments);
     }
-    return self::$migrations[$machine_name_key];
+    return $migrations[$machine_name_key];
   }
 
   /**

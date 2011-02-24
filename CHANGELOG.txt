@@ -3,6 +3,9 @@
 Next release
 ============
 
+Features and enhancements
+  Added JSON source plugin.
+
 Bug fixes
 - #1070894 - Apply tokens when saving files.
 - #1067918 - Static cache of migrations messes up simpletests.

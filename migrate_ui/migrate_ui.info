@@ -1,4 +1,3 @@
-; $Id$
 name = "Migrate UI"
 description = "UI for managing migration processes"
 package = "Development"

@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * Provide the summary information for the migration detail vertical tabs.

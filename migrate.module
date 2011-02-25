@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 define('MIGRATE_API_VERSION', 1);
 

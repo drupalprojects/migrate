@@ -1,4 +1,3 @@
-; $Id$
 name = "Migrate"
 description = "Import content from external sources"
 package = "Development"

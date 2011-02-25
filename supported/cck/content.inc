@@ -1,5 +1,4 @@
 <?php
-/* $Id$ */
 
 /**
  *  CCK data can be imported into any column of a CCK field.

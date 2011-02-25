@@ -15,4 +15,3 @@ Please consider contacting the maintainer or posting an issue on
 http://drupal.org/project/migrate if you create a support file for a
 content type that is widely used.
 
-$Id$

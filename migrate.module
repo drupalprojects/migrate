@@ -1,5 +1,4 @@
 <?php 
-// $Id$
 
 define('MIGRATE_ACCESS_BASIC', 'basic migration tools');
 define('MIGRATE_ACCESS_ADVANCED', 'advanced migration tools');

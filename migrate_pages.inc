@@ -1,5 +1,4 @@
 <?php
-// $Id$
 define('MIGRATE_COLS_ALL', 1);
 define('MIGRATE_COLS_EMPTY', 2);
 define('MIGRATE_COLS_NONEMPTY', 3);

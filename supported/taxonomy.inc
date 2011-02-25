@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 // Note: this file is included both for taxonomy.module and for
 // the wrapper taxonomy.module of category.module. This file

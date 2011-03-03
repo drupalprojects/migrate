@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.0 Release Candidate 3
+===============================
 
 Features and enhancements
   Added JSON source plugin.

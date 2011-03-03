@@ -139,14 +139,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       }
     }
 
-    // Avoid a notice
-    if (!isset($account->uid)) {
-      $account->uid = NULL;
-    }
-
     $this->prepare($account, $row);
     migrate_instrument_start('user_save');
-    $newaccount = user_save($account, (array)$account);
+    $newaccount = user_save(NULL, (array)$account);
     migrate_instrument_stop('user_save');
     if ($newaccount) {
       $this->complete($newaccount, $row);

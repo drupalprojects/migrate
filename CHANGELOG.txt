@@ -1,12 +1,13 @@
 
-Next release
-============
+Migrate 2.0 Release Candidate 3
+===============================
 
 Features and enhancements
   Added JSON source plugin.
   CSV source backported from D7.
 
 Bug fixes
+- #940984 - Avoid user insert errors on some MySQL versions.
 - #1079416 - postRollback called outside of rollback operation.
 - #1079438 - Simpletest notices on D6.
 - #1063926 - prepareRow() call missing from MigrateSourceList.

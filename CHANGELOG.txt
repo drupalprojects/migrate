@@ -6,6 +6,7 @@ Features and enhancements
   Added JSON source plugin.
 
 Bug fixes
+- #867940 - Prevent overwriting of migrated files with common basenames.
 - #1072170 - Allow revision setting to be overridden.
 - #1073770 - Quietly skip missing files in MigrateFileFieldHandler.
 - #1079416 - postRollback called outside of rollback operation.

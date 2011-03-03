@@ -279,7 +279,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
     $destination_dir = file_field_widget_uri($field_info, $instance);
     file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
-    $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . basename($full_path));
+    $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $full_path));
     $real_destination_file = drupal_realpath($destination_file);
 
     $source = (object) array(

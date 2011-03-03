@@ -229,13 +229,19 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     $return = array();
 
     if (empty($arguments['separator'])) {
-      $return[$language][0] = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, $values);
+      $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, $values);
+      if (!empty($file_array)) {
+        $return[$language][0] = $file_array;
+      }
     }
     else {
       foreach ($values as $delta => $value) {
         // Empty stuff is skipped
         if ($value) {
-          $return[$language][$delta] = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, explode($arguments['separator'], $value));
+          $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, explode($arguments['separator'], $value));
+          if (!empty($file_array)) {
+            $return[$language][$delta] = $file_array;
+          }
         }
       }
     }

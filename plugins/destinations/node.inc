@@ -186,7 +186,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
     // Invoke migration prepare handlers
     $this->prepare($node, $row);
-    $node->revision = 0; // Always create a new revision.
+    if (!isset($node->revision)) {
+      $node->revision = 0; // Saves disk space and writes. Can be overridden.
+    }
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');

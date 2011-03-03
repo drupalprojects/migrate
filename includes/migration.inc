@@ -240,7 +240,7 @@ abstract class Migration extends MigrationBase {
     if ($this->status == Migration::STATUS_IMPORTING) {
       $this->preImport();
     }
-    else {
+    elseif ($this->status == Migration::STATUS_ROLLING_BACK) {
       $this->preRollback();
     }
   }
@@ -254,7 +254,7 @@ abstract class Migration extends MigrationBase {
     if ($this->status == Migration::STATUS_IMPORTING) {
       $this->postImport();
     }
-    else {
+    elseif ($this->status == Migration::STATUS_ROLLING_BACK) {
       $this->postRollback();
     }
 

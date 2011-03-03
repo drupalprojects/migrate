@@ -97,20 +97,21 @@ function migrate_flush_caches() {
   $modules = array_keys(migrate_get_module_apis(TRUE));
 
   // Get list of classes we already know about
-  $existing_classes = db_select('migrate_status', 'ms')
-                      ->fields('ms', array('class_name'))
-                      ->execute()
-                      ->fetchCol();
+  $existing_classes = array();
+  $result = db_query("SELECT class_name
+                      FROM {migrate_status}");
+  while ($row = db_fetch_object($result)) {
+    $existing_classes[$row->class_name] = $row->class_name;
+  }
 
   // Discover class names registered with Drupal by modules implementing our API
-  $result = db_select('autoload_registry', 'r')
-            ->fields('r', array('name'))
-            ->condition('type', 'class')
-            ->condition('module', $modules, 'IN')
-            ->condition('filename', '%.test', 'NOT LIKE')
-            ->execute();
+  $result = db_query("SELECT name
+                      FROM {autoload_registry}
+                      WHERE type='class' AND module IN (" . db_placeholders($modules, 'varchar') .
+                          ") AND filename NOT LIKE '%.test'",
+                     $modules);
 
-  foreach ($result as $record) {
+  while ($record = db_fetch_object($result)) {
     $class_name = $record->name;
     // If we already know about this class, skip it
     if (isset($existing_classes[$class_name])) {

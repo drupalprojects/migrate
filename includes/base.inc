@@ -314,19 +314,16 @@ abstract class MigrationBase {
     }
 
     // See if this migration is already registered
-    $migration_row = db_select('migrate_status', 'ms')
-                     ->fields('ms', array('class_name', 'arguments'))
-                     ->condition('machine_name', $machine_name)
-                     ->execute()
-                     ->fetchObject();
+    $migration_row = db_fetch_object(db_query(
+      "SELECT class_name, arguments
+       FROM {migrate_status}
+       WHERE machine_name = '%s'", $machine_name));
+
     if (!$migration_row) {
-      db_insert('migrate_status')
-        ->fields(array(
-          'machine_name' => $machine_name,
-          'class_name' => $class_name,
-          'arguments' => serialize($arguments),
-        ))
-        ->execute();
+      db_query("INSERT INTO {migrate_status}
+                (machine_name, class_name, arguments)
+                VALUES('%s', '%s', '%s')",
+               $machine_name, $class_name, serialize($arguments));
     }
     else {
       // TODO: What, if anything, should we do if the pre-existing class_name or

@@ -1,4 +1,8 @@
 
+Migrate 2.0
+===========
+No changes since RC3.
+
 Migrate 2.0 Release Candidate 3
 ===============================
 

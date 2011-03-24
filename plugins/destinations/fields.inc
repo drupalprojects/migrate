@@ -129,8 +129,8 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
 
 class MigrateValueFieldHandler extends MigrateFieldHandler {
   public function __construct() {
-    $this->registerTypes(array('value', 'list', 'list_boolean', 'list_number',
-      'list_text', 'number_integer', 'number_decimal', 'number_float'));
+    $this->registerTypes(array('value', 'list', 'list_boolean', 'list_integer',
+      'list_float', 'list_text', 'number_integer', 'number_decimal', 'number_float'));
   }
 
   public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {

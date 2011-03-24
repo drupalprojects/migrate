@@ -520,7 +520,7 @@ class MigrateSQLMap extends MigrateMap {
         $message_query = $this->connection->delete($this->messageTable);
         $count = 1;
         foreach ($source_key as $key_value) {
-          $map_query->condition('sourceid' . $count++, $key_value);
+          $map_query->condition('sourceid' . $count, $key_value);
           $message_query->condition('sourceid' . $count++, $key_value);
         }
         $map_query->execute();

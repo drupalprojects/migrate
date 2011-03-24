@@ -1,4 +1,12 @@
 
+Next release
+============
+
+Bug fixes
+- #1097136 - Replace list_number with list_integer and list_float in set of
+  supported simple field types.
+- #1103042 - Rollback broken with multi-valued keys.
+
 Migrate 2.0
 ===========
 No changes since RC3.

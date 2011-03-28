@@ -183,7 +183,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         case 'file_move':
           // Check that source exists. If not, mark the entity as 'needs_update' and bail.
           // Sometimes the source file arrives later, when rsync is slower than DB.
-          if (!file_exists($full_path)) {
+          if (!is_file($full_path)) {
             $message = t('Source file does not exist: !path', array('!path' => $full_path));
             if ($arguments['throw_error']) {
               throw new MigrateException($message, MigrationBase::MESSAGE_ERROR);

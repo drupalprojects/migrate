@@ -135,7 +135,7 @@ class MigrateSourceCSV extends MigrateSource {
     $this->currentKey = NULL;
     // If we couldn't add the itemlimit to the query directly, enforce it here
     if (!$this->mapJoinable) {
-      $itemlimit = $migration->getOption('itemlimit');
+      $itemlimit = $migration->getItemLimit();
       if ($itemlimit && $this->numProcessed >= $itemlimit) {
         return;
       }

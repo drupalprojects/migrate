@@ -59,6 +59,22 @@ abstract class MigrationBase {
       return NULL;
     }
   }
+  public function getItemLimit() {
+    if (isset($this->options['limit']) && $this->options['limit']['unit'] == 'items') {
+      return $this->options['limit']['value'];
+    }
+    else {
+      return NULL;
+    }
+  }
+  public function getTimeLimit() {
+    if (isset($this->options['limit']) && $this->options['limit']['unit'] == 'seconds') {
+      return $this->options['limit']['value'];
+    }
+    else {
+      return NULL;
+    }
+  }
 
   /**
    * Indicates that we are processing a rollback or import - used to avoid
@@ -872,7 +888,7 @@ abstract class MigrationBase {
   }
 
   /**
-   * Test whether we've exceeded the desired time threshold. If so, output a message.
+   * Test whether we're approaching the PHP time limit. If so, output a message.
    *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.
@@ -890,6 +906,25 @@ abstract class MigrationBase {
                 '!usage' => format_size($time_elapsed),
                 '!limit' => format_size($this->timeLimit))),
         'warning');
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Test whether we've exceeded the designated time limit. If so, output a message.
+   *
+   * @return boolean
+   *  TRUE if the threshold is exceeded, FALSE if not.
+   */
+  protected function timeOptionExceeded() {
+    if (!$timelimit = $this->getTimeLimit()) {
+      return FALSE;
+    }
+    $time_elapsed = time() - REQUEST_TIME;
+    if ($time_elapsed >= $timelimit) {
       return TRUE;
     }
     else {

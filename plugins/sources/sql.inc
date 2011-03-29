@@ -314,8 +314,8 @@ class MigrateSourceSQL extends MigrateSource {
           $this->query->addField('map', $map_key, "migrate_map_$map_key");
         }
         $this->query->addField('map', 'needs_update');
-        if ($migration->getOption('itemlimit')) {
-          $this->query->range(0, $migration->getOption('itemlimit'));
+        if ($migration->getItemLimit()) {
+          $this->query->range(0, $migration->getItemLimit());
         }
       }
     }
@@ -338,7 +338,7 @@ class MigrateSourceSQL extends MigrateSource {
     $this->currentKey = NULL;
     // If we couldn't add the itemlimit to the query directly, enforce it here
     if (!$this->mapJoinable) {
-      $itemlimit = $migration->getOption('itemlimit');
+      $itemlimit = $migration->getItemLimit();
       if ($itemlimit && $this->numProcessed >= $itemlimit) {
         return;
       }
@@ -391,7 +391,7 @@ class MigrateSourceSQL extends MigrateSource {
         }
       }
 
-      // Add some debugging, just for the first row.
+      // Add some debugging, just for the first row. Requires --debug.
       if (empty($this->numProcessed)) {
         $migration->showMessage(print_r($this->currentRow, TRUE), 'debug');
       }

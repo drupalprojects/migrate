@@ -226,10 +226,10 @@ abstract class Migration extends MigrationBase {
     parent::beginProcess($newStatus);
 
     // Do some standard setup
-    if (isset($this->options['feedback']) && isset($this->options['feedback']['frequency']) &&
-        isset($this->options['feedback']['frequency_unit'])) {
-      $this->frequency = $this->options['feedback']['frequency'];
-      $this->frequency_unit = $this->options['feedback']['frequency_unit'];
+    if (isset($this->options['feedback']) && isset($this->options['feedback']['value']) &&
+        isset($this->options['feedback']['unit'])) {
+      $this->feedback = $this->options['feedback']['value'];
+      $this->feedback_unit = $this->options['feedback']['unit'];
     }
     $this->lastfeedback = $this->starttime;
 
@@ -295,7 +295,7 @@ abstract class Migration extends MigrationBase {
    */
   protected function rollback() {
     $return = MigrationBase::RESULT_COMPLETED;
-    $itemlimit = $this->getOption('itemlimit');
+    $itemlimit = $this->getItemLimit();
     $idlist = $this->getOption('idlist');
     if ($idlist) {
       // Make the IDs keys, to more easily identify them
@@ -308,6 +308,9 @@ abstract class Migration extends MigrationBase {
       $sourceids = array();
       $batch_count = 0;
       foreach ($this->map as $destination_key) {
+        if ($this->timeOptionExceeded()) {
+          break;
+        }
         if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
           break;
         }
@@ -373,6 +376,9 @@ abstract class Migration extends MigrationBase {
     }
     else {
       foreach ($this->map as $destination_key) {
+        if ($this->timeOptionExceeded()) {
+          break;
+        }
         if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
           break;
         }
@@ -429,6 +435,9 @@ abstract class Migration extends MigrationBase {
     $return = MigrationBase::RESULT_COMPLETED;
 
     foreach ($this->source as $data_row) {
+      if ($this->timeOptionExceeded()) {
+        break;
+      }
       if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
         break;
       }
@@ -548,9 +557,9 @@ abstract class Migration extends MigrationBase {
   protected function progressMessage($result) {
     // In the INCOMPLETE (feedback) case, only proceed under the proper conditions
     if ($result == Migration::RESULT_INCOMPLETE) {
-      if (isset($this->frequency)) {
-        if (($this->frequency_unit == 'seconds' && time()-$this->lastfeedback >= $this->frequency) ||
-            ($this->frequency_unit == 'items' && $this->processed_since_feedback >= $this->frequency)) {
+      if (isset($this->feedback)) {
+        if (($this->feedback_unit == 'seconds' && time()-$this->lastfeedback >= $this->feedback) ||
+            ($this->feedback_unit == 'items' && $this->processed_since_feedback >= $this->feedback)) {
           // Fall through
         }
         else {

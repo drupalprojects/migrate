@@ -242,7 +242,8 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
 
     // Now test highwater with unjoined map table
     $migration->getSource()->setMapJoinable(FALSE);
-    $result = $migration->processImport(array('itemlimit' => 2));
+    $result = $migration->processImport(array('limit' =>
+      array('value' => 2, 'unit' => 'items')));
     $query = db_update('migrate_example_wine')
              ->fields(array(
               'body' => 'Very berry',
@@ -268,7 +269,8 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     // Test itemlimit (joined map table)
     $result = $migration->processRollback();
     $migration->getSource()->setMapJoinable(TRUE);
-    $result = $migration->processImport(array('itemlimit' => 1));
+    $result = $migration->processImport(array('limit' =>
+      array('value' => 1, 'unit' => 'items')));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
@@ -288,7 +290,8 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     // Test itemlimit (unjoined map table)
     $result = $migration->processRollback();
     $migration->getSource()->setMapJoinable(FALSE);
-    $result = $migration->processImport(array('itemlimit' => 1));
+    $result = $migration->processImport(array('limit' =>
+      array('value' => 1, 'unit' => 'items')));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);

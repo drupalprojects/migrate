@@ -175,7 +175,7 @@ class MigrateSourceList extends MigrateSource {
     $this->currentKey = NULL;
 
     // Enforce the itemlimit
-    $itemlimit = $migration->getOption('itemlimit');
+    $itemlimit = $migration->getItemLimit();
 
     // Get next item (next ID not already in the map, unless needs_update=1)
     while ($this->id = array_shift($this->idList)) {

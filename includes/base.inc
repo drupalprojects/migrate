@@ -13,15 +13,13 @@
  * of modules) occur during the migration process.
  */
 abstract class MigrationBase {
-  /**
-   * Singleton-lite implementation - callers should call static getInstance() so
-   * only one copy of a given Migration class is instantiated.
-   *
-   * @var array
-   *  List of migration objects keys by class name.
-   */
   protected static $migrations = array();
-
+  /**
+   * Track the migration currently running, so handlers can easily determine it
+   * without having to pass a Migration object everywhere.
+   *
+   * @var Migration
+   */
   protected static $currentMigration;
   public static function currentMigration() {
     return self::$currentMigration;
@@ -57,6 +55,22 @@ abstract class MigrationBase {
   public function getOption($option_name) {
     if (isset($this->options[$option_name])) {
       return $this->options[$option_name];
+    }
+    else {
+      return NULL;
+    }
+  }
+  public function getItemLimit() {
+    if (isset($this->options['limit']) && $this->options['limit']['unit'] == 'items') {
+      return $this->options['limit']['value'];
+    }
+    else {
+      return NULL;
+    }
+  }
+  public function getTimeLimit() {
+    if (isset($this->options['limit']) && $this->options['limit']['unit'] == 'seconds') {
+      return $this->options['limit']['value'];
     }
     else {
       return NULL;
@@ -845,7 +859,7 @@ abstract class MigrationBase {
   }
 
   /**
-   * Test whether we've exceeded the desired time threshold. If so, output a message.
+   * Test whether we're approaching the PHP time limit. If so, output a message.
    *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.
@@ -863,6 +877,25 @@ abstract class MigrationBase {
                 '!usage' => format_size($time_elapsed),
                 '!limit' => format_size($this->timeLimit))),
         'warning');
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Test whether we've exceeded the designated time limit. If so, output a message.
+   *
+   * @return boolean
+   *  TRUE if the threshold is exceeded, FALSE if not.
+   */
+  protected function timeOptionExceeded() {
+    if (!$timelimit = $this->getTimeLimit()) {
+      return FALSE;
+    }
+    $time_elapsed = time() - $_SERVER['REQUEST_TIME'];
+    if ($time_elapsed >= $timelimit) {
       return TRUE;
     }
     else {

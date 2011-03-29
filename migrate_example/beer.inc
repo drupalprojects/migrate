@@ -184,16 +184,8 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->addFieldMapping('name', 'name')
          ->dedupe('users', 'name');
 
-    // Here we have a special case - we want to transform a date/time string
-    // into a UNIX timestamp, and also apply a specific timezone. The
-    // mapping of posted to created here is primarily for the sake of
-    // documentation - the prepare method below actually populates the field.
-    $this->addFieldMapping('created', 'posted')
-         ->description('See prepare method');
-    // We set the timezone here for efficiency - it will be used in the prepare
-    // method
-    // TODO: Don't set site timezone, affects lastupdatetime
-//    date_default_timezone_set('US/Mountain');
+    // The migrate module automatically converts date/time strings to UNIX timestamps.
+    $this->addFieldMapping('created', 'posted');
 
     // TODO Add dedupe with custom replacement pattern.
     $this->addFieldMapping('mail', 'mail');
@@ -243,9 +235,6 @@ class BeerUserMigration extends BasicExampleMigration {
     // where it highlights "init" as unmapped.
     $this->addFieldMapping('int')
          ->issueGroup(t('DNM'));
-  }
-  public function prepare($node, $row) {
-    watchdog(WATCHDOG_INFO, 'hello');
   }
 }
 

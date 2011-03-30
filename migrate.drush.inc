@@ -175,7 +175,7 @@ function drush_migrate_status() {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_clear($content_set) {
+function drush_migrate_clear($content_set = NULL) {
   // node_delete() has silly perm requirements in d5/d6.
   drush_set_option('user', 1);
   drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_LOGIN);
@@ -268,7 +268,7 @@ function _drush_migrate_do_clear($mcsid, $description, $options) {
  * @param $content_set
  *  The mcsid or the name of the content set
  */
-function drush_migrate_import($content_set) {
+function drush_migrate_import($content_set = NULL) {
   drush_migrate_set_verbose();
   if (drush_get_option('all')) {
     $all = TRUE;

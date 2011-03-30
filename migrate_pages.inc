@@ -937,6 +937,8 @@ function migrate_export_content_set($form_state, $mcsid) {
     $code .= '  $content_set->' . $field . "= '" . $value . "';\n";
   }
   $code .= '  migrate_save_content_set($content_set);' . "\n";
+  $code .= "// when used in hook_install(), use this line instead\n";
+  $code .= "// migrate_save_content_set(\$content_set, array('base_table' => 'table_name'));\n";
   $code .= '  $mcsid = $content_set->mcsid;' . "\n\n";
 
   $sql = "SELECT * FROM {migrate_content_mappings} WHERE mcsid=%d";

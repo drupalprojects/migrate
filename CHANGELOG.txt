@@ -1,3 +1,5 @@
+IMPORTANT: This is the final release of Migrate V1 - there will be no more support for
+this version of Migrate going forward.
 
 Migrate 1.2
 ===========

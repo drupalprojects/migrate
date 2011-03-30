@@ -1,3 +1,6 @@
+IMPORTANT: This is the final release of Migrate V1 - there will be no more support for
+this version of Migrate going forward.
+
 
 The Migrate module provides a flexible framework for migrating content into Drupal from other
 sources (e.g., when converting a web site from another CMS to Drupal). Out-of-the-box, support 

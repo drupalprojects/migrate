@@ -184,6 +184,10 @@ function migrate_save_content_set(&$content_set, $options = array()) {
       return NULL;
     }
     // Must do this to load the database
+    $views_version = (string)views_api_version();
+    if (views_api_version() >= '3') {
+      $view->init_display('default');
+    }
     $view->init_query();
 
     if (isset($view->base_database)) {
@@ -1206,6 +1210,10 @@ function migrate_schema_alter(&$schema) {
         continue;
       }
       // Must do this to load the database
+      $views_version = (string)views_api_version();
+      if (views_api_version() >= '3') {
+        $view->init_display('default');
+      }
       $view->init_query();
 
       // TODO: For now, PK must be in base_table

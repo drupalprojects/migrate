@@ -1,4 +1,9 @@
 
+Migrate 1.2
+===========
+Bug fixes
+- #1010308 - Support Views 3.0.
+
 Migrate 1.1
 ===========
 Features and enhancements

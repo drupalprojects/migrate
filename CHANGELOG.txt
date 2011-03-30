@@ -3,6 +3,7 @@ Migrate 1.2
 ===========
 Bug fixes
 - #1010308 - Support Views 3.0.
+- #736998 - Reset update flag so it isn't continously applied.
 
 Migrate 1.1
 ===========

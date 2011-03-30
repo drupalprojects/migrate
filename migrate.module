@@ -925,6 +925,7 @@ function migrate_content_process_batch($clearing, $importing, $limit, $idlist, &
       implode(',', $context['sandbox']['importing'])));
     if (variable_get('migrate_update', 0)) {
       migrate_content_set_update($row->mcsid);
+      variable_set('migrate_update', 0);
     }
     $status = migrate_content_process_import($row->mcsid, $options);
     if ($status != MIGRATE_RESULT_INCOMPLETE) {

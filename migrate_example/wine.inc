@@ -172,12 +172,10 @@ class WineUserMigration extends AdvancedExampleMigration {
     $this->destination = new MigrateDestinationUser();
 
     // Mapped fields
-    $this->addFieldMapping('name', 'name');
-    $this->addFieldMapping('status', 'status');
+    $this->addSimpleMappings(array('name', 'status', 'mail'));
     $this->addFieldMapping('created', 'posted');
     $this->addFieldMapping('access', 'last_access');
     $this->addFieldMapping('login', 'last_login');
-    $this->addFieldMapping('mail', 'mail');
     $this->addFieldMapping('pass', 'password');
     $this->addFieldMapping('roles')
          ->defaultValue(drupal_map_assoc(array(2)));
@@ -189,14 +187,7 @@ class WineUserMigration extends AdvancedExampleMigration {
     // Unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('theme')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('timezone')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('picture')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('theme', 'timezone', 'language', 'picture'));
   }
 }
 
@@ -245,22 +236,8 @@ class WineProducerMigration extends AdvancedExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('is_new')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('name')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('created')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('changed')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('status')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('promote')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('revision')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('is_new', 'name', 'created', 'changed',
+      'status', 'promote', 'revision', 'language'));
   }
 }
 
@@ -432,16 +409,8 @@ class WineWineMigration extends AdvancedExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('is_new')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('status')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('promote')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('revision')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('is_new', 'status', 'promote',
+      'revision', 'language'));
   }
 
   // TIP: Implement a prepareRow() method to manipulate the source row between
@@ -488,9 +457,7 @@ class WineCommentMigration extends AdvancedExampleMigration {
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_wine');
 
     // Mapped fields
-    $this->addFieldMapping('name', 'name');
-    $this->addFieldMapping('subject', 'subject');
-    $this->addFieldMapping('mail', 'mail');
+    $this->addSimpleMappings(array('name', 'subject', 'mail'));
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
     $this->addFieldMapping('nid', 'wineid')
@@ -509,10 +476,7 @@ class WineCommentMigration extends AdvancedExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('thread')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('thread', 'language'));
   }
 }
 
@@ -603,16 +567,8 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('sticky');
     $this->addFieldMapping('created');
     $this->addFieldMapping('changed');
-    $this->addFieldMapping('is_new')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('status')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('promote')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('revision')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('is_new', 'status', 'promote',
+      'revision', 'language'));
   }
 }
 
@@ -656,10 +612,7 @@ class WineCommentUpdatesMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('created');
     $this->addFieldMapping('changed');
     $this->addFieldMapping('homepage');
-    $this->addFieldMapping('thread')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('thread', 'language'));
   }
 }
 
@@ -743,13 +696,6 @@ class WineUserUpdatesMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('signature');
     $this->addFieldMapping('signature_format');
     $this->addFieldMapping('init');
-    $this->addFieldMapping('theme')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('timezone')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('picture')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('theme', 'timezone', 'language', 'picture'));
   }
 }

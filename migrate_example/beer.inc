@@ -177,26 +177,21 @@ class BeerUserMigration extends BasicExampleMigration {
     // unmapped source fields, and unmapped destination fields
 
     // Mapped fields
-    $this->addFieldMapping('status', 'status');
+
+    // This is a shortcut you can use when the source and destination fields are
+    // identical
+    $this->addSimpleMappings(array('status', 'mail'));
 
     // Dedupe assures that value is unique. Use it when source data is non-unique.
     // Pass the Drupal table and column for determining uniqueness.
     $this->addFieldMapping('name', 'name')
          ->dedupe('users', 'name');
 
-    // Here we have a special case - we want to transform a date/time string
-    // into a UNIX timestamp, and also apply a specific timezone. The
-    // mapping of posted to created here is primarily for the sake of
-    // documentation - the prepare method below actually populates the field.
-    $this->addFieldMapping('created', 'posted')
-         ->description('See prepare method');
-    // We set the timezone here for efficiency - it will be used in the prepare
-    // method
-    // TODO: Don't set site timezone, affects lastupdatetime
-//    date_default_timezone_set('US/Mountain');
+    // The migrate module automatically converts date/time strings to UNIX timestamps.
+    $this->addFieldMapping('created', 'posted');
 
     // TODO Add dedupe with custom replacement pattern.
-    $this->addFieldMapping('mail', 'mail');
+//    $this->addFieldMapping('mail', 'mail');
 
     $this->addFieldMapping('pass', 'password');
     // Instead of mapping a source field to a destination field, you can
@@ -211,20 +206,11 @@ class BeerUserMigration extends BasicExampleMigration {
          ->issueGroup(t('DNM'));
 
     // Unmapped destination fields
-    $this->addFieldMapping('theme')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('signature')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('access')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('login')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('timezone')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('picture')
-         ->issueGroup(t('DNM'));
+
+    // This is a shortcut you can use to mark several destination fields as DNM
+    // at once
+    $this->addUnmigratedDestinations(array('theme', 'signature', 'access', 'login',
+      'timezone', 'language', 'picture'));
 
     // Oops, we made a typo - this should have been 'init'! If you have
     // migrate_ui enabled, look at the BeerUser info page - you'll see that it
@@ -324,20 +310,8 @@ class BeerNodeMigration extends BasicExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('name')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('created')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('changed')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('status')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('promote')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('revision')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('name', 'created', 'changed', 'status',
+      'promote', 'revision', 'language'));
   }
 }
 
@@ -361,9 +335,7 @@ class BeerCommentMigration extends BasicExampleMigration {
     $this->destination = new MigrateDestinationComment('comment_node_migrate_example_beer');
 
     // Mapped fields
-    $this->addFieldMapping('name', 'name');
-    $this->addFieldMapping('subject', 'subject');
-    $this->addFieldMapping('mail', 'mail');
+    $this->addSimpleMappings(array('name', 'subject', 'mail'));
     $this->addFieldMapping('status')
          ->defaultValue(COMMENT_PUBLISHED);
 
@@ -383,21 +355,7 @@ class BeerCommentMigration extends BasicExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addFieldMapping('user_name')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('user_email')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('hostname')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('created')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('changed')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('thread')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('homepage')
-         ->issueGroup(t('DNM'));
-    $this->addFieldMapping('language')
-         ->issueGroup(t('DNM'));
+    $this->addUnmigratedDestinations(array('user_name', 'user_email', 'hostname',
+      'created', 'changed', 'thread', 'homepage', 'language'));
   }
 }

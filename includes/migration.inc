@@ -205,6 +205,59 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Shortcut for adding several fields which have the same name on both source
+   * and destination sides.
+   *
+   * @param array $fields
+   *  List of field names to map.
+   */
+  protected function addSimpleMappings(array $fields) {
+    foreach ($fields as $field) {
+      $this->addFieldMapping($field, $field);
+    }
+  }
+
+  /**
+   * Shortcut for adding several destination fields which are to be explicitly
+   * not migrated.
+   *
+   * @param array $fields
+   *  List of fields to mark as not for migration.
+   *
+   * @param string $issue_group
+   *  Issue group name to apply to the generated mappings (defaults to 'DNM').
+   */
+  protected function addUnmigratedDestinations(array $fields, $issue_group = NULL) {
+    if (!$issue_group) {
+      $issue_group = t('DNM');
+    }
+    foreach ($fields as $field) {
+      $this->addFieldMapping($field)
+           ->issueGroup($issue_group);
+    }
+  }
+
+  /**
+   * Shortcut for adding several source fields which are to be explicitly
+   * not migrated.
+   *
+   * @param array $fields
+   *  List of fields to mark as not for migration.
+   *
+   * @param string $issue_group
+   *  Issue group name to apply to the generated mappings (defaults to 'DNM').
+   */
+  protected function addUnmigratedSources(array $fields, $issue_group = NULL) {
+    if (!$issue_group) {
+      $issue_group = t('DNM');
+    }
+    foreach ($fields as $field) {
+      $this->addFieldMapping(NULL, $field)
+           ->issueGroup($issue_group);
+    }
+  }
+
+  /**
    * Reports whether this migration process is complete (i.e., all available
    * source rows have been processed).
    */

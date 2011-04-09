@@ -7,6 +7,7 @@ Features and enhancements
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.
 
 Bug fixes
+- #1118480 - Document _name arguments to file fields.
 - #1107546 - Check file presence with is_file() instead of file_exists().
 - #1103042 - Rollback broken with multi-valued keys.
 

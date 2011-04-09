@@ -302,9 +302,13 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param language
    *   Language of the text (defaults to destination language)
    * @param source_alt_name
+   *   Name of source field containing alt value for the file.
    * @param source_title_name
+   *   Name of source field containing title value for the file.
    * @param source_description_name
+   *   Name of source field containing description value for the file.
    * @param source_display_name
+   *   Name of source field containing display value for the file.
    * @param throw_error
    *  A non-existent file generates an INFORMATIONAL message by default. If this
    *  parameter is TRUE, throw an error instead (abort node creation).

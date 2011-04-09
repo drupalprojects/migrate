@@ -413,11 +413,15 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param language
    *   Language of the text (defaults to destination language)
    * @param source_alt_name
+   *   Name of source field containing alt value for the file.
    * @param source_title_name
+   *   Name of source field containing title value for the file.
    * @param source_description_name
+   *   Name of source field containing description value for the file.
    * @param source_display_name
+   *   Name of source field containing display value for the file.
    * @param separator
-   *
+   *   String separating values within the incoming value.
    */
  static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL, $separator = NULL) {
     return get_defined_vars();

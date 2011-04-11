@@ -405,11 +405,11 @@ abstract class Migration extends MigrationBase {
           }
           $destids = array();
           $sourceids = array();
-          $batch_count = 0;
           // Will increment even if there was an exception... But we don't
           // really have a way to know how many really were successfully rolled back
           $this->total_processed += $batch_count;
           $this->processed_since_feedback += $batch_count;
+          $batch_count = 0;
         }
       }
       if ($batch_count > 0) {

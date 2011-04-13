@@ -7,6 +7,7 @@ Features and enhancements
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.
 
 Bug fixes
+- #1126108 - Fix undefined variables in XML error handling.
 - #1117602 - Bad counts reported on bulk rollback.
 - #1118480 - Document _name arguments to file fields.
 - #1108700 - Remove obsolete references to prepare().

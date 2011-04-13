@@ -126,12 +126,12 @@ class MigrateItemXML extends MigrateItem {
     }
     else {
       $migration = Migration::currentMigration();
-      $message =  t('Loading of !objecturl failed:', array('!objecturl' => $object_url));
+      $message =  t('Loading of !objecturl failed:', array('!objecturl' => $item_url));
       foreach (libxml_get_errors() as $error) {
         $message .= "\n" . $error->message;
       }
       $migration->getMap()->saveMessage(
-        array($this->id), $message, MigrationBase::MESSAGE_ERROR);
+        array($id), $message, MigrationBase::MESSAGE_ERROR);
       libxml_clear_errors();
       return NULL;
     }

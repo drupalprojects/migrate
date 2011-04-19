@@ -186,7 +186,7 @@ function migrate_handler_invoke_all($destination, $method) {
  *  Array of incoming values, to be transformed into the appropriate structure
  *  for the field type.
  */
-function migrate_field_handler_invoke_all(stdClass $entity, array $field_info, array $instance,
+function migrate_field_handler_invoke_all($entity, array $field_info, array $instance,
     array $values) {
   $return = array();
   $type = $field_info['type'];

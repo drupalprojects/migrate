@@ -23,7 +23,7 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
     return $fields;
   }
 
-  public function prepare(stdClass $entity, stdClass $row) {
+  public function prepare($entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately
     $migration = Migration::currentMigration();
@@ -48,7 +48,7 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
 
 abstract class MigrateFieldHandler extends MigrateHandler {
   // abstract function arguments(...)
-  abstract public function prepare(stdClass $entity, array $field_info, array $instance, array $values);
+  abstract public function prepare($entity, array $field_info, array $instance, array $values);
 
   /**
    * Determine the language of the field
@@ -58,7 +58,7 @@ abstract class MigrateFieldHandler extends MigrateHandler {
    * @param $arguments
    * @return string language code
    */
-  function getFieldLanguage(stdClass $entity, $field_info, array $arguments) {
+  function getFieldLanguage($entity, $field_info, array $arguments) {
     $migration = Migration::currentMigration();
     switch (TRUE) {
       case !field_is_translatable($migration->getDestination()->getEntityType(), $field_info):
@@ -93,7 +93,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     return $arguments;
   }
 
-  public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare($entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -133,7 +133,7 @@ class MigrateValueFieldHandler extends MigrateFieldHandler {
       'list_float', 'list_text', 'number_integer', 'number_decimal', 'number_float'));
   }
 
-  public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare($entity, array $field_info, array $instance, array $values) {
     $migration = Migration::currentMigration();
     $arguments = (isset($values['arguments']))? $values['arguments']: array();
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
@@ -155,7 +155,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('taxonomy_term_reference'));
   }
 
-  public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare($entity, array $field_info, array $instance, array $values) {
     $migration = Migration::currentMigration();
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
@@ -214,7 +214,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare($entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -257,7 +257,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *
    * @return array
    */
-  protected function buildFileArray (stdClass $entity, array $field_info, array $instance, $migration, $arguments, array $values) {
+  protected function buildFileArray ($entity, array $field_info, array $instance, $migration, $arguments, array $values) {
     static $fids;
 
     if ($arguments['source_path']) {
@@ -435,7 +435,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('node_reference'));
   }
 
-  public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare($entity, array $field_info, array $instance, array $values) {
     $migration = Migration::currentMigration();
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
@@ -466,7 +466,7 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('user_reference'));
   }
 
-  public function prepare(stdClass $entity, array $field_info, array $instance, array $values) {
+  public function prepare($entity, array $field_info, array $instance, array $values) {
     $migration = Migration::currentMigration();
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];

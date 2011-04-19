@@ -361,34 +361,29 @@ function migrate_get_module_apis($reset = FALSE) {
  * @param array $log_entry
  */
 function migrate_watchdog($log_entry) {
-  // Validate that Migration is registered. Don't use DBTNG so we can carry on
-  // if there's a notice/warning during the registry rebuild.
-  $name = db_result(db_query("SELECT r.name
-    FROM {autoload_registry} r
-    WHERE name = 'Migration' AND type = 'class'"));
-  if ($name) {
-    if ($migration = Migration::currentMigration()) {
-      switch ($log_entry['severity']) {
-        case WATCHDOG_EMERG:
-        case WATCHDOG_ALERT:
-        case WATCHDOG_CRITICAL:
-        case WATCHDOG_ERROR:
-          $severity = MigrationBase::MESSAGE_ERROR;
-          break;
-        case WATCHDOG_WARNING:
-          $severity = MigrationBase::MESSAGE_WARNING;
-          break;
-        case WATCHDOG_NOTICE:
-          $severity = MigrationBase::MESSAGE_NOTICE;
-          break;
-        case WATCHDOG_DEBUG:
-        case WATCHDOG_INFO:
-        default:
-          $severity = MigrationBase::MESSAGE_INFORMATIONAL;
-          break;
-      }
-      $migration->saveMessage(t($log_entry['message'], $log_entry['variables']), $severity);
+  // Ensure that the Migration class exists, as different bootstrap phases may
+  // not have included migration.inc yet.
+  if (class_exists('Migration') && $migration = Migration::currentMigration()) {
+    switch ($log_entry['severity']) {
+      case WATCHDOG_EMERG:
+      case WATCHDOG_ALERT:
+      case WATCHDOG_CRITICAL:
+      case WATCHDOG_ERROR:
+        $severity = MigrationBase::MESSAGE_ERROR;
+        break;
+      case WATCHDOG_WARNING:
+        $severity = MigrationBase::MESSAGE_WARNING;
+        break;
+      case WATCHDOG_NOTICE:
+        $severity = MigrationBase::MESSAGE_NOTICE;
+        break;
+      case WATCHDOG_DEBUG:
+      case WATCHDOG_INFO:
+      default:
+        $severity = MigrationBase::MESSAGE_INFORMATIONAL;
+        break;
     }
+    $migration->saveMessage(t($log_entry['message'], $log_entry['variables']), $severity);
   }
 }
 

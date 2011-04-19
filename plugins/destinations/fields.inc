@@ -22,7 +22,7 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
     return $fields;
   }
 
-  public function prepare(stdClass $entity, stdClass $row) {
+  public function prepare($entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->prepareFields');
     // Look for Field API fields attached to this destination and handle appropriately
     $migration = Migration::currentMigration();
@@ -47,7 +47,7 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
 
 abstract class MigrateFieldHandler extends MigrateHandler {
   // abstract function arguments(...)
-  abstract public function prepare(stdClass $entity, array $instance, array $values);
+  abstract public function prepare($entity, array $instance, array $values);
 }
 
 class MigrateTextFieldHandler extends MigrateFieldHandler {
@@ -69,7 +69,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     return $arguments;
   }
 
-  public function prepare(stdClass $entity, array $instance, array $values) {
+  public function prepare($entity, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -107,7 +107,7 @@ class MigrateValueFieldHandler extends MigrateFieldHandler {
       'list_text', 'number_integer', 'number_decimal', 'number_float'));
   }
 
-  public function prepare(stdClass $entity, array $instance, array $values) {
+  public function prepare($entity, array $instance, array $values) {
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
@@ -134,7 +134,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @return array
    *  Field API array suitable for inserting in the destination object.
    */
-  public function prepare(stdClass $entity, array $instance, array $values) {
+  public function prepare($entity, array $instance, array $values) {
     $migration = Migration::currentMigration();
     $return = array();
     $arguments = $values['arguments'];
@@ -327,7 +327,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('nodereference'));
   }
 
-  public function prepare(stdClass $entity, array $instance, array $values) {
+  public function prepare($entity, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -355,7 +355,7 @@ class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('userreference'));
   }
 
-  public function prepare(stdClass $entity, array $instance, array $values) {
+  public function prepare($entity, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -384,7 +384,7 @@ class MigrateEmailFieldHandler extends MigrateFieldHandler {
   }
 
   // Copied from ValueFieldHandler::prepare except the propname is email.
-  public function prepare(stdClass $entity, array $instance, array $values) {
+  public function prepare($entity, array $instance, array $values) {
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {

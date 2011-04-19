@@ -7,6 +7,9 @@ Features and enhancements
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.
 
 Bug fixes
+- #1132034 - Don't assume entity is a stdClass. NOTE: Any field handler prepare() 
+  or complete() methods you have defined must also be changed to not specify stdClass
+  for the $entity argument.
 - #1126108 - Fix undefined variables in XML error handling.
 - #1117602 - Bad counts reported on bulk rollback.
 - #1118480 - Document _name arguments to file fields.

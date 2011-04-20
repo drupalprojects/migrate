@@ -15,7 +15,7 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
     return array('path' => t('Node: Path alias'));
   }
 
-  public function prepare(stdClass $entity, stdClass $row) {
+  public function prepare($entity, stdClass $row) {
     if (isset($entity->path)) {
       $path = $entity->path;
       $entity->path = array();

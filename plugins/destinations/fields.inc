@@ -370,26 +370,26 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;
-      if (isset($arguments['source_alt_name']) && isset($values[$arguments['source_alt_name']])) {
-        $object_field['alt'] = $values[$arguments['source_alt_name']];
+      if (isset($arguments['alt'])) {
+        $object_field['alt'] = $arguments['alt'];
       }
       else {
         $object_field['alt'] = '';
       }
-      if (isset($arguments['source_title_name']) && isset($values[$arguments['source_title_name']])) {
-        $object_field['title'] = $values[$arguments['source_title_name']];
+      if (isset($arguments['title'])) {
+        $object_field['title'] = $arguments['title'];
       }
       else {
         $object_field['title'] = '';
       }
-      if (isset($arguments['source_description_name']) && isset($values[$arguments['source_description_name']])) {
-        $object_field['description'] = $values[$arguments['source_description_name']];
+      if (isset($arguments['description'])) {
+        $object_field['description'] = $arguments['description'];
       }
       else {
         $object_field['description'] = '';
       }
-      if (isset($arguments['source_display_name']) && isset($values[$arguments['source_display_name']])) {
-        $object_field['display'] = $values[$arguments['source_display_name']];
+      if (isset($arguments['display'])) {
+        $object_field['display'] = $arguments['display'];
       }
       else {
         $object_field['display'] = TRUE;
@@ -412,18 +412,26 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *   Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.
    * @param language
    *   Language of the text (defaults to destination language)
-   * @param source_alt_name
-   *   Name of source field containing alt value for the file.
-   * @param source_title_name
-   *   Name of source field containing title value for the file.
-   * @param source_description_name
-   *   Name of source field containing description value for the file.
-   * @param source_display_name
-   *   Name of source field containing display value for the file.
+   * @param alt
+   *   String to be used as the alt value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the alt value from
+   *   the query field named source_field_name.
+   * @param title
+   *   String to be used as the title value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the title value from
+   *   the query field named source_field_name.
+   * @param description
+   *   String to be used as the description value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the description value from
+   *   the query field named source_field_name.
+   * @param display
+   *   String to be used as the display value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the display value from
+   *   the query field named source_field_name.
    * @param separator
    *   String separating values within the incoming value.
    */
- static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $source_alt_name = NULL, $source_title_name = NULL, $source_description_name = NULL, $source_display_name = NULL, $separator = NULL) {
+ static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $alt = NULL, $title = NULL, $description = NULL, $display = NULL, $separator = NULL) {
     return get_defined_vars();
   }
 }

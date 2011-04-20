@@ -96,6 +96,24 @@ function migrate_example_beer_schema_node() {
         'not null' => FALSE,
         'description' => 'Image path',
       ),
+      'image_alt' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image ALT',
+      ),
+      'image_title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image title',
+      ),
+      'image_description' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image description',
+      ),
     ),
     'primary key' => array('bid'),
   );
@@ -562,14 +580,15 @@ function migrate_example_beer_content_type_delete() {
 }
 
 function migrate_example_beer_data_node() {
-  $fields = array('bid', 'name', 'body', 'excerpt', 'countries', 'aid', 'image');
+  $fields = array('bid', 'name', 'body', 'excerpt', 'countries', 'aid', 'image',
+    'image_alt', 'image_title', 'image_description');
   $query = db_insert('migrate_example_beer_node')
-    ->fields($fields);
+           ->fields($fields);
   // Use high bid numbers to avoid overwriting an existing node id.
   $data = array(
-    array(99999999, 'Heineken', 'Blab Blah Blah Green', 'Green', 'Netherlands|Belgium', 0, 'heineken.jpg'), // comes with migrate_example project.
-    array(99999998, 'Miller Lite', 'We love Miller Brewing', 'Tasteless', 'USA|Canada', 1, NULL),
-    array(99999997, 'Boddington', 'English occassionally get something right', 'A treat', 'United Kingdom', 1, NULL),
+    array(99999999, 'Heineken', 'Blab Blah Blah Green', 'Green', 'Netherlands|Belgium', 0, 'heineken.jpg', 'Heinekin alt', 'Heinekin title', 'Heinekin description'), // comes with migrate_example project.
+    array(99999998, 'Miller Lite', 'We love Miller Brewing', 'Tasteless', 'USA|Canada', 1, NULL, NULL, NULL, NULL),
+    array(99999997, 'Boddington', 'English occassionally get something right', 'A treat', 'United Kingdom', 1, NULL, NULL, NULL, NULL),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

@@ -302,7 +302,7 @@ function drush_migrate_fields_destination() {
                 'error');
       return;
     }
-    if (method_exists($destination, fields)) {
+    if (method_exists($destination, 'fields')) {
       $table = array();
       foreach ($destination->fields() as $machine_name => $description) {
         $table[] = array($description, $machine_name);

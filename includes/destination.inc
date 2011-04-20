@@ -79,6 +79,6 @@ abstract class MigrateDestinationHandler extends MigrateHandler {
    * Any one or more of these methods may be implemented
    */
   //abstract public function fields();
-  //abstract public function prepare(stdClass $entity, stdClass $row);
-  //abstract public function complete(stdClass $entity, stdClass $row);
+  //abstract public function prepare($entity, stdClass $row);
+  //abstract public function complete($entity, stdClass $row);
 }

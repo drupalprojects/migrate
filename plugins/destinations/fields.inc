@@ -274,10 +274,10 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         // Build up a return object.
         $file['list'] = NULL;
         $file['data'] = array(
-          'alt' => isset($arguments['source_alt_name']) ? $arguments['source_alt_name'] : NULL,
-          'title' => isset($arguments['source_title_name']) ? $arguments['source_title_name'] : NULL,
-          'description' => isset($arguments['source_description_name']) ? $arguments['source_description_name'] : NULL,
-          'display' => isset($arguments['source_display_name']) ? $arguments['source_display_name'] : NULL,
+          'alt' => isset($arguments['alt']) ? $arguments['alt'] : NULL,
+          'title' => isset($arguments['title']) ? $arguments['title'] : NULL,
+          'description' => isset($arguments['description']) ? $arguments['description'] : NULL,
+          'display' => isset($arguments['display']) ? $arguments['display'] : NULL,
           'process' => TRUE, // This activates filefield_paths crazy move code.
         );
         $return[] = $file;
@@ -301,23 +301,31 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *   Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.
    * @param language
    *   Language of the text (defaults to destination language)
-   * @param source_alt_name
-   *   Name of source field containing alt value for the file.
-   * @param source_title_name
-   *   Name of source field containing title value for the file.
-   * @param source_description_name
-   *   Name of source field containing description value for the file.
-   * @param source_display_name
-   *   Name of source field containing display value for the file.
+   * @param alt
+   *   String to be used as the alt value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the alt value from
+   *   the query field named source_field_name.
+   * @param title
+   *   String to be used as the title value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the title value from
+   *   the query field named source_field_name.
+   * @param description
+   *   String to be used as the description value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the description value from
+   *   the query field named source_field_name.
+   * @param display
+   *   String to be used as the display value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the display value from
+   *   the query field named source_field_name.
    * @param throw_error
    *  A non-existent file generates an INFORMATIONAL message by default. If this
    *  parameter is TRUE, throw an error instead (abort node creation).
    *
    */
   static function arguments($source_path = NULL, $file_function = 'file_copy',
-      $file_replace = FILE_EXISTS_RENAME, $source_alt_name = NULL,
-      $source_title_name = NULL, $source_description_name = NULL,
-      $source_display_name = NULL, $throw_error = FALSE) {
+      $file_replace = FILE_EXISTS_RENAME, $alt = NULL,
+      $title = NULL, $description = NULL,
+      $display = NULL, $throw_error = FALSE) {
     return get_defined_vars();
   }
 }

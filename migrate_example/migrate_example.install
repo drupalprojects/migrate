@@ -74,3 +74,37 @@ function migrate_example_update_6001() {
   $ret[] = t('Converted modificationdate datetime field to modificationdatetime int field');
   return $ret;
 }
+
+/**
+ * Add image alt/title/description columns.
+ */
+function migrate_example_update_6002() {
+  $ret = array();
+  db_add_field($ret, 'migrate_example_beer_node', 'image_alt', array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image ALT',
+    )
+  );
+  db_add_field($ret, 'migrate_example_beer_node', 'image_title', array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image title',
+    )
+  );
+  db_add_field($ret, 'migrate_example_beer_node', 'image_description', array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image description',
+    )
+  );
+  db_query("UPDATE {migrate_example_beer_node}
+            SET image_alt='%s', image_title='%s', image_description='%s'
+            WHERE bid=%d",
+    'Heinekin alt', 'Heinekin title', 'Heinekin description', 99999999);
+  $ret[] = t('Added image_alt, image_title, and image_description fields.');
+  return $ret;
+}

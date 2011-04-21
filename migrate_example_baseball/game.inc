@@ -17,8 +17,8 @@ class GameBaseball extends DynamicMigration {
     // Create a map object for tracking the relationships between source rows
     $this->map = new MigrateSQLMap($this->machineName,
         array(
-          'start_date' => array('type' => 'int',
-                           'length' => 11,
+          'start_date' => array('type' => 'varchar',
+                           'length' => 8,
                            'not null' => TRUE,
                            'description' => 'Start date',
                           ),
@@ -28,7 +28,6 @@ class GameBaseball extends DynamicMigration {
                            'description' => 'Home team',
                           ),
           'home_game_number' => array('type' => 'int',
-                           'length' => 4,
                            'not null' => TRUE,
                            'description' => 'Home team game number',
                           ),
@@ -69,12 +68,12 @@ class GameBaseball extends DynamicMigration {
            ->description('Not needed since we use the multi-value field: home_batters.');
     }
   }
-  
+
   function csvcolumns() {
     // Note: Remember to subtract 1 from column number at http://www.retrosheet.org/gamelogs/glfields.txt
     $columns[0] = array('start_date', 'Date of game');
     $columns[3] = array('visiting_team', 'Visiting team');
-    $columns[7] = array('home_team', 'Home team');
+    $columns[6] = array('home_team', 'Home team');
     $columns[8] = array('home_game_number', 'Home team game number');
     $columns[9] = array('home_score', 'Home score');
     $columns[10] = array('visiting_score', 'Visiting score');
@@ -90,7 +89,7 @@ class GameBaseball extends DynamicMigration {
     $columns[104] = array('home_pitcher', 'Home starting pitcher');
     return $columns;
   }
-  
+
   function prepareRow($row) {
     // Collect all the batters into one multi-value field.
     for ($i=1; $i <= 9; $i++ ) {
@@ -101,20 +100,16 @@ class GameBaseball extends DynamicMigration {
     }
     $row->visiting_batters = implode(',', $visiting_batters);
     $row->home_batters = implode(',', $home_batters);
-    
-    // Convert to Unix time. Assumes midnight start time.
-    $row->start_date = strtotime($row->start_date);
-    
-    $row->title = "$row->home_team vs. $row->visiting_team. " . gmdate('M d, Y', $row->start_date) ;
+    $row->title = "$row->home_team vs. $row->visiting_team. " . gmdate('M d, Y', strtotime($row->start_date));
   }
-  
+
   /**
    * Construct the machine name from the source file name.
    */
   protected function generateMachineName($class_name = NULL) {
-    return strtolower(pathinfo($this->arguments['source_file'], PATHINFO_FILENAME));  
+    return strtolower(pathinfo($this->arguments['source_file'], PATHINFO_FILENAME));
   }
-  
+
   function fields() {
     return array(
       'title' => 'A composite field made during prepareRow().',

@@ -10,6 +10,7 @@ Bug fixes
 - #1132034 - Don't assume entity is a stdClass. NOTE: Any field handler prepare() 
   or complete() methods you have defined must also be changed to not specify stdClass
   for the $entity argument.
+- #1134506 - Removed obsolete views_alter() hook.
 - #1133096 - CSV source always processed last row, fix to clear currentRow.
 - #1124318 - Properly use source_field arguments for file field attributes.
 - #1133030 - Undefined constant in drush migrate-fields-destination.

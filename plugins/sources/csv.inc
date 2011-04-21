@@ -30,8 +30,6 @@ class MigrateSourceCSV extends MigrateSource {
    */
   protected $fgetcsv = array();
 
-  protected $mapJoinable = FALSE;
-
   protected $usingHighwater = FALSE;
 
   /**
@@ -133,12 +131,10 @@ class MigrateSourceCSV extends MigrateSource {
     $migration = Migration::currentMigration();
     $this->currentRow = NULL;
     $this->currentKey = NULL;
-    // If we couldn't add the itemlimit to the query directly, enforce it here
-    if (!$this->mapJoinable) {
-      $itemlimit = $migration->getItemLimit();
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        return;
-      }
+
+    $itemlimit = $migration->getItemLimit();
+    if ($itemlimit && $this->numProcessed >= $itemlimit) {
+      return;
     }
 
     // get next row
@@ -159,37 +155,37 @@ class MigrateSourceCSV extends MigrateSource {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
 
-      if (!$this->mapJoinable) {
-        $map_row = $migration->getMap()->getRowBySource($this->currentKey);
-        if (!$map_row) {
-          // Unmigrated row, take it
-        }
-        elseif ($map_row && $map_row['needs_update'] == 1) {
-          // We always want to take this row if needs_update = 1
+      $map_row = $migration->getMap()->getRowBySource($this->currentKey);
+      if (!$map_row) {
+        // Unmigrated row, take it
+      }
+      elseif ($map_row && $map_row['needs_update'] == 1) {
+        // We always want to take this row if needs_update = 1
+      }
+      else {
+        if ($this->usingHighwater) {
+          // With highwater, we want to take this row if it's above the highwater
+          // mark
+          $highwaterField = $migration->getHighwaterField();
+          $highwaterField = $highwaterField['name'];
+          if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
+            $this->currentRow = NULL;
+            continue;
+          }
         }
         else {
-          if ($this->usingHighwater) {
-            // With highwater, we want to take this row if it's above the highwater
-            // mark
-            $highwaterField = $migration->getHighwaterField();
-            $highwaterField = $highwaterField['name'];
-            if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
-              continue;
-            }
-          }
-          else {
-            // With no highwater, we want to take this row if it's not in the map table
-            if ($map_row) {
-              continue;
-            }
+          // With no highwater, we want to take this row if it's not in the map table
+          if ($map_row) {
+            $this->currentRow = NULL;
+            continue;
           }
         }
-        // Add map info to the row, if present
-        if ($map_row) {
-          foreach ($map_row as $field => $value) {
-            $field = 'migrate_map_' . $field;
-            $this->currentRow->$field = $value;
-          }
+      }
+      // Add map info to the row, if present
+      if ($map_row) {
+        foreach ($map_row as $field => $value) {
+          $field = 'migrate_map_' . $field;
+          $this->currentRow->$field = $value;
         }
       }
 
@@ -209,6 +205,9 @@ class MigrateSourceCSV extends MigrateSource {
       if ($return !== FALSE) {
         $this->numProcessed++;
         break;
+      }
+      else {
+        $this->currentRow = NULL;
       }
     }
     if (!is_object($this->currentRow)) {

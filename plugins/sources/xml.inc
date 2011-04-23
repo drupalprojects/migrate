@@ -116,7 +116,15 @@ class MigrateItemXML extends MigrateItem {
    * @return stdClass
    */
   public function getItem($id) {
+    // Make sure we actually have an ID
+    if (empty($id)) {
+      return NULL;
+    }
     $item_url = $this->constructItemUrl($id);
+    // And make sure we actually got a URL to fetch
+    if (empty($item_url)) {
+      return NULL;
+    }
     // Get the XML object at the specified URL;
     $xml = $this->loadXmlUrl($item_url);
     if ($xml) {

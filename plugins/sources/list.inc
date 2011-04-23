@@ -179,6 +179,10 @@ class MigrateSourceList extends MigrateSource {
 
     // Get next item (next ID not already in the map, unless needs_update=1)
     while ($this->id = array_shift($this->idList)) {
+      // Skip empty IDs
+      if (empty($this->id)) {
+        continue;
+      }
       // Enforce the itemlimit
       if ($itemlimit && $this->numProcessed >= $itemlimit) {
         return;

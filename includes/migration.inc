@@ -320,7 +320,7 @@ abstract class Migration extends MigrationBase {
    * call parent::preImport() etc.
    */
   protected function preImport() {
-    if (method_exists($this->destination, 'preRollback')) {
+    if (method_exists($this->destination, 'preImport')) {
       $this->destination->preImport();
     }
   }

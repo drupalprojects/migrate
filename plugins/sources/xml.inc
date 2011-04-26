@@ -3,8 +3,23 @@
 /**
  * @file
  * Support for migration from XML sources.
+ *
+ * NOTE: There are two methods supported in this file.
+ *
+ * 1) List - ids are listed in an index xml file and the data for each item is
+ *      stored in a separate xml file per item. Use MigrateSourceList class
+ *      as the source.
+ *
+ * 2) MultiItems - ids are part of the item and all items are stored in a
+ *      single xml file. Use MigrateSourceMultiItems class as the source.
+ *
+ * Both of these methods are described in more detail in the wine migration
+ * example.
  */
 
+/*===========================================================================*/
+/*                              List Method                                  */
+/*===========================================================================*/
 /**
  * Implementation of MigrateList, for retrieving a list of IDs to be migrated
  * from an XML document.
@@ -52,7 +67,7 @@ class MigrateListXML extends MigrateList {
       foreach (libxml_get_errors() as $error) {
         $migration->showMessage($error);
       }
-      return array();
+      return NULL;
     }
   }
 
@@ -265,6 +280,265 @@ abstract class XMLMigration extends Migration {
       }
     }
     else {
+      return NULL;
+    }
+  }
+}
+
+/*===========================================================================*/
+/*                           MultiItems Method                               */
+/*===========================================================================*/
+/**
+ * Implementation of MigrateItems, for providing a list of IDs and for
+ * retrieving a parsed XML document given an ID from this list.
+ */
+class MigrateItemsXML extends MigrateItems {
+  /**
+   * A URL pointing to an XML document containing the ids and data.
+   *
+   * @var string
+   */
+  protected $xmlUrl;
+
+  /**
+   * xpath identifying the element used for each item
+   */
+  protected $itemXpath;
+  public function getItemXpath() {
+    return $this->itemXpath;
+  }
+
+  /**
+   * xpath identifying the subelement under itemXpath that holds the id for
+   * each item.
+   */
+  protected $itemIDXpath;
+  public function getIDXpath() {
+    return $this->itemIDXpath;
+  }
+
+  public function __construct($xml_url, $item_xpath='item', $itemID_xpath='id') {
+    parent::__construct();
+    $this->xmlUrl = $xml_url;
+    $this->itemXpath = $item_xpath;
+    $this->itemIDXpath = $itemID_xpath;
+
+    // Suppress errors during parsing, so we can pick them up after
+    libxml_use_internal_errors(TRUE);
+  }
+
+  /**
+   * Our public face is the URL we're getting items from
+   *
+   * @return string
+   */
+  public function __toString() {
+    return 'url = ' . $this->xmlUrl . ' | item xpath = ' . $this->itemXpath .
+                                      ' | item ID xpath = ' . $this->itemIDXpath;
+  }
+
+  /**
+   * Load the XML at the given URL, and return an array of the IDs found
+   * within it.
+   *
+   * @return array
+   */
+  public function getIdList() {
+    migrate_instrument_start("Retrieve $this->xmlUrl");
+    $xml = simplexml_load_file($this->xmlUrl);
+    migrate_instrument_stop("Retrieve $this->xmlUrl");
+    if ($xml) {
+      return $this->getIDsFromXML($xml);
+    }
+    else {
+      $migration = Migration::currentMigration();
+      $migration->showMessage(t('Loading of !xmlUrl failed:',
+          array('!xmlUrl' => $this->xmlUrl)));
+      foreach (libxml_get_errors() as $error) {
+        $migration->showMessage($error);
+      }
+      return NULL;
+    }
+  }
+
+  /**
+   * Given an XML object, parse out the IDs for processing and return them as
+   * an array. The location of the IDs in the XML are based on the item xpath
+   * and item ID xpath set in the constructor.
+   *    eg, xpath = itemXpath . '/' . itemIDXpath
+   * IDs are cached.  The list of IDs are returned from the cache except when
+   * this is the first call (ie, cache is NULL) OR the refresh parameter is
+   * TRUE.
+   *
+   * @param SimpleXMLElement $xml
+   * @param boolean $refresh
+   *
+   * @return array
+   */
+  protected $cache_ids = NULL;
+  protected function getIDsFromXML(SimpleXMLElement $xml, $refresh=FALSE) {
+    if ($refresh !== TRUE && $this->cache_ids != NULL) {
+      return $this->cache_ids;
+    }
+
+    $this->cache_ids = NULL;
+    $ids = array();
+    $full_xpath = $this->itemXpath . '/' . $this->itemIDXpath;
+
+    $result = $xml->xpath($full_xpath);
+    if ($result) {
+      if (count($result) > 1) {
+        foreach ($result as $id) {
+          $ids[] = (string)$id;
+        }
+      }
+      else {
+        $ids[] = (string)$result[0];
+      }
+      $this->cache_ids = $ids;
+      return $ids;
+    }
+    else {
+      return NULL;
+    }
+  }
+
+  /**
+   * Return a count of all available IDs from the source listing.
+   */
+  public function count($refresh = FALSE) {
+    $count = 0;
+    $xml = simplexml_load_file($this->xmlUrl);
+    if ($xml) {
+      $ids = $this->getIDsFromXML($xml,$refresh);
+      $count = count($ids);
+    }
+    return $count;
+  }
+
+  /**
+   * Load the XML at the given URL, and return an array of the Items found
+   * within it.
+   *
+   * @return array
+   */
+  public function getAllItems() {
+    $xml = simplexml_load_file($this->xmlUrl);
+    if ($xml) {
+      return $this->getItemsFromXML($xml);
+    }
+    else {
+      $migration = Migration::currentMigration();
+      $migration->showMessage(t('Loading of !xmlUrl failed:',
+          array('!xmlUrl' => $this->xmlUrl)));
+      foreach (libxml_get_errors() as $error) {
+        $migration->showMessage($error);
+      }
+      return NULL;
+    }
+  }
+
+  /**
+   * Given an XML object, parse out the items for processing and return them as
+   * an array. The location of the items in the XML are based on the item xpath
+   * set in the constructor.  Items are cached.  The list of items are returned
+   * from the cache except when this is the first call (ie, cache is NULL) OR
+   * the refresh parameter is TRUE.
+   *
+   * Items are cached as an array of key=ID and value=stdclass object with
+   * attribute xml containing the xml SimpleXMLElement object of the item.
+   *
+   * @param SimpleXMLElement $xml
+   * @param boolean $refresh
+   *
+   * @return array
+   */
+  protected $cache_items = NULL;
+  public function getItemsFromXML(SimpleXMLElement $xml, $refresh=FALSE) {
+    if ($refresh !== FALSE && $this->cache_items != NULL) {
+      return $this->cache_items;
+    }
+
+    $this->cache_items = NULL;
+    $items = array();
+    $result = $xml->xpath($this->itemXpath);
+
+    if ($result) {
+      if (count($result) > 1) {
+        foreach ($result as $item_xml) {
+          $id = $this->getItemID($item_xml);
+          $item = new stdclass;
+          $item->xml = $item_xml;
+          $items[$id] = $item;
+        }
+      }
+      else {
+        $item_xml = $result[0];
+        $id = $this->getItemID($item_xml);
+        $item = new stdclass;
+        $item->xml = $item_xml;
+        $items[$id] = $item;
+      }
+      $this->cache_items = $items;
+      return $items;
+    }
+    else {
+      return NULL;
+    }
+  }
+
+  /**
+   * Get the item ID from the itemXML based on itemIDXpath.
+   *
+   * @return string
+   */
+  protected function getItemID($itemXML){
+    return $this->getElementValue($itemXML, $this->itemIDXpath);
+  }
+
+  /**
+   * Get an element from the itemXML based on an xpath.
+   *
+   * @return string
+   */
+  protected function getElementValue($itemXML,$xpath){
+    $value = NULL;
+    if ($itemXML) {
+      $result = $itemXML->xpath($xpath);
+      if ($result)
+        $value = (string)$result[0];
+    }
+    return $value;
+  }
+
+  /**
+   * Implementors are expected to return an object representing a source item.
+   * Items are cached as an array of key=ID and value=stdclass object with
+   * attribute xml containing the xml SimpleXMLElement object of the item.
+   *
+   * @param mixed $id
+   *
+   * @return stdClass
+   */
+  public function getItem($id) {
+    // Make sure we actually have an ID
+    if (empty($id)) {
+      return NULL;
+    }
+    $items = $this->getAllItems();
+    $item = $items[$id];
+    if ($item) {
+      return $item;
+    }
+    else {
+      $migration = Migration::currentMigration();
+      $message =  t('Loading of !itemxml given id failed:', array('!id' => $id));
+      foreach (libxml_get_errors() as $error) {
+        $message .= "\n" . $error->message;
+      }
+      $migration->getMap()->saveMessage(
+        array($id), $message, MigrationBase::MESSAGE_ERROR);
+      libxml_clear_errors();
       return NULL;
     }
   }

@@ -65,6 +65,7 @@ function migrate_example_wine_disable() {
   Migration::deregisterMigration('WineBestWith');
   Migration::deregisterMigration('WineProducer');
   Migration::deregisterMigration('WineProducerXML');
+  Migration::deregisterMigration('WineProducerMultiXML');
   Migration::deregisterMigration('WineWine');
   Migration::deregisterMigration('WineComment');
   MigrationBase::deregisterMigration('WineFinish');

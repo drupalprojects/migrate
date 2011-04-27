@@ -146,6 +146,9 @@ abstract class MigrationBase {
    * @var string
    */
   protected $outputFunction;
+  public function setOutputFunction($output_function) {
+    $this->outputFunction = $output_function;
+  }
 
   /**
    * The fraction of the memory limit at which an operation will be interrupted.
@@ -871,12 +874,6 @@ abstract class MigrationBase {
     $time_elapsed = time() - $_SERVER['REQUEST_TIME'];
     $pct_time = $time_elapsed / $this->timeLimit;
     if ($pct_time > $this->timeThreshold) {
-      $this->showMessage(
-        t('Time limit approaching, starting new batch',
-          array('!pct' => round($pct_time*100),
-                '!usage' => format_size($time_elapsed),
-                '!limit' => format_size($this->timeLimit))),
-        'warning');
       return TRUE;
     }
     else {

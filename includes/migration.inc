@@ -91,7 +91,7 @@ abstract class Migration extends MigrationBase {
    *
    * @var int
    */
-  protected $rollbackBatchSize = 500;
+  protected $rollbackBatchSize = 50;
 
   /**
    * If present, an array with keys name and alias (optional). Name refers to
@@ -608,22 +608,6 @@ abstract class Migration extends MigrationBase {
    *  Status of the process, represented by one of the Migration::RESULT_* constants.
    */
   protected function progressMessage($result) {
-    // In the INCOMPLETE (feedback) case, only proceed under the proper conditions
-    if ($result == Migration::RESULT_INCOMPLETE) {
-      if (isset($this->feedback)) {
-        if (($this->feedback_unit == 'seconds' && time()-$this->lastfeedback >= $this->feedback) ||
-            ($this->feedback_unit == 'items' && $this->processed_since_feedback >= $this->feedback)) {
-          // Fall through
-        }
-        else {
-          return;
-        }
-      }
-      else {
-        return;
-      }
-    }
-
     $time = microtime(TRUE) - $this->lastfeedback;
     if ($time > 0) {
       $perminute = round(60*$this->processed_since_feedback/$time);
@@ -719,7 +703,14 @@ abstract class Migration extends MigrationBase {
     if ($this->getStatus() == Migration::STATUS_STOPPING) {
       return MigrationBase::RESULT_STOPPED;
     }
-    $this->progressMessage(MigrationBase::RESULT_INCOMPLETE);
+    // If feedback is requested, produce a progress message at the proper time
+    if (isset($this->feedback)) {
+      if (($this->feedback_unit == 'seconds' && time() - $this->lastfeedback >= $this->feedback) ||
+          ($this->feedback_unit == 'items' && $this->processed_since_feedback >= $this->feedback)) {
+        $this->progressMessage(MigrationBase::RESULT_INCOMPLETE);
+      }
+    }
+
     return MigrationBase::RESULT_COMPLETED;
   }
 

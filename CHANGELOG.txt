@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1017246 - Added support for running migrations from the dashboard.
 - #1138096 - Added MigrateSourceMultiItems class for self-contained XML sources.
 - #1101586 - Add shortcut methods for adding several field mappings at once.
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.

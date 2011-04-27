@@ -5,5 +5,6 @@ package = "Development"
 core = 6.x
 php = 5.2
 dependencies[] = migrate
+dependencies[] = elements
 files[] = migrate_ui.module
 ;files[] = migrate_ui.pages.inc

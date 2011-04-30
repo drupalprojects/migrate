@@ -115,3 +115,26 @@ function migrate_example_update_7002() {
   $ret[] = t('Added image_alt, image_title, and image_description fields.');
   return $ret;
 }
+
+/**
+ * Add data for remote file examples.
+ */
+function migrate_example_update_7003() {
+  $ret = array();
+  db_create_table('migrate_example_wine_files', migrate_example_wine_schema_files());
+  migrate_example_wine_data_files();
+  db_add_field('migrate_example_wine_account', 'imageid', array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+      'description' => 'Image ID.',
+    )
+  );
+  db_update('migrate_example_wine_account')
+    ->fields(array('imageid' => 1))
+    ->condition('accountid', 9)
+    ->execute();
+  $ret[] = t('Added migrate_example_wine_files table.');
+  $ret[] = t('Added imageid field to migrate_example_wine_account table.');
+  return $ret;
+}

@@ -29,6 +29,10 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('"Best With" term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('WineFile');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('File import returned RESULT_COMPLETED'));
     $migration = Migration::getInstance('WineUser');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,

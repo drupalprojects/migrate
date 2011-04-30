@@ -17,6 +17,7 @@ function migrate_example_wine_schema() {
   $schema['migrate_example_wine_category_producer'] = migrate_example_wine_schema_category_producer();
   $schema['migrate_example_wine_comment'] = migrate_example_wine_schema_comment();
   $schema['migrate_example_wine_comment_updates'] = migrate_example_wine_schema_comment_updates();
+  $schema['migrate_example_wine_files'] = migrate_example_wine_schema_files();
 
   return $schema;
 }
@@ -39,6 +40,7 @@ function migrate_example_wine_install() {
   migrate_example_wine_data_category_producer();
   migrate_example_wine_data_comment();
   migrate_example_wine_data_comment_updates();
+  migrate_example_wine_data_files();
 }
 
 function migrate_example_wine_uninstall() {
@@ -59,6 +61,7 @@ function migrate_example_wine_uninstall() {
 
 function migrate_example_wine_disable() {
   MigrationBase::deregisterMigration('WinePrep');
+  Migration::deregisterMigration('WineFile');
   Migration::deregisterMigration('WineRegion');
   Migration::deregisterMigration('WineUser');
   Migration::deregisterMigration('WineVariety');
@@ -112,7 +115,7 @@ function migrate_example_wine_schema_wine() {
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => 'Image path',
+        'description' => 'Comma-separated list of images',
       ),
       'posted' => array(
         'type' => 'int',
@@ -501,6 +504,12 @@ function migrate_example_wine_schema_account() {
         'not null' => TRUE,
         'description' => 'Signature for comments',
       ),
+      'imageid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'Image ID',
+      ),
     ),
     'primary key' => array('accountid'),
   );
@@ -523,6 +532,27 @@ function migrate_example_wine_schema_account_updates() {
       ),
     ),
     'primary key' => array('accountid'),
+  );
+}
+
+function migrate_example_wine_schema_files() {
+  return array(
+    'description' => 'Wine and account files',
+    'fields' => array(
+      'imageid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Image ID',
+      ),
+      'url'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Image URL',
+      ),
+    ),
+    'primary key' => array('imageid'),
   );
 }
 
@@ -895,19 +925,19 @@ function migrate_example_wine_data_producer() {
 
 function migrate_example_wine_data_account() {
   $fields = array('accountid', 'status', 'posted', 'last_access', 'last_login',
-    'name', 'sex', 'password', 'mail', 'original_mail', 'sig');
+    'name', 'sex', 'password', 'mail', 'original_mail', 'sig', 'imageid');
   $query = db_insert('migrate_example_wine_account')
     ->fields($fields);
   $data = array(
     array(1, 1, '2010-03-30 10:31:05', '2010-04-30 18:25:24', '2010-04-30 14:01:02',
       'darren', 'M', 'dpass', 'ddarren@example.com', 'darren@example.com',
-      'All about the Australians'),
+      'All about the Australians', NULL),
     array(3, 0, '2007-03-15 10:31:05', '2007-06-10 04:11:38', '2007-06-10 04:11:38',
       'emily', 'F', 'insecure', 'emily@example.com', 'emily@example.com',
-      'Sommelier to the stars'),
+      'Sommelier to the stars', NULL),
     array(9, 1, '2004-02-29 10:31:05', '2004-02-29 10:31:05', '2004-02-29 10:31:05',
       'fonzie', NULL, 'bike', 'thefonz@example.com', 'arthur@example.com',
-      'Aaay!'),
+      'Aaay!', 1),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));
@@ -1066,6 +1096,19 @@ function migrate_example_wine_data_category_producer() {
     ->fields($fields);
   $data = array(
     array(1, 17),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
+function migrate_example_wine_data_files() {
+  $fields = array('imageid', 'url');
+  $query = db_insert('migrate_example_wine_files')
+    ->fields($fields);
+  $data = array(
+    array(1, 'http://drupal.org/files/images/DA-individual.thumbnail.png'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

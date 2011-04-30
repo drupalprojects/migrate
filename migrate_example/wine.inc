@@ -143,11 +143,46 @@ class WineBestWithMigration extends WineTermMigration {
   }
 }
 
+/**
+ * TIP: Files can be migrated directly by themselves, by using the MigrateDestinationFile
+ * class. This will copy the files themselves from the source, and set up the
+ * Drupal file tables appropriately.
+ */
+class WineFileMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('Profile images');
+    $this->dependencies = array('WinePrep');
+    $this->map = new MigrateSQLMap($this->machineName,
+        array('imageid' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'description' => 'Image ID.'
+                )
+             ),
+        MigrateDestinationFile::getKeySchema()
+    );
+    $query = db_select('migrate_example_wine_files', 'wf')
+             ->fields('wf', array('imageid', 'url'));
+    $this->source = new MigrateSourceSQL($query);
+
+    // TIP: Set copy_file to copy the file from its source (which could be a
+    // remote server, i.e. the uri is of the form http://example.com/images/foo.jpg).
+    $this->destination = new MigrateDestinationFile(array('copy_file' => TRUE));
+
+    // Just map the incoming URL to the destination's 'uri'
+    $this->addFieldMapping('uri', 'url');
+    $this->addUnmigratedDestinations(array('fid', 'uid', 'filename', 'status',
+      'filemime', 'timestamp'));
+  }
+}
+
 class WineUserMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine Drinkers of the world');
-    $this->dependencies = array('WinePrep');
+    $this->dependencies = array('WinePrep', 'WineFile');
     $this->map = new MigrateSQLMap($this->machineName,
         array('accountid' => array(
                 'type' => 'int',
@@ -161,7 +196,7 @@ class WineUserMigration extends AdvancedExampleMigration {
     $query = db_select('migrate_example_wine_account', 'wa')
              ->fields('wa', array('accountid', 'status', 'posted', 'name',
                 'password', 'mail', 'last_access', 'last_login',
-                'original_mail', 'sig', 'sex'));
+                'original_mail', 'sig', 'sex', 'imageid'));
     $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationUser();
 
@@ -182,11 +217,13 @@ class WineUserMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('init', 'original_mail');
     $this->addFieldMapping('field_migrate_example_gender', 'sex')
          ->description(t('Map from M/F to 0/1 in prepare method'));
+    $this->addFieldMapping('picture', 'imageid')
+         ->sourceMigration('WineFile');
 
     // Unmapped source fields
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('theme', 'timezone', 'language', 'picture'));
+    $this->addUnmigratedDestinations(array('theme', 'timezone', 'language'));
   }
 
   public function prepare(stdClass $account, stdClass $row) {
@@ -504,7 +541,7 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
     $this->addFieldMapping(NULL, 'excerpt');
-    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
+    $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);
     $this->addFieldMapping('sticky')

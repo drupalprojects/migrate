@@ -7,6 +7,7 @@ Features and enhancements
 - #1138096 - Added MigrateSourceMultiItems class for self-contained XML sources.
 - #1101586 - Add shortcut methods for adding several field mappings at once.
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.
+- #1139080 - Added example and test for importing profile pictures over http.
 
 Bug fixes
 - #1132034 - Don't assume entity is a stdClass. NOTE: Any field handler prepare() 

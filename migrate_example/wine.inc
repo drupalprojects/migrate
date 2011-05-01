@@ -475,9 +475,12 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('field_migrate_example_top_vintag', 'best_vintages');
     $this->addFieldMapping('body', 'body');
     $this->addFieldMapping('teaser', 'excerpt');
-/*    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'), 'file_copy', FILE_EXISTS_RENAME);
+    // Note that the image field in the source data contains URLs (http://example.com/...),
+    // and can contain multiple URLs separated by |
+    $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
     $this->addFieldMapping('field_migrate_example_image', 'image')
-         ->arguments($arguments);*/
+         ->separator('|')
+         ->arguments($arguments);
     $this->addFieldMapping('sticky')
          ->defaultValue(0);
     // These are already UNIX timestamps, so just pass through

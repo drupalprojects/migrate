@@ -181,26 +181,51 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         // the file_replace setting if the file already exists
         case 'file_copy':
         case 'file_move':
+          $remote = FALSE;
+
           // Check that source exists. If not, mark the entity as 'needs_update' and bail.
           // Sometimes the source file arrives later, when rsync is slower than DB.
           if (!is_file($full_path)) {
-            $message = t('Source file does not exist: !path', array('!path' => $full_path));
-            if ($arguments['throw_error']) {
-              throw new MigrateException($message, MigrationBase::MESSAGE_ERROR);
+            // is_file() won't handle URLs, check to see if we have a remote file
+            // (only relevant in the file_copy case)
+            if ($file_function == 'file_copy') {
+              $headers = @get_headers($full_path);
+              if (is_array($headers) && $headers[0] == 'HTTP/1.1 200 OK') {
+                $remote = TRUE;
+              }
             }
-            else {
-              $migration->saveMessage($message, MigrationBase::MESSAGE_INFORMATIONAL);
+            if (!$remote) {
+              $message = t('Source file does not exist: !path', array('!path' => $full_path));
+              if ($arguments['throw_error']) {
+                throw new MigrateException($message, MigrationBase::MESSAGE_ERROR);
+              }
+              else {
+                $migration->saveMessage($message, MigrationBase::MESSAGE_INFORMATIONAL);
+              }
+              $message_saved = TRUE;
+              $migration->needsUpdate = TRUE;
+              continue;
             }
-            $message_saved = TRUE;
-      // TODO     $migration->needsUpdate = TRUE;
-            continue;
           }
           // TODO: FILE_EXISTS_REPLACE is hardcoded
           // TODO: Should retrieve and pass validators in 2nd arg
-          $file = field_file_save_file($full_path, array(), $destination_dir, $account);
-          if ($file_function == 'file_move') {
-            // TODO: Optimize by using rename()
-            unlink($full_path);
+          if ($remote) {
+            $destination_file = $destination_dir . "/" . basename($full_path);
+            $result = @copy($full_path, $destination_file);
+            if ($result) {
+              $file = field_file_save_file($destination_file, array(), $destination_dir, $account);
+            }
+            else {
+              $migration->saveMessage(t('Unable to copy file from !source',
+                array('!source' => $source->uri)));
+            }
+          }
+          else {
+            $file = field_file_save_file($full_path, array(), $destination_dir, $account);
+            if ($file_function == 'file_move') {
+              // TODO: Optimize by using rename()
+              unlink($full_path);
+            }
           }
           break;
         case 'file_fast':

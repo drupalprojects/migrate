@@ -371,6 +371,7 @@ function migrate_example_beer_image() {
     'widget_type' => 'imagefield_widget',
     'type_name' => 'migrate_example_beer',
     'label' => t('Image'),
+    'multiple' => 1,
   );
   content_field_instance_create($field);
 }

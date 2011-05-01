@@ -750,82 +750,20 @@ function migrate_example_wine_fields() {
   );
   content_field_instance_create($field);
 
-  /*  if (!field_info_field('field_migrate_example_image')) {
-    $field = array(
-      'field_name' => 'field_migrate_example_image',
-      'type' => 'image',
-      'cardinality' => 1,
-      'translatable' => TRUE,
-      'indexes' => array('fid' => array('fid')),
-      'settings' => array(
-        'uri_scheme' => 'public',
-        'default_image' => FALSE,
-      ),
-    );
-    field_create_field($field);
-  }
+  migrate_example_wine_image();
+}
 
-  if (!field_info_instance('node', 'field_migrate_example_image', 'migrate_example_wine')) {
-    $instance = array(
-      'field_name' => 'field_migrate_example_image',
-      'entity_type' => 'node',
-      'label' => 'Image',
-      'bundle' => 'migrate_example_wine',
-      'description' => 'Upload an image to go with this wine.',
-      'settings' => array(
-        'file_directory' => 'field/migrate_example/image',
-        'file_extensions' => 'png gif jpg jpeg',
-        'max_filesize' => '',
-        'max_resolution' => '',
-        'min_resolution' => '',
-        'alt_field' => TRUE,
-        'title_field' => '',
-      ),
-
-      'widget' => array(
-        'type' => 'image_image',
-        'settings' => array(
-          'progress_indicator' => 'throbber',
-          'preview_image_style' => 'thumbnail',
-        ),
-        'weight' => -1,
-      ),
-
-      'display' => array(
-        'full' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'teaser' => array(
-          'label' => 'hidden',
-          'type' => 'image_link_content__medium',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'rss' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'search_index' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-        'search_results' => array(
-          'label' => 'hidden',
-          'type' => 'image__large',
-          'settings' => array(),
-          'weight' => -1,
-        ),
-      ),
-    );
-    field_create_instance($instance);
-  }*/
+// Create an image field named "Migrate Example Image", enabled for the 'Beer' content type.
+function migrate_example_wine_image() {
+  $field = array(
+    'field_name' => 'field_migrate_example_image',
+    'type' => 'filefield',
+    'widget_type' => 'imagefield_widget',
+    'type_name' => 'migrate_example_wine',
+    'label' => t('Image'),
+    'multiple' => 1,
+  );
+  content_field_instance_create($field);
 }
 
 function migrate_example_wine_content_type_delete() {
@@ -835,10 +773,12 @@ function migrate_example_wine_content_type_delete() {
 
 function migrate_example_wine_data_wine() {
   $data = array(
-    array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9, NULL,
+    array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9,
+      'http://cyrve.com/files/penguin.jpeg',
       strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95,
       '3/4/10 05:06:07 PM'),
-    array(2, 'Archeo Ruggero di Tasso Nero d\'Avola', 'Lots of berry character', 'Pair with red sauced dishes', 3, NULL,
+    array(2, 'Archeo Ruggero di Tasso Nero d\'Avola', 'Lots of berry character', 'Pair with red sauced dishes', 3,
+      'http://cyrve.com/files/rioja.jpeg|http://cyrve.com/files/boutisse.jpeg',
       strtotime('2010-09-03 18:23:58'), strtotime('2010-09-03 18:23:58'), 26, 2, 85),
   );
   foreach ($data as $row) {

@@ -108,3 +108,23 @@ function migrate_example_update_6002() {
   $ret[] = t('Added image_alt, image_title, and image_description fields.');
   return $ret;
 }
+
+/**
+ * Add sample data for file fields. And, make the image field multi-value.
+ */
+function migrate_example_update_6003() {
+  require drupal_get_path('module', 'content') . '/includes/content.crud.inc';
+  $ret = array();
+  db_query("UPDATE {migrate_example_wine}
+            SET image='%s'
+            WHERE wineid=%d",
+           'http://cyrve.com/files/penguin.jpeg', 1);
+  db_query("UPDATE {migrate_example_wine}
+            SET image='%s'
+            WHERE wineid=%d",
+           'http://cyrve.com/files/rioja.jpeg|http://cyrve.com/files/boutisse_0.jpeg', 2);
+  migrate_example_wine_image();
+  $ret[] = t('Added sample data for file fields.');
+  $ret[] = t('Made field_migrate_example_image multi-value');
+  return $ret;
+}

@@ -138,3 +138,24 @@ function migrate_example_update_7003() {
   $ret[] = t('Added imageid field to migrate_example_wine_account table.');
   return $ret;
 }
+
+/**
+ * Add sample data for file fields. And, make the image field multi-value.
+ */
+function migrate_example_update_7004() {
+  $ret = array();
+  db_update('migrate_example_wine')
+    ->fields(array('image' => 'http://cyrve.com/files/penguin.jpeg'))
+    ->condition('wineid', 1)
+    ->execute();
+  db_update('migrate_example_wine')
+    ->fields(array('image' => 'http://cyrve.com/files/rioja.jpeg|http://cyrve.com/files/boutisse_0.jpeg'))
+    ->condition('wineid', 2)
+    ->execute();
+  $field = field_info_field('field_migrate_example_image');
+  $field['cardinality'] = -1; // Unlimited
+  field_update_field($field);
+  $ret[] = t('Added sample data for file fields.');
+  $ret[] = t('Made field_migrate_example_image multi-value');
+  return $ret;
+}

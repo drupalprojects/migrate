@@ -227,21 +227,17 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
 
     $return = array();
-
-    if (empty($arguments['separator'])) {
-      $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, $values);
-      if (!empty($file_array)) {
-        $return[$language][0] = $file_array;
-      }
-    }
-    else {
-      foreach ($values as $delta => $value) {
-        // Empty stuff is skipped
-        if ($value) {
+    foreach ($values as $delta => $value) {
+      // Empty stuff is skipped
+      if ($value) {
+        if (empty($arguments['separator'])) {
+          $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, array($value));
+        }
+        else {
           $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, explode($arguments['separator'], $value));
-          if (!empty($file_array)) {
-            $return[$language][$delta] = $file_array;
-          }
+        }
+        if (!empty($file_array)) {
+          $return[$language][$delta] = $file_array;
         }
       }
     }
@@ -250,15 +246,26 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
   /**
    * Parses file information to create an appropriate data array.
-   * @param stdClass $entity
+   *
+   * @param $entity
    * @param array $field_info
    * @param array $instance
+   * @param $migration
+   * @param $arguments
    * @param array $values
    *
    * @return array
    */
-  protected function buildFileArray ($entity, array $field_info, array $instance, $migration, $arguments, array $values) {
+  protected function buildFileArray($entity, array $field_info, array $instance, $migration, $arguments, array $values) {
     static $fids;
+
+    // One can override a file_function via CLI or drushrc.php
+    if ($migration->getOption('file_function')) {
+      $file_function = $migration->getOption('file_function');
+    }
+    else {
+      $file_function = $arguments['file_function'];
+    }
 
     if ($arguments['source_path']) {
       $full_path = rtrim($arguments['source_path'], DIRECTORY_SEPARATOR) .
@@ -268,20 +275,37 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $full_path = reset($values);
     }
 
+    $remote = FALSE;
+
     // Check that source exists. If not, mark the entity as 'needs_update' and bail.
     // Sometimes the source file arrives later, when rsync is slower than DB.
     if (!is_file($full_path)) {
-      $migration->saveMessage(t('Source file does not exist: !path',
-        array('!path' => $full_path)), Migration::MESSAGE_WARNING);
-      $migration->needsUpdate = TRUE;
-      return;
+      // is_file() won't handle URLs, check to see if we have a remote file
+      // (only relevant in the file_copy case)
+      if ($file_function == 'file_copy') {
+        $headers = @get_headers($full_path);
+        if (is_array($headers) && $headers[0] == 'HTTP/1.1 200 OK') {
+          $remote = TRUE;
+        }
+      }
+      if (!$remote) {
+        $migration->saveMessage(t('Source file does not exist: !path',
+          array('!path' => $full_path)), Migration::MESSAGE_WARNING);
+        $migration->needsUpdate = TRUE;
+        return;
+      }
     }
 
     $destination_dir = file_field_widget_uri($field_info, $instance);
     file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
-    $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $full_path));
-    $real_destination_file = drupal_realpath($destination_file);
+    if ($remote) {
+      $destination_file = $destination_dir . "/" . basename($full_path);
+    }
+    else {
+      $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $full_path));
+    }
 
+    $real_destination_file = drupal_realpath($destination_file);
     $source = (object) array(
       'uri' => $full_path,
       'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
@@ -309,16 +333,22 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     }
     else {
       migrate_instrument_start('MigrateFileFieldHandler file_function');
-      // One can override a file_function via CLI or drushrc.php
-      if ($migration->getOption('file_function')) {
-        $file_function = $migration->getOption('file_function');
-      }
-      else {
-        $file_function = $arguments['file_function'];
-      }
       switch ($file_function) {
         case 'file_copy':
-          $file = file_copy($source, $destination_dir, $arguments['file_replace']);
+          if ($remote) {
+            $result = @copy($source->uri, $destination_file);
+            if ($result) {
+              $source->uri = $destination_file;
+              $file = file_save($source);
+            }
+            else {
+              $migration->saveMessage(t('Unable to copy file from !source',
+                array('!source' => $source->uri)));
+            }
+          }
+          else {
+            $file = file_copy($source, $destination_dir, $arguments['file_replace']);
+          }
           break;
         case 'file_move':
           // file_move() does a copy then delete which slow. So we implement our own.
@@ -335,12 +365,12 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
               break;
             }
             else {
-              $migration->saveMessage(t('Unable to rename !source to !uri', array('!source' => $source->uri, '!uri' => $destination_file)), MIGRATION::MESSAGE_ERROR);
+              $migration->saveMessage(t('Unable to rename !source to !uri', array('!source' => $source->uri, '!uri' => $destination_file)), Migration::MESSAGE_ERROR);
               return;
             }
           }
           else {
-            $migration->saveMessage(t('Unable to prepare directory !dir', array('!dir' => $destination_dir)), MIGRATION::MESSAGE_ERROR);
+            $migration->saveMessage(t('Unable to prepare directory !dir', array('!dir' => $destination_dir)), Migration::MESSAGE_ERROR);
             return;
           }
           break;
@@ -397,7 +427,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       return $object_field;
     }
     else {
-      $migration->saveMessage(t('Unable to create file record for !path', array('!path' => $full_path)), MIGRATION::MESSAGE_ERROR);
+      $migration->saveMessage(t('Unable to create file record for !path', array('!path' => $full_path)), Migration::MESSAGE_ERROR);
     }
   }
 

@@ -541,8 +541,11 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('body', 'body')
          ->arguments($arguments);
     $this->addFieldMapping(NULL, 'excerpt');
+    // Note that the image field in the source data contains URLs (http://example.com/...),
+    // and can contain multiple URLs separated by |
     $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
     $this->addFieldMapping('field_migrate_example_image', 'image')
+         ->separator('|')
          ->arguments($arguments);
     $this->addFieldMapping('sticky')
          ->defaultValue(0);

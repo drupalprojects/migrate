@@ -725,7 +725,7 @@ function migrate_example_wine_fields() {
     $field = array(
       'field_name' => 'field_migrate_example_image',
       'type' => 'image',
-      'cardinality' => 1,
+      'cardinality' => -1,
       'translatable' => TRUE,
       'indexes' => array('fid' => array('fid')),
       'settings' => array(
@@ -884,9 +884,11 @@ function migrate_example_wine_data_wine() {
   $query = db_insert('migrate_example_wine')
            ->fields($fields);
   $data = array(
-    array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9, NULL,
+    array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9,
+      'http://cyrve.com/files/penguin.jpeg',
       strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95),
-    array(2, 'Archeo Ruggero di Tasso Nero d\'Avola', 'Lots of berry character', 'Pair with red sauced dishes', 3, NULL,
+    array(2, 'Archeo Ruggero di Tasso Nero d\'Avola', 'Lots of berry character', 'Pair with red sauced dishes', 3,
+      'http://cyrve.com/files/rioja.jpeg|http://cyrve.com/files/boutisse.jpeg',
       strtotime('2010-09-03 18:23:58'), strtotime('2010-09-03 18:23:58'), 26, 2, 85),
   );
   foreach ($data as $row) {

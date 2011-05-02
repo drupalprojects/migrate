@@ -189,6 +189,22 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     if (!isset($node->revision)) {
       $node->revision = 0; // Saves disk space and writes. Can be overridden.
     }
+
+    // Trying to update an existing node
+    if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+      // Incoming data overrides existing data, so only copy non-existent fields
+      foreach ($old_node as $field => $value) {
+        // An explicit NULL in the source data means to wipe to old value (i.e.,
+        // don't copy it over from $old_node)
+        if (property_exists($node, $field) && $node->$field === NULL) {
+          // Ignore this field
+        }
+        elseif (!isset($node->$field)) {
+          $node->$field = $old_node->$field;
+        }
+      }
+    }
+
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');

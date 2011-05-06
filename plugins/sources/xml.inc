@@ -86,7 +86,7 @@ class MigrateListXML extends MigrateList {
     foreach ($xml as $element) {
       $ids[] = (string)$element;
     }
-    return $ids;
+    return array_unique($ids);
   }
 
   /**
@@ -395,8 +395,8 @@ class MigrateItemsXML extends MigrateItems {
       else {
         $ids[] = (string)$result[0];
       }
-      $this->cache_ids = $ids;
-      return $ids;
+      $this->cache_ids = array_unique($ids);
+      return $this->cache_ids;
     }
     else {
       return NULL;

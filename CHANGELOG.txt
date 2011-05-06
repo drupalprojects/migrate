@@ -17,6 +17,7 @@ Features and enhancements
 - #1139080 - Added example and test for importing profile pictures over http.
 
 Bug fixes
+- #1148474 - Enforce unique IDs in MigrateItemsXML.
 - #1132034 - Don't assume entity is a stdClass.
 - #753284 - Fixed systemOfRecord==DESTINATION updates for nodes and users.
 - #1142104 - Proper prefixing of tables when updating comment statistics.

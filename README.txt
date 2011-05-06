@@ -14,6 +14,12 @@ by drush commands.
 The Migrate module itself has support for migration into core objects. Support
 for migration involving contrib modules is in the migrate_extras module. 
 
+Known issues
+------------
+A user migration with systemOfRecord == DESTINATION will drop pictures from user
+records due to core bug http://drupal.org/node/935592 - the simpletests report an
+error reflecting this. We have not developed a work-around.
+
 Upgrading
 ---------
 Do not attempt to upgrade directly from Migrate 1 to Migrate 2! There is no

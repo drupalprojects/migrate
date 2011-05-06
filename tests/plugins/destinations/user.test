@@ -89,25 +89,35 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     // TODO: Theme, timezone, language
 
     // Test updates
-    // Capture original terms
-    $original_users = user_load_multiple(array(), array(), TRUE);
+    // Capture original users
+    $query = new EntityFieldQuery;
+    $result = $query
+      ->entityCondition('entity_type', 'user')
+      ->propertyCondition('uid', 1, '>')
+      ->execute();
+    $uids = array_keys($result['user']);
+    $original_users = user_load_multiple($uids, array(), TRUE);
     $update_migration = Migration::getInstance('WineUserUpdates');
     $result = $update_migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine user updates import returned RESULT_COMPLETED'));
-    $final_users = user_load_multiple(array(), array(), TRUE);
+    $final_users = user_load_multiple($uids, array(), TRUE);
     foreach ($original_users as $uid => $original_user) {
       foreach ($original_user as $field => $value) {
         if ($field == 'field_migrate_example_gender') {
           if ($value == $final_users[$uid]->$field) {
-            $this->error(t('Field !field should have changed but did not, value=!value',
-              array('!field' => $field, '!value' => print_r($value, TRUE))));
+            $this->error(t('For user !name, field !field should have changed but did not, value=!value',
+              array('!name' => $final_users[$uid]->name, '!field' => $field,
+                '!value' => print_r($value, TRUE))));
           }
         }
         else {
           if ($value != $final_users[$uid]->$field) {
-            $this->error(t('Field !field mismatch: original !value1, result !value2',
-              array('!field' => $field, '!value1' => print_r($value, TRUE),
+            // Note we will get an error here until core bug http://drupal.org/node/935592
+            // is fixed.
+            $this->error(t('For user !name, field !field mismatch: original !value1, result !value2',
+              array('!name' => $final_users[$uid]->name, '!field' => $field,
+                '!value1' => print_r($value, TRUE),
                 '!value2' => print_r($final_users[$uid]->$field, TRUE))));
           }
         }

@@ -864,7 +864,7 @@ class WineUserUpdatesMigration extends AdvancedExampleMigration {
         $account->field_migrate_example_gender[LANGUAGE_NONE][0]['value'] = 1;
         break;
       default:
-        unset($account->field_migrate_example_gender);
+        $account->field_migrate_example_gender = NULL;
         break;
     }
   }

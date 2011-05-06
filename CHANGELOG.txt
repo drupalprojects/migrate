@@ -2,6 +2,12 @@
 Next release
 ============
 
+API change:
+
+Any field handler prepare() or complete() methods you have defined must be changed 
+to remove stdClass for the $entity argument. I.e., prepare(stdClass $entity, stdClass $row)
+should now be prepare($entity, stdClass $row).
+
 Features and enhancements
 - #1017246 - Added support for running migrations from the dashboard.
 - #1142384 - Extended file field support to copy from remote URLs.
@@ -11,10 +17,8 @@ Features and enhancements
 - #1139080 - Added example and test for importing profile pictures over http.
 
 Bug fixes
-- #1132034 - Don't assume entity is a stdClass. NOTE: Any field handler prepare() 
-  or complete() methods you have defined must also be changed to not specify stdClass
-  for the $entity argument.
-- #753284 - Fix systemOfRecord==DESTINATION updates for nodes.
+- #1132034 - Don't assume entity is a stdClass.
+- #753284 - Fixed systemOfRecord==DESTINATION updates for nodes and users.
 - #1142104 - Proper prefixing of tables when updating comment statistics.
 - #1136852 - Fixed cross-threaded test in preImport().
 - #1134858 - Improved validation for XML imports.
@@ -109,7 +113,7 @@ Features and enhancements
   Migration class names are no longer required to end in 'Migration'.
 - #992898 - Pass options to source and destination constructors as arrays.
 File destinations (i.e., migrating directly to the file_managed table, with
-  option copying of the files themselves) are now supported.
+  optional copying of the files themselves) are now supported.
 Allow migration of comment enable/disable.
 Check max_execution_time as well as memory_limit, for graceful exit when
   max_execution_time is in play.

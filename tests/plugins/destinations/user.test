@@ -34,16 +34,14 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
              ->execute();
     $uids = db_select('users', 'u')
               ->fields('u', array('uid'))
+              ->condition('uid', 1, '>')
               ->execute()
               ->fetchCol();
     // Index by name
     $users = array();
     foreach ($uids as $uid) {
-      // Skip anon/admin users
-      if ($uid > 1) {
-        $account = user_load($uid);
-        $users[$account->name] = $account;
-      }
+      $account = user_load($uid);
+      $users[$account->name] = $account;
     }
 
     $rows = array();
@@ -77,6 +75,43 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
       t('Signature formats match'));
 
     // TODO: Theme, timezone, language, picture
+
+    // Test updates. Well, since we don't have fields on users in D6, we're only
+    // testing that updates don't destroy data.
+
+    // Capture original users
+    foreach ($uids as $uid) {
+      $original_users[$uid] = user_load($uid);
+    }
+    $update_migration = Migration::getInstance('WineUserUpdates');
+    $result = $update_migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Wine user updates import returned RESULT_COMPLETED'));
+    foreach ($uids as $uid) {
+      $final_users[$uid] = user_load($uid);
+    }
+    foreach ($original_users as $uid => $original_user) {
+      foreach ($original_user as $field => $value) {
+/* Not applicable on D6
+        if ($field == 'field_migrate_example_gender') {
+          if ($value == $final_users[$uid]->$field) {
+            $this->error(t('For user !name, field !field should have changed but did not, value=!value',
+              array('!name' => $final_users[$uid]->name, '!field' => $field,
+                '!value' => print_r($value, TRUE))));
+          }
+        }
+        else {*/
+          if ($value != $final_users[$uid]->$field) {
+            // Note we will get an error here until core bug http://drupal.org/node/935592
+            // is fixed.
+            $this->error(t('For user !name, field !field mismatch: original !value1, result !value2',
+              array('!name' => $final_users[$uid]->name, '!field' => $field,
+                '!value1' => print_r($value, TRUE),
+                '!value2' => print_r($final_users[$uid]->$field, TRUE))));
+          }
+//        }
+      }
+    }
 
     // Test rollback
     $result = $migration->processRollback();

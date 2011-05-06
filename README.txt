@@ -21,6 +21,12 @@ to this is CCK - because the equivalent (Field API) is implemented in core for
 Drupal 7, to ease maintaining both D6 and D7 implementations of Migrate 2 the
 CCK support is builtin under Drupal 6.
 
+Known issues
+------------
+A user migration with systemOfRecord == DESTINATION will drop pictures from user
+records due to core bug http://drupal.org/node/935592 - the simpletests report an
+error reflecting this. We have not developed a work-around.
+
 Upgrading
 ---------
 Do not attempt to upgrade directly from Migrate 1 to Migrate 2! There is no

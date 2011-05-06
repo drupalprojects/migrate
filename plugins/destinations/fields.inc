@@ -32,7 +32,7 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
     $info = content_types($bundle);
     $instances = $info['fields'];
     foreach ($instances as $machine_name => $instance) {
-      if (isset($entity->$machine_name)) {
+      if (property_exists($entity, $machine_name)) {
         // Normalize to an array
         if (!is_array($entity->$machine_name)) {
           $entity->$machine_name = array($entity->$machine_name);

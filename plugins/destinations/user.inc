@@ -122,11 +122,13 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       if (!isset($account->uid)) {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination uid provided'));
       }
+      $old_account = user_load($account->uid, TRUE);
     }
     else {
       if (!isset($account->status)) {
         $account->status = 1;
       }
+      $old_account = $account;
     }
 
     // Convert core date columns to unix timestamp as needed.
@@ -135,13 +137,16 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         $account->$property = MigrationBase::timestamp($account->$property);
       }
       else {
-        $account->$property = $_SERVER['REQUEST_TIME'];
+        // Don't touch in the DESTINATION case, preserve the original value
+        if ($migration->getSystemOfRecord() != Migration::DESTINATION) {
+          $account->$property = $_SERVER['REQUEST_TIME'];
+        }
       }
     }
 
     $this->prepare($account, $row);
     migrate_instrument_start('user_save');
-    $newaccount = user_save(NULL, (array)$account);
+    $newaccount = user_save($old_account, (array)$account);
     migrate_instrument_stop('user_save');
     if ($newaccount) {
       $this->complete($newaccount, $row);

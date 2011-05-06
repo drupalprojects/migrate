@@ -736,7 +736,7 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
   }
 }
 
-
+// Doesn't really do anything, because we don't have fields on users in D6.
 class WineUserUpdatesMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();

@@ -55,7 +55,13 @@ class MigrateDestinationTableCopy extends MigrateDestination {
     unset($fields->needs_update);
     $query = db_merge($this->tableName)->key(array($key => $valkey))->fields((array)$fields);
     try {
-      $query->execute();
+      $status = $query->execute();
+      if ($status == MergeQuery::STATUS_INSERT) {
+        $this->numCreated++;
+      }
+      else {
+        $this->numUpdated++;
+      }
       return array($valkey);
     }
     catch (MigrateException $e) {

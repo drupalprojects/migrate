@@ -28,6 +28,23 @@ abstract class MigrateSource implements Iterator {
   protected $numProcessed = 0;
 
   /**
+   * Number of rows intentionally ignored (prepareRow() returned FALSE)
+   *
+   * @var int
+   */
+  protected $numIgnored = 0;
+  public function getIgnored() {
+    return $this->numIgnored;
+  }
+
+  /**
+   * Reset numIgnored back to 0.
+   */
+  public function resetStats() {
+    $this->numIgnored = 0;
+  }
+
+  /**
    * The primary key of the current row
    *
    * @var array

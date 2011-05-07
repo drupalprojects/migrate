@@ -152,6 +152,7 @@ class MigrateSourceList extends MigrateSource {
     $migration = Migration::currentMigration();
     migrate_instrument_start('MigrateSourceList rewind');
     $this->numProcessed = 0;
+    $this->numIgnored = 0;
     $idlist = $migration->getOption('idlist');
     if ($idlist) {
       $this->idList = explode(',', $idlist);
@@ -220,6 +221,9 @@ class MigrateSourceList extends MigrateSource {
           // OK, got a valid one, break out and return
           $this->numProcessed++;
           break;
+        }
+        else {
+          $this->numIgnored++;
         }
       }
       else {

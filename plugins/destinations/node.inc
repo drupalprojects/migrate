@@ -208,11 +208,24 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       }
     }
 
+    if (isset($node->nid)) {
+      $updating = TRUE;
+    }
+    else {
+      $updating = FALSE;
+    }
+
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');
 
     if (isset($node->nid)) {
+      if ($updating) {
+        $this->numUpdated++;
+      }
+      else {
+        $this->numCreated++;
+      }
 
       // Unfortunately, http://drupal.org/node/722688 was not accepted, so fix
       // the changed timestamp
@@ -240,8 +253,11 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         $query->fields($fields);
         $query->execute();
       }
+      $return = array($node->nid);
     }
-
+    else {
+      $return = FALSE;
+     }
     $this->complete($node, $row);
 
     // Clear the node cache periodically
@@ -251,7 +267,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $count = 0;
     }
 
-    $return = isset($node->nid) ? array($node->nid) : FALSE;
     return $return;
   }
 }

@@ -229,6 +229,7 @@ class MigrateSourceSQL extends MigrateSource {
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
+    $this->numIgnored = 0;
     $this->highwaterSeen = FALSE;
     $this->query = clone $this->originalQuery;
 
@@ -407,6 +408,9 @@ class MigrateSourceSQL extends MigrateSource {
       if ($return !== FALSE) {
         $this->numProcessed++;
         break;
+      }
+      else {
+        $this->numIgnored++;
       }
     }
     if (!is_object($this->currentRow)) {

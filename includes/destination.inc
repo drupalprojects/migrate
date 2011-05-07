@@ -64,6 +64,28 @@ abstract class MigrateDestination {
    */
 
   /**
+   * Maintain stats on the number of destination objects created or updated.
+   *
+   * @var int
+   */
+  protected $numCreated = 0;
+  public function getCreated() {
+    return $this->numCreated;
+  }
+  protected $numUpdated = 0;
+  public function getUpdated() {
+    return $this->numUpdated;
+  }
+
+  /**
+   * Reset numCreated and numUpdated back to 0.
+   */
+  public function resetStats() {
+    $this->numCreated = 0;
+    $this->numUpdated = 0;
+  }
+
+  /**
    * Null constructor
    */
   public function __construct() {

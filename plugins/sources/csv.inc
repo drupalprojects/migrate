@@ -113,7 +113,7 @@ class MigrateSourceCSV extends MigrateSource {
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
-
+    $this->numIgnored = 0;
 
     migrate_instrument_start('MigrateSourceCSV execute');
     $this->result = fopen($this->file, 'r');
@@ -208,6 +208,7 @@ class MigrateSourceCSV extends MigrateSource {
       }
       else {
         $this->currentRow = NULL;
+        $this->numIgnored++;
       }
     }
     if (!is_object($this->currentRow)) {

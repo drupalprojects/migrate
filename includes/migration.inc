@@ -659,7 +659,7 @@ abstract class Migration extends MigrationBase {
     }
     $numitems = $this->processed_since_feedback + $this->source->getIgnored();
     $message = t($basetext,
-        array('!numitems' => $this->processed_since_feedback,
+        array('!numitems' => $numitems,
               '!successes' => $this->successes_since_feedback,
               '!failed' => $this->processed_since_feedback - $this->successes_since_feedback,
               '!created' => $this->destination->getCreated(),

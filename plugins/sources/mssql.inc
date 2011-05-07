@@ -164,6 +164,7 @@ class MigrateSourceMSSQL extends MigrateSource {
     $this->result = NULL;
     $this->currentRow = NULL;
     $this->numProcessed = 0;
+    $this->numIgnored = 0;
     $map = $migration->getMap();
 
     $keys = array();

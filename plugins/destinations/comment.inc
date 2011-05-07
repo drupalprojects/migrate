@@ -186,6 +186,12 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       }
     }
 
+    if (isset($comment->cid) && $comment->cid) {
+      $updating = TRUE;
+    }
+    else {
+      $updating = FALSE;
+    }
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');
@@ -196,8 +202,18 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         ->execute();
     }
     $this->complete($comment, $row);
-    $return = (isset($comment->cid) && $comment->cid > 0)
-      ? array($comment->cid) : FALSE;
+    if (isset($comment->cid) && $comment->cid > 0) {
+      $return = array($comment->cid);
+      if ($updating) {
+        $this->numUpdated++;
+      }
+      else {
+        $this->numCreated++;
+      }
+    }
+    else {
+      $return = FALSE;
+    }
     return $return;
   }
 

@@ -620,19 +620,19 @@ abstract class Migration extends MigrationBase {
     if ($this->status == Migration::STATUS_IMPORTING) {
       switch ($result) {
         case Migration::RESULT_COMPLETED:
-          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - done with '!name'";
+          $basetext = "Processed !numitems (!created created, !updated updated, !failed failed, !ignored ignored) in !time sec (!perminute/min) - done with '!name'";
           $type = 'completed';
           break;
         case Migration::RESULT_FAILED:
-          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - failure with '!name'";
+          $basetext = "Processed !numitems (!created created, !updated updated, !failed failed, !ignored ignored) in !time sec (!perminute/min) - failure with '!name'";
           $type = 'failed';
           break;
         case Migration::RESULT_INCOMPLETE:
-          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - continuing with '!name'";
+          $basetext = "Processed !numitems (!created created, !updated updated, !failed failed, !ignored ignored) in !time sec (!perminute/min) - continuing with '!name'";
           $type = 'ok';
           break;
         case Migration::RESULT_STOPPED:
-          $basetext = "Imported !successes (!failed failed) in !time sec (!perminute/min) - stopped '!name'";
+          $basetext = "Processed !numitems (!created created, !updated updated, !failed failed, !ignored ignored) in !time sec (!perminute/min) - stopped '!name'";
           $type = 'warning';
           break;
       }
@@ -657,10 +657,14 @@ abstract class Migration extends MigrationBase {
           break;
       }
     }
+    $numitems = $this->processed_since_feedback + $this->source->getIgnored();
     $message = t($basetext,
         array('!numitems' => $this->processed_since_feedback,
               '!successes' => $this->successes_since_feedback,
               '!failed' => $this->processed_since_feedback - $this->successes_since_feedback,
+              '!created' => $this->destination->getCreated(),
+              '!updated' => $this->destination->getUpdated(),
+              '!ignored' => $this->source->getIgnored(),
               '!time' => $time,
               '!perminute' => $perminute,
               '!name' => $this->machineName));
@@ -686,6 +690,8 @@ abstract class Migration extends MigrationBase {
     if ($result == Migration::RESULT_INCOMPLETE) {
       $this->lastfeedback = time();
       $this->processed_since_feedback = $this->successes_since_feedback = 0;
+      $this->source->resetStats();
+      $this->destination->resetStats();
     }
   }
 

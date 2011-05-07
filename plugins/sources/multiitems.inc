@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Support for migration from sources where data spans multiple lines 
+ * Support for migration from sources where data spans multiple lines
  * (ex. xml, json) and IDs for the items are part of each item and multiple
  * items reside in a single file.
  */
@@ -10,7 +10,7 @@
 /**
  * Extend the MigrateItems class to provide a means to obtain a list of IDs to
  * be migrated from a given source (e.g., MigrateItemsXML extends MigrateItem to
- * obtain a list of IDs from an XML document).  This class also provides a means 
+ * obtain a list of IDs from an XML document).  This class also provides a means
  * to obtain the data for a given migratable item given its ID.
  */
 abstract class MigrateItems {
@@ -53,7 +53,7 @@ abstract class MigrateItems {
 
 
 /**
- * Implementation of MigrateItems, for providing a list of IDs and for 
+ * Implementation of MigrateItems, for providing a list of IDs and for
  * retrieving a parsed XML document given an ID from this list.
  */
 
@@ -63,7 +63,7 @@ abstract class MigrateItems {
  */
 class MigrateSourceMultiItems extends MigrateSource {
   /**
-   * MigrateItems object used to obtain the list of IDs and source for 
+   * MigrateItems object used to obtain the list of IDs and source for
    * all objects.
    *
    * @var MigrateItems
@@ -88,7 +88,7 @@ class MigrateSourceMultiItems extends MigrateSource {
    */
   public function __construct(MigrateItems $items_class, $fields = array()) {
     parent::__construct();
-    
+
     $this->itemsClass = $items_class;
     $this->fields = $fields;
   }
@@ -133,6 +133,7 @@ class MigrateSourceMultiItems extends MigrateSource {
     $migration = Migration::currentMigration();
     migrate_instrument_start('MigrateSourceList rewind');
     $this->numProcessed = 0;
+    $this->numIgnored = 0;
     $idlist = $migration->getOption('idlist');
     if ($idlist) {
       $this->idList = explode(',', $idlist);
@@ -201,6 +202,9 @@ class MigrateSourceMultiItems extends MigrateSource {
           // OK, got a valid one, break out and return
           $this->numProcessed++;
           break;
+        }
+        else {
+          $this->numIgnored++;
         }
       }
       else {

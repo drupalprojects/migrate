@@ -178,11 +178,29 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     }
     // Invoke migration prepare handlers
     $this->prepare($file, $row);
+
+    if (isset($file->fid)) {
+      $updating = TRUE;
+    }
+    else {
+      $updating = FALSE;
+    }
     migrate_instrument_start('file_save');
     $file = file_save($file);
     migrate_instrument_stop('file_save');
     $this->complete($file, $row);
-    $return = isset($file->fid) ? array($file->fid) : FALSE;
+    if (isset($file->fid)) {
+      $return = array($file->fid);
+      if ($updating) {
+        $this->numUpdated++;
+      }
+      else {
+        $this->numCreated++;
+      }
+    }
+    else {
+      $return = FALSE;
+    }
     return $return;
   }
 }

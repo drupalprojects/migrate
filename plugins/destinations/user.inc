@@ -131,12 +131,25 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
 
     $this->prepare($account, $row);
 
+    if (isset($account->uid) && !(isset($account->is_new) && $account->is_new)) {
+      $updating = TRUE;
+    }
+    else {
+      $updating = FALSE;
+    }
+
     migrate_instrument_start('user_save');
     $newaccount = user_save($old_account, (array)$account);
     migrate_instrument_stop('user_save');
     if ($newaccount) {
+      if ($updating) {
+        $this->numUpdated++;
+      }
+      else {
+        $this->numCreated++;
+      }
       $this->complete($newaccount, $row);
-      $return = isset($newaccount->uid) ? array($newaccount->uid) : FALSE;
+      $return = array($newaccount->uid);
     }
     else {
       $return = FALSE;

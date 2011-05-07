@@ -202,11 +202,29 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       }
     }
 
+    if (isset($term->tid)) {
+      $updating = TRUE;
+    }
+    else {
+      $updating = FALSE;
+    }
+
     migrate_instrument_start('taxonomy_term_save');
     $status = taxonomy_term_save($term);
     migrate_instrument_stop('taxonomy_term_save');
     $this->complete($term, $row);
-    $return = isset($term->tid) ? array($term->tid) : FALSE;
+    if (isset($term->tid)) {
+      if ($updating) {
+        $this->numUpdated++;
+      }
+      else {
+        $this->numCreated++;
+      }
+      $return = array($term->tid);
+    }
+    else {
+      $return = FALSE;
+    }
     return $return;
   }
 }

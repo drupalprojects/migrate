@@ -8,6 +8,12 @@ Any field handler prepare() or complete() methods you have defined must be chang
 to remove stdClass for the $entity argument. I.e., prepare(stdClass $entity, stdClass $row)
 should now be prepare($entity, stdClass $row).
 
+Requirements change:
+
+The migrate_ui submodule now requires the Elements module (http://drupal.org/project/elements)
+to support performing operations from the dashboard. Install and enable Elements
+before upgrading from Migrate 2.0 to this version if you have migrate_ui enabled.
+
 Features and enhancements
 - #1017246 - Added support for running migrations from the dashboard.
 - #730980 - Added more detailed reporting on import.

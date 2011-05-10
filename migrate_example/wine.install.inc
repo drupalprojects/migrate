@@ -18,6 +18,8 @@ function migrate_example_wine_schema() {
   $schema['migrate_example_wine_comment'] = migrate_example_wine_schema_comment();
   $schema['migrate_example_wine_comment_updates'] = migrate_example_wine_schema_comment_updates();
   $schema['migrate_example_wine_files'] = migrate_example_wine_schema_files();
+  $schema['migrate_example_wine_table_source'] = migrate_example_wine_schema_table_source();
+  $schema['migrate_example_wine_table_dest'] = migrate_example_wine_schema_table_dest();
 
   return $schema;
 }
@@ -40,6 +42,7 @@ function migrate_example_wine_install() {
   migrate_example_wine_data_category_producer();
   migrate_example_wine_data_comment();
   migrate_example_wine_data_comment_updates();
+  migrate_example_wine_data_table_source();
 }
 
 function migrate_example_wine_uninstall() {
@@ -564,6 +567,60 @@ function migrate_example_wine_schema_files() {
   );
 }
 
+function migrate_example_wine_schema_table_source() {
+  return array(
+    'description' => 'Source data to go into a custom Drupal table',
+    'fields' => array(
+      'fooid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key',
+      ),
+      'field1'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'First field',
+      ),
+      'field2'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Second field',
+      ),
+    ),
+    'primary key' => array('fooid'),
+  );
+}
+
+function migrate_example_wine_schema_table_dest() {
+  return array(
+    'description' => 'Custom Drupal table to receive source data directly',
+    'fields' => array(
+      'recordid'  => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key',
+      ),
+      'drupal_text'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'First field',
+      ),
+      'drupal_int'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Second field',
+      ),
+    ),
+    'primary key' => array('recordid'),
+  );
+}
+
 function migrate_example_wine_content_types() {
   // This code based on from standard.profile.
   // Insert default user-defined node types into the database.
@@ -1040,6 +1097,20 @@ function migrate_example_wine_data_files() {
     db_query("INSERT INTO {migrate_example_wine_files}
               (imageid, url, image_alt, image_title, wineid)
               VALUES(%d, '%s', '%s', '%s', %d)",
+             $row);
+  }
+}
+
+function migrate_example_wine_data_table_source() {
+  $data = array(
+    array(3, 'Some sample data', 58),
+    array(15, 'Whatever', 2),
+    array(646, 'More sample data', 34989),
+  );
+  foreach ($data as $row) {
+    db_query("INSERT INTO {migrate_example_wine_table_source}
+              (fooid, field1, field2)
+              VALUES(%d, '%s', %d)",
              $row);
   }
 }

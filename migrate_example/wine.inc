@@ -164,7 +164,8 @@ class WineFileMigration extends AdvancedExampleMigration {
         MigrateDestinationFile::getKeySchema()
     );
     $query = db_select('migrate_example_wine_files', 'wf')
-             ->fields('wf', array('imageid', 'url'));
+             ->fields('wf', array('imageid', 'url'))
+             ->isNull('wineid');
     $this->source = new MigrateSourceSQL($query);
 
     // TIP: Set copy_file to copy the file from its source (which could be a

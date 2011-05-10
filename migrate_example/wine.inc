@@ -646,6 +646,37 @@ class WineCommentMigration extends AdvancedExampleMigration {
   }
 }
 
+// TIP: An easy way to simply migrate into a Drupal table (i.e., one defined
+// through the Schema API) is to use the MigrateDestinationTable destination.
+// Just pass the table name to getKeySchema and the MigrateDestinationTable constructor.
+class WineTableMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = 'Miscellaneous table data';
+    $this->softDependencies = array('WineComment');
+    $table_name = 'migrate_example_wine_table_dest';
+    $this->map = new MigrateSQLMap($this->machineName,
+      array('fooid' => array(
+              'type' => 'int',
+              'unsigned' => TRUE,
+              'not null' => TRUE,
+             )
+           ),
+        MigrateDestinationTable::getKeySchema($table_name)
+      );
+    $query = db_select('migrate_example_wine_table_source', 't')
+             ->fields('t', array('fooid', 'field1', 'field2'));
+    $this->source = new MigrateSourceSQL($query);
+    $this->destination = new MigrateDestinationTable($table_name);
+
+    // Mapped fields
+    $this->addFieldMapping('drupal_text', 'field1');
+    $this->addFieldMapping('drupal_int', 'field2');
+
+    $this->addUnmigratedDestinations(array('recordid'));
+  }
+}
+
 class WineFinishMigration extends MigrationBase {
   public function __construct() {
     parent::__construct();

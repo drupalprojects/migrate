@@ -180,3 +180,16 @@ function migrate_example_update_7005() {
   $ret[] = t('Reconfigured sample data for file fields.');
   return $ret;
 }
+
+/**
+ * Sample data for table destinations..
+ */
+function migrate_example_update_7006() {
+  $ret = array();
+  db_create_table('migrate_example_wine_table_source', migrate_example_wine_schema_table_source());
+  db_create_table('migrate_example_wine_table_dest', migrate_example_wine_schema_table_dest());
+  migrate_example_wine_data_table_source();
+
+  $ret[] = t('Added sample data for table destinations.');
+  return $ret;
+}

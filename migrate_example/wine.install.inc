@@ -18,6 +18,8 @@ function migrate_example_wine_schema() {
   $schema['migrate_example_wine_comment'] = migrate_example_wine_schema_comment();
   $schema['migrate_example_wine_comment_updates'] = migrate_example_wine_schema_comment_updates();
   $schema['migrate_example_wine_files'] = migrate_example_wine_schema_files();
+  $schema['migrate_example_wine_table_source'] = migrate_example_wine_schema_table_source();
+  $schema['migrate_example_wine_table_dest'] = migrate_example_wine_schema_table_dest();
 
   return $schema;
 }
@@ -41,6 +43,7 @@ function migrate_example_wine_install() {
   migrate_example_wine_data_comment();
   migrate_example_wine_data_comment_updates();
   migrate_example_wine_data_files();
+  migrate_example_wine_data_table_source();
 }
 
 function migrate_example_wine_uninstall() {
@@ -571,6 +574,60 @@ function migrate_example_wine_schema_files() {
       ),
     ),
     'primary key' => array('imageid'),
+  );
+}
+
+function migrate_example_wine_schema_table_source() {
+  return array(
+    'description' => 'Source data to go into a custom Drupal table',
+    'fields' => array(
+      'fooid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key',
+      ),
+      'field1'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'First field',
+      ),
+      'field2'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Second field',
+      ),
+    ),
+    'primary key' => array('fooid'),
+  );
+}
+
+function migrate_example_wine_schema_table_dest() {
+  return array(
+    'description' => 'Custom Drupal table to receive source data directly',
+    'fields' => array(
+      'recordid'  => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key',
+      ),
+      'drupal_text'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'First field',
+      ),
+      'drupal_int'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Second field',
+      ),
+    ),
+    'primary key' => array('recordid'),
   );
 }
 
@@ -1132,6 +1189,21 @@ function migrate_example_wine_data_files() {
     array(2, 'http://cyrve.com/files/penguin.jpeg', 'Penguin alt', 'Penguin title', 1),
     array(3, 'http://cyrve.com/files/rioja.jpeg', 'Rioja alt', 'Rioja title', 2),
     array(4, 'http://cyrve.com/files/boutisse_0.jpeg', 'Boutisse alt', 'Boutisse title', 2),
+  );
+  foreach ($data as $row) {
+    $query->values(array_combine($fields, $row));
+  }
+  $query->execute();
+}
+
+function migrate_example_wine_data_table_source() {
+  $fields = array('fooid', 'field1', 'field2');
+  $query = db_insert('migrate_example_wine_table_source')
+    ->fields($fields);
+  $data = array(
+    array(3, 'Some sample data', 58),
+    array(15, 'Whatever', 2),
+    array(646, 'More sample data', 34989),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

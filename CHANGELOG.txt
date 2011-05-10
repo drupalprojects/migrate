@@ -16,6 +16,7 @@ before upgrading from Migrate 2.0 to this version if you have migrate_ui enabled
 
 Features and enhancements
 - #1017246 - Added support for running migrations from the dashboard.
+- #1005090 - Added filefield property import from JSON input.
 - #730980 - Added more detailed reporting on import.
 - #1142384 - Extended file field support to copy from remote URLs.
 - #1138096 - Added MigrateSourceMultiItems class for self-contained XML sources.

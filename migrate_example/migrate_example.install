@@ -128,3 +128,20 @@ function migrate_example_update_6003() {
   $ret[] = t('Made field_migrate_example_image multi-value');
   return $ret;
 }
+
+/**
+ * Add file field example data.
+ */
+function migrate_example_update_6004() {
+  $ret = array();
+  db_create_table($ret, 'migrate_example_wine_files', migrate_example_wine_schema_files());
+  migrate_example_wine_data_files();
+
+  // Moved this data to migrate_example_wine_files
+  if (db_column_exists('migrate_example_wine', 'image')) {
+    db_drop_field($ret, 'migrate_example_wine', 'image');
+  }
+
+  $ret[] = t('Reconfigured sample data for file fields.');
+  return $ret;
+}

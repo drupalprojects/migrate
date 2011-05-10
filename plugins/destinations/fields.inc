@@ -150,6 +150,24 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       if (!$file_path) {
         continue;
       }
+      // Handle JSON input
+      if ($file_path{0} == '{') {
+        $properties = json_decode($file_path, TRUE);
+        $file_path = $properties['path'];
+        // Properties passed in with the image override any set via arguments
+        if (!empty($properties['alt'])) {
+          $arguments['alt'] = $properties['alt'];
+        }
+        if (!empty($properties['title'])) {
+          $arguments['title'] = $properties['title'];
+        }
+        if (!empty($properties['description'])) {
+          $arguments['description'] = $properties['description'];
+        }
+        if (!empty($properties['display'])) {
+          $arguments['display'] = $properties['display'];
+        }
+      }
       $message_saved = FALSE;
       if ($arguments['source_path']) {
         $full_path = rtrim($arguments['source_path'], DIRECTORY_SEPARATOR) .

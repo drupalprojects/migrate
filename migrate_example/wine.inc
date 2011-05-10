@@ -411,7 +411,7 @@ class WineWineMigration extends AdvancedExampleMigration {
 
     $query = db_select('migrate_example_wine', 'w')
              ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid',
-              'image', 'posted', 'last_changed', 'variety', 'region', 'rating',
+              'posted', 'last_changed', 'variety', 'region', 'rating',
               'last_reviewed'));
     $query->leftJoin('migrate_example_wine_category_wine', 'cwbw',
       "w.wineid = cwbw.wineid");
@@ -432,6 +432,7 @@ class WineWineMigration extends AdvancedExampleMigration {
       'wineid' => t('Wine ID in the old system'),
       'name' => t('The name of the wine'),
       'best_vintages' => t('What years were best for this wine?'),
+      'images' => t('Images attached to this wine; populated in prepareRow()'),
     );
 
     // TIP: By default, each time a migration is run, any previously unimported source items
@@ -475,11 +476,9 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('field_migrate_example_top_vintag', 'best_vintages');
     $this->addFieldMapping('body', 'body');
     $this->addFieldMapping('teaser', 'excerpt');
-    // Note that the image field in the source data contains URLs (http://example.com/...),
-    // and can contain multiple URLs separated by |
+    // We will get the image data from a related table in prepareRow()
     $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
-    $this->addFieldMapping('field_migrate_example_image', 'image')
-         ->separator('|')
+    $this->addFieldMapping('field_migrate_example_image', 'images')
          ->arguments($arguments);
     $this->addFieldMapping('sticky')
          ->defaultValue(0);
@@ -508,6 +507,24 @@ class WineWineMigration extends AdvancedExampleMigration {
     foreach ($result as $row) {
       $current_row->best_vintages[] = $row->vintage;
     }
+
+    // An advanced feature of the file field handler is that in addition to the
+    // path to the image itself, we can add image properties like ALT text,
+    // encapsulating them as JSON
+    $result = db_select('migrate_example_wine_files', 'f')
+              ->fields('f', array('url', 'image_alt', 'image_title'))
+              ->condition('wineid', $source_id)
+              ->execute();
+    $current_row->images = array();
+    foreach ($result as $row) {
+      $image_data = array(
+        'path' => $row->url,
+        'alt' => $row->image_alt,
+        'title' => $row->image_title,
+      );
+      $current_row->images[] = drupal_to_js($image_data);
+    }
+
     // We could also have used this function to decide to skip a row, in cases
     // where that couldn't easy be done through the original query. Simply
     // return FALSE in such cases.

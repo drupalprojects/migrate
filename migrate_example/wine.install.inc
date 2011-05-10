@@ -17,6 +17,7 @@ function migrate_example_wine_schema() {
   $schema['migrate_example_wine_category_producer'] = migrate_example_wine_schema_category_producer();
   $schema['migrate_example_wine_comment'] = migrate_example_wine_schema_comment();
   $schema['migrate_example_wine_comment_updates'] = migrate_example_wine_schema_comment_updates();
+  $schema['migrate_example_wine_files'] = migrate_example_wine_schema_files();
 
   return $schema;
 }
@@ -524,6 +525,45 @@ function migrate_example_wine_schema_account_updates() {
   );
 }
 
+function migrate_example_wine_schema_files() {
+  return array(
+    'description' => 'Wine and account files',
+    'fields' => array(
+      'imageid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Image ID',
+      ),
+      'url'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Image URL',
+      ),
+      'image_alt'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image alt',
+      ),
+      'image_title'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image title',
+      ),
+      'wineid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'Wine node this is associated with',
+      ),
+    ),
+    'primary key' => array('imageid'),
+  );
+}
+
 function migrate_example_wine_content_types() {
   // This code based on from standard.profile.
   // Insert default user-defined node types into the database.
@@ -985,6 +1025,21 @@ function migrate_example_wine_data_category_producer() {
     db_query("INSERT INTO {migrate_example_wine_category_producer}
               (producerid, categoryid)
               VALUES(%d, %d)",
+             $row);
+  }
+}
+
+function migrate_example_wine_data_files() {
+  $data = array(
+    array(1, 'http://drupal.org/files/images/DA-individual.thumbnail.png', NULL, NULL, NULL),
+    array(2, 'http://cyrve.com/files/penguin.jpeg', 'Penguin alt', 'Penguin title', 1),
+    array(3, 'http://cyrve.com/files/rioja.jpeg', 'Rioja alt', 'Rioja title', 2),
+    array(4, 'http://cyrve.com/files/boutisse_0.jpeg', 'Boutisse alt', 'Boutisse title', 2),
+  );
+  foreach ($data as $row) {
+    db_query("INSERT INTO {migrate_example_wine_files}
+              (imageid, url, image_alt, image_title, wineid)
+              VALUES(%d, '%s', '%s', '%s', %d)",
              $row);
   }
 }

@@ -230,12 +230,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     foreach ($values as $delta => $value) {
       // Empty stuff is skipped
       if ($value) {
-        if (empty($arguments['separator'])) {
-          $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, array($value));
-        }
-        else {
-          $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, explode($arguments['separator'], $value));
-        }
+        $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, $value);
         if (!empty($file_array)) {
           $return[$language][$delta] = $file_array;
         }
@@ -252,12 +247,34 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param array $instance
    * @param $migration
    * @param $arguments
-   * @param array $values
+   * @param $value
    *
    * @return array
    */
-  protected function buildFileArray($entity, array $field_info, array $instance, $migration, $arguments, array $values) {
+  protected function buildFileArray($entity, array $field_info, array $instance, $migration, $arguments, $value) {
     static $fids;
+
+    // Is the value a straight path, or JSON containing a set of properties?
+    if ($value{0} == '{') {
+      $properties = drupal_json_decode($value);
+      $path = $properties['path'];
+      // Properties passed in with the image override any set via arguments
+      if (!empty($properties['alt'])) {
+        $arguments['alt'] = $properties['alt'];
+      }
+      if (!empty($properties['title'])) {
+        $arguments['title'] = $properties['title'];
+      }
+      if (!empty($properties['description'])) {
+        $arguments['description'] = $properties['description'];
+      }
+      if (!empty($properties['display'])) {
+        $arguments['display'] = $properties['display'];
+      }
+    }
+    else {
+      $path = $value;
+    }
 
     // One can override a file_function via CLI or drushrc.php
     if ($migration->getOption('file_function')) {
@@ -269,10 +286,10 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
     if ($arguments['source_path']) {
       $full_path = rtrim($arguments['source_path'], DIRECTORY_SEPARATOR) .
-        DIRECTORY_SEPARATOR . ltrim(reset($values), DIRECTORY_SEPARATOR);
+        DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
     }
     else {
-      $full_path = reset($values);
+      $full_path = $path;
     }
 
     $remote = FALSE;
@@ -400,25 +417,25 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     if ($file) {
       // Build up a return object.
       $object_field['fid'] = $file->fid;
-      if (isset($arguments['alt'])) {
+      if (!empty($arguments['alt'])) {
         $object_field['alt'] = $arguments['alt'];
       }
       else {
         $object_field['alt'] = '';
       }
-      if (isset($arguments['title'])) {
+      if (!empty($arguments['title'])) {
         $object_field['title'] = $arguments['title'];
       }
       else {
         $object_field['title'] = '';
       }
-      if (isset($arguments['description'])) {
+      if (!empty($arguments['description'])) {
         $object_field['description'] = $arguments['description'];
       }
       else {
         $object_field['description'] = '';
       }
-      if (isset($arguments['display'])) {
+      if (!empty($arguments['display'])) {
         $object_field['display'] = $arguments['display'];
       }
       else {
@@ -458,10 +475,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *   String to be used as the display value for all file fields, or
    *   array('source_field' => 'source_field_name') to obtain the display value from
    *   the query field named source_field_name.
-   * @param separator
-   *   String separating values within the incoming value.
    */
- static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $alt = NULL, $title = NULL, $description = NULL, $display = NULL, $separator = NULL) {
+ static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $alt = NULL, $title = NULL, $description = NULL, $display = NULL) {
     return get_defined_vars();
   }
 }

@@ -551,6 +551,24 @@ function migrate_example_wine_schema_files() {
         'not null' => TRUE,
         'description' => 'Image URL',
       ),
+      'image_alt'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image alt',
+      ),
+      'image_title'  => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Image title',
+      ),
+      'wineid'  => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'Wine node this is associated with',
+      ),
     ),
     'primary key' => array('imageid'),
   );
@@ -1106,11 +1124,14 @@ function migrate_example_wine_data_category_producer() {
 }
 
 function migrate_example_wine_data_files() {
-  $fields = array('imageid', 'url');
+  $fields = array('imageid', 'url', 'image_alt', 'image_title', 'wineid');
   $query = db_insert('migrate_example_wine_files')
     ->fields($fields);
   $data = array(
-    array(1, 'http://drupal.org/files/images/DA-individual.thumbnail.png'),
+    array(1, 'http://drupal.org/files/images/DA-individual.thumbnail.png', NULL, NULL, NULL),
+    array(2, 'http://cyrve.com/files/penguin.jpeg', 'Penguin alt', 'Penguin title', 1),
+    array(3, 'http://cyrve.com/files/rioja.jpeg', 'Rioja alt', 'Rioja title', 2),
+    array(4, 'http://cyrve.com/files/boutisse_0.jpeg', 'Boutisse alt', 'Boutisse title', 2),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

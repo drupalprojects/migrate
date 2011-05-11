@@ -144,9 +144,12 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       }
     }
 
-    // Role arrays need to be keyed by the role id, which isn't how the data
+    // Roles must be arrays keyed by the role id, which isn't how the data
     // naturally comes in. Fix them up.
-    if (is_array($account->roles)) {
+    if (!empty($account->roles)) {
+      if (!is_array($account->roles)) {
+        $account->roles = array($account->roles);
+      }
       $account->roles = drupal_map_assoc($account->roles);
     }
 

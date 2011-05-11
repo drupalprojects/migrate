@@ -18,6 +18,7 @@ Features and enhancements
 - #1017246 - Added support for running migrations from the dashboard.
 - #1004812 - Added schema-driven table destination plugin.
 - #1009708 - Added role destination plugin.
+- #737170 - Added support for field level callbacks.
 - #1005090 - Added filefield property import from JSON input.
 - #730980 - Added more detailed reporting on import.
 - #1142384 - Extended file field support to copy from remote URLs.

@@ -757,6 +757,12 @@ abstract class Migration extends MigrationBase {
           $this->destinationValues->$destination = $this->handleSourceMigration($source_migration, $this->destinationValues->$destination, $default, $this);
         }
 
+        // Call any designated callbacks
+        $callbacks = $mapping->getCallbacks();
+        foreach ($callbacks as $callback) {
+          $this->destinationValues->$destination = call_user_func($callback, $this->destinationValues->$destination);
+        }
+
         // If specified, assure a unique value for this property.
         $dedupe = $mapping->getDedupe();
         if ($dedupe && isset($this->destinationValues->$destination)) {

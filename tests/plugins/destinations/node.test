@@ -127,7 +127,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
       t('created properly migrated'));
     $this->assertEqual($wine_node->changed, $wine_row->last_changed,
       t('changed properly migrated'));
-    $this->assertEqual($wine_node->body, $wine_row->body,
+    $this->assertEqual($wine_node->body, 'REVIEW: ' . drupal_strtoupper($wine_row->body),
       t('body properly migrated'));
     $this->assertEqual($wine_node->teaser, $wine_row->excerpt,
       t('teaser properly migrated'));
@@ -219,7 +219,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
              ->fetchField();
     $node = node_load($nid, NULL, TRUE);
     $body = $node->body;
-    if (!$this->assertEqual($body, 'Not so much berry character', t('Body updated'))) {
+    if (!$this->assertEqual($body, 'REVIEW: NOT SO MUCH BERRY CHARACTER', t('Body updated'))) {
       $this->error(t('Actual body !body', array('!body' => $body)));
     }
 
@@ -278,7 +278,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
              ->fetchField();
     $node = node_load($nid, NULL, TRUE);
     $body = $node->body;
-    if (!$this->assertEqual($body, 'Very berry', t('Body updated'))) {
+    if (!$this->assertEqual($body, 'REVIEW: VERY BERRY', t('Body updated'))) {
       $this->error(t('Actual body !body', array('!body' => $body)));
     }
 

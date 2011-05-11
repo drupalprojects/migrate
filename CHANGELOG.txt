@@ -10,7 +10,7 @@ should now be prepare($entity, stdClass $row).
 
 Features and enhancements
 - #1017246 - Added support for running migrations from the dashboard.
-- #1004812 - Added schema-drive table destination plugin
+- #1004812 - Added schema-driven table destination plugin.
 - #1005090 - Modified filefield property import to use JSON input.
 - #730980 - Added more detailed reporting on import.
 - #1142384 - Extended file field support to copy from remote URLs.
@@ -20,6 +20,7 @@ Features and enhancements
 - #1139080 - Added example and test for importing profile pictures over http.
 
 Bug fixes
+- #1146366 - Fixed rollback of table destinations.
 - #1148474 - Enforce unique IDs in MigrateItemsXML.
 - #1132034 - Don't assume entity is a stdClass.
 - #753284 - Fixed systemOfRecord==DESTINATION updates for nodes and users.

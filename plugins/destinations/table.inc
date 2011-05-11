@@ -59,12 +59,15 @@ class MigrateDestinationTable extends MigrateDestination {
    * Delete a single row.
    *
    * @param $id
-   *  Primary key(s) and their values.
+   *  Primary key values.
    */
   public function rollback(array $id) {
     migrate_instrument_start('table rollback');
     $delete = db_delete($this->tableName);
-    foreach ($id as $key => $value) {
+    $keys = array_keys(self::getKeySchema($this->tableName));
+    $i = 0;
+    foreach ($id as $value) {
+      $key = $keys[$i++];
       $delete->condition($key, $value);
     }
     $delete->execute();

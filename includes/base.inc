@@ -26,6 +26,13 @@ abstract class MigrationBase {
   }
 
   /**
+   * Clear the cached list of migration objects.
+   */
+  public static function resetMigrations() {
+    self::$migrations = array();
+  }
+
+  /**
    * The machine name of this Migration object, derived by removing the 'Migration'
    * suffix from the class name. Used to construct default map/message table names,
    * displayed in drush migrate-status, key to migrate_status table...

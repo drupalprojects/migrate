@@ -25,6 +25,7 @@ Features and enhancements
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.
 
 Bug fixes
+- #1146366 - Fixed rollback of table destinations.
 - #1148474 - Enforce unique IDs in MigrateItemsXML.
 - #1132034 - Don't assume entity is a stdClass. 
 - #753284 - Fixed systemOfRecord==DESTINATION updates for nodes and users.

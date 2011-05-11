@@ -36,9 +36,12 @@ class MigrateTableUnitTest extends DrupalWebTestCase {
       t('Count of imported records is correct'));
 
     // Test rollback
-/* Implement when http://drupal.org/node/1147366 is fixed
     $result = $migration->processRollback();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
-      t('Variety term rollback returned RESULT_COMPLETED'));*/
+      t('Variety term rollback returned RESULT_COMPLETED'));
+    $result = db_query("SELECT COUNT(*) FROM {migrate_example_wine_table_dest}");
+    $this->assertEqual(db_result($result), 0, t('All migrated rows removed'));
+    $result = db_query("SELECT COUNT(*) FROM {migrate_map_winetable}");
+    $this->assertEqual(db_result($result), 0, t('All map rows removed'));
   }
 }

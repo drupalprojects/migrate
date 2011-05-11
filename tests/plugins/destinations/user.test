@@ -23,6 +23,20 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
   }
 
   function testUserImport() {
+    $migration = Migration::getInstance('WineRole');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Role import returned RESULT_COMPLETED'));
+    // Confirm both roles were successfully imported
+    $result = db_select('role', 'r')
+                ->fields('r', array('rid', 'name'))
+                ->condition('name', array('Taster', 'Vintner'), 'IN')
+                ->execute();
+    $roles = array();
+    foreach ($result as $row) {
+      $roles[$row->name] = $row->rid;
+    }
+    $this->assertEqual(count($roles), 2, t('Both roles imported'));
     $migration = Migration::getInstance('WineUser');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
@@ -59,6 +73,8 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     $this->assertEqual($users['darren']->status, $rows['darren']->status,
       t('Statuses match'));
     $this->assertNotNull($users['darren']->roles[2], t('Authenticated role'));
+    $this->assertNotNull($users['darren']->roles[$roles['Taster']], t('Taster role'));
+    $this->assertFalse(isset($users['darren']->roles[$roles['Vintner']]), t('No Vintner role'));
     $this->assertEqual($users['darren']->created, strtotime($rows['darren']->posted),
       t('Created times match'));
     $this->assertEqual($users['darren']->access, strtotime($rows['darren']->last_access),
@@ -73,6 +89,8 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
       t('Signatures match'));
     $this->assertEqual($users['darren']->signature_format, $migration->basicFormat,
       t('Signature formats match'));
+    $this->assertNotNull($users['fonzie']->roles[$roles['Taster']], t('Taster role'));
+    $this->assertNotNull($users['fonzie']->roles[$roles['Vintner']], t('Vintner role'));
 
     // TODO: Theme, timezone, language, picture
 

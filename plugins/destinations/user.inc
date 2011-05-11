@@ -144,6 +144,12 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       }
     }
 
+    // Role arrays need to be keyed by the role id, which isn't how the data
+    // naturally comes in. Fix them up.
+    if (is_array($account->roles)) {
+      $account->roles = drupal_map_assoc($account->roles);
+    }
+
     $this->prepare($account, $row);
 
     if (isset($account->uid) && !(isset($account->is_new) && $account->is_new)) {
@@ -170,5 +176,15 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       $return = FALSE;
     }
     return $return;
+  }
+}
+
+class MigrateDestinationRole extends MigrateDestinationTable {
+  public function __construct() {
+    parent::__construct('role');
+  }
+
+  static public function getKeySchema() {
+    return MigrateDestinationTable::getKeySchema('role');
   }
 }

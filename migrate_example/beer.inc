@@ -199,7 +199,7 @@ class BeerUserMigration extends BasicExampleMigration {
     // value is provided in addition to a source field, the default value will
     // be applied to any rows where the source field is empty or NULL.
     $this->addFieldMapping('roles')
-         ->defaultValue(drupal_map_assoc(array(2)));
+         ->defaultValue(2);
 
     // Unmapped source fields
     $this->addFieldMapping(NULL, 'nickname')

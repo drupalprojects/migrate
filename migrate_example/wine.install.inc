@@ -503,6 +503,12 @@ function migrate_example_wine_schema_account() {
         'not null' => TRUE,
         'description' => 'Signature for comments',
       ),
+      'positions' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Positions held',
+      ),
     ),
     'primary key' => array('accountid'),
   );
@@ -918,19 +924,19 @@ function migrate_example_wine_data_account() {
   $data = array(
     array(1, 1, '2010-03-30 10:31:05', '2010-04-30 18:25:24', '2010-04-30 14:01:02',
       'darren', 'M', 'dpass', 'ddarren@example.com', 'darren@example.com',
-      'All about the Australians'),
+      'All about the Australians', '5'),
     array(3, 0, '2007-03-15 10:31:05', '2007-06-10 04:11:38', '2007-06-10 04:11:38',
       'emily', 'F', 'insecure', 'emily@example.com', 'emily@example.com',
-      'Sommelier to the stars'),
+      'Sommelier to the stars', '18'),
     array(9, 1, '2004-02-29 10:31:05', '2004-02-29 10:31:05', '2004-02-29 10:31:05',
       'fonzie', NULL, 'bike', 'thefonz@example.com', 'arthur@example.com',
-      'Aaay!'),
+      'Aaay!', '5,18'),
   );
   foreach ($data as $row) {
     db_query("INSERT INTO {migrate_example_wine_account}
               (accountid, status, posted, last_access, last_login, name, sex,
-                password, mail, original_mail, sig)
-              VALUES(%d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
+                password, mail, original_mail, sig, positions)
+              VALUES(%d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
              $row);
   }
 }

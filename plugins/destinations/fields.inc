@@ -170,8 +170,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       }
       $message_saved = FALSE;
       if ($arguments['source_path']) {
-        $full_path = rtrim($arguments['source_path'], DIRECTORY_SEPARATOR) .
-          DIRECTORY_SEPARATOR . ltrim($file_path, DIRECTORY_SEPARATOR);
+        $full_path = rtrim($arguments['source_path'], "/\\") .
+          '/' . ltrim($file_path, "/\\");
       }
       else {
         $full_path = $file_path;
@@ -185,13 +185,13 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       }
       else {
         // Set a default destination_dir.
-        $destination_dir = file_directory_path() . DIRECTORY_SEPARATOR . $instance['widget']['file_path'];
+        $destination_dir = file_directory_path() . '/' . $instance['widget']['file_path'];
       }
 
       // file_check_directory does not do $recursive so we create dir ourselves.
       @mkdir($destination_dir, 0777, TRUE);
-      $destination_file = rtrim($destination_dir, DIRECTORY_SEPARATOR) .
-        DIRECTORY_SEPARATOR . basename($full_path);
+      $destination_file = rtrim($destination_dir, "/\\") .
+        '/' . basename($full_path);
 
       migrate_instrument_start('MigrateFileFieldHandler file_function');
       switch ($file_function) {

@@ -285,8 +285,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     }
 
     if ($arguments['source_path']) {
-      $full_path = rtrim($arguments['source_path'], DIRECTORY_SEPARATOR) .
-        DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
+      $full_path = rtrim($arguments['source_path'], "/\\") .
+        '/' . ltrim($path, "/\\");
     }
     else {
       $full_path = $path;

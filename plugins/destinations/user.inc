@@ -175,4 +175,70 @@ class MigrateDestinationRole extends MigrateDestinationTable {
   static public function getKeySchema() {
     return MigrateDestinationTable::getKeySchema('role');
   }
+
+
+  /**
+   * Delete a single row.
+   *
+   * @param $id
+   *  Primary key values.
+   */
+  public function rollback(array $id) {
+    migrate_instrument_start('role rollback');
+    $rid = reset($id);
+    user_role_delete((int)$rid);
+    migrate_instrument_stop('role rollback');
+  }
+
+  /**
+   * Import a single row.
+   *
+   * @param $entity
+   *  Object object to build. Prefilled with any fields mapped in the Migration.
+   * @param $row
+   *  Raw source data object - passed through to prepare/complete handlers.
+   * @return array
+   *  Array of key fields of the object that was saved if
+   *  successful. FALSE on failure.
+   */
+  public function import(stdClass $entity, stdClass $row) {
+    $migration = Migration::currentMigration();
+    // Updating previously-migrated content?
+    if (isset($row->migrate_map_destid1)) {
+      if (isset($entity->rid)) {
+        if ($entity->rid != $row->migrate_map_destid1) {
+          throw new MigrateException(t("Incoming id !id and map destination id !destid don't match",
+            array('!id' => $entity->rid, '!destid' => $row->migrate_map_destid1)));
+        }
+        else {
+          $entity->rid = $row->migrate_map_destid1;
+        }
+      }
+    }
+
+    if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+      if (!isset($entity->rid)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but no destination id provided'));
+      }
+
+      $old_entity = user_role_load($entity->rid);
+
+      foreach ($entity as $field => $value) {
+        $old_entity->$field = $entity->$field;
+      }
+      $entity = $old_entity;
+    }
+
+    $this->prepare($entity, $row);
+    user_role_save($entity);
+    $this->complete($entity, $row);
+
+    if (!empty($entity->rid)) {
+      $id = array($entity->rid);
+    }
+    else {
+      $id = FALSE;
+    }
+    return $id;
+  }
 }

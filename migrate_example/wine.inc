@@ -179,11 +179,54 @@ class WineFileMigration extends AdvancedExampleMigration {
   }
 }
 
+class WineRoleMigration extends XMLMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('XML feed (multi items) of roles (positions)');
+    $this->softDependencies = array('WineFile');
+
+    // There isn't a consistent way to automatically identify appropriate "fields"
+    // from an XML feed, so we pass an explicit list of source fields
+    $fields = array(
+      'name' => t('Position name'),
+    );
+
+    // The source ID here is the one retrieved from each data item in the XML file, and
+    // used to identify specific items
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'sourceid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        )
+      ),
+      MigrateDestinationRole::getKeySchema()
+    );
+
+    // This can also be an URL instead of a file path.
+    $xml_folder = DRUPAL_ROOT . '/' . drupal_get_path('module', 'migrate_example') . '/xml/';
+    $items_url = $xml_folder . 'positions.xml';
+    $item_xpath = '/positions/position';  // relative to document
+    $item_ID_xpath = 'sourceid';         // relative to item_xpath and gets assembled
+                                         // into full path /producers/producer/sourceid
+
+    $items_class = new MigrateItemsXML($items_url, $item_xpath, $item_ID_xpath);
+    $this->source = new MigrateSourceMultiItems($items_class, $fields);
+
+    $this->destination = new MigrateDestinationRole();
+
+    $this->addFieldMapping('name', 'name')
+         ->xpath('name');
+    $this->addUnmigratedDestinations(array('weight'));
+  }
+}
+
 class WineUserMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine Drinkers of the world');
-    $this->dependencies = array('WinePrep', 'WineFile');
+    $this->dependencies = array('WinePrep', 'WineFile', 'WineRole');
     $this->map = new MigrateSQLMap($this->machineName,
         array('accountid' => array(
                 'type' => 'int',
@@ -197,7 +240,7 @@ class WineUserMigration extends AdvancedExampleMigration {
     $query = db_select('migrate_example_wine_account', 'wa')
              ->fields('wa', array('accountid', 'status', 'posted', 'name',
                 'password', 'mail', 'last_access', 'last_login',
-                'original_mail', 'sig', 'sex', 'imageid'));
+                'original_mail', 'sig', 'sex', 'imageid', 'positions'));
     $this->source = new MigrateSourceSQL($query);
     $this->destination = new MigrateDestinationUser();
 
@@ -210,8 +253,9 @@ class WineUserMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('login', 'last_login')
          ->description('See prepare method');
     $this->addFieldMapping('pass', 'password');
-    $this->addFieldMapping('roles')
-         ->defaultValue(drupal_map_assoc(array(2)));
+    $this->addFieldMapping('roles', 'positions')
+         ->separator(',')
+         ->sourceMigration('WineRole');
     $this->addFieldMapping('signature', 'sig');
     $this->addFieldMapping('signature_format')
          ->defaultValue($this->basicFormat->format);

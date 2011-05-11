@@ -193,3 +193,31 @@ function migrate_example_update_7006() {
   $ret[] = t('Added sample data for table destinations.');
   return $ret;
 }
+
+/**
+ * Add data for testing/demonstrating roles.
+ */
+function migrate_example_update_7007() {
+  $ret = array();
+  db_add_field('migrate_example_wine_account', 'positions', array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Positions held',
+    )
+  );
+  $query = db_update('migrate_example_wine_account')
+    ->fields(array('positions' => '5'))
+    ->condition('accountid', 1)
+    ->execute();
+  db_update('migrate_example_wine_account')
+    ->fields(array('positions' => '18'))
+    ->condition('accountid', 3)
+    ->execute();
+  db_update('migrate_example_wine_account')
+    ->fields(array('positions' => '5,18'))
+    ->condition('accountid', 9)
+    ->execute();
+  $ret[] = t('Added positions field to migrate_example_wine_account table.');
+  return $ret;
+}

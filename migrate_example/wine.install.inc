@@ -513,6 +513,12 @@ function migrate_example_wine_schema_account() {
         'not null' => FALSE,
         'description' => 'Image ID',
       ),
+      'positions' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Positions held',
+      ),
     ),
     'primary key' => array('accountid'),
   );
@@ -1002,19 +1008,19 @@ function migrate_example_wine_data_producer() {
 
 function migrate_example_wine_data_account() {
   $fields = array('accountid', 'status', 'posted', 'last_access', 'last_login',
-    'name', 'sex', 'password', 'mail', 'original_mail', 'sig', 'imageid');
+    'name', 'sex', 'password', 'mail', 'original_mail', 'sig', 'imageid', 'positions');
   $query = db_insert('migrate_example_wine_account')
     ->fields($fields);
   $data = array(
     array(1, 1, '2010-03-30 10:31:05', '2010-04-30 18:25:24', '2010-04-30 14:01:02',
       'darren', 'M', 'dpass', 'ddarren@example.com', 'darren@example.com',
-      'All about the Australians', NULL),
+      'All about the Australians', NULL, '5'),
     array(3, 0, '2007-03-15 10:31:05', '2007-06-10 04:11:38', '2007-06-10 04:11:38',
       'emily', 'F', 'insecure', 'emily@example.com', 'emily@example.com',
-      'Sommelier to the stars', NULL),
+      'Sommelier to the stars', NULL, '18'),
     array(9, 1, '2004-02-29 10:31:05', '2004-02-29 10:31:05', '2004-02-29 10:31:05',
       'fonzie', NULL, 'bike', 'thefonz@example.com', 'arthur@example.com',
-      'Aaay!', 1),
+      'Aaay!', 1, '5,18'),
   );
   foreach ($data as $row) {
     $query->values(array_combine($fields, $row));

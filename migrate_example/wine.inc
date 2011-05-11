@@ -583,9 +583,17 @@ class WineWineMigration extends AdvancedExampleMigration {
          ->arguments(array('source_type' => 'tid'));
     $this->addFieldMapping('field_migrate_example_wine_ratin', 'rating');
     $this->addFieldMapping('field_migrate_example_top_vintag', 'best_vintages');
+
+    // TIP: You can apply one or more functions to a source value using ->callbacks().
+    // The function must take a single argument and return a value which is a
+    // transformation of the argument. As this example shows, you can have multiple
+    // callbacks, and they can either be straight functions or class methods. In
+    // this case, our custom method prepends 'review: ' to the body, and then we
+    // call a standard Drupal function to uppercase the whole body.
     $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
     $this->addFieldMapping('body', 'body')
-         ->arguments($arguments);
+         ->arguments($arguments)
+         ->callbacks(array($this, 'addTitlePrefix'), 'drupal_strtoupper');
     $this->addFieldMapping(NULL, 'excerpt');
     // We will get the image data from a related table in prepareRow()
     $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
@@ -602,6 +610,10 @@ class WineWineMigration extends AdvancedExampleMigration {
     // Unmapped destination fields
     $this->addUnmigratedDestinations(array('is_new', 'status', 'promote',
       'revision', 'language'));
+  }
+
+  protected function addTitlePrefix($source_title) {
+    return t('review: ') . $source_title;
   }
 
   // TIP: Implement a prepareRow() method to manipulate the source row between

@@ -63,7 +63,17 @@ class MigrateFieldMapping {
   public function getSourceMigration() {
     return $this->sourceMigration;
   }
-  
+
+  /**
+   * Array of callbacks to be called on a source value.
+   *
+   * @var string
+   */
+  protected $callbacks = array();
+  public function getCallbacks() {
+    return $this->callbacks;
+  }
+
   /**
    * An associative array with keys:
    *   - table: The table for querying for a duplicate.
@@ -150,7 +160,12 @@ class MigrateFieldMapping {
     $this->sourceMigration = $source_migration;
     return $this;
   }
-  
+
+  public function callbacks($callbacks) {
+    $this->callbacks = func_get_args();
+    return $this;
+  }
+
   public function dedupe($table, $column) {
     $this->dedupe = array('table' => $table, 'column' => $column);
     return $this;

@@ -120,7 +120,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     // Test Field API fields of all types
     // body_with_summary
     $body = field_get_items('node', $wine_node, 'body');
-    $this->assertEqual($body[0]['value'], $wine_row->body,
+    $this->assertEqual($body[0]['value'], 'REVIEW: ' . drupal_strtoupper($wine_row->body),
       t('body properly migrated'));
     $this->assertEqual($body[0]['summary'], $wine_row->excerpt,
       t('summary properly migrated'));
@@ -225,7 +225,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $nodes = node_load_multiple(FALSE, array('title' => 'Archeo Ruggero di Tasso Nero d\'Avola'), TRUE);
     $node = reset($nodes);
     $body = $node->body[LANGUAGE_NONE][0]['value'];
-    if (!$this->assertEqual($body, 'Not so much berry character', t('Body updated'))) {
+    if (!$this->assertEqual($body, 'REVIEW: NOT SO MUCH BERRY CHARACTER', t('Body updated'))) {
       $this->error(t('Actual body !body', array('!body' => $body)));
     }
 
@@ -270,7 +270,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $nodes = node_load_multiple(FALSE, array('title' => 'Montes Classic Cabernet Sauvignon'), TRUE);
     $node = reset($nodes);
     $body = $node->body[LANGUAGE_NONE][0]['value'];
-    if (!$this->assertEqual($body, 'Very berry', t('Body updated'))) {
+    if (!$this->assertEqual($body, 'REVIEW: VERY BERRY', t('Body updated'))) {
       $this->error(t('Actual body !body', array('!body' => $body)));
     }
 

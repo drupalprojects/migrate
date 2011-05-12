@@ -208,7 +208,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
             // (only relevant in the file_copy case)
             if ($file_function == 'file_copy') {
               $headers = @get_headers($full_path);
-              if (is_array($headers) && $headers[0] == 'HTTP/1.1 200 OK') {
+              if (is_array($headers) && preg_match('%^HTTP/[0-9]\.[0-9] 200 OK$%', $headers[0])) {
                 $remote = TRUE;
               }
             }

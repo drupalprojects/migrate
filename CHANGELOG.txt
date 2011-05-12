@@ -27,6 +27,7 @@ Features and enhancements
 - #1101592 - Replace --itemlimit with --limit, supporting time limits as well.
 
 Bug fixes
+- #1155740 - Make remote file fetch HTTP version independent
 - #1037872 - Deal with updates with idlists when mapping nids directly.
 - #943546 - Make sure both slashes and backslashes are trimmed where necessary.
 - #1146366 - Fixed rollback of table destinations.

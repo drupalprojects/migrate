@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.1 Beta 1
+==================
 
 API change:
 
@@ -22,6 +22,7 @@ Features and enhancements
 - #1139080 - Added example and test for importing profile pictures over http.
 
 Bug fixes
+- #1037872 - Deal with updates with idlists when mapping nids directly.
 - #943546 - Make sure both slashes and backslashes are trimmed where necessary.
 - #1146366 - Fixed rollback of table destinations.
 - #1148474 - Enforce unique IDs in MigrateItemsXML.

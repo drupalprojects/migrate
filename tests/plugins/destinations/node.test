@@ -315,5 +315,31 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $node = reset($rawnodes);
     $this->assertEqual($node->title, 'Archeo Ruggero di Tasso Nero d\'Avola',
       t('Single specified node imported'));
+
+    // Test for http://drupal.org/node/1037872 - updating with nid mapped and idlist
+    $migration = Migration::getInstance('BeerTerm');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Beer term import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerUser');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Beer user import returned RESULT_COMPLETED'));
+    $migration = Migration::getInstance('BeerNode');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Beer node import returned RESULT_COMPLETED'));
+    db_update('migrate_map_beernode')
+      ->fields(array('needs_update' => 1))
+      ->execute();
+    $result = $migration->processImport(array('idlist' => 99999999));
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('Beer node update import returned RESULT_COMPLETED'));
+    $result = db_select('migrate_message_beernode', 'msg')
+              ->fields('msg', array('message'))
+              ->execute();
+    foreach ($result as $row) {
+      $this->error($row->message);
+    }
   }
 }

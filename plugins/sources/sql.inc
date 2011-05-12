@@ -259,6 +259,8 @@ class MigrateSourceSQL extends MigrateSource {
       // Only supp for single-field key
       $this->query->condition($keys[0], explode(',', $migration->getOption('idlist')), 'IN');
       $this->usingHighwater = FALSE;
+      // We won't join with the map, but we want to add its data to the row later
+      $this->mapJoinable = FALSE;
     }
     else {
       $highwaterField = $migration->getHighwaterField();
@@ -355,31 +357,35 @@ class MigrateSourceSQL extends MigrateSource {
 
       if (!$this->mapJoinable) {
         $map_row = $migration->getMap()->getRowBySource($this->currentKey);
-        if (!$map_row) {
-          // Unmigrated row, take it
-        }
-        elseif ($map_row && $map_row['needs_update'] == 1) {
-          // We always want to take this row if needs_update = 1
-        }
-        else {
-          if ($this->usingHighwater) {
-            if ($this->highwaterSeen) {
-              // We've passed the highwater mark previously, so no need to check again
-            }
-            else {
-              // With highwater, we want to take this row if it's above the highwater
-              // mark
-              $highwaterField = $migration->getHighwaterField();
-              $highwaterField = $highwaterField['name'];
-              if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
-                continue;
-              }
-            }
+        // If we're processing an idlist, we don't want to follow the logic for skipping
+        // rows, but we still want to add the map data to the row.
+        if (!$migration->getOption('idlist')) {
+          if (!$map_row) {
+            // Unmigrated row, take it
+          }
+          elseif ($map_row && $map_row['needs_update'] == 1) {
+            // We always want to take this row if needs_update = 1
           }
           else {
-            // With no highwater, we want to take this row if it's not in the map table
-            if ($map_row) {
-              continue;
+            if ($this->usingHighwater) {
+              if ($this->highwaterSeen) {
+                // We've passed the highwater mark previously, so no need to check again
+              }
+              else {
+                // With highwater, we want to take this row if it's above the highwater
+                // mark
+                $highwaterField = $migration->getHighwaterField();
+                $highwaterField = $highwaterField['name'];
+                if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
+                  continue;
+                }
+              }
+            }
+            else {
+              // With no highwater, we want to take this row if it's not in the map table
+              if ($map_row) {
+                continue;
+              }
             }
           }
         }

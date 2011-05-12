@@ -22,6 +22,7 @@ Features and enhancements
 - #1139080 - Added example and test for importing profile pictures over http.
 
 Bug fixes
+- #1155740 - Make remote file fetch HTTP version independent
 - #1037872 - Deal with updates with idlists when mapping nids directly.
 - #943546 - Make sure both slashes and backslashes are trimmed where necessary.
 - #1146366 - Fixed rollback of table destinations.

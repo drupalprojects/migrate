@@ -164,8 +164,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         if (!empty($properties['description'])) {
           $arguments['description'] = $properties['description'];
         }
-        if (!empty($properties['display'])) {
-          $arguments['display'] = $properties['display'];
+        if (!empty($properties['list'])) {
+          $arguments['list'] = $properties['list'];
         }
       }
       $message_saved = FALSE;
@@ -315,12 +315,11 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
       if (isset($file) && is_array($file)) {
         // Build up a return object.
-        $file['list'] = NULL;
+        $file['list'] = isset($arguments['list']) ? $arguments['list'] : NULL;
         $file['data'] = array(
           'alt' => isset($arguments['alt']) ? $arguments['alt'] : NULL,
           'title' => isset($arguments['title']) ? $arguments['title'] : NULL,
           'description' => isset($arguments['description']) ? $arguments['description'] : NULL,
-          'display' => isset($arguments['display']) ? $arguments['display'] : NULL,
           'process' => TRUE, // This activates filefield_paths crazy move code.
         );
         $return[] = $file;
@@ -356,9 +355,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *   String to be used as the description value for all file fields, or
    *   array('source_field' => 'source_field_name') to obtain the description value from
    *   the query field named source_field_name.
-   * @param display
-   *   String to be used as the display value for all file fields, or
-   *   array('source_field' => 'source_field_name') to obtain the display value from
+   * @param list
+   *   String to be used as the list value for all file fields, or
+   *   array('source_field' => 'source_field_name') to obtain the list value from
    *   the query field named source_field_name.
    * @param throw_error
    *  A non-existent file generates an INFORMATIONAL message by default. If this
@@ -368,7 +367,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
   static function arguments($source_path = NULL, $file_function = 'file_copy',
       $file_replace = FILE_EXISTS_RENAME, $alt = NULL,
       $title = NULL, $description = NULL,
-      $display = NULL, $throw_error = FALSE) {
+      $list = NULL, $throw_error = FALSE) {
     return get_defined_vars();
   }
 }

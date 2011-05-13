@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Bug fixes
+- #1157078 - Drupal 6 filefields have list property, not display.
+
 Migrate 2.1 Beta 1
 ==================
 

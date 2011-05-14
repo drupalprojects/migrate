@@ -179,8 +179,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
       // Set destination_dir, considering user tokens which filefield natively supports.
       // Also load $account or build a stub (faster)
+      $account = user_load(array('uid' => $entity->uid));
       if (!module_exists('filefield_paths') && isset($entity->uid) && strpos($instance['widget']['file_path'], '[')) {
-        $account = user_load(array('uid' => $entity->uid));
         $destination_dir = filefield_widget_file_path($instance, $account);
       }
       else {

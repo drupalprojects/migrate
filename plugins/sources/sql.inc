@@ -276,7 +276,7 @@ class MigrateSourceSQL extends MigrateSource {
         // marked with needs_update=1. Except with highwater marks, where we don't care
         // about the existence of map/message table entries, only needs_update.
         $first = TRUE;
-        $map_join = $msg_join = $map_condition = $msg_condition = '';
+        $map_join = $map_condition = '';
         $count = 1;
 
         foreach ($map->getSourceKey() as $field_name => $field_schema) {
@@ -290,23 +290,17 @@ class MigrateSourceSQL extends MigrateSource {
           else {
             $map_join .= ' AND ';
             if (!$this->usingHighwater) {
-              $msg_join .= ' AND ';
               $map_condition .= ' OR ';
-              $msg_condition .= ' OR ';
             }
           }
           $map_join .= "$field_name = map.$map_key";
           if (!$this->usingHighwater) {
-            $msg_join .= "$field_name = msg.$map_key";
             $map_condition .= "map.$map_key IS NULL";
-            $msg_condition .= "msg.$map_key IS NULL";
           }
         }
         $this->query->leftJoin($map->getMapTable(), 'map', $map_join);
         $map_condition .= ' OR map.needs_update = 1';
-        $this->query->leftJoin($map->getMessageTable(), 'msg', $msg_join);
         $this->query->where($map_condition);
-        $this->query->where($msg_condition);
 
         // And as long as we have the map table, get the destination ID, the
         // import hook will need it to identify the existing destination object.

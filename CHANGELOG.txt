@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1156972 - Do not include message table in source queries.
 - #1156928 - Always load account for filefields.
 - #1157250 - Fixed migrate_ui menu entry to show under admin/content.
 - #1157078 - Drupal 6 filefields have list property, not display.

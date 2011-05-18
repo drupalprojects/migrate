@@ -781,7 +781,7 @@ abstract class Migration extends MigrationBase {
             // handlers?
             $this->destinationValues->{$destination}['arguments'] = array();
             foreach ($arguments as $argname => $destarg) {
-              if (is_array($destarg) && isset($destarg['source_field']) && isset($this->sourceValues->$destarg['source_field'])) {
+              if (is_array($destarg) && isset($destarg['source_field']) && property_exists($this->sourceValues, $destarg['source_field'])) {
                 $this->destinationValues->{$destination}['arguments'][$argname] = $this->sourceValues->$destarg['source_field'];
               }
               elseif (is_array($destarg) && isset($destarg['default_value'])) {

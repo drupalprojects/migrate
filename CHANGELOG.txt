@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1161482 - Handle NULL source_field mappings.
 - #1156972 - Do not include message table in source queries.
 
 Migrate 2.1 Beta 1

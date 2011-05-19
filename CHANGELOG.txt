@@ -2,6 +2,9 @@
 Next release
 ============
 
+Features and enhancements:
+- #1025754 - Added support for multi-value source keys to handleSourceMigration().
+
 Bug fixes
 - #1161482 - Handle NULL source_field mappings.
 - #1156972 - Do not include message table in source queries.

@@ -88,7 +88,7 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $this->assertEqual($comment->name, $row->name, t('Name matches'));
     $this->assertEqual($comment->status, COMMENT_PUBLISHED, t('Status matches'));
     $wine_migration = MigrationBase::getInstance('WineWine');
-    $destid = $wine_migration->getMap()->lookupDestinationID(array($row->wineid), $migration);
+    $destid = $wine_migration->getMap()->lookupDestinationID(array($row->wineid));
     $this->assertEqual($comment->nid, reset($destid), t('Nid matches'));
     $body = field_get_items('comment', $comment, 'comment_body');
     $this->assertEqual($body[0]['value'], $row->body, t('Body matches'));
@@ -100,7 +100,7 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $comment = $comments['im child'];
     $row = $rows['im child'];
     $user_migration = MigrationBase::getInstance('WineUser');
-    $destid = $user_migration->getMap()->lookupDestinationID(array($row->accountid), $migration);
+    $destid = $user_migration->getMap()->lookupDestinationID(array($row->accountid));
     $this->assertEqual($comment->uid, reset($destid), t('Uid matches'));
     $this->assertEqual($comment->pid, $comments['im parent']->cid, t('Parent matches'));
 

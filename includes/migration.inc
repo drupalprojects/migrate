@@ -823,7 +823,7 @@ abstract class Migration extends MigrationBase {
    *   a single key was passed in, or an array of values if there were multiple
    *   keys to look up.
    */
-  protected function handleSourceMigration($source_migrations, $source_keys, $default = NULL, $migration) {
+  protected function handleSourceMigration($source_migrations, $source_keys, $default = NULL, $migration = NULL) {
     // Handle the source migration(s) as an array.
     $source_migrations = (array) $source_migrations;
 
@@ -861,7 +861,7 @@ abstract class Migration extends MigrationBase {
       // Loop through each source migration, checking for an existing dest ID.
       foreach ($source_migrations as $source_migration) {
         // Break out of the loop as soon as a destination ID is found.
-        if ($destids = $source_migration->getMap()->lookupDestinationID($source_key, $this)) {
+        if ($destids = $source_migration->getMap()->lookupDestinationID($source_key)) {
           break;
         }
       }
@@ -930,7 +930,7 @@ abstract class Migration extends MigrationBase {
   /**
    * If stub creation is enabled, try to create a stub and save the mapping.
    */
-  protected function createStubWrapper(array $source_key, $migration) {
+  protected function createStubWrapper(array $source_key, $migration = NULL) {
     if (method_exists($this, 'createStub')) {
       $destids = $this->createStub($migration);
       if ($destids) {

@@ -809,17 +809,43 @@ abstract class Migration extends MigrationBase {
    *
    * @param mixed $source_migrations
    *   An array of source migrations, or string for a single migration.
-   * @param mixed $source_values
-   *   An array of source values, or string for a single value.
+   * @param mixed $source_keys
+   *   Key(s) to be looked up against the source migration(s). This may be a simple
+   *   value (one single-field key), an array of values (multiple single-field keys
+   *   to each be looked up), or an array of arrays (multiple multi-field keys to
+   *   each be looked up).
    * @param mixed $default
    *   The default value, if no ID was found.
    * @param $migration
    *   The implementing migration.
+   * @return
+   *   Destination value(s) from the source migration(s), as a single value if
+   *   a single key was passed in, or an array of values if there were multiple
+   *   keys to look up.
    */
-  protected function handleSourceMigration($source_migrations, $source_values, $default = NULL, $migration) {
-    // Ensure source migrations and source keys are arrays.
+  protected function handleSourceMigration($source_migrations, $source_keys, $default = NULL, $migration) {
+    // Handle the source migration(s) as an array.
     $source_migrations = (array) $source_migrations;
-    $source_keys = (array) $source_values;
+
+    // We want to treat source keys consistently as an array of arrays (each
+    // representing one key).
+    if (is_array($source_keys)) {
+      if (is_array(reset($source_keys))) {
+        // Already an array of key arrays, fall through
+      }
+      else {
+        // An array of single-key values - make each one an array
+        $new_source_keys = array();
+        foreach ($source_keys as $source_key) {
+          $new_source_keys[] = array($source_key);
+        }
+        $source_keys = $new_source_keys;
+      }
+    }
+    else {
+      // A simple value - make it an array within an array
+      $source_keys = array(array($source_keys));
+    }
 
     // Instantiate each migration, and store back in the array.
     foreach ($source_migrations as $key => $source_migration) {
@@ -827,14 +853,15 @@ abstract class Migration extends MigrationBase {
     }
 
     $results = array();
+    // Each $source_key will be an array of key values
     foreach ($source_keys as $source_key) {
-      if (is_null($source_key)) {
+      if (empty($source_key)) {
         continue;
       }
       // Loop through each source migration, checking for an existing dest ID.
       foreach ($source_migrations as $source_migration) {
         // Break out of the loop as soon as a destination ID is found.
-        if ($destids = $source_migration->getMap()->lookupDestinationID(array($source_key), $this)) {
+        if ($destids = $source_migration->getMap()->lookupDestinationID($source_key, $this)) {
           break;
         }
       }
@@ -843,7 +870,7 @@ abstract class Migration extends MigrationBase {
       if (!$destids) {
         foreach ($source_migrations as $source_migration) {
           // Break out of the loop if a stub was successfully created.
-          if ($destids = $source_migration->createStubWrapper(array($source_key), $migration)) {
+          if ($destids = $source_migration->createStubWrapper($source_key, $migration)) {
             break;
           }
         }
@@ -863,11 +890,12 @@ abstract class Migration extends MigrationBase {
         $results[] = $default;
       }
     }
-    if (is_array($source_values) || count($results) > 1) {
+    // Return a single result if we had a single key
+    if (count($source_keys) > 1) {
       return $results;
     }
     else {
-      return $results[0];
+      return reset($results);
     }
   }
 

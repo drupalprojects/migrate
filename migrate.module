@@ -382,7 +382,8 @@ function migrate_watchdog($log_entry) {
         $severity = MigrationBase::MESSAGE_INFORMATIONAL;
         break;
     }
-    $migration->saveMessage(t($log_entry['message'], $log_entry['variables']), $severity);
+    $variables = is_array($log_entry['variables']) ? $log_entry['variables'] : array();
+    $migration->saveMessage(t($log_entry['message'], $variables), $severity);
   }
 }
 

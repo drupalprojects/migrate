@@ -112,6 +112,28 @@ abstract class MigrateMap implements Iterator {
   abstract public function getRowByDestination(array $destination_id);
 
   /**
+   * Given a (possibly multi-field) destination key, return the (possibly multi-field)
+   * source key mapped to it.
+   *
+   * @param array $destination_id
+   *  Array of destination key values.
+   * @return array
+   *  Array of source key values, or NULL on failure.
+   */
+  abstract public function lookupSourceID(array $destination_id);
+
+  /**
+   * Given a (possibly multi-field) source key, return the (possibly multi-field)
+   * destination key it is mapped to.
+   *
+   * @param array $source_id
+   *  Array of source key values.
+   * @return array
+   *  Array of destination key values, or NULL on failure.
+   */
+  abstract public function lookupDestinationID(array $source_id);
+
+  /**
    * Remove any persistent storage used by this map (e.g., map and message tables)
    */
   abstract public function destroy();

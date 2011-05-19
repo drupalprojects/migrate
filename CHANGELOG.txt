@@ -4,6 +4,7 @@ Next release
 
 Features and enhancements:
 - #1025754 - Added support for multi-value source keys to handleSourceMigration().
+- #1161584 - Added lookupSourceID() and lookupDestinationID() to MigrateMap.
 
 Bug fixes
 - #1161590 - Made $migration optional for handleSourceMigration(), createStubWrapper(), 

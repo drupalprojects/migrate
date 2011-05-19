@@ -150,7 +150,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
         // We'd like to use file_unmanaged_copy, but it calls file_exists, which
         // won't work for remote URLs
         migrate_instrument_start('MigrateDestinationFile copy');
-        $result = @copy($file->uri, $destination);
+        $result = @copy(str_replace(' ', '%20', $file->uri), $destination);
         migrate_instrument_stop('MigrateDestinationFile copy');
         if ($result) {
           $file->uri = $destination;

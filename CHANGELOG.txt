@@ -7,6 +7,7 @@ Features and enhancements:
 - #1161584 - Added lookupSourceID() and lookupDestinationID() to MigrateMap.
 
 Bug fixes
+- #1159274 - Handle spaces in URLs for MigrateDestinationFile.
 - #1161812 - Added handling for NULL watchdog variables.
 - #1009708 - Fixed E_STRICT notice on MigrateDestinationRole::getKeySchema().
 - #1161590 - Made $migration optional for handleSourceMigration(), createStubWrapper(), 

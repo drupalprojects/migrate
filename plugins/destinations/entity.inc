@@ -86,9 +86,6 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
    */
   public function prepareRollback($entity_id) {
     $migration = Migration::currentMigration();
-    $entity->migrate = array(
-      'machineName' => $migration->getMachineName(),
-    );
 
     // Call any general entity handlers (in particular, the builtin field handler)
     migrate_handler_invoke_all('Entity', 'prepareRollback', $entity_id);

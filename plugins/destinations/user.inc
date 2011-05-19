@@ -172,10 +172,16 @@ class MigrateDestinationRole extends MigrateDestinationTable {
     parent::__construct('role');
   }
 
-  static public function getKeySchema() {
+  /**
+   * Get the key definition for the role table.
+   *
+   * @param $dummy
+   *  PHP is picky - it throws E_STRICT notices if we don't have a parameter
+   *  because MigrateDestinationTable has one.
+   */
+  static public function getKeySchema($dummy = NULL) {
     return MigrateDestinationTable::getKeySchema('role');
   }
-
 
   /**
    * Delete a single row.

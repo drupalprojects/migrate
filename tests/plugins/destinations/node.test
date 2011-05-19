@@ -114,8 +114,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $wine_row = $wine_rows['Montes Classic Cabernet Sauvignon'];
     $user_migration = MigrationBase::getInstance('WineUser');
 
-    $mapped_uid = $user_migration->getMap()->lookupDestinationID(
-      array($producer_row->accountid), $migration);
+    $mapped_uid = $user_migration->getMap()->lookupDestinationID(array($producer_row->accountid));
     if (is_array($mapped_uid)) {
       $this->assertEqual($producer_node->uid, reset($mapped_uid),
         t('uid properly migrated'));
@@ -134,8 +133,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
 
     // Taxonomy terms - single and multiple
     $variety_migration = MigrationBase::getInstance('WineVariety');
-    $mapped_tid = $variety_migration->getMap()->lookupDestinationID(
-      array($wine_row->variety), $migration);
+    $mapped_tid = $variety_migration->getMap()->lookupDestinationID(array($wine_row->variety));
     if (is_array($mapped_tid)) {
       $this->assertNotNull($wine_node->taxonomy[reset($mapped_tid)],
         t('Single taxonomy_term_reference properly migrated'));
@@ -148,8 +146,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $source_ids = explode(',', $wine_row->best_with);
     $mapped_tids = array();
     foreach ($source_ids as $source_id) {
-      $tid = $best_with_migration->getMap()->lookupDestinationID(
-        array($source_id), $migration);
+      $tid = $best_with_migration->getMap()->lookupDestinationID(array($source_id));
       if ($tid) {
         $mapped_tids[reset($tid)] = reset($tid);
       }

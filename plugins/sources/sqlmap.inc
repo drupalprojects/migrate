@@ -220,15 +220,13 @@ class MigrateSQLMap extends MigrateMap {
    *
    * @param array $source_id
    *  Array of source key values.
+   * @param Migration $destination_migration
+   *  Unused and deprecated. To be removed at next API update.
    * @return array
    *  Array of destination key values, or NULL on failure.
    */
-  public function lookupDestinationID(array $source_id, Migration $destination_migration) {
+  public function lookupDestinationID(array $source_id, Migration $destination_migration = NULL) {
     migrate_instrument_start('lookupDestinationID');
-
-    ////////////////////////////////////////////////////////////////
-    // TODO: Temporary, until we update the cache code for the new world
-    // Query map table and cache the result.
     $query = $this->connection->select($this->mapTable, 'map')
               ->fields('map', $this->destinationKeyMap);
     foreach ($this->sourceKeyMap as $key_name) {
@@ -236,81 +234,6 @@ class MigrateSQLMap extends MigrateMap {
     }
     $result = $query->execute();
     $destination_id = $result->fetchAssoc();
-    migrate_instrument_stop('lookupDestinationID');
-    return $destination_id;
-    ////////////////////////////////////////////////////////////////
-
-    static $frequent = array();
-
-    // TODO: Let fieldMapping change lookup_cache_size
-    $lookup_cache_size = 500;
-    $frequent_key = $source_id[0];
-
-    // Initialize if needed.
-    if (!isset($frequent[$this->mapTable])) {
-      $frequent[$this->mapTable] = array();
-    }
-
-    // Initialize if needed.
-    if (!isset($destination_migration->counts['lookup_cache'][$this->mapTable])) {
-      $destination_migration->counts['lookup_cache'][$this->mapTable] = array(
-         'hit' => 0,
-         'miss_hit' => 0,
-         'miss_miss' => 0,
-      );
-    }
-
-    // Check for cached pairs. Only works for single keys.
-    if (count($source_id) == 1 && isset($frequent[$this->mapTable][$frequent_key])) {
-      // Cache hit. Just return.
-      $destination_migration->counts['lookup_cache'][$this->mapTable]['hit']++;
-      return $frequent[$this->mapTable][$frequent_key];
-    }
-    else {
-      // We have a cache miss.
-
-      // Query map table and cache the result.
-      $query = db_select($this->mapTable, 'map')
-                        ->fields('map', $this->destinationKeyMap());
-      foreach ($this->sourceKeyMap() as $key_name) {
-        $query = $query->condition("map.$key_name", array_shift($source_id), '=');
-      }
-      $result = $query->execute();
-      $destination_id = $result->fetchAssoc();
-
-      if ($destination_id === FALSE) {
-        // We have a lookup miss.
-        $destination_migration->counts['lookup_cache'][$this->mapTable]['miss_miss']++;
-
-      /*
-       * Handle self references like articles that have 'related articles' and
-       * users that have 'friends'. Sometimes we can't save these references because
-       * the referenced item is not yet migrated. In that case, just mark this row
-       * in map table as needs_update. The entity will be fully saved in a
-       * subsequent import.
-       */
-        if ($this->machineName == $destination_migration->mapTable) {
-          // We have an entity that's referencing own migration.
-          $destination_migration->needsUpdate = TRUE;
-        }
-      }
-      else {
-        // We have a lookup hit.
-        $destination_migration->counts['lookup_cache'][$this->mapTable]['miss_hit']++;
-
-        // Optionally cache the lookup hit.
-        // A lookup_cache_size of 0 would disable the cache for a given sourceMigration.
-        if ($lookup_cache_size) {
-          $frequent[$this->mapTable] = array($frequent_key => $destination_id) + $frequent[$this->machineName];
-
-          // Keep most recently used (MRU). Size varies between 500 and 1000 items, by default.
-          if (count($frequent[$this->mapTable]) > 2 * $lookup_cache_size) {
-            $frequent[$this->mapTable] = array_slice($frequent[$this->machineName], 0, $lookup_cache_size, TRUE);
-          }
-        }
-      }
-    }
-
     migrate_instrument_stop('lookupDestinationID');
     return $destination_id;
   }

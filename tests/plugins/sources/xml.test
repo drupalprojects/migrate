@@ -60,8 +60,7 @@ class MigrateXMLUnitTest extends DrupalWebTestCase {
     $producer_node = $producer_nodes['Lolonis Winery'];
     $user_migration = MigrationBase::getInstance('WineUser');
 
-    $mapped_uid = $user_migration->getMap()->lookupDestinationID(
-      array(3), $migration);
+    $mapped_uid = $user_migration->getMap()->lookupDestinationID(array(3));
     if (is_array($mapped_uid)) {
       $this->assertEqual($producer_node->uid, reset($mapped_uid),
         t('uid properly migrated'));

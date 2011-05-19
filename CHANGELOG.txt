@@ -6,6 +6,8 @@ Features and enhancements:
 - #1025754 - Added support for multi-value source keys to handleSourceMigration().
 
 Bug fixes
+- #1161590 - Made $migration optional for handleSourceMigration(), createStubWrapper(), 
+  lookupDestinationID().
 - #1161482 - Handle NULL source_field mappings.
 - #1156972 - Do not include message table in source queries.
 - #1156928 - Always load account for filefields.

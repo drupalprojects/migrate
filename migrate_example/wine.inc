@@ -554,6 +554,10 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->highwaterField = array(
       'name' => 'last_changed', // Column to be used as highwater mark
       'alias' => 'w',           // Table alias containing that column
+      'type' => 'int',          // By default, highwater marks are assumed to be lexicographically
+                                // sortable (e.g., '2011-05-19 17:53:12'). To properly
+                                // deal with integer highwater marks (such as UNIX
+                                // timestamps), indicate so here.
     );
     // Note that it is important to process rows in the order of the highwater mark
     $query->orderBy('last_changed');

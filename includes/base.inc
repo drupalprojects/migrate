@@ -594,7 +594,16 @@ abstract class MigrationBase {
                ->fields(array('highwater' => $highwater))
                ->condition('machine_name', $this->machineName);
       if (!$force) {
-        $query->condition('highwater', $highwater, '<');
+        if (!empty($this->highwaterField['type']) && $this->highwaterField['type'] == 'int') {
+          // If the highwater is an integer type, we need to force the DB server
+          // to treat the varchar highwater field as an integer (otherwise it will
+          // think '5' > '10'). CAST(highwater AS INTEGER) would be ideal, but won't
+          // work in MySQL. This hack is thought to be portable.
+          $query->where('(highwater+0) < :highwater', array(':highwater' => $highwater));
+        }
+        else {
+          $query->condition('highwater', $highwater, '<');
+        }
       }
       $query->execute();
     }

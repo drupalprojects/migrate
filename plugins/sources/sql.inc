@@ -373,6 +373,9 @@ class MigrateSourceSQL extends MigrateSource {
                 if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
                   continue;
                 }
+                else {
+                  $this->highwaterSeen = TRUE;
+                }
               }
             }
             else {

@@ -104,12 +104,6 @@ function migrate_example_wine_schema_wine() {
         'not null' => FALSE,
         'description' => 'ID of the author.',
       ),
-      'image' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'description' => 'Image path',
-      ),
       'posted' => array(
         'type' => 'int',
         'unsigned' => TRUE,
@@ -877,18 +871,16 @@ function migrate_example_wine_content_type_delete() {
 function migrate_example_wine_data_wine() {
   $data = array(
     array(1, 'Montes Classic Cabernet Sauvignon', 'Intense ruby-red color', 'Great!', 9,
-      'http://cyrve.com/files/penguin.jpeg',
       strtotime('2010-01-02 03:04:05'), strtotime('2010-03-04 05:06:07'), 25, 17, 95,
       '3/4/10 05:06:07 PM'),
     array(2, 'Archeo Ruggero di Tasso Nero d\'Avola', 'Lots of berry character', 'Pair with red sauced dishes', 3,
-      'http://cyrve.com/files/rioja.jpeg|http://cyrve.com/files/boutisse.jpeg',
       strtotime('2010-09-03 18:23:58'), strtotime('2010-09-03 18:23:58'), 26, 2, 85),
   );
   foreach ($data as $row) {
     db_query("INSERT INTO {migrate_example_wine}
-              (wineid, name, body, excerpt, accountid, image, posted, last_changed,
+              (wineid, name, body, excerpt, accountid, posted, last_changed,
                 variety, region, rating, last_reviewed)
-              VALUES(%d, '%s', '%s', '%s', %d, '%s',
+              VALUES(%d, '%s', '%s', '%s', %d,
                      '%s', '%s', %d, %d, %d, '%s')",
              $row);
   }

@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.1
+===========
 
 Features and enhancements:
 - #1025754 - Added support for multi-value source keys to handleSourceMigration().

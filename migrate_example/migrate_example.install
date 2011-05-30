@@ -153,8 +153,14 @@ function migrate_example_update_7004() {
     ->condition('wineid', 2)
     ->execute();
   $field = field_info_field('field_migrate_example_image');
-  $field['cardinality'] = -1; // Unlimited
-  field_update_field($field);
+  if ($field) {
+    $field['cardinality'] = -1; // Unlimited
+    field_update_field($field);
+  }
+  else {
+    migrate_example_beer_image();
+    migrate_example_wine_fields();
+  }
   $ret[] = t('Added sample data for file fields.');
   $ret[] = t('Made field_migrate_example_image multi-value');
   return $ret;

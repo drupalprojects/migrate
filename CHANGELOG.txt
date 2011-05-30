@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Bug fixes
+- #1169796 - Handle example upgrades if image field is missing.
+
 Migrate 2.1
 ===========
 

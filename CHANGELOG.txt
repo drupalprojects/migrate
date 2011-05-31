@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Features and enhancements
+- #1169724 - Implemented source plugin for Oracle.
+
 Migrate 2.1
 ===========
 

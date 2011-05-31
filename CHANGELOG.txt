@@ -2,13 +2,16 @@
 Next release
 ============
 
+Features and enhancements
+- #1169724 - Implemented source plugin for Oracle.
+
 Bug fixes
 - #1169796 - Handle example upgrades if image field is missing.
 
 Migrate 2.1
 ===========
 
-Features and enhancements:
+Features and enhancements
 - #1025754 - Added support for multi-value source keys to handleSourceMigration().
 - #1161584 - Added lookupSourceID() and lookupDestinationID() to MigrateMap.
 

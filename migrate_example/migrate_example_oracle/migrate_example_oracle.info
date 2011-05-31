@@ -1,0 +1,12 @@
+core = "7.x"
+dependencies[] = "features"
+dependencies[] = "migrate"
+description = "Content type supporting example of Oracle migration"
+features[field][] = "node-migrate_example_oracle-body"
+features[node][] = "migrate_example_oracle"
+files[] = migrate_example_oracle.migrate.inc
+
+name = "Migrate example - Oracle"
+package = "Features"
+project = "migrate_example_oracle"
+version = "7.x-2.2-dev"

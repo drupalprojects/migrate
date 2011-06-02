@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1176930 - Renamed migrate-descriptions to migrate-mappings, enhanced to export to CSV.
 - #1169724 - Implemented source plugin for Oracle.
 
 Bug fixes

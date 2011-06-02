@@ -5,6 +5,9 @@ Next release
 Features and enhancements
 - #1169724 - Implemented source plugin for Oracle.
 
+Bug fixes
+- #1176790 - Prevent multiple handlers from messing up fields info.
+
 Migrate 2.1
 ===========
 

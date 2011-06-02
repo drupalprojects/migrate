@@ -199,7 +199,7 @@ function migrate_field_handler_invoke_all($entity, array $instance,
         array($entity, $instance, $values));
       migrate_instrument_stop($class_name . '->prepare');
       if (isset($result) && is_array($result)) {
-        $return = array_merge_recursive($return, $result);
+        $return = array_merge($return, $result);
       }
       elseif (isset($result)) {
         $return[] = $result;

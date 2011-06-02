@@ -224,7 +224,15 @@ class MigrateSourceOracle extends MigrateSource {
   public function next() {
     $migration = Migration::currentMigration();
 
+    // Enforce the itemlimit
+    $itemlimit = $migration->getItemLimit();
     while ($this->currentRow = $this->getNextObject()) {
+      // Enforce the itemlimit
+      if ($itemlimit && $this->numProcessed >= $itemlimit) {
+        $this->currentRow = NULL;
+        return;
+      }
+
       $map = $migration->getMap();
       $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {

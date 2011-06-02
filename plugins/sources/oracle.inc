@@ -71,7 +71,12 @@ class MigrateSourceOracle extends MigrateSource {
     $this->countQuery = $count_query;
     $this->configuration = $configuration;
     $this->fields = $fields;
-    $this->characterSet = $options['character_set'];
+    if (empty($options['character_set'])) {
+      $this->characterSet = 'UTF';
+    }
+    else {
+      $this->characterSet = $options['character_set'];
+    }
   }
 
   /**

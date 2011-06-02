@@ -161,7 +161,7 @@ function migrate_handler_invoke_all($destination, $method) {
       $result = call_user_func_array(array($handler, $method), $args);
       migrate_instrument_stop($class_name . '->' . $method);
       if (isset($result) && is_array($result)) {
-        $return = array_merge_recursive($return, $result);
+        $return = array_merge($return, $result);
       }
       elseif (isset($result)) {
         $return[] = $result;

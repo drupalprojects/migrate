@@ -24,8 +24,8 @@ function migrate_drush_help($section) {
       return dt('List the fields available for mapping to a destination');
     case 'drush:migrate-fields-source':
       return dt('List the fields available for mapping from a source');
-    case 'drush:migrate-descriptions':
-      return dt('View descriptions for a migration and all its mappings');
+    case 'drush:migrate-mappings':
+      return dt('View information on all field mappings in a migration');
     case 'drush:migrate-wipe':
       return dt('Delete all nodes from specified content types.');
   }
@@ -84,16 +84,21 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mfs'),
   );
-  $items['migrate-descriptions'] = array(
-    'description' => 'View descriptions for a migration and all its mappings.',
+  $items['migrate-mappings'] = array(
+    'description' => 'View information on all field mappings in a migration.',
+    'options' => array(
+      'csv' => 'Export information as a CSV',
+      'full' => 'Include more information on each mapping',
+    ),
     'arguments' => array(
       'migration' => 'Name of the migration',
     ),
     'examples' => array(
-      'migrate-descriptions MyNode' => 'Show descriptions for the MyNode migration',
+      'migrate-descriptions MyNode' => 'Show mappings for the MyNode migration',
+      'migrate-descriptions MyNode --csv --full' => 'Export full mapping information in CSV format',
     ),
     'drupal dependencies' => array('migrate'),
-    'aliases' => array('md'),
+    'aliases' => array('mm'),
   );
   $items['migrate-rollback'] = array(
     'description' => 'Roll back the destination objects from a given migration',
@@ -350,7 +355,10 @@ function drush_migrate_fields_source() {
   }
 }
 
-function drush_migrate_descriptions() {
+/**
+ * Display field mappings for a migration.
+ */
+function drush_migrate_mappings() {
   try {
     $args = func_get_args();
     $machine_name = array_shift($args);
@@ -359,17 +367,56 @@ function drush_migrate_descriptions() {
       return drush_set_error(dt('No class found matching !machine_name',
                    array('!machine_name' => $machine_name)));
     }
-    drush_print($migration->getDescription());
-    if (method_exists($migration, 'getFieldMappings')) {
-      // First group the mappings
-      $descriptions = array();
-      foreach ($migration->getFieldMappings() as $mapping) {
-        $descriptions[$mapping->getIssueGroup()][] = $mapping;
+    $full = drush_get_option('full');
+    // In verbose mode, we'll also get source and destination field descriptions
+    if ($full) {
+      $destination = $migration->getDestination();
+      $dest_descriptions = array();
+      if (method_exists($destination, 'fields')) {
+        foreach ($destination->fields() as $machine_name => $description) {
+          $dest_descriptions[$machine_name] = $description;
+        }
       }
+      $source = $migration->getSource();
+      $src_descriptions = array();
+      if (method_exists($source, 'fields')) {
+        foreach ($source->fields() as $machine_name => $description) {
+          $src_descriptions[$machine_name] = $description;
+        }
+      }
+    }
+
+    if (method_exists($migration, 'getFieldMappings')) {
+      // First group the mappings. We want "interesting" mappings first, so
+      // put the boring Done and DNM mappings last.
+      $descriptions = array();
+      $done = array();
+      $dnm = array();
+      foreach ($migration->getFieldMappings() as $mapping) {
+        $group = $mapping->getIssueGroup();
+        $lowergroup = drupal_strtolower($group);
+        if ($lowergroup == dt('done')) {
+          $done[$group][] = $mapping;
+        }
+        else if ($lowergroup == dt('dnm') || $lowergroup == dt('do not migrate')) {
+          $dnm[$group][] = $mapping;
+        }
+        else {
+          $descriptions[$group][] = $mapping;
+        }
+      }
+      $descriptions = array_merge($descriptions, $done, $dnm);
+
       // Put out each group header
       $table = array();
-      $table[] = array(dt('Destination'), dt('Source'), dt('Default'),
-        dt('Description'));
+      if ($full) {
+        $table[] = array(dt('Destination'), dt(''), dt('Source'), dt(''), dt('Default'),
+          dt('Description'));
+      }
+      else {
+        $table[] = array(dt('Destination'), dt('Source'), dt('Default'),
+          dt('Description'));
+      }
       $first = TRUE;
 
       foreach ($descriptions as $group => $mappings) {
@@ -379,9 +426,9 @@ function drush_migrate_descriptions() {
         else {
           $table[] = array(' ');
         }
-        // Attempt to offset and highlight the group header a bit so it stands out
+        // Attempt to highlight the group header a bit so it stands out
         $group_header = '--- ' . strtoupper($group) . ' ---';
-        $table[] = array('', $group_header);
+        $table[] = array($group_header);
         foreach ($mappings as $mapping) {
           if (is_array($mapping->getDefaultValue())) {
             $default = implode(',', $mapping->getDefaultValue());
@@ -389,12 +436,38 @@ function drush_migrate_descriptions() {
           else {
             $default = $mapping->getDefaultValue();
           }
-          $table[] = array($mapping->getDestinationField(), $mapping->getSourceField(),
-            $default, $mapping->getDescription());
+          $destination = $mapping->getDestinationField();
+          $source = $mapping->getSourceField();
+          if ($full) {
+            if ($destination && $dest_descriptions[$destination]) {
+              $dest_description = $dest_descriptions[$destination];
+            }
+            else {
+              $dest_description = '';
+            }
+            if ($source && $src_descriptions[$source]) {
+              $src_description = $src_descriptions[$source];
+            }
+            else {
+              $src_description = '';
+            }
+            $table[] = array($destination, $dest_description, $source, $src_description,
+              $default, $mapping->getDescription());
+          }
+          else {
+            $table[] = array($destination, $source,
+              $default, $mapping->getDescription());
+          }
         }
       }
-
-      drush_print_table($table, TRUE);
+      if (drush_get_option('csv')) {
+        foreach ($table as $row) {
+          fputcsv(STDOUT, $row);
+        }
+      }
+      else {
+        drush_print_table($table, TRUE);
+      }
     }
   }
   catch (MigrateException $e) {

@@ -49,11 +49,14 @@ class MigrateDestinationTableCopy extends MigrateDestination {
     $migration = MigrationBase::currentMigration();
 
     $fields = clone $row;
-    $key = key($this->keySchema);
-    $valkey = $row->$key;
+    $keys = array_keys($this->keySchema);
+    $values  = array();
+    foreach ($keys as $key) {
+      $values[] = $row->$key;
+    }
     unset($fields->migrate_map_destid1);
     unset($fields->needs_update);
-    $query = db_merge($this->tableName)->key(array($key => $valkey))->fields((array)$fields);
+    $query = db_merge($this->tableName)->key($keys, $values)->fields((array)$fields);
     try {
       $status = $query->execute();
       if ($status == MergeQuery::STATUS_INSERT) {
@@ -62,7 +65,7 @@ class MigrateDestinationTableCopy extends MigrateDestination {
       else {
         $this->numUpdated++;
       }
-      return array($valkey);
+      return $values;
     }
     catch (MigrateException $e) {
       $migration->saveMessage($e->getMessage(), $e->getLevel());

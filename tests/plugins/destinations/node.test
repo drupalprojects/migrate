@@ -275,7 +275,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $migration->getSource()->setMapJoinable(TRUE);
     $result = $migration->processImport(array('limit' =>
-      array('value' => 1, 'unit' => 'items')));
+      array('value' => 1, 'unit' => 'item')));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);
@@ -296,7 +296,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $migration->getSource()->setMapJoinable(FALSE);
     $result = $migration->processImport(array('limit' =>
-      array('value' => 1, 'unit' => 'items')));
+      array('value' => 1, 'unit' => 'item')));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));
     $rawnodes = node_load_multiple(FALSE, array('type' => 'migrate_example_wine'), TRUE);

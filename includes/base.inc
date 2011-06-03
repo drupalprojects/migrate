@@ -60,7 +60,8 @@ abstract class MigrationBase {
     }
   }
   public function getItemLimit() {
-    if (isset($this->options['limit']) && $this->options['limit']['unit'] == 'items') {
+    if (isset($this->options['limit']) &&
+        ($this->options['limit']['unit'] == 'items' || $this->options['limit']['unit'] == 'item')) {
       return $this->options['limit']['value'];
     }
     else {
@@ -68,7 +69,8 @@ abstract class MigrationBase {
     }
   }
   public function getTimeLimit() {
-    if (isset($this->options['limit']) && $this->options['limit']['unit'] == 'seconds') {
+    if (isset($this->options['limit']) &&
+        ($this->options['limit']['unit'] == 'seconds' || $this->options['limit']['unit'] == 'second')) {
       return $this->options['limit']['value'];
     }
     else {

@@ -283,7 +283,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $migration->getSource()->setMapJoinable(TRUE);
     $result = $migration->processImport(array('limit' =>
-      array('value' => 1, 'unit' => 'items')));
+      array('value' => 1, 'unit' => 'item')));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));
     $titles = db_select('node', 'n')
@@ -311,7 +311,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $result = $migration->processRollback();
     $migration->getSource()->setMapJoinable(FALSE);
     $result = $migration->processImport(array('limit' =>
-      array('value' => 1, 'unit' => 'items')));
+      array('value' => 1, 'unit' => 'item')));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import with itemlimit returned RESULT_COMPLETED'));
     $titles = db_select('node', 'n')

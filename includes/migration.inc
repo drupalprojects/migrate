@@ -283,6 +283,12 @@ abstract class Migration extends MigrationBase {
         isset($this->options['feedback']['unit'])) {
       $this->feedback = $this->options['feedback']['value'];
       $this->feedback_unit = $this->options['feedback']['unit'];
+      if ($this->feedback_unit == 'item') {
+        $this->feedback_unit = 'items';
+      }
+      else if ($this->feedback_unit == 'second') {
+        $this->feedback_unit = 'seconds';
+      }
     }
     $this->lastfeedback = $this->starttime;
 

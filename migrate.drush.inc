@@ -136,6 +136,8 @@ function migrate_drush_command() {
       'migrate-import Article --idlist=4,9' => 'Import two specific articles. The ids refer to the value of the primary key in base table',
       'migrate-import Article --limit="60 seconds" --stop --rollback' =>
         'Import for up to 60 seconds after stopping and rolling back the Article migration.',
+      'migrate-import Article --limit="100 items"' =>
+        'Import up to 100 items from the migration named Article.',
       'migrate-import User --feedback="1000 items"' => 'Display a progress message every 1000 processed items or less',
       'migrate-import --all=User' => 'Perform User migrations and all that follow it.',
     ),
@@ -496,7 +498,9 @@ function drush_migrate_rollback($args = NULL) {
       $options['limit']['value'] = $parts[0];
       $options['limit']['unit'] = $parts[1];
       if ($options['limit']['value'] != 'seconds' &&
-          $options['limit']['unit'] != 'items') {
+          $options['limit']['value'] != 'second' &&
+          $options['limit']['value'] != 'items' &&
+          $options['limit']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;
@@ -509,7 +513,9 @@ function drush_migrate_rollback($args = NULL) {
       $options['feedback']['value'] = $parts[0];
       $options['feedback']['unit'] = $parts[1];
       if ($options['feedback']['unit'] != 'seconds' &&
-          $options['feedback']['unit'] != 'items') {
+          $options['feedback']['unit'] != 'second' &&
+          $options['feedback']['unit'] != 'items' &&
+          $options['feedback']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
           array('!unit' => $options['feedback']['unit'])));
         return;
@@ -704,7 +710,9 @@ function drush_migrate_import($args = NULL) {
       $options['limit']['value'] = $parts[0];
       $options['limit']['unit'] = $parts[1];
       if ($options['limit']['unit'] != 'seconds' &&
-          $options['limit']['unit'] != 'items') {
+          $options['limit']['unit'] != 'second' &&
+          $options['limit']['unit'] != 'items' &&
+          $options['limit']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;
@@ -716,7 +724,9 @@ function drush_migrate_import($args = NULL) {
       $options['feedback']['value'] = $parts[0];
       $options['feedback']['unit'] = $parts[1];
       if ($options['feedback']['unit'] != 'seconds' &&
-          $options['feedback']['unit'] != 'items') {
+          $options['feedback']['unit'] != 'second' &&
+          $options['feedback']['unit'] != 'items' &&
+          $options['feedback']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid feedback frequency unit '!unit'",
           array('!unit' => $options['feedback']['unit'])));
         return;

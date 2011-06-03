@@ -43,6 +43,7 @@ function migrate_example_wine_install() {
   migrate_example_wine_data_comment();
   migrate_example_wine_data_comment_updates();
   migrate_example_wine_data_table_source();
+  migrate_example_wine_data_files();
 }
 
 function migrate_example_wine_uninstall() {

@@ -228,10 +228,11 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
           // TODO: FILE_EXISTS_REPLACE is hardcoded
           // TODO: Should retrieve and pass validators in 2nd arg
           if ($remote) {
-            $destination_file = $destination_dir . "/" . basename($full_path);
-            $result = @copy($full_path, $destination_file);
+            $temporary_file = file_directory_temp() . "/" . basename($full_path);
+            $result = @copy($full_path, $temporary_file);
             if ($result) {
-              $file = field_file_save_file($destination_file, array(), $destination_dir, $account);
+              $file = field_file_save_file($temporary_file, array(), $destination_dir, $account);
+              file_delete($temporary_file);
             }
             else {
               $migration->saveMessage(t('Unable to copy file from !source',

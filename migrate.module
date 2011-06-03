@@ -186,18 +186,20 @@ function migrate_handler_invoke_all($destination, $method) {
  * @param $values
  *  Array of incoming values, to be transformed into the appropriate structure
  *  for the field type.
+ * @param $method
+ *  Handler method to call (defaults to prepare()).
  */
 function migrate_field_handler_invoke_all($entity, array $instance,
-    array $values) {
+    array $values, $method = 'prepare') {
   $return = array();
   $type = $instance['type'];
   $class_list = _migrate_class_list('MigrateFieldHandler');
   foreach ($class_list as $class_name => $handler) {
-    if ($handler->handlesType($type) && method_exists($handler, 'prepare')) {
-      migrate_instrument_start($class_name . '->prepare');
-      $result = call_user_func_array(array($handler, 'prepare'),
+    if ($handler->handlesType($type) && method_exists($handler, $method)) {
+      migrate_instrument_start($class_name . '->' . $method);
+      $result = call_user_func_array(array($handler, $method),
         array($entity, $instance, $values));
-      migrate_instrument_stop($class_name . '->prepare');
+      migrate_instrument_stop($class_name . '->' . $method);
       if (isset($result) && is_array($result)) {
         $return = array_merge($return, $result);
       }

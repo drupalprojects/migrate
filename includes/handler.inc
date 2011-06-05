@@ -27,6 +27,9 @@ abstract class MigrateHandler {
    * @var array
    */
   protected $typesHandled = array();
+  public function getTypesHandled() {
+    return $this->typesHandled;
+  }
 
   /**
    * Register a list of types handled by this class

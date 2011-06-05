@@ -628,3 +628,133 @@ function migrate_migration_info($form, $form_state, $migration) {
   }
   return $form;
 }
+
+/**
+ * Menu callback
+ */
+function migrate_ui_configure() {
+  drupal_set_title(t('Migrate configuration'));
+  return drupal_get_form('migrate_ui_configure_form');
+}
+
+/**
+ * Form for reviewing migrations.
+ */
+function migrate_ui_configure_form($form, &$form_state) {
+  $build = array();
+  $build['description'] = array(
+    '#prefix' => '<div>',
+    '#markup' => t('In some cases, such as when a handler for a contributed module is
+      implemented in both migrate_extras and the module itself, you may need to disable
+      a particular handler. In this case, you may uncheck the undesired handler below.'),
+    '#suffix' => '</div>',
+  );
+
+  $build['destination'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Destination handlers'),
+    '#collapsible' => TRUE,
+  );
+
+  $header = array(
+    'module' => array('data' => t('Module')),
+    'class' => array('data' => t('Class')),
+    'types' => array('data' => t('Destination types handled')),
+  );
+
+  $disabled = unserialize(variable_get('migrate_disabled_handlers', serialize(array())));
+  $class_list = _migrate_class_list('MigrateDestinationHandler');
+  $rows = array();
+  $default_values = array();
+  foreach ($class_list as $class_name => $handler) {
+    $row = array();
+    $module = db_select('registry', 'r')
+              ->fields('r', array('module'))
+              ->condition('name', $class_name)
+              ->condition('type', 'class')
+              ->execute()
+              ->fetchField();
+    $row['module'] = $module;
+    $row['class'] = $class_name;
+    $row['types'] = implode(', ', $handler->getTypesHandled());
+    $default_values[$class_name] = !in_array($class_name, $disabled);
+    $rows[$class_name] = $row;
+  }
+  $build['destination']['destination_handlers'] = array(
+    '#type' => 'tableselect',
+    '#header' => $header,
+    '#options' => $rows,
+    '#default_value' => $default_values,
+    '#empty' => t('No destination handlers found'),
+  );
+
+  $build['field'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Field handlers'),
+    '#collapsible' => TRUE,
+  );
+
+  $header = array(
+    'module' => array('data' => t('Module')),
+    'class' => array('data' => t('Class')),
+    'types' => array('data' => t('Field types handled')),
+  );
+
+  $class_list = _migrate_class_list('MigrateFieldHandler');
+  $rows = array();
+  $default_values = array();
+  foreach ($class_list as $class_name => $handler) {
+    $row = array();
+    $module = db_select('registry', 'r')
+              ->fields('r', array('module'))
+              ->condition('name', $class_name)
+              ->condition('type', 'class')
+              ->execute()
+              ->fetchField();
+    $row['module'] = $module;
+    $row['class'] = $class_name;
+    $row['types'] = implode(', ', $handler->getTypesHandled());
+    $default_values[$class_name] = !in_array($class_name, $disabled);
+    $rows[$class_name] = $row;
+  }
+  $build['field']['field_handlers'] = array(
+    '#type' => 'tableselect',
+    '#header' => $header,
+    '#options' => $rows,
+    '#default_value' => $default_values,
+    '#empty' => t('No field handlers found'),
+  );
+
+  $build['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save handler statuses'),
+    '#submit' => array('migrate_ui_configure_submit'),
+  );
+
+  return $build;
+}
+
+/**
+ * Submit callback for the dashboard form.
+ */
+function migrate_ui_configure_submit($form, &$form_state) {
+  $disabled = array();
+  foreach ($form_state['values']['destination_handlers'] as $class => $value) {
+    if (!$value) {
+      $disabled[] = $class;
+    }
+  }
+  foreach ($form_state['values']['field_handlers'] as $class => $value) {
+    if (!$value) {
+      $disabled[] = $class;
+    }
+  }
+  variable_set('migrate_disabled_handlers', serialize($disabled));
+  if (!empty($disabled)) {
+    drupal_set_message(t('The following handler classes are disabled: !classes',
+      array('!classes' => implode(', ', $disabled))));
+  }
+  else {
+    drupal_set_message(t('No handler classes are currently disabled.'));
+  }
+}

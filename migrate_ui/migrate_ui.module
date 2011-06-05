@@ -28,11 +28,25 @@ function migrate_menu() {
 
   $items['admin/content/migrate'] = array(
     'title' => 'Migrate',
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
     'description' => 'Monitor the creation of Drupal content from source data',
     'page callback' => 'migrate_ui_dashboard',
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui/migrate_ui.pages.inc',
+  );
+  $items['admin/content/migrate/dashboard'] = array(
+    'title' => 'Migrate',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/content/migrate/configure'] = array(
+    'title' => 'Configure',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Configure migration handlers',
+    'page callback' => 'migrate_ui_configure',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_ui/migrate_ui.pages.inc',
+    'weight' => 10,
   );
   $items['admin/content/migrate/messages/%migration'] = array(
     'title callback' => 'migration_title',

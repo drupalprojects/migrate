@@ -249,8 +249,26 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $arguments = array();
     }
     $migration = Migration::currentMigration();
-
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
+
+    if ($arguments['file_function'] == 'file_blob') {
+      if (empty($arguments['source_path'])) {
+        throw new MigrateException("You must specify a filename in the 'source_path' argument for file_blog migrations.");
+        return FALSE;
+      }
+      $destination_dir = file_field_widget_uri($field_info, $instance);
+      $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $arguments['source_path']));
+      if (!file_exists($destination_file)) {
+        file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
+        try {
+          $return = (bool) file_put_contents($destination_file, $values[0]);
+        }
+        catch (Exception $exception) {
+          throw new MigrateException("Can't write file to: $destination_file");
+          return FALSE;
+        }
+      }
+    }
 
     $return = array();
     foreach ($values as $delta => $value) {
@@ -310,9 +328,18 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $file_function = $arguments['file_function'];
     }
 
+    $destination_dir = file_field_widget_uri($field_info, $instance);
+    file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
+
     if ($arguments['source_path']) {
-      $full_path = rtrim($arguments['source_path'], "/\\") .
-        '/' . ltrim($path, "/\\");
+      // $full_path needs adjusting for file_blob
+      if ($file_function == 'file_blob') {
+        $full_path = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $arguments['source_path']));
+      }
+      else {
+        $full_path = rtrim($arguments['source_path'], "/\\") .
+          '/' . ltrim($path, "/\\");
+      }
     }
     else {
       $full_path = $path;
@@ -320,6 +347,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
 
     $remote = FALSE;
 
+    // TODO: belongs in prepare or validate?
     // Check that source exists. If not, mark the entity as 'needs_update' and bail.
     // Sometimes the source file arrives later, when rsync is slower than DB.
     if (!is_file($full_path)) {
@@ -339,13 +367,11 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       }
     }
 
-    $destination_dir = file_field_widget_uri($field_info, $instance);
-    file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
     if ($remote) {
       $destination_file = $destination_dir . "/" . basename($full_path);
     }
     else {
-      $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $full_path));
+      $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', basename($full_path)));
     }
 
     $real_destination_file = drupal_realpath($destination_file);
@@ -436,6 +462,49 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
             $file->fid = $fids[$source];
           }
           break;
+        case 'file_link':
+        case 'file_blob':
+          // The file is copied by some outside process (e.g., rsync), and we
+          // just need to make sure it's present and has a files table row.
+          // Not present - skip
+          migrate_instrument_start('file_link: file_exists');
+          if (!file_exists($full_path)) {
+            migrate_instrument_stop('file_link: file_exists');
+            $message = t('File does not exist in Drupal files directory: !path',
+              array('!path' => $full_path));
+            if ($arguments['throw_error']) {
+              throw new MigrateException($message, MigrationBase::MESSAGE_ERROR);
+            }
+            else {
+              $migration->saveMessage($message, MigrationBase::MESSAGE_INFORMATIONAL);
+            }
+            $message_saved = TRUE;
+            // TODO     $migration->needsUpdate = TRUE;
+            continue;
+          }
+          migrate_instrument_stop('file_link: file_exists');
+
+          // Files table entry exists? Use that...
+          migrate_instrument_start('file_link: select existing');
+          // Note that indexing files.filepath can be very helpful.
+          // TODO: Might be better way that straight query in D7?
+          $file = db_select('file_managed', 'f')
+                  ->fields('f')
+                  ->condition('uri', $full_path)
+                  ->execute()
+                  ->fetchAssoc();
+          migrate_instrument_stop('file_link: select existing');
+          if (!$file) {
+            migrate_instrument_start('file_link: create file record');
+            $file = new stdClass;
+            $file->uri = $full_path;
+            $file->uid = isset($entity->uid) ? $entity->uid : 0;
+            $file->status |= FILE_STATUS_PERMANENT;
+
+            $file = file_save($file);
+            migrate_instrument_stop('file_link: create file record');
+          }
+          break;
       }
       migrate_instrument_stop('MigrateFileFieldHandler file_function');
     }
@@ -478,9 +547,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * Arguments for a file_field migration.
    *
    * @param source_path
-   *   Path to source file.
+   *   Path to source file. In the case of file_blob, the desired filename to write.
    * @param file_function
-   *   file_fast, file_move, or file_copy.
+   *   file_fast, file_move, file_copy, file_link, or file_blob.
    * @param file_replace
    *   Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.
    * @param language

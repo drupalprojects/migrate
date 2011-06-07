@@ -45,6 +45,7 @@ class MigrateExampleOracle extends Migration {
       'OID' => t('Source id'),
       'TITLE' => t('Title'),
       'BODY' => t('Description'),
+      'MAINIMAGE' => t('Main image'),
       'CREATED' => t('Creation date'),
       'UPDATED' => t('Updated date'),
     );
@@ -52,7 +53,7 @@ class MigrateExampleOracle extends Migration {
     // Oracle will usually (depending on server configuration) return only a
     // date (such as 01-MAY-11) for datetime fields - you need to use TO_CHAR()
     // to extract time information as well.
-    $query = "SELECT OID, TITLE, BODY, TO_CHAR(CREATED, 'yyyy/mm/dd hh24:mi:ss') CREATED,
+    $query = "SELECT OID, TITLE, BODY, MAINIMAGE, TO_CHAR(CREATED, 'yyyy/mm/dd hh24:mi:ss') CREATED,
                 TO_CHAR(UPDATED, 'yyyy/mm/dd hh24:mi:ss') UPDATED
               FROM ORACLE_CONTENT";
     $count_query = "SELECT COUNT(*) FROM ORACLE_CONTENT";
@@ -68,6 +69,14 @@ class MigrateExampleOracle extends Migration {
     $this->addFieldMapping('uid')
          ->defaultValue(1);
     $this->addFieldMapping('body', 'BODY');
+    $this->addFieldMapping('field_mainimage', 'MAINIMAGE')
+         ->description('An image blob in the DB')
+         ->arguments(array(
+              'file_function' => 'file_blob',
+              // Alternatively, specify a column here for dynamic file name.
+              'source_path' => 'druplicon.png',
+
+          ));
     $this->addFieldMapping('created', 'CREATED');
     $this->addFieldMapping('changed', 'UPDATED');
 

@@ -19,6 +19,7 @@ function migrate_example_oracle_install() {
             (OID     NUMBER NOT NULL,
              TITLE   VARCHAR2(255) NOT NULL,
              BODY    CLOB NOT NULL,
+             MAINIMAGE   BLOB NOT NULL,
              CREATED DATE NOT NULL,
              UPDATED DATE NOT NULL,
              CONSTRAINT ORACLE_CONTENT_PK PRIMARY KEY (OID)
@@ -36,11 +37,11 @@ function migrate_example_oracle_install() {
 
   // Insert a test row or three
   $query = "INSERT INTO ORACLE_CONTENT
-            (OID, TITLE, BODY, CREATED, UPDATED)
-            VALUES(:oid, :title, EMPTY_CLOB(),
+            (OID, TITLE, BODY, MAINIMAGE, CREATED, UPDATED)
+            VALUES(:oid, :title, EMPTY_CLOB(), EMPTY_BLOB(),
               TO_DATE(:created, 'yyyy/mm/dd hh24:mi:ss'),
               TO_DATE(:updated, 'yyyy/mm/dd hh24:mi:ss'))
-            RETURNING body INTO :body";
+            RETURNING body, mainimage INTO :body, :mainimage";
   $result = oci_parse($connection, $query);
   if (!$result) {
     $e = oci_error($connection);
@@ -52,7 +53,9 @@ function migrate_example_oracle_install() {
   oci_bind_by_name($result, ':oid', $oid, 1, SQLT_INT);
   oci_bind_by_name($result, ':title', $title, 255, SQLT_CHR);
   $body_clob = oci_new_descriptor($connection, OCI_D_LOB);
+  $image_blob = oci_new_descriptor($connection, OCI_D_LOB);
   oci_bind_by_name($result, ':body', $body_clob, -1, SQLT_CLOB);
+  oci_bind_by_name($result, ':mainimage', $image_blob, -1, SQLT_BLOB);
   oci_bind_by_name($result, ':created', $created, 9, SQLT_CHR);
   oci_bind_by_name($result, ':updated', $updated, 9, SQLT_CHR);
   foreach ($data as $row) {
@@ -63,6 +66,7 @@ function migrate_example_oracle_install() {
       throw new Exception($e['message'] . "\n" . $e['sqltext']);
     }
     $body_clob->save($body);
+    $image_blob->save($mainimage);
   }
   oci_commit($connection);
 }
@@ -81,7 +85,8 @@ function migrate_example_oracle_uninstall() {
   }
 
   // Get rid of the test data
-  $query = "DROP TABLE ORACLE_CONTENT";
+  // This SQL from http://dbaforums.org/oracle/index.php?showtopic=4990.
+  $query = "begin execute immediate 'drop table ORACLE_CONTENT'; exception when others then null; end;";
   $result = oci_parse($connection, $query);
   if (!$result) {
     $e = oci_error($connection);
@@ -134,7 +139,7 @@ $conf[\'oracle_db\'] = array(
 
       // Check that we can connect to the Oracle db.
       $requirements['oracle_connect'] = array('title' => $t('Oracle connection available'));
-      $connection = @oci_connect($conf['oracle_db']['username'], $conf['oracle_db']['password'],
+      $connection = oci_connect($conf['oracle_db']['username'], $conf['oracle_db']['password'],
         $conf['oracle_db']['connection_string'], 'UTF8');
       if (!$connection) {
         $e = oci_error();

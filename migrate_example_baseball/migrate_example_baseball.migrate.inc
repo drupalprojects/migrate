@@ -5,6 +5,18 @@
  *   A baseball game migration example.
  */
 
+
+/*
+ * You must implement hook_migrate_api(), setting the API level to 2, for
+ * your migration classes to be recognized by the Migrate module.
+ */
+function migrate_example_baseball_migrate_api() {
+  $api = array(
+    'api' => 2,
+  );
+  return $api;
+}
+
 /**
  * A dynamic migration that is reused for each source CSV file.
  */

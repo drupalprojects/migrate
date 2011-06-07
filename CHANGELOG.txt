@@ -3,6 +3,8 @@ Next release
 ============
 
 Features and enhancements
+- #1181826 - Implemented hook_hook_info(), so implementing modules can define 
+  hook_migrate_api() in example.migrate.inc.
 - #1179464 - Added capability of disabling handlers.
 - #1175094 - Added support for field handler complete() methods.
 - #1176930 - Renamed migrate-descriptions to migrate-mappings, enhanced to export to CSV.

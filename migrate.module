@@ -321,6 +321,16 @@ function _migrate_class_list($parent_class, array $existing = array()) {
   return $class_lists[$parent_class];
 }
 
+/**
+ * Implementation of hook_hook_info().
+ */
+function migrate_hook_info() {
+  $hooks['migrate_api'] = array(
+    'group' => 'migrate',
+  );
+  return $hooks;
+}
+
 /*
  * Implementation of hook_migrate_api().
  */

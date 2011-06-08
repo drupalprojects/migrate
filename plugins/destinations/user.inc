@@ -54,7 +54,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
    */
   public function __construct(array $options = array()) {
     parent::__construct('user', 'user', $options);
-    $this->md5Passwords = $options['md5_passwords'];
+    if (!empty($options['md5_passwords'])) {
+      $this->md5Passwords = $options['md5_passwords'];
+    }
   }
 
   /**

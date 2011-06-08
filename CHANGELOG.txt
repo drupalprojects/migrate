@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1181720 - Add item/second limiting to UI.
 - #1181826 - Implemented hook_hook_info(), so implementing modules can define 
   hook_migrate_api() in example.migrate.inc.
 - #1179464 - Added capability of disabling handlers.

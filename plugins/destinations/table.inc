@@ -98,6 +98,7 @@ class MigrateDestinationTable extends MigrateDestination {
     if (isset($row->migrate_map_destid1)) {
       $i = 1;
       foreach ($this->schema['primary key'] as $key) {
+        $primary_key[] = $key;
         $destination_id = $row->{'migrate_map_destid' . $i};
         if (isset($entity->{$key})) {
           if ($entity->{$key} != $destination_id) {
@@ -119,7 +120,8 @@ class MigrateDestinationTable extends MigrateDestination {
         }
       }
 
-      $select = db_select($this->tableName);
+      $select = db_select($this->tableName)
+                ->fields($this->tableName);
       foreach ($this->schema['primary key'] as $key) {
         $select->condition($key, $entity->{$key});
       }

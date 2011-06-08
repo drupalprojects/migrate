@@ -10,6 +10,7 @@ Features and enhancements
 - #1169724 - Implemented source plugin for Oracle.
 
 Bug fixes
+- #1181652 - Fixed MigrateDestinationTable to work on update.
 - #1174934 - Support multi-column keys for table_copy destination.
 - #1171840 - Delete temporary files when importing URLs to filefields.
 - #1176790 - Prevent multiple handlers from messing up fields info.

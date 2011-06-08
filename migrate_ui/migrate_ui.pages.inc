@@ -146,6 +146,21 @@ function _migrate_ui_dashboard_form() {
     '#title_display' => 'invisible',
     '#options' => $options,
   );
+  $build['operations']['limit'] = array(
+    '#tree' => TRUE,
+    'value' => array(
+      '#type' => 'textfield',
+      '#title' => t('Limit to'),
+      '#size' => 10,
+    ),
+    'unit' => array(
+      '#type' => 'select',
+      '#options' => array(
+        'items' => t('items'),
+        'seconds' => t('seconds'),
+      ),
+    ),
+  );
   $build['operations']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Execute'),
@@ -188,10 +203,11 @@ function migrate_ui_dashboard_validate($form, &$form_state) {
  */
 function migrate_ui_dashboard_submit($form, &$form_state) {
   $operation = $form_state['values']['operation'];
+  $limit = $form_state['values']['limit'];
   $operations = array();
   foreach ($form_state['values']['dashboard'] as $machine_name) {
     if ($machine_name) {
-      $operations[] = array('migrate_ui_batch', array($operation, $machine_name));
+      $operations[] = array('migrate_ui_batch', array($operation, $machine_name, $limit));
     }
   }
 
@@ -219,10 +235,14 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
  *  Operation to perform - 'import', 'rollback', 'stop', or 'reset'.
  * @param $machine_name
  *  Machine name of migration to process.
+ * @param $limit
+ *  An array indicating the number of items to import or rollback, or the
+ *  number of seconds to process. Should include 'unit' (either 'items' or
+ *  'seconds') and 'value'.
  * @param $context
  *  Batch API context structure
  */
-function migrate_ui_batch($operation, $machine_name, &$context) {
+function migrate_ui_batch($operation, $machine_name, $limit, &$context) {
   // If we got a stop message, skip everything else
   if (isset($context['results']['stopped'])) {
     $context['finished'] = 1;
@@ -239,10 +259,10 @@ function migrate_ui_batch($operation, $machine_name, &$context) {
   // Perform the requested operation
   switch ($operation) {
     case 'import':
-      $result = $migration->processImport();
+      $result = $migration->processImport(array('limit' => $limit));
       break;
     case 'rollback':
-      $result = $migration->processRollback();
+      $result = $migration->processRollback(array('limit' => $limit));
       break;
     case 'stop':
       $migration->stopProcess();

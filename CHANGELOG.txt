@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1181720 - Add item/second limiting to UI.
 - #1179464 - Added capability of disabling handlers.
 - #1175094 - Added support for field handler complete() methods.
 - #1176930 - Renamed migrate-descriptions to migrate-mappings, enhanced to export to CSV.

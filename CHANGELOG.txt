@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1180188 - Added ability to save BLOB data to file fields.
 - #1181136 - Provided mechanism to handle incoming MD5-encrypted passwords.
 - #1181720 - Add item/second limiting to UI.
 - #1181826 - Implemented hook_hook_info(), so implementing modules can define 

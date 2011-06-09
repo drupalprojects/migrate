@@ -94,8 +94,8 @@ function migrate_drush_command() {
       'migration' => 'Name of the migration',
     ),
     'examples' => array(
-      'migrate-descriptions MyNode' => 'Show mappings for the MyNode migration',
-      'migrate-descriptions MyNode --csv --full' => 'Export full mapping information in CSV format',
+      'migrate-mappings MyNode' => 'Show mappings for the MyNode migration',
+      'migrate-mappings MyNode --csv --full' => 'Export full mapping information in CSV format',
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mm'),

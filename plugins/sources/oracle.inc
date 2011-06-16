@@ -236,10 +236,15 @@ class MigrateSourceOracle extends MigrateSource {
         return;
       }
 
+      // Check the map - if it's already mapped, and not marked for update, skip it
       $map = $migration->getMap();
       $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
+      }
+      $map_row = $map->getRowBySource($this->currentKey);
+      if ($map_row && $map_row['needs_update'] == 0) {
+        continue;
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean

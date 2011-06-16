@@ -57,7 +57,7 @@ class MigrateSourceOracle extends MigrateSource {
    * @param string $character_set
    *  Character set to use in retrieving data. Defaults to 'UTF'.
    */
-  static public function options($character_set = 'UTF') {
+  static public function options($character_set = 'UTF8') {
     return compact('character_set');
   }
 
@@ -72,7 +72,7 @@ class MigrateSourceOracle extends MigrateSource {
     $this->configuration = $configuration;
     $this->fields = $fields;
     if (empty($options['character_set'])) {
-      $this->characterSet = 'UTF';
+      $this->characterSet = 'UTF8';
     }
     else {
       $this->characterSet = $options['character_set'];
@@ -96,7 +96,7 @@ class MigrateSourceOracle extends MigrateSource {
       if (!extension_loaded('oci8')) {
         throw new Exception(t('You must configure the oci8 extension in PHP.'));
       }
-      $this->connection = @oci_connect($this->configuration['username'],
+      $this->connection = oci_connect($this->configuration['username'],
         $this->configuration['password'], $this->configuration['connection_string'],
         $this->characterSet);
     }
@@ -105,7 +105,6 @@ class MigrateSourceOracle extends MigrateSource {
     }
     else {
       $e = oci_error();
-      $migration = Migration::currentMigration();
       throw new Exception($e['message']);
       return FALSE;
     }
@@ -130,6 +129,7 @@ class MigrateSourceOracle extends MigrateSource {
    *  Not currently implemented.
    */
   public function count($refresh = FALSE) {
+    migrate_instrument_start('MigrateSourceOracle count');
     if ($this->connect()) {
       $statement = oci_parse($this->connection, $this->countQuery);
       if (!$statement) {
@@ -146,8 +146,9 @@ class MigrateSourceOracle extends MigrateSource {
     }
     else {
       // Do something else?
-      return FALSE;
+      $count = FALSE;
     }
+    migrate_instrument_stop('MigrateSourceOracle count');
     return $count;
   }
 
@@ -222,6 +223,8 @@ class MigrateSourceOracle extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
+    migrate_instrument_start('MigrateSourceOracle next');
+
     $migration = Migration::currentMigration();
 
     // Enforce the itemlimit
@@ -258,6 +261,8 @@ class MigrateSourceOracle extends MigrateSource {
     if (!is_object($this->currentRow)) {
       $this->currentRow = NULL;
     }
+
+    migrate_instrument_stop('MigrateSourceOracle next');
   }
 
   /**
@@ -266,7 +271,9 @@ class MigrateSourceOracle extends MigrateSource {
    * returned directly without special handling.
    */
   public function getNextObject() {
+    migrate_instrument_start('MigrateSourceOracle getNextObject');
     $row = oci_fetch_array($this->result, OCI_ASSOC | OCI_RETURN_NULLS | OCI_RETURN_LOBS);
+    migrate_instrument_stop('MigrateSourceOracle getNextObject');
     if (!empty($row)) {
       return (object)$row;
     }

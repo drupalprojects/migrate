@@ -680,6 +680,7 @@ function migrate_example_wine_categories() {
       'settings' => array(
         'allowed_values' => array(
           array(
+            'vocabulary' => $vocabulary->machine_name,
             'vid' => $vocabulary->vid,
             'parent' => 0,
           ),
@@ -719,6 +720,7 @@ function migrate_example_wine_categories() {
       'settings' => array(
         'allowed_values' => array(
           array(
+            'vocabulary' => $vocabulary->machine_name,
             'vid' => $vocabulary->vid,
             'parent' => 0,
           ),
@@ -771,6 +773,7 @@ function migrate_example_wine_categories() {
       'settings' => array(
         'allowed_values' => array(
           array(
+            'vocabulary' => $vocabulary->machine_name,
             'vid' => $vocabulary->vid,
             'parent' => 0,
           ),

@@ -2,7 +2,8 @@
 
 /**
  * @file
- * Support for files as destinations.
+ * Support for file entity as destination. Note that File Fields have a their
+ * own destination in fields.inc
  */
 
 /**
@@ -41,6 +42,9 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *
    * @param boolean $copy_file
    *  TRUE to have the file copied from the provided URI to Drupal. Defaults to FALSE.
+   * @param boolean $copy_blob
+   *  TRUE to the binary value written to filesystem at $copy_destination. When this
+   *  is TRUE, $copy_file should be FALSE. Defaults to FALSE.
    * @param string $copy_destination
    *  If $copy_file is TRUE, the scheme/directory to use as the destination for the copied file.
    *  Defaults to 'public://'.
@@ -50,7 +54,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *  Default text format for files created via this destination class.
    */
   static public function options($copy_file, $copy_destination, $language, $text_format) {
-    return compact('copy_file', 'copy_destination', 'language', 'text_format');
+    return compact('copy_file', 'copy_blob', 'copy_destination', 'language', 'text_format');
   }
 
   /**
@@ -62,6 +66,9 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
   public function __construct(array $options = array()) {
     if (isset($options['copy_file'])) {
       $this->copyFile = $options['copy_file'];
+    }
+    if (isset($options['copy_blob'])) {
+      $this->copyBlob = $options['copy_blob'];
     }
     if (isset($options['copy_destination'])) {
       $this->copyDestination = $options['copy_destination'];
@@ -81,9 +88,10 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     // First the core properties
     $fields['fid'] = t('File: Existing file ID');
     $fields['uid'] = t('File: Uid of user associated with file');
-    $fields['filename'] = t('File: Name of the file with no path components');
-    $fields['uri'] = t('URI of the file');
-    $fields['filemime'] = t('File: The file\'s MIME type');
+    $fields['filename'] = t('File: Name of the file with no path components. Required for copy_blob migration.');
+    $fields['uri'] = t('URI of the source file. Not used for copy_blob migrations.');
+    $fields['contents'] = t('Contents of the file (only used with copy_blob option)');
+    $fields['filemime'] = t('File: The file\'s MIME type. Optional.');
     $fields['status'] = t('File: A bitmapped field indicating the status of the file');
     $fields['timestamp'] = t('File: UNIX timestamp for the date the file was added');
 
@@ -92,6 +100,37 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     $fields += migrate_handler_invoke_all('File', 'fields');
 
     return $fields;
+  }
+
+  /**
+   * Copy from BLOB to filesystem if needed
+   *
+   * @param $entity
+   *  Entity object to build. Prefilled with any fields mapped in the Migration.
+   * @param $source_row
+   *  Raw source data object - passed through to prepare handlers.
+   */
+  public function prepare($entity, stdClass $source_row) {
+    if ($this->copyBlob) {
+      if (empty($entity->filename)) {
+        throw new MigrateException("You must map to filename field for copy_blob migrations.");
+        return FALSE;
+      }
+      $destination_dir = $this->copyDestination;
+      // file_save() expects $file->uri to be set.
+      $entity->uri = $destination_dir . str_replace('/', '-', $entity->filename);
+      $destination_file = file_stream_wrapper_uri_normalize($entity->uri);
+      if (!file_exists($destination_file)) {
+        file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+        try {
+          $return = (bool) file_put_contents($destination_file, $entity->contents);
+        }
+        catch (Exception $exception) {
+          throw new MigrateException("Can't write file to: $destination_file");
+          return FALSE;
+        }
+      }
+    }
   }
 
   /**
@@ -185,8 +224,21 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     else {
       $updating = FALSE;
     }
+
     migrate_instrument_start('file_save');
-    $file = file_save($file);
+    // Save this file to DB.
+    if ($existing_files = file_load_multiple(array(), array('uri' => $file->uri))) {
+      // Existing record exists. Reuse it.
+      $file = reset($existing_files);
+      // TODO: Do we really need to save again? Copied from File Field.
+      // $file = file_save($file);
+    }
+    else {
+      // Get this orphaned file into the file table.
+      $file->fid = NULL;
+      $file->status |= FILE_STATUS_PERMANENT; // Save a write in file_field_presave().
+      $file = file_save($file);
+    }
     migrate_instrument_stop('file_save');
     $this->complete($file, $row);
     if (isset($file->fid)) {

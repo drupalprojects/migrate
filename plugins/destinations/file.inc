@@ -2,7 +2,8 @@
 
 /**
  * @file
- * Support for files as destinations.
+ * Support for file entity as destination. Note that File Fields have a their
+ * own destination in fields.inc
  */
 
 /**

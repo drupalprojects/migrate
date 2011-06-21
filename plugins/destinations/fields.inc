@@ -61,7 +61,7 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
           $entity->$machine_name = array($entity->$machine_name);
         }
         $field_info = field_info_field($machine_name);
-        $entity->$machine_name = migrate_field_handler_invoke_all($entity, $field_info,
+        migrate_field_handler_invoke_all($entity, $field_info,
           $instance, $entity->$machine_name, 'complete');
       }
     }

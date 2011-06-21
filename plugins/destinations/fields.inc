@@ -59,7 +59,7 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
         if (!is_array($entity->$machine_name)) {
           $entity->$machine_name = array($entity->$machine_name);
         }
-        $entity->$machine_name = migrate_field_handler_invoke_all($entity,
+        migrate_field_handler_invoke_all($entity,
           $instance, $entity->$machine_name, 'complete');
       }
     }

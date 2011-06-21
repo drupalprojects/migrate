@@ -3,10 +3,10 @@ Next release
 ============
 
 Features and enhancements
-- #1180188 - Added ability to save BLOB data to file fields.
+- #1180188 - Added ability to save BLOB data to file fields and file entities.
 - #1181136 - Provided mechanism to handle incoming MD5-encrypted passwords.
 - #1181720 - Add item/second limiting to UI.
-- #1181826 - Implemented hook_hook_info(), so implementing modules can define 
+- #1181826 - Implemented hook_hook_info(), so implementing modules can define
   hook_migrate_api() in example.migrate.inc.
 - #1179464 - Added capability of disabling handlers.
 - #1175094 - Added support for field handler complete() methods.
@@ -32,7 +32,7 @@ Bug fixes
 - #1159274 - Handle spaces in URLs for MigrateDestinationFile.
 - #1161812 - Added handling for NULL watchdog variables.
 - #1009708 - Fixed E_STRICT notice on MigrateDestinationRole::getKeySchema().
-- #1161590 - Made $migration optional for handleSourceMigration(), createStubWrapper(), 
+- #1161590 - Made $migration optional for handleSourceMigration(), createStubWrapper(),
   lookupDestinationID().
 - #1161482 - Handle NULL source_field mappings.
 - #1156972 - Do not include message table in source queries.
@@ -42,7 +42,7 @@ Migrate 2.1 Beta 1
 
 API change:
 
-Any field handler prepare() or complete() methods you have defined must be changed 
+Any field handler prepare() or complete() methods you have defined must be changed
 to remove stdClass for the $entity argument. I.e., prepare(stdClass $entity, stdClass $row)
 should now be prepare($entity, stdClass $row).
 
@@ -130,7 +130,7 @@ Let a node migration set node_revisions.uid. That's the 'last edited by' user
 Bug fixes
 - #1053798 - Consistent use of error codes.
 - #1053526 - Machine names in drush commands now case-insensitive.
-- #914440 - Enhance multilingual support. 
+- #914440 - Enhance multilingual support.
 - #1014648 - Defaulting of file field subfields.
 - #1037872 - Make sure is_new is off for previously migrated content.
 - #919706 - Fix drush migrate-descriptions command.
@@ -155,9 +155,9 @@ Features and enhancements
 - #989200 - Support "dynamic" migrations. Changes to be aware of:
   All modules implementing migration classes must now implement hook_migrate_api()
     (see migrate_migrate_api() for an example).
-  Dependencies and sourceMigrations must now be expressed in terms of 
+  Dependencies and sourceMigrations must now be expressed in terms of
     machine name rather than class name.
-  MigrationBase::getInstance now takes a machine name rather than a class name. 
+  MigrationBase::getInstance now takes a machine name rather than a class name.
   Migration class names are no longer required to end in 'Migration'.
 - #992898 - Pass options to source and destination constructors as arrays.
 File destinations (i.e., migrating directly to the file_managed table, with
@@ -191,5 +191,5 @@ Bug fixes
 
 Migrate 2.0 Beta 1
 ==================
-Version 2 of the Migrate module is an entirely new implementation - it is 
+Version 2 of the Migrate module is an entirely new implementation - it is
 pointless to list changes since Migrate 1.

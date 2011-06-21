@@ -148,7 +148,7 @@ class WineBestWithMigration extends WineTermMigration {
  * class. This will copy the files themselves from the source, and set up the
  * Drupal file tables appropriately.
  */
-class WineFileMigration extends AdvancedExampleMigration {
+class WineFileCopyMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Profile images');
@@ -179,11 +179,54 @@ class WineFileMigration extends AdvancedExampleMigration {
   }
 }
 
+/**
+ * Migration class to test importing from a BLOB column into a file entity. Typically,
+ * one would use this OR import into a File Field (@see MigrateExampleOracleNode).
+ */
+class WineFileBlobMigration extends AdvancedExampleMigration {
+  public function __construct() {
+    parent::__construct();
+    $this->description = t('Example migration from BLOB column into files.');
+    $this->dependencies = array('WinePrep');
+    $this->map = new MigrateSQLMap($this->machineName,
+        array('imageid' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'description' => 'Image ID.'
+                )
+             ),
+        MigrateDestinationFile::getKeySchema()
+    );
+    $query = db_select('migrate_example_wine_blobs', 'wf')
+             ->fields('wf', array('imageid', 'imageblob'));
+    $this->source = new MigrateSourceSQL($query);
+
+    $options = array(
+      'copy_blob' => TRUE,
+      'copy_destination' => 'public://', // This is the default. Specified for completeness.
+    );
+    $this->destination = new MigrateDestinationFile($options);
+
+    // Basic fields
+    $this->addFieldMapping('uid')
+         ->defaultValue(1);
+    $this->addFieldMapping('filename')
+         ->defaultValue('druplicon.png');
+    $this->addFieldMapping('contents', 'imageblob')
+         ->description('An image blob in the DB');
+    $this->addFieldMapping('timestamp', 'CREATED');
+
+    // Unmapped destination fields
+    $this->addUnmigratedDestinations(array('fid', 'uri', 'filemime', 'status'));
+  }
+}
+
 class WineRoleMigration extends XMLMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('XML feed (multi items) of roles (positions)');
-    $this->softDependencies = array('WineFile');
+    $this->softDependencies = array('WineFileCopy');
 
     // There isn't a consistent way to automatically identify appropriate "fields"
     // from an XML feed, so we pass an explicit list of source fields
@@ -226,7 +269,7 @@ class WineUserMigration extends AdvancedExampleMigration {
   public function __construct() {
     parent::__construct();
     $this->description = t('Wine Drinkers of the world');
-    $this->dependencies = array('WinePrep', 'WineFile', 'WineRole');
+    $this->dependencies = array('WinePrep', 'WineFileCopy', 'WineRole');
     $this->map = new MigrateSQLMap($this->machineName,
         array('accountid' => array(
                 'type' => 'int',
@@ -263,7 +306,7 @@ class WineUserMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('field_migrate_example_gender', 'sex')
          ->description(t('Map from M/F to 0/1 in prepare method'));
     $this->addFieldMapping('picture', 'imageid')
-         ->sourceMigration('WineFile');
+         ->sourceMigration('WineFileCopy');
 
     // Unmapped source fields
 

@@ -19,12 +19,12 @@
  */
 
 /**
- * Migration class to test importing from Oracle.
+ * Migration class to test importing from Oracle into nodes.
  */
-class MigrateExampleOracle extends Migration {
+class MigrateExampleOracleNode extends Migration {
   public function __construct() {
     parent::__construct();
-    $this->description = t('Example migration from Oracle');
+    $this->description = t('Example migration from Oracle into nodes.');
 
     // Note that Oracle by default upper-cases all identifiers, so use upper-case
     // for the key name and for source fields below.

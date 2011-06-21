@@ -21,7 +21,7 @@ class MigrateXMLUnitTest extends DrupalWebTestCase {
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Region term import returned RESULT_COMPLETED'));
-    $migration = Migration::getInstance('WineFile');
+    $migration = Migration::getInstance('WineFileCopy');
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('File import returned RESULT_COMPLETED'));

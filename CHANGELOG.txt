@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1195802 - Added prepareRow() support for MSSQL plugin.
 - #1195784 - Added verification of required extension to MSSQL plugin.
 - #1181720 - Add item/second limiting to UI.
 - #1179464 - Added capability of disabling handlers.

@@ -309,6 +309,9 @@ class MigrateSourceMSSQL extends MigrateSource {
         $this->numProcessed++;
         break;
       }
+      else {
+        $this->numIgnored++;
+      }
     }
 
     if (!is_object($this->currentRow)) {

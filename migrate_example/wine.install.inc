@@ -70,6 +70,8 @@ function migrate_example_wine_disable() {
   Migration::deregisterMigration('WineUserUpdates');
   Migration::deregisterMigration('WineVarietyUpdates');
   Migration::deregisterMigration('WineCommentUpdates');
+  Migration::deregisterMigration('WineRole');
+  Migration::deregisterMigration('WineTable');
 }
 
 function migrate_example_wine_schema_wine() {

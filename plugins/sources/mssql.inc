@@ -95,6 +95,9 @@ class MigrateSourceMSSQL extends MigrateSource {
    */
   protected function connect() {
     if (!isset($this->connection)) {
+      if (!extension_loaded('mssql')) {
+        throw new Exception(t('You must configure the mssql extension in PHP.'));
+      }
       if (isset($this->configuration['port'])) {
         $host = $this->configuration['servername'] . ':' . $this->configuration['port'];
       }

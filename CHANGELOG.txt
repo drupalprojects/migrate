@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1199150 - Added file_fid function to file field migration.
 - #1195802 - Added prepareRow() support for MSSQL plugin.
 - #1195784 - Added verification of required extension to MSSQL plugin.
 - #1180188 - Added ability to save BLOB data to file fields and file entities.

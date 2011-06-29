@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1078368 - Implemented create_term argument for term references, to lazy-create terms.
 - #1195802 - Added prepareRow() support for MSSQL plugin.
 - #1195784 - Added verification of required extension to MSSQL plugin.
 - #1180188 - Added ability to save BLOB data to file fields and file entities.

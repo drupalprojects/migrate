@@ -208,11 +208,22 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       // Cannot use taxonomy_term_load_multiple() since we have an array of names.
       // It wants a singular value.
       $tids = db_select('taxonomy_term_data', 'td')
-        ->fields('td', array('tid'))
+        ->fields('td', array('tid', 'name'))
         ->condition('td.name', $values, 'IN')
         ->condition('td.vid', $vid)
         ->execute()
-        ->fetchAllKeyed(0, 0);
+        ->fetchAllKeyed(1, 0);
+      if (!empty($arguments['create_term'])) {
+        foreach ($values as $value) {
+          if (!isset($tids[$value])) {
+            $new_term = new stdClass();
+            $new_term->vid = $vid;
+            $new_term->name = $value;
+            taxonomy_term_save($new_term);
+            $tids[$value] = $new_term->tid;
+          }
+        }
+      }
     }
     else {
       $tids = array();

@@ -34,6 +34,7 @@ Much of the Migrate module functionality was sponsored by Cyrve, for its clients
 (http://www.genomeweb.com), The Economist (http://www.economist.com), and Examiner.com 
 (http://www.examiner.com). 
 
-Author
-------
+Authors
+-------
 Mike Ryan - http://drupal.org/user/4420
+Moshe Weitzman - http://drupal.org/user/23

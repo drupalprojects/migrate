@@ -26,6 +26,15 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    */
   protected $copyDestination = 'public://';
 
+  /**
+   * When creating a file entry, add a usage entry so that the file is only
+   * deleted when the file itself is deleted. Otherwise, the deletion of a
+   * referencing entity may delete the file.
+   *
+   * @var boolean
+   */
+  protected $preserveFiles = FALSE;
+
   static public function getKeySchema() {
     return array(
       'fid' => array(
@@ -52,9 +61,14 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *  Default language for files created via this destination class.
    * @param string $text_format
    *  Default text format for files created via this destination class.
+   * @param boolean $preserve_files
+   *  TRUE will add a self-reference to each file created, so it is not deleted
+   *  on rollback of fields referencing it.
    */
-  static public function options($copy_file, $copy_destination, $language, $text_format) {
-    return compact('copy_file', 'copy_blob', 'copy_destination', 'language', 'text_format');
+  static public function options($copy_file, $copy_destination, $language,
+      $text_format, $preserve_files = FALSE) {
+    return compact('copy_file', 'copy_blob', 'copy_destination', 'language',
+      'text_format', 'preserve_files');
   }
 
   /**
@@ -72,6 +86,9 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     }
     if (isset($options['copy_destination'])) {
       $this->copyDestination = $options['copy_destination'];
+    }
+    if (isset($options['preserve_files'])) {
+      $this->preserveFiles = $options['preserve_files'];
     }
     parent::__construct('file', 'file', $options);
   }
@@ -144,7 +161,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     $file = file_load(reset($fid));
     if ($file) {
       // TODO: Error checking
-      file_delete($file);
+      file_delete($file, TRUE);
     }
     migrate_instrument_stop('file_delete');
   }
@@ -241,6 +258,13 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     }
     migrate_instrument_stop('file_save');
     $this->complete($file, $row);
+
+    // When creating a new file entry, if we want to preserve it against deletion,
+    // add a usage entry.
+    if (!$updating && $this->preserveFiles) {
+      file_usage_add($file, 'migrate', 'file', $file->fid);
+    }
+
     if (isset($file->fid)) {
       $return = array($file->fid);
       if ($updating) {

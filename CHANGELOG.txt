@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1205278 - Added preserve_files option to MigrateDestinationFile.
 - #1078368 - Implemented create_term argument for term references, to lazy-create terms.
 - #1199150 - Added file_fid function to file field migration.
 - #1195802 - Added prepareRow() support for MSSQL plugin.

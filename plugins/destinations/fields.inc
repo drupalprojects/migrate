@@ -88,10 +88,10 @@ abstract class MigrateFieldHandler extends MigrateHandler {
     $migration = Migration::currentMigration();
     switch (TRUE) {
       case !field_is_translatable($migration->getDestination()->getEntityType(), $field_info):
-          return LANGUAGE_NONE;
+        return LANGUAGE_NONE;
       case isset($arguments['language']):
         return $arguments['language'];
-      case $entity->language != LANGUAGE_NONE:
+      case !empty($entity->language) && $entity->language != LANGUAGE_NONE:
         return $entity->language;
         break;
       default:

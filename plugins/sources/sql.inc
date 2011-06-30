@@ -72,9 +72,11 @@ class MigrateSourceSQL extends MigrateSource {
    *
    * @param boolean $map_joinable
    *  Indicates whether the map table can be joined directly to the source query.
+   * @param boolean $cache_counts
+   *  Indicates whether to cache counts of source records.
    */
-  static public function options($map_joinable) {
-    return compact('map_joinable');
+  static public function options($map_joinable, $cache_counts) {
+    return compact('map_joinable', 'cache_counts');
   }
 
   /**
@@ -94,7 +96,7 @@ class MigrateSourceSQL extends MigrateSource {
    */
   public function __construct(SelectQuery $query, array $fields = array(),
        SelectQuery $count_query = NULL, array $options = array()) {
-    parent::__construct();
+    parent::__construct($options);
     $this->originalQuery = $query;
     $this->query = clone $query;
     $this->fields = $fields;
@@ -208,15 +210,8 @@ class MigrateSourceSQL extends MigrateSource {
 
   /**
    * Return a count of all available source records.
-   *
-   * @param boolean $refresh
-   *  If TRUE, or if there is no cached count, perform a SQL COUNT query to
-   *  retrieve and cache the number of rows in the query. Otherwise, return
-   *  the last cached value.
-   *
-   *  TODO: Implement caching
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     $count = $this->countQuery->execute()->fetchField();
     return $count;
   }

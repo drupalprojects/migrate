@@ -63,9 +63,11 @@ class MigrateSourceMSSQL extends MigrateSource {
    *
    * @param int $batch_size
    *  Number of rows to pull at once (defaults to 500).
+   * @param boolean $cache_counts
+   *  Indicates whether to cache counts of source records.
    */
-  static public function options($batch_size) {
-    return compact('batch_size');
+  static public function options($batch_size, $cache_counts) {
+    return compact('batch_size', 'cache_counts');
   }
 
   /**
@@ -73,7 +75,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    */
   public function __construct(array $configuration, $query, $count_query,
       array $fields, array $options = array()) {
-    parent::__construct();
+    parent::__construct($options);
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->configuration = $configuration;
@@ -129,32 +131,15 @@ class MigrateSourceMSSQL extends MigrateSource {
 
   /**
    * Return a count of all available source records.
-   *
-   * @param boolean $refresh
-   *  If TRUE, or if there is no cached count, perform a SQL COUNT query to
-   *  retrieve and cache the number of rows in the query. Otherwise, return
-   *  the last cached value.
    */
-  public function count($refresh = FALSE) {
-    if ($refresh) {
-      cache_clear_all(__METHOD__, 'cache');
-    }
-
-    $count = cache_get(__METHOD__, 'cache');
-    if (!is_object($count)) {
-      // Cache miss.
-      if ($this->connect()) {
-        $result = mssql_query($this->countQuery);
-        $count = reset(mssql_fetch_object($result));
-        $return = cache_set(__METHOD__, $count, 'cache');
-      }
-      else {
-        // Do something else?
-        return FALSE;
-      }
+  public function computeCount() {
+    if ($this->connect()) {
+      $result = mssql_query($this->countQuery);
+      $count = reset(mssql_fetch_object($result));
     }
     else {
-      $count = $count->data;
+      // Do something else?
+      $count = FALSE;
     }
     return $count;
   }

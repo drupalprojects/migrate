@@ -56,9 +56,11 @@ class MigrateSourceOracle extends MigrateSource {
    *
    * @param string $character_set
    *  Character set to use in retrieving data. Defaults to 'UTF'.
+   * @param boolean $cache_counts
+   *  Indicates whether to cache counts of source records.
    */
-  static public function options($character_set = 'UTF8') {
-    return compact('character_set');
+  static public function options($character_set = 'UTF8', $cache_counts = FALSE) {
+    return compact('character_set', 'cache_counts');
   }
 
   /**
@@ -66,7 +68,7 @@ class MigrateSourceOracle extends MigrateSource {
    */
   public function __construct(array $configuration, $query, $count_query,
       array $fields, array $options = array()) {
-    parent::__construct();
+    parent::__construct($options);
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->configuration = $configuration;
@@ -124,11 +126,8 @@ class MigrateSourceOracle extends MigrateSource {
 
   /**
    * Return a count of all available source records.
-   *
-   * @param boolean $refresh
-   *  Not currently implemented.
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     migrate_instrument_start('MigrateSourceOracle count');
     if ($this->connect()) {
       $statement = oci_parse($this->connection, $this->countQuery);

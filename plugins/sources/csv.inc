@@ -47,7 +47,7 @@ class MigrateSourceCSV extends MigrateSource {
    *  migration will add via other means (e.g., prepareRow()).
    */
   public function __construct($path, array $csvcolumns = array(), array $options = array(), array $fields = array()) {
-    parent::__construct();
+    parent::__construct($options);
     $this->file = $path;
     $this->csvcolumns = $csvcolumns;
     $this->options = $options;
@@ -91,15 +91,8 @@ class MigrateSourceCSV extends MigrateSource {
 
   /**
    * Return a count of all available source records.
-   *
-   * @param boolean $refresh
-   *  If TRUE, or if there is no cached count, perform a SQL COUNT query to
-   *  retrieve and cache the number of rows in the query. Otherwise, return
-   *  the last cached value.
-   *
-   *  TODO: Implement caching
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     // TODO. If this takes too much time/memory, use exec('wc -l')
     $count = count(file($this->file));
     return $count;

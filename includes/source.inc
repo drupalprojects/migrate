@@ -65,12 +65,58 @@ abstract class MigrateSource implements Iterator {
   abstract public function fields();
 
   /**
-   * Derived classes must implement count(), returning a count of all available
-   * source records. If the count is cached, it must be refreshed when TRUE is passed.
+   * Whether this instance should cache the source count;
+   * @var boolean
    */
-  abstract public function count($refresh = FALSE);
+  protected $cacheCounts = FALSE;
 
-  public function __construct() {}
+  /**
+   * Return a count of available source records, from the cache if appropriate.
+   *
+   * @param boolean $refresh
+   */
+  public function count($refresh = FALSE) {
+    $cache_key = md5((string)$this);
+    // If a refresh is requested, or we're not caching counts, ask the derived
+    // class to get the count from the source.
+    if ($refresh || !$this->cacheCounts) {
+      $count = $this->computeCount();
+      cache_set($cache_key, $count, 'cache');
+    }
+    else {
+      // Caching is in play, first try to retrieve a cached count.
+      $cache_object = cache_get($cache_key, 'cache');
+      if (is_object($cache_object)) {
+        // Success
+        $count = $cache_object->data;
+      }
+      else {
+        // No cached count, ask the derived class to count 'em up, and cache
+        // the result
+        $count = $this->computeCount();
+        cache_set($cache_key, $count, 'cache');
+      }
+    }
+    return $count;
+  }
+
+  /**
+   * Derived classes must implement computeCount(), to retrieve a fresh count of
+   * source records.
+   */
+  //abstract public function computeCount();
+
+  /**
+   * Class constructor.
+   *
+   * @param array $options
+   *  Optional array of options.
+   */
+  public function __construct($options = array()) {
+    if (!empty($options['cache_counts'])) {
+      $this->cacheCounts = TRUE;
+    }
+  }
 
   /**
    * Default implementations of Iterator methods - many derivations will find

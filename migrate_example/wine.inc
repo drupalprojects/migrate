@@ -666,9 +666,9 @@ class WineWineMigration extends AdvancedExampleMigration {
   // TIP: Implement a prepareRow() method to manipulate the source row between
   // retrieval from the database and the automatic applicaton of mappings
   public function prepareRow($current_row) {
-    // We can only handle a single multi-value source field using GROUP_CONCAT
-    // as we did above - insert others with a query against the related table
-    // with multiple values here, so the values can run through the mapping process
+    // We used the MySQL GROUP_CONCAT function above to handle a multi-value source
+    // field - more portably, we query the related table with multiple values here,
+    // so the values can run through the mapping process
     $source_id = $current_row->wineid;
     $result = db_select('migrate_example_wine_vintages', 'v')
               ->fields('v', array('vintage'))

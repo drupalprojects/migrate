@@ -20,6 +20,7 @@ Features and enhancements
 - #1169724 - Implemented source plugin for Oracle.
 
 Bug fixes
+- #1185046 - Wine example mistakenly said GROUP_CONCAT could only be used once.
 - #1202234 - Fix translatable field language handling.
 - #1184538 - Fixed term field allowed values in migrate_example.
 - #1181652 - Fixed MigrateDestinationTable to work on update.

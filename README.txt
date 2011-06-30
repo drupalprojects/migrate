@@ -44,3 +44,4 @@ Much of the Migrate module functionality was sponsored by Cyrve, for its clients
 Author
 ------
 Mike Ryan - http://drupal.org/user/4420
+Moshe Weitzman - http://drupal.org/user/23

@@ -81,7 +81,7 @@ class MigrateListJSON extends MigrateList {
    * of IDs available - in many cases, you will need to override this to reflect
    * your particular JSON structure.
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     $count = 0;
     if (empty($this->httpOptions)) {
       $json = file_get_contents($this->listUrl);

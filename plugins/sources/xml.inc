@@ -95,7 +95,7 @@ class MigrateListXML extends MigrateList {
    * of IDs available - in many cases, you will need to override this to reflect
    * your particular XML structure.
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     $xml = simplexml_load_file($this->listUrl);
     // Number of sourceid elements beneath the top-level element
     $count = count($xml);
@@ -406,11 +406,11 @@ class MigrateItemsXML extends MigrateItems {
   /**
    * Return a count of all available IDs from the source listing.
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     $count = 0;
     $xml = simplexml_load_file($this->xmlUrl);
     if ($xml) {
-      $ids = $this->getIDsFromXML($xml,$refresh);
+      $ids = $this->getIDsFromXML($xml, TRUE);
       $count = count($ids);
     }
     return $count;

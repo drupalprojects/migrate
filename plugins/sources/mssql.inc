@@ -74,9 +74,11 @@ class MigrateSourceMSSQL extends MigrateSource {
    *
    * @param int $batch_size
    *  Number of rows to pull at once (defaults to 500).
+   * @param boolean $cache_counts
+   *  Indicates whether to cache counts of source records.
    */
-  static public function options($batch_size) {
-    return compact('batch_size');
+  static public function options($batch_size, $cache_counts) {
+    return compact('batch_size', 'cache_counts');
   }
 
   /**
@@ -84,7 +86,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    */
   public function __construct(array $configuration, $query, $count_query,
       array $fields, array $options = array()) {
-    parent::__construct();
+    parent::__construct($options);
     $this->query = $query;
     $this->countQuery = $count_query;
     $this->configuration = $configuration;
@@ -140,18 +142,17 @@ class MigrateSourceMSSQL extends MigrateSource {
 
   /**
    * Return a count of all available source records.
-   *
-   * @param boolean $refresh
-   *   @todo: Not implemented.
    */
-  public function count($refresh = FALSE) {
+  public function computeCount() {
     if ($this->connect()) {
       $result = mssql_query($this->countQuery);
-      return reset(mssql_fetch_object($result));
+      $count = reset(mssql_fetch_object($result));
     }
     else {
-      return FALSE;
+      // Do something else?
+      $count = FALSE;
     }
+    return $count;
   }
 
   /**

@@ -262,7 +262,11 @@ class BeerNodeMigration extends BasicExampleMigration {
     $count_query = db_select('migrate_example_beer_node', 'b');
     $count_query->addExpression('COUNT(bid)', 'cnt');
 
-    $this->source = new MigrateSourceSQL($query, array(), $count_query);
+    // Passing the cache_counts option means the source count (shown in
+    // drush migrate-status) will be cached - this can be very handy when
+    // dealing with a slow source database.
+    $this->source = new MigrateSourceSQL($query, array(), $count_query,
+      array('cache_counts' => TRUE));
 
     // Set up our destination - nodes of type migrate_example_beer
     $this->destination = new MigrateDestinationNode('migrate_example_beer');

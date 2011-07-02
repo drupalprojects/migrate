@@ -35,11 +35,17 @@ abstract class MigrateItems {
   /**
    * Implementors are expected to return a count of IDs available to be migrated.
    *
-   * @param boolean $refresh
+   * @API: Commented out so not to break implementations which haven't implemented
+   *  this yet - require it in the next API.
    *
    * @return int
    */
-  abstract public function count($refresh = FALSE);
+  //abstract public function computeCount();
+
+  /**
+   * Deprecated - implement computeCount() instead
+   */
+  //abstract public function count($refresh = TRUE);
 
   /**
    * Implementors are expected to return an object representing a source item.
@@ -86,8 +92,8 @@ class MigrateSourceMultiItems extends MigrateSource {
   /**
    * Simple initialization.
    */
-  public function __construct(MigrateItems $items_class, $fields = array()) {
-    parent::__construct();
+  public function __construct(MigrateItems $items_class, $fields = array(), $options = array()) {
+    parent::__construct($options);
 
     $this->itemsClass = $items_class;
     $this->fields = $fields;
@@ -118,12 +124,16 @@ class MigrateSourceMultiItems extends MigrateSource {
   /**
    * It's the list class that knows how many records are available, so ask it.
    *
-   * @param boolean $refresh
-   *
    * @return int
    */
-  public function count($refresh = FALSE) {
-    return $this->itemsClass->count($refresh);
+  public function computeCount() {
+      // @API: Support old count method for now.
+    if (method_exists($this->itemsClass, 'computeCount')) {
+      return $this->itemsClass->computeCount();
+    }
+    else {
+      return $this->itemsClass->count();
+    }
   }
 
   /**

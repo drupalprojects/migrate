@@ -288,6 +288,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         $file_array = $this->buildFileArray($entity, $field_info, $instance, $migration, $arguments, $value);
         if (!empty($file_array)) {
           $return[$language][$delta] = $file_array;
+          if (!empty($arguments['preserve_files'])) {
+            file_usage_add((object)$file_array, 'migrate', 'file', $file_array['fid']);
+          }
         }
       }
     }
@@ -588,7 +591,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *   array('source_field' => 'source_field_name') to obtain the display value from
    *   the query field named source_field_name.
    */
- static function arguments($source_path = NULL, $file_function = 'file_copy', $file_replace = FILE_EXISTS_RENAME, $language = NULL, $alt = NULL, $title = NULL, $description = NULL, $display = NULL) {
+ static function arguments($source_path = NULL, $file_function = 'file_copy',
+      $file_replace = FILE_EXISTS_RENAME, $language = NULL, $alt = NULL, $title = NULL,
+      $description = NULL, $display = NULL, $preserve_files = FALSE) {
     return get_defined_vars();
   }
 }

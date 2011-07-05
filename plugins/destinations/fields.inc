@@ -305,8 +305,22 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param array $instance
    * @param $migration
    * @param $arguments
+   *   Supported arguments are
+   *   - 'file_function'
+   *     - 'file_fid' if the incoming $value is a fid that we can use as is.
+   *     - 'file_copy' to use the file_copy() function
+   *     - 'file_move' to use file_move()
+   *     - 'file_fast' to use the existing file
+   *     - 'file_link'
+   *     - 'file_blob'
    * @param $value
-   *
+   *   If file_function is set to file_fid, this will be a fid. Otherwise, it may
+   *   be a path to the source file, or a json-encoded array of properties:
+   *   - path
+   *   - alt
+   *   - title
+   *   - description
+   *   - display
    * @return array
    */
   protected function buildFileArray($entity, array $field_info, array $instance, $migration, $arguments, $value) {

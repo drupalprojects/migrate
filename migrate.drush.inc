@@ -582,6 +582,13 @@ function drush_migrate_get_migrations($args) {
       }
     }
   }
+  else if ($group = drush_get_option('group')) {
+    foreach ($migration_objects as $name => $migration) {
+      if (strtolower($group) != strtolower($migration->getGroup()->getName()) || !$migration->getEnabled()) {
+        unset($migration_objects[$name]);
+      }
+    }
+  }
   else {
     $named_migrations = array();
     foreach (explode(',', $args) as $name) {
@@ -634,13 +641,18 @@ function drush_migrate_validate_common($args) {
   $user = $user_one;
   session_save_session(FALSE);
   if (drush_get_option('all')) {
-    if (!empty($args)) {
-      return drush_set_error(NULL, dt('You must specify either a migration name or --all, not both'));
+    if (!empty($args) || drush_get_option('group')) {
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
+    }
+  }
+  else if (drush_get_option('group')) {
+    if (!empty($args) || drush_get_option('all')) {
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
     }
   }
   else {
     if (empty($args)) {
-      return drush_set_error(NULL, dt('You must specify either a migration name or the --all option'));
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
     }
     $machine_names = explode(',', $args);
 

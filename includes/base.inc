@@ -45,6 +45,16 @@ abstract class MigrationBase {
   }
 
   /**
+   * The name of a migration group, used to collect related migrations.
+   *
+   * @var string
+   */
+  protected $group;
+  public function getGroup() {
+    return $this->group;
+  }
+
+  /**
    * Detailed information describing the migration.
    *
    * @var string
@@ -284,8 +294,15 @@ abstract class MigrationBase {
   /**
    * General initialization of a MigrationBase object.
    */
-  public function __construct() {
+  public function __construct($group = NULL) {
     $this->machineName = $this->generateMachineName();
+
+    if (empty($group)) {
+      $this->group = MigrateGroup::getInstance('default');
+    }
+    else {
+      $this->group = $group;
+    }
 
     // Record the memory limit in bytes
     $limit = trim(ini_get('memory_limit'));

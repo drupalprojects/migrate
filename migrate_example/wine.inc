@@ -17,7 +17,17 @@ abstract class AdvancedExampleMigration extends Migration {
   public $basicFormat;
 
   public function __construct() {
-    parent::__construct();
+    // TIP: Migrations can be organized into groups. In this case, all the migrations
+    // derived from AdvancedExampleMigration will be part of the 'wine' group.
+    // This enables us to easily run just the wine example migrations:
+    //  drush migrate-import --group=wine
+    // The second argument to MigrateGroup::getInstance is an array of groups
+    // which should come before this when viewing migration statuses, or running
+    // migration operations using --all. Since the beer migrations in this module
+    // did not specify a group, it is in the 'default' group, so this constructor
+    // indicates that the wine migrations come after the beer migrations.
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+
     $this->team = array(
       new MigrateTeamMember('Jack Kramer', 'jkramer@example.com', t('Taster')),
       new MigrateTeamMember('Linda Madison', 'lmadison@example.com', t('Winemaker')),
@@ -41,16 +51,10 @@ class WinePrepMigration extends MigrationBase {
   public static $wasEnabled = FALSE;
 
   public function __construct() {
-    parent::__construct();
+    // Because we're derived directly from migrationBase rather than AdvancedExampleMigration,
+    // we must specify the group again here.
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
     $this->description = t('If auto_nodetitle is present, disable it for the duration');
-    // TIP: Regular dependencies, besides enforcing (in the absence of --force)
-    // the run order of migrations, affect the sorting of migrations on display.
-    // You can use soft dependencies to affect just the display order when the
-    // migrations aren't technically required to run in a certain order. In this
-    // case, we want the wine migrations to appear after the beer migrations -
-    // without this line, they would be intermingled due to their lack of
-    // (formal) interdependencies.
-    $this->softDependencies = array('BeerComment');
   }
   // Define isComplete(), returning a boolean, to indicate whether dependent
   // migrations may proceed
@@ -224,8 +228,14 @@ class WineFileBlobMigration extends AdvancedExampleMigration {
 
 class WineRoleMigration extends XMLMigration {
   public function __construct() {
-    parent::__construct();
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
     $this->description = t('XML feed (multi items) of roles (positions)');
+
+    // TIP: Regular dependencies, besides enforcing (in the absence of --force)
+    // the run order of migrations, affect the sorting of migrations on display.
+    // You can use soft dependencies to affect just the display order when the
+    // migrations aren't technically required to run in a certain order. In this
+    // case, we want the role migration to appear after the file migration.
     $this->softDependencies = array('WineFileCopy');
 
     // There isn't a consistent way to automatically identify appropriate "fields"
@@ -404,7 +414,7 @@ class WineProducerMigration extends AdvancedExampleMigration {
  */
 class WineProducerXMLMigration extends XMLMigration {
   public function __construct() {
-    parent::__construct();
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
     $this->description = t('XML feed of wine producers of the world');
     $this->dependencies = array('WineRegion', 'WineUser');
 
@@ -475,7 +485,7 @@ class WineProducerXMLMigration extends XMLMigration {
  */
 class WineProducerMultiXMLMigration extends XMLMigration {
   public function __construct() {
-    parent::__construct();
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
     $this->description = t('XML feed (multi items) of wine producers of the world');
     $this->dependencies = array('WineRegion', 'WineUser');
 
@@ -782,7 +792,7 @@ class WineTableMigration extends AdvancedExampleMigration {
 
 class WineFinishMigration extends MigrationBase {
   public function __construct() {
-    parent::__construct();
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
     $this->description = t('If auto_nodetitle is present and was previously enabled,
       re-enable it');
     $this->dependencies = array('WineComment');

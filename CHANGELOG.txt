@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #719650 - Implemented ability to assign migrations to groups, and run by group.
 - #1201762 - Implemented built-in caching for source counts, and flag to enable it.
 - #1205278 - Added preserve_files argument to MigrateFileFieldHandler.
 - #1205278 - Added preserve_files option to MigrateDestinationFile.

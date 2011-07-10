@@ -8,6 +8,7 @@ files[] = includes/field_mapping.inc
 files[] = includes/migration.inc
 files[] = includes/destination.inc
 files[] = includes/exception.inc
+files[] = includes/group.inc
 files[] = includes/handler.inc
 files[] = includes/map.inc
 files[] = includes/source.inc

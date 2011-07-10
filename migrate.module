@@ -83,6 +83,28 @@ function migrate_migrations() {
       }
     }
   }
+
+  // The migrations are now ordered according to their own dependencies - now order
+  // them by group
+  $groups = MigrateGroup::groups();
+  // Seed the final list by properly-ordered groups.
+  $final_migrations = array();
+  foreach ($groups as $name => $group) {
+    $final_migrations[$name] = array();
+  }
+
+  // Fill in the grouped list
+  foreach ($migrations as $machine_name => $migration) {
+    $final_migrations[$migration->getGroup()->getName()][$machine_name] = $migration;
+  }
+  // Then flatten the list
+  $migrations = array();
+  foreach ($final_migrations as $group_name => $group_migrations) {
+    foreach ($group_migrations as $machine_name => $migration) {
+      $migrations[$machine_name] = $migration;
+    }
+  }
+
   return $migrations;
 }
 

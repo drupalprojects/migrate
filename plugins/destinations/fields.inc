@@ -406,6 +406,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       else {
         $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', basename($full_path)));
       }
+      $destination_file = file_destination($destination_file, $arguments['file_replace']);
 
       $real_destination_file = drupal_realpath($destination_file);
       $source = (object) array(

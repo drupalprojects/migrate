@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1210152 - Improved error messages on file field migration.
 - #1212818 - migrate_ui support for one-step rollback-and-import.
 - #1218244 - Support for is_new for users.
 - #1216796 - Use file_destination() to generate destination filespec.

@@ -329,6 +329,10 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     // If we've been passed a fid, all the hard work's been done
     if ($arguments['file_function'] == 'file_fid') {
       $file = file_load($value);
+      if (empty($file)) {
+        $migration->saveMessage(t('The fid provided to create a file field (%fid) does not exist in the managed_file table.', array('%fid' => $value)), Migration::MESSAGE_ERROR);
+        return;
+      }
     }
     else {
       // Is the value a straight path, or JSON containing a set of properties?
@@ -574,7 +578,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       return $object_field;
     }
     else {
-      $migration->saveMessage(t('Unable to create file record for !path', array('!path' => $full_path)), Migration::MESSAGE_ERROR);
+      $migration->saveMessage(t('Unable to create file record for value=%value, arguments=%arguments', array('%value' => print_r($value, TRUE), '%arguments' => print_r($arguments, TRUE))), Migration::MESSAGE_ERROR);
     }
   }
 

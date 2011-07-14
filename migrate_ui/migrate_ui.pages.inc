@@ -137,6 +137,7 @@ function _migrate_ui_dashboard_form() {
   $options = array(
     'import' => t('Import'),
     'rollback' => t('Rollback'),
+    'rollback_and_import' => t('Rollback and import'),
     'stop' => t('Stop'),
     'reset' => t('Reset'),
   );
@@ -175,6 +176,8 @@ function _migrate_ui_dashboard_form() {
          <li>Import - Imports all previously unimported records from the source, plus
              any records marked for update, into destination Drupal objects.</li>
          <li>Rollback - Deletes all Drupal objects created by the migration.</li>
+         <li>Rollback and import - Performs the Rollback operation, immediately
+             followed by the Import operation.</li>
          <li>Stop - Cleanly interrupts any import or rollback processes that may
              currently be running.</li>
          <li>Reset - Sometimes a migration process may fail to stop cleanly, and be
@@ -204,17 +207,27 @@ function migrate_ui_dashboard_validate($form, &$form_state) {
 function migrate_ui_dashboard_submit($form, &$form_state) {
   $operation = $form_state['values']['operation'];
   $limit = $form_state['values']['limit'];
+  $machine_names = array_filter($form_state['values']['dashboard']);
   $operations = array();
-  foreach ($form_state['values']['dashboard'] as $machine_name) {
-    if ($machine_name) {
+
+  // Rollback in reverse order.
+  if (in_array($operation, array('rollback', 'rollback_and_import'))) {
+    $machine_names = array_reverse($machine_names);
+    foreach ($machine_names as $machine_name) {
+      $operations[] = array('migrate_ui_batch', array('rollback', $machine_name, $limit));
+    }
+    // Reset order of machines names in preparation for final operation.
+    $machine_names = array_reverse($machine_names);
+    $operation = $operation == 'rollback_and_import' ? 'import' : NULL;
+  }
+
+  // Perform non-rollback operation, if one exists.
+  if ($operation) {
+    foreach ($machine_names as $machine_name) {
       $operations[] = array('migrate_ui_batch', array($operation, $machine_name, $limit));
     }
   }
 
-  // Rollback in reverse order
-  if ($operation == 'rollback') {
-    $operations = array_reverse($operations);
-  }
   $batch = array(
     'operations' => $operations,
     'title' => t('Migration processing'),

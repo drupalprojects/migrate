@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1218244 - Support for is_new for users.
 - #1216796 - Use file_destination() to generate destination filespec.
 - #719650 - Implemented ability to assign migrations to groups, and run by group.
 - #1201762 - Implemented built-in caching for source counts, and flag to enable it.

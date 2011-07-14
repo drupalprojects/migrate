@@ -70,6 +70,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields = array();
     // First the core (users table) properties
     $fields['uid'] = t('User: Existing user ID');
+    $fields['is_new'] = t('User: Indicates a new user with the specified uid should be created');
     $fields['name'] = t('User: Username');
     $fields['pass'] = t('User: Password (plain text)');
     $fields['mail'] = t('User: Email address');

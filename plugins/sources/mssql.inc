@@ -248,54 +248,31 @@ class MigrateSourceMSSQL extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
     $migration = Migration::currentMigration();
-
-    // If we couldn't add the itemlimit to the query directly, enforce it here
-    if (!$this->mapJoinable) {
-      $itemlimit = $migration->getOption('itemlimit');
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        return;
-      }
-    }
-
-    // get next row
-    migrate_instrument_start('MigrateSourceMSSQL next');
-    $map = $migration->getMap();
-    while (TRUE) {
-      $this->currentRow = mssql_fetch_object($this->result);
+    migrate_instrument_start('mssql_fetch_object');
+    $this->currentRow = mssql_fetch_object($this->result);
+    migrate_instrument_stop('mssql_fetch_object');
+    while ($this->currentRow) {
+      // Might be totally out of data, or just out of this batch - request another
+      // batch and see
       if (!is_object($this->currentRow)) {
-        // Might be totally out of data, or just out of this batch - request another batch and see.
         migrate_instrument_start('mssql_fetch_batch');
         mssql_fetch_batch($this->result);
         migrate_instrument_stop('mssql_fetch_batch');
-        if (!$this->currentRow = mssql_fetch_object($this->result)) {
-          break;
-        }
+
+        migrate_instrument_start('mssql_fetch_object');
+        $this->currentRow = mssql_fetch_object($this->result);
+        migrate_instrument_stop('mssql_fetch_object');
+      }
+      if (!is_object($this->currentRow)) {
+        $this->currentRow = NULL;
+        break;
       }
 
+      $map = $migration->getMap();
+      $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
-      }
-      if (!$this->mapJoinable) {
-        // Check the map - if it's already mapped, and not marked for update, skip it
-        $map_row = $migration->getMap()->getRowBySource($this->currentKey);
-        if ($map_row && $map_row['needs_update'] == 0) {
-          continue;
-        }
-        // Add map info to the row, if present
-        if ($map_row) {
-          foreach ($map_row as $field => $value) {
-            $field = 'migrate_map_' . $field;
-            $this->currentRow->$field = $value;
-          }
-        }
-      }
-
-      // Add some debugging, just for the first row.
-      if (empty($this->numProcessed)) {
-        $migration->showMessage(print_r($this->currentRow, TRUE));
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean
@@ -313,12 +290,14 @@ class MigrateSourceMSSQL extends MigrateSource {
       else {
         $this->numIgnored++;
       }
+      migrate_instrument_start('mssql_fetch_object');
+      $this->currentRow = mssql_fetch_object($this->result);
+      migrate_instrument_stop('mssql_fetch_object');
     }
-
     if (!is_object($this->currentRow)) {
       $this->currentRow = NULL;
     }
-    migrate_instrument_stop('MigrateSourceMSSQL next');
+    migrate_instrument_stop('mssql_fetch_object');
   }
 
   /**

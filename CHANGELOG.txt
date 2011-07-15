@@ -2,6 +2,12 @@
 Next release
 ============
 
+Bug fixes
+- #1195802 - Fixed prepareRow() support for MSSQL plugin.
+
+Migrate 2.2 RC1
+===============
+
 Features and enhancements
 - #1212818 - migrate_ui support for one-step rollback-and-import.
 - #719650 - Implemented ability to assign migrations to groups, and run by group.

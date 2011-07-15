@@ -100,6 +100,7 @@ class MigrateSourceMSSQL extends MigrateSource {
       if (!extension_loaded('mssql')) {
         throw new Exception(t('You must configure the mssql extension in PHP.'));
       }
+
       if (isset($this->configuration['port'])) {
         $host = $this->configuration['servername'] . ':' . $this->configuration['port'];
       }
@@ -228,31 +229,27 @@ class MigrateSourceMSSQL extends MigrateSource {
     migrate_instrument_start('mssql_fetch_object');
     $this->currentRow = mssql_fetch_object($this->result);
     migrate_instrument_stop('mssql_fetch_object');
-    // Might be totally out of data, or just out of this batch - request another
-    // batch and see
-    if (!is_object($this->currentRow)) {
-      migrate_instrument_start('mssql_fetch_batch');
-      mssql_fetch_batch($this->result);
-      migrate_instrument_stop('mssql_fetch_batch');
+    while ($this->currentRow) {
+      // Might be totally out of data, or just out of this batch - request another
+      // batch and see
+      if (!is_object($this->currentRow)) {
+        migrate_instrument_start('mssql_fetch_batch');
+        mssql_fetch_batch($this->result);
+        migrate_instrument_stop('mssql_fetch_batch');
 
-      migrate_instrument_start('mssql_fetch_object');
-      $this->currentRow = mssql_fetch_object($this->result);
-      migrate_instrument_stop('mssql_fetch_object');
-    }
-    if (!is_object($this->currentRow)) {
-      $this->currentRow = NULL;
-    }
+        migrate_instrument_start('mssql_fetch_object');
+        $this->currentRow = mssql_fetch_object($this->result);
+        migrate_instrument_stop('mssql_fetch_object');
+      }
+      if (!is_object($this->currentRow)) {
+        $this->currentRow = NULL;
+        break;
+      }
 
-    if ($this->currentRow) {
       $map = $migration->getMap();
       $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
-      }
-
-      // Add some debugging, just for the first row.
-      if (empty($this->numProcessed)) {
-        $migration->showMessage(print_r($this->currentRow, TRUE));
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean
@@ -270,7 +267,14 @@ class MigrateSourceMSSQL extends MigrateSource {
       else {
         $this->numIgnored++;
       }
+      migrate_instrument_start('mssql_fetch_object');
+      $this->currentRow = mssql_fetch_object($this->result);
+      migrate_instrument_stop('mssql_fetch_object');
     }
+    if (!is_object($this->currentRow)) {
+      $this->currentRow = NULL;
+    }
+    migrate_instrument_stop('mssql_fetch_object');
   }
 
   /**

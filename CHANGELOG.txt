@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1216796 - Make sure file_replace argument exists.
 - #1195802 - Fixed prepareRow() support for MSSQL plugin.
 
 Migrate 2.2 RC1

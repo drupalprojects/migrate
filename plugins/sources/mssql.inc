@@ -229,18 +229,18 @@ class MigrateSourceMSSQL extends MigrateSource {
     migrate_instrument_start('mssql_fetch_object');
     $this->currentRow = mssql_fetch_object($this->result);
     migrate_instrument_stop('mssql_fetch_object');
-    while ($this->currentRow) {
-      // Might be totally out of data, or just out of this batch - request another
-      // batch and see
-      if (!is_object($this->currentRow)) {
-        migrate_instrument_start('mssql_fetch_batch');
-        mssql_fetch_batch($this->result);
-        migrate_instrument_stop('mssql_fetch_batch');
+    // Might be totally out of data, or just out of this batch - request another
+    // batch and see
+    if (!is_object($this->currentRow)) {
+      migrate_instrument_start('mssql_fetch_batch');
+      mssql_fetch_batch($this->result);
+      migrate_instrument_stop('mssql_fetch_batch');
 
-        migrate_instrument_start('mssql_fetch_object');
-        $this->currentRow = mssql_fetch_object($this->result);
-        migrate_instrument_stop('mssql_fetch_object');
-      }
+      migrate_instrument_start('mssql_fetch_object');
+      $this->currentRow = mssql_fetch_object($this->result);
+      migrate_instrument_stop('mssql_fetch_object');
+    }
+    while ($this->currentRow) {
       if (!is_object($this->currentRow)) {
         $this->currentRow = NULL;
         break;
@@ -270,6 +270,18 @@ class MigrateSourceMSSQL extends MigrateSource {
       migrate_instrument_start('mssql_fetch_object');
       $this->currentRow = mssql_fetch_object($this->result);
       migrate_instrument_stop('mssql_fetch_object');
+
+      // Might be totally out of data, or just out of this batch - request another
+      // batch and see
+      if (!is_object($this->currentRow)) {
+        migrate_instrument_start('mssql_fetch_batch');
+        mssql_fetch_batch($this->result);
+        migrate_instrument_stop('mssql_fetch_batch');
+
+        migrate_instrument_start('mssql_fetch_object');
+        $this->currentRow = mssql_fetch_object($this->result);
+        migrate_instrument_stop('mssql_fetch_object');
+      }
     }
     if (!is_object($this->currentRow)) {
       $this->currentRow = NULL;

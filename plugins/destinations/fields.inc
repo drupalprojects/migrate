@@ -531,7 +531,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
                     ->fields('f')
                     ->condition('uri', $full_path)
                     ->execute()
-                    ->fetchAssoc();
+                    ->fetchObject();
             migrate_instrument_stop('file_link: select existing');
             if (!$file) {
               migrate_instrument_start('file_link: create file record');

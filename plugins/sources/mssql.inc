@@ -262,7 +262,7 @@ class MigrateSourceMSSQL extends MigrateSource {
 
     // Might be totally out of data, or just out of this batch - request another
     // batch and see
-    if (!is_object($this->currentRow)) {
+    if (!is_object($row)) {
       migrate_instrument_start('mssql_fetch_batch');
       mssql_fetch_batch($this->result);
       migrate_instrument_stop('mssql_fetch_batch');

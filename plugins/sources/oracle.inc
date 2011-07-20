@@ -25,6 +25,9 @@ class MigrateSourceOracle extends MigrateSource {
    * @var resource
    */
   protected $connection;
+  public function getConnection() {
+    return $this->connection;
+  }
 
   /**
    * The SQL query from which to obtain data. Is a string.

@@ -24,7 +24,7 @@ class MigrateSourceOracle extends MigrateSource {
    *
    * @var resource
    */
-  public $connection;
+  protected $connection;
 
   /**
    * The SQL query from which to obtain data. Is a string.
@@ -55,7 +55,7 @@ class MigrateSourceOracle extends MigrateSource {
    * Return an options array for Oracle sources.
    *
    * @param string $character_set
-   *  Character set to use in retrieving data. Defaults to 'UTF'.
+   *  Character set to use in retrieving data. Defaults to 'UTF8'.
    * @param boolean $cache_counts
    *  Indicates whether to cache counts of source records.
    */

@@ -2,16 +2,11 @@
 
 /**
  * @file
- * Define a MigrateSource for importing from Microsoft SQL Server databases. This
- * plugin has limited capabilities compared to MigrateSourceSQL which can join
- * with the map/message tables and only fetch un-migrated content. This plugin
- * fetched everything unless an idlist or itemlimit are supplied. Note that
- * this is not completely inefficient; already migrated content does not actually
- * get re-imported, it just gets re-fetched.
+ * Define a MigrateSource for importing from Microsoft SQL Server databases.
  */
 
 /**
- * Implementation of MigrateSource, to handle imports from remote DB servers.
+ * Implementation of MigrateSource, to handle imports from remote MS SQL Server db servers.
  */
 class MigrateSourceMSSQL extends MigrateSource {
   /**
@@ -89,7 +84,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    * @return string
    */
   public function __toString() {
-    return (string) $this->query;
+    return $this->query;
   }
 
   /**
@@ -126,7 +121,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    // The fields are defined in the Constructor for this plugin.
+    // The fields are passed to the constructor for this plugin.
     return $this->fields;
   }
 
@@ -134,6 +129,7 @@ class MigrateSourceMSSQL extends MigrateSource {
    * Return a count of all available source records.
    */
   public function computeCount() {
+    migrate_instrument_start('MigrateSourceMSSQL count');
     if ($this->connect()) {
       $result = mssql_query($this->countQuery);
       $count = reset(mssql_fetch_object($result));
@@ -142,6 +138,7 @@ class MigrateSourceMSSQL extends MigrateSource {
       // Do something else?
       $count = FALSE;
     }
+    migrate_instrument_stop('MigrateSourceMSSQL count');
     return $count;
   }
 
@@ -159,7 +156,6 @@ class MigrateSourceMSSQL extends MigrateSource {
     $keys = array();
     foreach ($map->getSourceKey() as $field_name => $field_schema) {
       // Allow caller to provide an alias to table containing the primary key.
-      // TODO: Alias should be determined automatically
       if (!empty($field_schema['alias'])) {
         $field_name = $field_schema['alias'] . '.' . $field_name;
       }
@@ -204,52 +200,32 @@ class MigrateSourceMSSQL extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::current() - called when entering a loop
-   * iteration, returning the current row
-   */
-  public function current() {
-    return $this->currentRow;
-  }
-
-  /**
-   * Implementation of Iterator::key - called when entering a loop iteration, returning
-   * the key of the current row. It must be a scalar - we will serialize
-   * to fulfill the requirement, but using getCurrentKey() is preferable.
-   */
-  public function key() {
-    return serialize($this->currentKey);
-  }
-
-  /**
    * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
    * as well as explicitly from rewind().
    */
   public function next() {
-    $migration = Migration::currentMigration();
-    migrate_instrument_start('mssql_fetch_object');
-    $this->currentRow = mssql_fetch_object($this->result);
-    migrate_instrument_stop('mssql_fetch_object');
-    // Might be totally out of data, or just out of this batch - request another
-    // batch and see
-    if (!is_object($this->currentRow)) {
-      migrate_instrument_start('mssql_fetch_batch');
-      mssql_fetch_batch($this->result);
-      migrate_instrument_stop('mssql_fetch_batch');
+    migrate_instrument_start('MigrateSourceMSSQL next');
 
-      migrate_instrument_start('mssql_fetch_object');
-      $this->currentRow = mssql_fetch_object($this->result);
-      migrate_instrument_stop('mssql_fetch_object');
-    }
-    while ($this->currentRow) {
-      if (!is_object($this->currentRow)) {
+    $migration = Migration::currentMigration();
+
+    // Enforce the itemlimit
+    $itemlimit = $migration->getItemLimit();
+    while ($this->currentRow = $this->getNextObject()) {
+      // Enforce the itemlimit
+      if ($itemlimit && $this->numProcessed >= $itemlimit) {
         $this->currentRow = NULL;
-        break;
+        return;
       }
 
+      // Check the map - if it's already mapped, and not marked for update, skip it
       $map = $migration->getMap();
       $this->currentKey = array();
       foreach ($map->getSourceKey() as $field_name => $field_schema) {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
+      }
+      $map_row = $map->getRowBySource($this->currentKey);
+      if ($map_row && $map_row['needs_update'] == 0) {
+        continue;
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean
@@ -267,33 +243,39 @@ class MigrateSourceMSSQL extends MigrateSource {
       else {
         $this->numIgnored++;
       }
-      migrate_instrument_start('mssql_fetch_object');
-      $this->currentRow = mssql_fetch_object($this->result);
-      migrate_instrument_stop('mssql_fetch_object');
-
-      // Might be totally out of data, or just out of this batch - request another
-      // batch and see
-      if (!is_object($this->currentRow)) {
-        migrate_instrument_start('mssql_fetch_batch');
-        mssql_fetch_batch($this->result);
-        migrate_instrument_stop('mssql_fetch_batch');
-
-        migrate_instrument_start('mssql_fetch_object');
-        $this->currentRow = mssql_fetch_object($this->result);
-        migrate_instrument_stop('mssql_fetch_object');
-      }
     }
     if (!is_object($this->currentRow)) {
       $this->currentRow = NULL;
     }
-    migrate_instrument_stop('mssql_fetch_object');
+    migrate_instrument_stop('MigrateSourceMSSQL next');
   }
 
   /**
-   * Implementation of Iterator::valid() - called at the top of the loop, returning
-   * TRUE to process the loop and FALSE to terminate it
+   * Convenience function to return the next row of the result set as an
+   * object, dealing with the difference between the end of the batch and the
+   * end of all data.
    */
-  public function valid() {
-    return !is_null($this->currentRow);
+  public function getNextObject() {
+    migrate_instrument_start('mssql_fetch_object');
+    $row = mssql_fetch_object($this->result);
+    migrate_instrument_stop('mssql_fetch_object');
+
+    // Might be totally out of data, or just out of this batch - request another
+    // batch and see
+    if (!is_object($this->currentRow)) {
+      migrate_instrument_start('mssql_fetch_batch');
+      mssql_fetch_batch($this->result);
+      migrate_instrument_stop('mssql_fetch_batch');
+
+      migrate_instrument_start('mssql_fetch_object');
+      $row = mssql_fetch_object($this->result);
+      migrate_instrument_stop('mssql_fetch_object');
+    }
+    if (is_object($row)) {
+      return $row;
+    }
+    else {
+      return FALSE;
+    }
   }
 }

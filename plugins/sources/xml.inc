@@ -376,7 +376,7 @@ class MigrateItemsXML extends MigrateItems {
    * @return array
    */
   protected $cache_ids = NULL;
-  protected function getIDsFromXML(SimpleXMLElement $xml, $refresh=FALSE) {
+  protected function getIDsFromXML(SimpleXMLElement $xml, $refresh = FALSE) {
     if ($refresh !== TRUE && $this->cache_ids != NULL) {
       return $this->cache_ids;
     }
@@ -395,11 +395,8 @@ class MigrateItemsXML extends MigrateItems {
       else {
         $ids[] = (string)$result[0];
       }
-      $this->cache_ids = array_unique($ids);
-      return $this->cache_ids;
-    }
-    else {
-      return NULL;
+    $this->cache_ids = array_unique($ids);
+    return $this->cache_ids;
     }
   }
 

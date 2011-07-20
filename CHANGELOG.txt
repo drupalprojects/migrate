@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1223734 - Fixed bogus assignment of uid to file fields.
 - #1223756 - Fix warnings with file_blob when file exists in file_managed.
 - #1216796 - Make sure file_replace argument exists.
 - #1195802 - Fixed prepareRow() support for MSSQL plugin.

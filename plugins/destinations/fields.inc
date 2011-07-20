@@ -416,7 +416,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $real_destination_file = drupal_realpath($destination_file);
       $source = (object) array(
         'uri' => $full_path,
-        'uid' => isset($entity->uid) ? isset($entity->uid) : 0,
+        'uid' => isset($entity->uid) ? $entity->uid : 0,
         'filename' => basename($full_path),
         'filemime' => file_get_mimetype($full_path),
         'timestamp' => REQUEST_TIME,

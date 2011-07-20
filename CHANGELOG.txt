@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1223468 - Make sure getIDsFromXML always returns an array.
 - #1195802 - Fixed prepareRow() support for MSSQL plugin.
 
 Migrate 2.2 RC1

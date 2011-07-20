@@ -395,12 +395,9 @@ class MigrateItemsXML extends MigrateItems {
       else {
         $ids[] = (string)$result[0];
       }
-      $this->cache_ids = array_unique($ids);
-      return $this->cache_ids;
     }
-    else {
-      return NULL;
-    }
+    $this->cache_ids = array_unique($ids);
+    return $this->cache_ids;
   }
 
   /**

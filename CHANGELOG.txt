@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1205278 - Fixed file entity rollback to preserve files when requested.
 - #1223468 - Make sure getIDsFromXML always returns an array.
 - #1223734 - Fixed bogus assignment of uid to file fields.
 - #1223756 - Fix warnings with file_blob when file exists in file_managed.

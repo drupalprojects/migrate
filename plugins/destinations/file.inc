@@ -157,13 +157,29 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *  Fid to delete, arrayed.
    */
   public function rollback(array $fid) {
-    migrate_instrument_start('file_delete');
+    migrate_instrument_start('file_load');
     $file = file_load(reset($fid));
+    migrate_instrument_stop('file_load');
     if ($file) {
-      // TODO: Error checking
-      file_delete($file, TRUE);
+      // If we want to preserve the file while wiping the DB evidence of the file,
+      // we need to do it ourselves - file_delete() is all-or-nothing.
+      if ($this->preserveFiles) {
+        migrate_instrument_start('file_delete (preserving)');
+        // Let other modules clean up any references to the deleted file.
+        module_invoke_all('file_delete', $file);
+        module_invoke_all('entity_delete', $file, 'file');
+        // Remove the core knowledge of the file.
+        db_delete('file_managed')->condition('fid', $file->fid)->execute();
+        db_delete('file_usage')->condition('fid', $file->fid)->execute();
+        migrate_instrument_stop('file_delete (preserving)');
+      }
+      else {
+        // If we're not preserving the file, make sure we do the job completely.
+        migrate_instrument_start('file_delete');
+        file_delete($file, TRUE);
+        migrate_instrument_stop('file_delete');
+      }
     }
-    migrate_instrument_stop('file_delete');
   }
 
   /**

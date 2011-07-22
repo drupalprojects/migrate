@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1227130 - On import, clear messages before applyMappings().
 - #1195802 - Fixed SQL Server problem handling end of batch; brought Oracle/SQL
   Server implementations in line with each other.
 - #1223468 - Make sure getIDsFromXML always returns an array.

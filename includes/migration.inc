@@ -503,6 +503,9 @@ abstract class Migration extends MigrationBase {
 
       $this->currentSourceKey = $this->source->getCurrentKey();
 
+      // Wipe old messages
+      $this->map->delete($this->currentSourceKey, TRUE);
+
       $this->sourceValues = $data_row;
       $this->applyMappings();
 
@@ -766,7 +769,9 @@ abstract class Migration extends MigrationBase {
         // Call any designated callbacks
         $callbacks = $mapping->getCallbacks();
         foreach ($callbacks as $callback) {
-          $this->destinationValues->$destination = call_user_func($callback, $this->destinationValues->$destination);
+          if (property_exists($this->destinationValues, $destination)) {
+            $this->destinationValues->$destination = call_user_func($callback, $this->destinationValues->$destination);
+          }
         }
 
         // If specified, assure a unique value for this property.

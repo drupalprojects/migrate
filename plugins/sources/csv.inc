@@ -33,6 +33,13 @@ class MigrateSourceCSV extends MigrateSource {
   protected $usingHighwater = FALSE;
 
   /**
+   * If TRUE, the first row of the CSV file is taken as the header.
+   *
+   * @var boolean
+   */
+  protected $headerRow = FALSE;
+
+  /**
    * Simple initialization.
    *
    * @param atring $path
@@ -49,12 +56,32 @@ class MigrateSourceCSV extends MigrateSource {
   public function __construct($path, array $csvcolumns = array(), array $options = array(), array $fields = array()) {
     parent::__construct($options);
     $this->file = $path;
-    $this->csvcolumns = $csvcolumns;
+    if (!empty($options['header_row'])) {
+      $this->headerRow = TRUE;
+    }
+    else {
+      $this->headerRow = FALSE;
+    }
     $this->options = $options;
     $this->fields = $fields;
     // fgetcsv specific options
     foreach (array('length' => NULL, 'delimiter' => ',', 'enclosure' => '"', 'escape' => '\\') as $key => $default) {
       $this->fgetcsv[$key] = isset($options[$key]) ? $options[$key] : $default;
+    }
+    // One can either pass in an explicit list of column names to use, or if we have
+    // a header row use the names from that
+    if ($this->headerRow && empty($csvcolumns)) {
+      $this->csvcolumns = array();
+      $result = fopen($this->file, 'r');
+      $row = fgetcsv($result, $this->fgetcsv['length'], $this->fgetcsv['delimiter'],
+        $this->fgetcsv['enclosure']);
+      foreach ($row as $header) {
+        $this->csvcolumns[] = array($header, $header);
+      }
+      fclose($result);
+    }
+    else {
+      $this->csvcolumns = $csvcolumns;
     }
   }
 
@@ -95,6 +122,9 @@ class MigrateSourceCSV extends MigrateSource {
   public function computeCount() {
     // TODO. If this takes too much time/memory, use exec('wc -l')
     $count = count(file($this->file));
+    if ($this->headerRow) {
+      $count--;
+    }
     return $count;
   }
 
@@ -112,7 +142,10 @@ class MigrateSourceCSV extends MigrateSource {
     $this->result = fopen($this->file, 'r');
     migrate_instrument_stop('MigrateSourceCSV execute');
 
-    // Load up the first row
+    // Load up the first row, skipping the header if necessary
+    if ($this->headerRow) {
+      fgets($this->result);
+    }
     $this->next();
   }
 

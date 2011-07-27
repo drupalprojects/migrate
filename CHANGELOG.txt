@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1226768 - Improved exception handling.
 - #1185632 - Handle headers in CSV source plugin.
 
 Bug fixes

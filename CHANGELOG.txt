@@ -6,6 +6,7 @@ Features and enhancements
 - #1185632 - Handle headers in CSV source plugin.
 
 Bug fixes
+- #1225636 - File field: fixed warnings, added docs.
 - #1227130 - On import, clear messages before applyMappings().
 - #1195802 - Fixed SQL Server problem handling end of batch; brought Oracle/SQL
   Server implementations in line with each other.
@@ -15,7 +16,6 @@ Bug fixes
 - #1223756 - Fix warnings with file_blob when file exists in file_managed.
 - #1216796 - Make sure file_replace argument exists.
 - #1195802 - Fixed prepareRow() support for MSSQL plugin.
-
 
 Migrate 2.2 RC1
 ===============

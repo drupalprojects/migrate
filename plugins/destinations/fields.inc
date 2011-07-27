@@ -306,13 +306,16 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param $migration
    * @param $arguments
    *   Supported arguments are
-   *   - 'file_function'
+   *   - 'file_function': One of
    *     - 'file_fid' if the incoming $value is a fid that we can use as is.
    *     - 'file_copy' to use the file_copy() function
    *     - 'file_move' to use file_move()
    *     - 'file_fast' to use the existing file
    *     - 'file_link'
    *     - 'file_blob'
+   *   - 'file_replace' See file_copy(). FILE_EXISTS_REPLACE, FILE_EXISTS_RENAME,
+   *      or FILE_EXISTS_ERROR.
+   *   - 'source_path': A path to be prepended to the path of the source item.
    * @param $value
    *   If file_function is set to file_fid, this will be a fid. Otherwise, it may
    *   be a path to the source file, or a json-encoded array of properties:
@@ -368,7 +371,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       $destination_dir = file_field_widget_uri($field_info, $instance);
       file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
 
-      if ($arguments['source_path']) {
+      if (!empty($arguments['source_path'])) {
         // $full_path needs adjusting for file_blob
         if ($file_function == 'file_blob') {
           $full_path = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $arguments['source_path']));
@@ -455,7 +458,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
               }
             }
             else {
-              $file = file_copy($source, $destination_dir, $arguments['file_replace']);
+              $file = file_copy($source, $destination_dir, $file_replace);
             }
             break;
           case 'file_move':

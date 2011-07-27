@@ -248,6 +248,13 @@ class MigrateSourceOracle extends MigrateSource {
       if ($map_row && $map_row['needs_update'] == 0) {
         continue;
       }
+      // Add map info to the row, if present
+      if ($map_row) {
+        foreach ($map_row as $field => $value) {
+          $field = 'migrate_map_' . $field;
+          $this->currentRow->$field = $value;
+        }
+      }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean
       // FALSE to stop processing this row. To add/modify fields on the

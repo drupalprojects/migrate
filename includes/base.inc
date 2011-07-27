@@ -516,6 +516,25 @@ abstract class MigrationBase {
   }
 
   /**
+   * Takes an Exception object and both saves and displays it, pulling additional
+   * information on the location triggering the exception.
+   *
+   * @param Exception $exception
+   *  Object representing the exception.
+   * @param boolean $save
+   *  Whether to save the message in the migration's mapping table. Set to FALSE
+   *  in contexts where this doesn't make sense.
+   */
+  public function handleException($exception, $save = TRUE) {
+    $result = _drupal_decode_exception($exception);
+    $message = $result['!message'] . ' (' . $result['%file'] . ':' . $result['%line'] . ')';
+    if ($save) {
+      $this->saveMessage($message);
+    }
+    $this->showMessage($message);
+  }
+
+  /**
    * Database logging callback - called when there's a database error. We
    * log non-critical stuff, and throw an exception otherwise
    * TODO: Eliminate in favor of hook_watchdog()?

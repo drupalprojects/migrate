@@ -405,7 +405,7 @@ abstract class Migration extends MigrationBase {
             $this->successes_since_feedback += $batch_count;
           }
           catch (Exception $e) {
-            $this->showMessage($e->getMessage());
+            $this->handleException($e, FALSE);
             migrate_instrument_stop('bulkRollback');
             migrate_instrument_stop('rollback map/message update');
           }
@@ -529,8 +529,7 @@ abstract class Migration extends MigrationBase {
         $this->showMessage($e->getMessage());
       }
       catch (Exception $e) {
-        $this->saveMessage($e->getMessage());
-        $this->showMessage($e->getMessage());
+        $this->handleException($e);
       }
       $this->total_processed++;
       $this->processed_since_feedback++;

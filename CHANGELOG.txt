@@ -4,7 +4,7 @@ Next release
 
 Features and enhancements
 - #1226768 - Improved exception handling.
-- #1185632 - Handle headers in CSV source plugin.
+- #1185632 - Handle (potentially multiple) headers in CSV source plugin.
 
 Bug fixes
 - #1231398 - Add map data to row in Oracle source plugin.

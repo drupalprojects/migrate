@@ -33,11 +33,11 @@ class MigrateSourceCSV extends MigrateSource {
   protected $usingHighwater = FALSE;
 
   /**
-   * If TRUE, the first row of the CSV file is taken as the header.
+   * The number of rows in the CSV file before the data starts.
    *
-   * @var boolean
+   * @var integer
    */
-  protected $headerRow = FALSE;
+  protected $headerRows = 0;
 
   /**
    * Simple initialization.
@@ -56,11 +56,11 @@ class MigrateSourceCSV extends MigrateSource {
   public function __construct($path, array $csvcolumns = array(), array $options = array(), array $fields = array()) {
     parent::__construct($options);
     $this->file = $path;
-    if (!empty($options['header_row'])) {
-      $this->headerRow = TRUE;
+    if (!empty($options['header_rows'])) {
+      $this->headerRows = $options['header_rows'];
     }
     else {
-      $this->headerRow = FALSE;
+      $this->headerRows = 0;
     }
     $this->options = $options;
     $this->fields = $fields;
@@ -70,12 +70,18 @@ class MigrateSourceCSV extends MigrateSource {
     }
     // One can either pass in an explicit list of column names to use, or if we have
     // a header row use the names from that
-    if ($this->headerRow && empty($csvcolumns)) {
+    if ($this->headerRows && empty($csvcolumns)) {
       $this->csvcolumns = array();
       $result = fopen($this->file, 'r');
+      // Skip all but the last header
+      for ($i = 0; $i < $this->headerRows - 1; $i++) {
+        fgets($this->result);
+      }
+
       $row = fgetcsv($result, $this->fgetcsv['length'], $this->fgetcsv['delimiter'],
         $this->fgetcsv['enclosure']);
       foreach ($row as $header) {
+        $header = trim($header);
         $this->csvcolumns[] = array($header, $header);
       }
       fclose($result);
@@ -122,9 +128,7 @@ class MigrateSourceCSV extends MigrateSource {
   public function computeCount() {
     // TODO. If this takes too much time/memory, use exec('wc -l')
     $count = count(file($this->file));
-    if ($this->headerRow) {
-      $count--;
-    }
+    $count -= $this->headerRows;
     return $count;
   }
 
@@ -143,7 +147,7 @@ class MigrateSourceCSV extends MigrateSource {
     migrate_instrument_stop('MigrateSourceCSV execute');
 
     // Load up the first row, skipping the header if necessary
-    if ($this->headerRow) {
+    for ($i = 0; $i < $this->headerRows; $i++) {
       fgets($this->result);
     }
     $this->next();

@@ -25,6 +25,9 @@ class MigrateSourceOracle extends MigrateSource {
    * @var resource
    */
   protected $connection;
+  public function getConnection() {
+    return $this->connection;
+  }
 
   /**
    * The SQL query from which to obtain data. Is a string.
@@ -244,6 +247,13 @@ class MigrateSourceOracle extends MigrateSource {
       $map_row = $map->getRowBySource($this->currentKey);
       if ($map_row && $map_row['needs_update'] == 0) {
         continue;
+      }
+      // Add map info to the row, if present
+      if ($map_row) {
+        foreach ($map_row as $field => $value) {
+          $field = 'migrate_map_' . $field;
+          $this->currentRow->$field = $value;
+        }
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean

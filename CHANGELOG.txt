@@ -8,6 +8,7 @@ Features and enhancements
 - #1185632 - Handle (potentially multiple) headers in CSV source plugin.
 
 Bug fixes
+- #1231398 - Add map data to row in Oracle source plugin.
 - #1227130 - On import, clear messages before applyMappings().
 - #1195802 - Fixed SQL Server problem handling end of batch; brought Oracle/SQL
   Server implementations in line with each other.

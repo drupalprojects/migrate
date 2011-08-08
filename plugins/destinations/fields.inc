@@ -267,7 +267,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         throw new MigrateException("You must specify a filename in the 'source_path' argument for file_blog migrations.");
         return FALSE;
       }
-      $destination_dir = file_field_widget_uri($field_info, $instance);
+      $destination_dir = $this->destinationDir($field_info, $instance);
       $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', $arguments['source_path']));
       if (!file_exists($destination_file)) {
         file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
@@ -295,6 +295,11 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       }
     }
     return $return;
+  }
+
+  protected function destinationDir($field_info, $instance) {
+    $destination_dir = file_field_widget_uri($field_info, $instance);
+    return $destination_dir;
   }
 
   /**

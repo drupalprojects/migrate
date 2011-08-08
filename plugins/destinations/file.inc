@@ -77,7 +77,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    * @param array $options
    *  Options applied to files.
    */
-  public function __construct(array $options = array()) {
+  public function __construct(array $options = array(), $bundle = 'file') {
     if (isset($options['copy_file'])) {
       $this->copyFile = $options['copy_file'];
     }
@@ -90,7 +90,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     if (isset($options['preserve_files'])) {
       $this->preserveFiles = $options['preserve_files'];
     }
-    parent::__construct('file', 'file', $options);
+    parent::__construct('file', $bundle, $options);
   }
 
   /**
@@ -114,7 +114,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
 
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);
-    $fields += migrate_handler_invoke_all('File', 'fields');
+    $fields += migrate_handler_invoke_all('File', 'fields', $this->entityType, $this->bundle);
 
     return $fields;
   }

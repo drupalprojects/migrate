@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Support for file entity as destination. Note that File Fields have a their
+ * Support for file entity as destination. Note that File Fields have their
  * own destination in fields.inc
  */
 
@@ -128,7 +128,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *  Raw source data object - passed through to prepare handlers.
    */
   public function prepare($entity, stdClass $source_row) {
-    if ($this->copyBlob) {
+    if (!empty($this->copyBlob)) {
       if (empty($entity->filename)) {
         throw new MigrateException("You must map to filename field for copy_blob migrations.");
         return FALSE;
@@ -207,6 +207,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
         $file->fid = $row->migrate_map_destid1;
       }
     }
+
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       if (!isset($file->fid)) {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination fid provided'));

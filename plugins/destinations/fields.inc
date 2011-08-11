@@ -262,6 +262,10 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
     $migration = Migration::currentMigration();
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
 
+    if (empty($arguments['file_function'])) {
+      $arguments['file_function'] = 'file_copy';
+    }
+
     if ($arguments['file_function'] == 'file_blob') {
       if (empty($arguments['source_path'])) {
         throw new MigrateException("You must specify a filename in the 'source_path' argument for file_blog migrations.");
@@ -373,9 +377,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         $file_function = $arguments['file_function'];
       }
 
-      $destination_dir = file_field_widget_uri($field_info, $instance);
+      $destination_dir = $this->destinationDir($field_info, $instance);
       file_prepare_directory($destination_dir, FILE_CREATE_DIRECTORY);
-
       if (!empty($arguments['source_path'])) {
         // $full_path needs adjusting for file_blob
         if ($file_function == 'file_blob') {
@@ -389,7 +392,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       else {
         $full_path = $path;
       }
-
       $remote = FALSE;
 
       // TODO: belongs in prepare or validate?
@@ -418,9 +420,9 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
       else {
         $destination_file = file_stream_wrapper_uri_normalize($destination_dir . "/" . str_replace('/', '-', basename($full_path)));
       }
+
       $file_replace = empty($arguments['file_replace']) ? FILE_EXISTS_RENAME : $arguments['file_replace'];
       $destination_file = file_destination($destination_file, $file_replace);
-
       $real_destination_file = drupal_realpath($destination_file);
       $source = (object) array(
         'uri' => $full_path,
@@ -519,7 +521,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
               migrate_instrument_stop('file_link: file_exists');
               $message = t('File does not exist in Drupal files directory: !path',
                 array('!path' => $full_path));
-              if ($arguments['throw_error']) {
+              if (!empty($arguments['throw_error'])) {
                 throw new MigrateException($message, MigrationBase::MESSAGE_ERROR);
               }
               else {
@@ -547,7 +549,6 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
               $file->uri = $full_path;
               $file->uid = isset($entity->uid) ? $entity->uid : 0;
               $file->status |= FILE_STATUS_PERMANENT;
-
               $file = file_save($file);
               migrate_instrument_stop('file_link: create file record');
             }

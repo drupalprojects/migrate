@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.2 RC2
+===============
 
 Features and enhancements
 - #1240928 - Generalize file handlers, to ease media module support.

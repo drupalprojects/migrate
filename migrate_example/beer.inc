@@ -336,11 +336,6 @@ class BeerNodeMigration extends BasicExampleMigration {
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);
 
-    // Oops, we've added a second mapping for sticky... Fortunately, the
-    // Migrate module will warn you that the second mapping overrides the first
-    $this->addFieldMapping('sticky')
-         ->defaultValue(0);
-
     // No unmapped source fields
 
     // Unmapped destination fields

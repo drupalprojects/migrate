@@ -936,3 +936,50 @@ function drush_migrate_print_memory() {
     drush_print_table($table, TRUE);
   }
 }
+
+/**
+ * Command argument complete callback.
+ *
+ * @return
+ *   List of migrations.
+ */
+function migrate_migrate_status_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_import_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_rollback_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_fields_destination_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_fields_source_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_mappings_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_reset_status_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function migrate_migrate_stop_complete() {
+  return array('values' => drush_migrate_migrations());
+}
+
+function drush_migrate_migrations() {
+  drush_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+  $migrations = migrate_migrations();
+  foreach ($migrations as $migration) {
+    $values[] = $migration->getMachineName();
+  }
+  return $values;
+}

@@ -451,29 +451,26 @@ function migrate_migration_info($form, $form_state, $migration) {
 
   foreach ($team as $group => $list) {
     $form['overview'][$group] = array(
-      '#theme' => 'item_list',
+      '#type' => 'item',
       '#title' => $group,
-      '#attributes' => array('id' => 'team'),
-      '#items' => $list,
+      '#markup' => implode(', ', $list),
     );
   }
 
   $dependencies = $migration->getHardDependencies();
   if (count($dependencies) > 0) {
     $form['overview']['dependencies'] = array(
-      '#prefix' => '<div>',
-      '#markup' => '<strong>' . t('Dependencies: ') . '</strong>' .
-         implode(', ', $dependencies),
-      '#suffix' => '</div>',
+      '#title' => t('Dependencies') ,
+      '#markup' => implode(', ', $dependencies),
+      '#type' => 'item',
     );
   }
   $soft_dependencies = $migration->getSoftDependencies();
   if (count($soft_dependencies) > 0) {
     $form['overview']['soft_dependencies'] = array(
-      '#prefix' => '<div>',
-      '#markup' => '<strong>' . t('Soft Dependencies: ') . '</strong>' .
-         implode(', ', $soft_dependencies),
-      '#suffix' => '</div>',
+      '#title' => t('Soft Dependencies'),
+      '#markup' => implode(', ', $soft_dependencies),
+      '#type' => 'item',
     );
   }
 
@@ -490,16 +487,16 @@ function migrate_migration_info($form, $form_state, $migration) {
         break;
     }
     $form['overview']['system_of_record'] = array(
-      '#prefix' => '<div>',
-      '#markup' => '<strong>' . t('System of record: ') . '</strong>' . $system_of_record,
-      '#suffix' => '</div>',
+      '#type' => 'item',
+      '#title' => t('System of record: '),
+      '#markup' => $system_of_record,
     );
   }
 
   $form['overview']['description'] = array(
-    '#prefix' => '<div>',
+    '#title' => t('Description: '),
     '#markup' => $migration->getDescription(),
-    '#suffix' => '</div>',
+    '#type' => 'item',
   );
 
   if ($has_mappings) {

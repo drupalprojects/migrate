@@ -529,7 +529,7 @@ class MigrateItemsXML extends MigrateItems {
     }
     else {
       $migration = Migration::currentMigration();
-      $message =  t('Loading of !itemxml given id failed:', array('!id' => $id));
+      $message =  t('Loading of item XML for ID !id failed:', array('!id' => $id));
       foreach (libxml_get_errors() as $error) {
         $message .= "\n" . $error->message;
       }

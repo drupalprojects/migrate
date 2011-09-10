@@ -1,4 +1,10 @@
 
+Migrate 2.2
+===============
+
+Bug fixes
+- #1265514 - Fixed error message for failed XML load in MigrateItemsXML.
+
 Migrate 2.2 RC2
 ===============
 

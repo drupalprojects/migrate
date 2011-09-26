@@ -329,6 +329,11 @@ abstract class MigrationBase {
       $this->outputFunction = 'drupal_set_message';
     }
 
+    // Prevent any emails from being sent out on migration
+    foreach ($conf['mail_system'] as $system => $class) {
+      $conf['mail_system'][$system] = 'MigrateMailIgnore';
+    }
+
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));
   }

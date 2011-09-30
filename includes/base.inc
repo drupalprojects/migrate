@@ -331,8 +331,10 @@ abstract class MigrationBase {
 
     // Prevent any emails from being sent out on migration
     global $conf;
-    foreach ($conf['mail_system'] as $system => $class) {
-      $conf['mail_system'][$system] = 'MigrateMailIgnore';
+    if (!empty($conf['mail_system'])) {
+      foreach ($conf['mail_system'] as $system => $class) {
+        $conf['mail_system'][$system] = 'MigrateMailIgnore';
+      }
     }
 
     // Make sure we clear our semaphores in case of abrupt exit

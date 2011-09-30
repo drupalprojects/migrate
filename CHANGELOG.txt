@@ -1,6 +1,12 @@
 
+Next release
+============
+
+Features and enhancements
+- #1254398 - Prevent accidental emailing during migration.
+
 Migrate 2.2
-===============
+===========
 
 Bug fixes
 - #1265514 - Fixed error message for failed XML load in MigrateItemsXML.

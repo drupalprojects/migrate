@@ -139,7 +139,7 @@ class MigrateItemJSON extends MigrateItem {
       $migration = Migration::currentMigration();
       $message =  t('Loading of !objecturl failed:', array('!objecturl' => $item_url));
       $migration->getMap()->saveMessage(
-        array($this->id), $message, MigrationBase::MESSAGE_ERROR);
+        array(id), $message, MigrationBase::MESSAGE_ERROR);
       return NULL;
     }
   }

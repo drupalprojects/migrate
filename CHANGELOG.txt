@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Bug fixes
+- #1133096 - Failure to clear currentRow in MigrateSourceMultiItems.
+
 Migrate 2.2
 ===============
 

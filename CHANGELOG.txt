@@ -5,6 +5,9 @@ Next release
 Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
+Bug fixes
+- #1133096 - Failure to clear currentRow in MigrateSourceMultiItems.
+
 Migrate 2.2
 ===========
 

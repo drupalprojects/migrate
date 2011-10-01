@@ -215,6 +215,7 @@ class MigrateSourceMultiItems extends MigrateSource {
         }
         else {
           $this->numIgnored++;
+          $this->currentRow = NULL;
         }
       }
       else {

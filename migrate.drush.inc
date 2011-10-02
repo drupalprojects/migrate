@@ -44,6 +44,7 @@ function migrate_drush_command() {
     '--all' => 'Process all migrations that come after the specified migration. If no value is supplied, all migrations are processed.',
     '--instrument' => 'Capture performance information (timer, memory, or all)',
     '--force' => 'Force an operation to run, even if all dependencies are not satisfied',
+    '--group' => 'Name of the migration group to run',
   );
   $items['migrate-status'] = array(
     'description' => 'List all migrations with current status.',

@@ -301,6 +301,13 @@ class MigrateItemsXML extends MigrateItems {
   protected $xmlUrl;
 
   /**
+   * Stores the loaded XML document.
+   *
+   * @var SimpleXMLElement
+   */
+  protected $xml = FALSE;
+
+  /**
    * xpath identifying the element used for each item
    */
   protected $itemXpath;
@@ -338,6 +345,27 @@ class MigrateItemsXML extends MigrateItems {
   }
 
   /**
+   * Load and return the xml from the defined xmlUrl.
+   * @return SimpleXMLElement
+   */
+  public function &xml() {
+    if (!$this->xml && !empty($this->xmlUrl)) {
+      $this->xml = simplexml_load_file($this->xmlUrl);
+      if (!$this->xml) {
+        $migration = Migration::currentMigration();
+        $migration->showMessage(t(
+          'Loading of !xmlUrl failed:',
+          array('!xmlUrl' => $this->xmlUrl)
+        ));
+        foreach (libxml_get_errors() as $error) {
+          $migration->showMessage($error);
+        }
+      }
+    }
+    return $this->xml;
+  }
+
+  /**
    * Load the XML at the given URL, and return an array of the IDs found
    * within it.
    *
@@ -345,20 +373,12 @@ class MigrateItemsXML extends MigrateItems {
    */
   public function getIdList() {
     migrate_instrument_start("Retrieve $this->xmlUrl");
-    $xml = simplexml_load_file($this->xmlUrl);
+    $xml = $this->xml();
     migrate_instrument_stop("Retrieve $this->xmlUrl");
     if ($xml) {
       return $this->getIDsFromXML($xml);
     }
-    else {
-      $migration = Migration::currentMigration();
-      $migration->showMessage(t('Loading of !xmlUrl failed:',
-          array('!xmlUrl' => $this->xmlUrl)));
-      foreach (libxml_get_errors() as $error) {
-        $migration->showMessage($error);
-      }
-      return NULL;
-    }
+    return NULL;
   }
 
   /**
@@ -405,7 +425,7 @@ class MigrateItemsXML extends MigrateItems {
    */
   public function computeCount() {
     $count = 0;
-    $xml = simplexml_load_file($this->xmlUrl);
+    $xml = $this->xml();
     if ($xml) {
       $ids = $this->getIDsFromXML($xml, TRUE);
       $count = count($ids);
@@ -420,19 +440,11 @@ class MigrateItemsXML extends MigrateItems {
    * @return array
    */
   public function getAllItems() {
-    $xml = simplexml_load_file($this->xmlUrl);
+    $xml = $this->xml();
     if ($xml) {
       return $this->getItemsFromXML($xml);
     }
-    else {
-      $migration = Migration::currentMigration();
-      $migration->showMessage(t('Loading of !xmlUrl failed:',
-          array('!xmlUrl' => $this->xmlUrl)));
-      foreach (libxml_get_errors() as $error) {
-        $migration->showMessage($error);
-      }
-      return NULL;
-    }
+    return NULL;
   }
 
   /**

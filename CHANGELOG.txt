@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1290706 - Centralize loading of XML.
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes

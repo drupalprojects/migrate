@@ -152,7 +152,10 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       }
       $account->roles = drupal_map_assoc($account->roles);
     }
-
+    if (empty($account->roles) && empty($old_account->roles))  {
+      $account->roles = array();
+    }
+    
     $this->prepare($account, $row);
 
     if (isset($account->uid) && !(isset($account->is_new) && $account->is_new)) {

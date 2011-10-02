@@ -41,7 +41,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
    * @param string $bundle
    *  A.k.a. the content type (page, article, etc.) of the node.
    * @param array $options
-+   *  Options applied to nodes.
+   *  Options applied to nodes.
    */
   public function __construct($bundle, array $options = array()) {
     parent::__construct('node', $bundle, $options);

@@ -22,6 +22,13 @@ abstract class MigrateDestination {
    * abstract static public function getKeySchema()
    */
 
+  /**
+   * Derived classes must implement __toString().
+   *
+   * @return string
+   *  Description of the destination being migrated into
+   */
+  abstract public function __toString();
 
   /**
    * Derived classes must implement fields(), returning a list of available

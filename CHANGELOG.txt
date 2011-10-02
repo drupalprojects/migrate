@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1290122 - Force destinations to implement __toString().
 - #1290120 - Warnings updating users if roles not set.
 - #1290118 - Warning in MigrateItemJSON::getItem()
 - #1133096 - Failure to clear currentRow in MigrateSourceMultiItems.

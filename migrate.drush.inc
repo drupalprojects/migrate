@@ -496,39 +496,52 @@ function drush_migrate_mappings($args = NULL) {
 function drush_migrate_audit($args = NULL) {
   try {
     $problem_descriptions = array(
+      'wtf' => dt("Probably an incomplete migration:"),
       'noted_issues' => dt("Noted as an issue:"),
-      'sources_unmapped' => dt("Source not used in a mapping:"),
+      // I wish drush had dformat_plural().
+      'sources_unmapped' => dt("Source(s) not used in a mapping:"),
       'sources_missing' => dt("Used as source field in mapping but not in source field list:"),
-      'destinations_unmapped' => dt("Destination not used in a mapping:"),
+      'destinations_unmapped' => dt("Destination(s) not used in a mapping:"),
       'destinations_missing' => dt("Used as destination field in mapping but not in destination field list:"),
     );
 
+    drush_print("Auditing migrations");
+
     $migrations = drush_migrate_get_migrations($args);
     foreach ($migrations as $name => $migration) {
-      drush_print("\n" . dt('@migration Audit', array('@migration' => $name)) . "\n");
-
-      $source = $migration->getSource();
-      $destination = $migration->getDestination();
-      if (empty($source)) {
-        drush_print(dt('Missing a source.'));
-      }
-      if (empty($destination)) {
-        drush_print(dt('Missing a destination.'));
+      $problems = array();
+      foreach ($problem_descriptions as $key => $description) {
+        $problems[$key] = array();
       }
 
-      $field_mappings = $migration->getFieldMappings();
-      $source_fields = $source->fields();
-      $destination_fields = $destination->fields();
+      drush_print("\n" . dt('@migration', array('@migration' => $name)) . "\n");
 
-      $unused_sources = array();
+      if (!method_exists($migration, 'getSource') || !($source = $migration->getSource())) {
+        $problems['wtf'][] = dt('Missing a source');
+        $source_fields = array();
+      }
+      else {
+        $source_fields = $source->fields();
+      }
+
+      if (!method_exists($migration, 'getDestination') || !($destination = $migration->getDestination())) {
+        $problems['wtf'][] = dt('Missing a destination');
+        $destination_fields = array();
+      }
+      else {
+        $destination_fields = $destination->fields();
+      }
+
+      if (!method_exists($migration, 'getFieldMappings')) {
+        $problems['wtf'][] = dt('Missing field mappings');
+        $field_mappings = array();
+      }
+      else {
+        $field_mappings = $migration->getFieldMappings();
+      }
+
+      $used_sources = array();
       $used_destinations = array();
-      $problems = array(
-        'noted_issues' => array(),
-        'sources_unmapped' => array(),
-        'sources_missing' => array(),
-        'destinations_unmapped' => array(),
-        'destinations_missing' => array(),
-      );
       foreach ($field_mappings as $mapping) {
         $source_field = $mapping->getSourceField();
         $destination_field = $mapping->getDestinationField();
@@ -555,8 +568,12 @@ function drush_migrate_audit($args = NULL) {
         }
       }
 
-      $problems['sources_unmapped'] = array_diff_key($source_fields, $used_sources);
-      $problems['destinations_unmapped'] = array_diff_key($destination_fields, $used_destinations);
+      foreach (array_diff_key($source_fields, $used_sources) as $name => $description) {
+        $problems['sources_unmapped'][] = array('Field' => $name, 'Description' => $description);
+      }
+      foreach (array_diff_key($destination_fields, $used_destinations) as $name => $description) {
+        $problems['destinations_unmapped'][] = array('Field' => $name, 'Description' => $description);
+      }
 
       $problems = array_filter($problems);
       if (empty($problems)) {
@@ -565,17 +582,18 @@ function drush_migrate_audit($args = NULL) {
       else {
         foreach ($problems as $type => $some_problems) {
           drush_print($problem_descriptions[$type]);
-          // Print arrays as tables.
+          // If the contents of each row are arrays print it as a table.
           if (is_array($some_problems[0])) {
             $table = array_merge(array(array_keys($some_problems[0])), $some_problems);
             drush_print_table($table, TRUE);
           }
-          // Print strings line by line.
           else {
             foreach ($some_problems as $problem) {
               drush_print($problem, 1);
             }
-            drush_print('');
+            // Add an extra new line to keep the spacing consistent with the
+            // tables.
+            drush_print();
           }
         }
       }

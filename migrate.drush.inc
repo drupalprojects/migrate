@@ -26,6 +26,8 @@ function migrate_drush_help($section) {
       return dt('List the fields available for mapping from a source');
     case 'drush:migrate-mappings':
       return dt('View information on all field mappings in a migration');
+    case 'drush:migrate-audit':
+      return dt('View information on problems in a migration');
     case 'drush:migrate-wipe':
       return dt('Delete all nodes from specified content types.');
   }
@@ -108,6 +110,21 @@ function migrate_drush_command() {
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mm'),
+  );
+  $items['migrate-audit'] = array(
+    'description' => 'View information on problems in a migration.',
+    'options' => array(
+      'all' => $migration_options['--all'],
+      'group' => $migration_options['--group'],
+    ),
+    'arguments' => array(
+      'migration' => 'Name of the migration',
+    ),
+    'examples' => array(
+      'migrate-audit MyNode' => 'Report on problems in the MyNode migration',
+    ),
+    'drupal dependencies' => array('migrate'),
+    'aliases' => array('ma'),
   );
   $items['migrate-rollback'] = array(
     'description' => 'Roll back the destination objects from a given migration',
@@ -474,6 +491,103 @@ function drush_migrate_mappings($args = NULL) {
 }
 
 /**
+ * Display field mappings for a migration.
+ */
+function drush_migrate_audit($args = NULL) {
+  try {
+    $problem_descriptions = array(
+      'noted_issues' => dt("Noted as an issue:"),
+      'sources_unmapped' => dt("Source not used in a mapping:"),
+      'sources_missing' => dt("Used as source field in mapping but not in source field list:"),
+      'destinations_unmapped' => dt("Destination not used in a mapping:"),
+      'destinations_missing' => dt("Used as destination field in mapping but not in destination field list:"),
+    );
+
+    $migrations = drush_migrate_get_migrations($args);
+    foreach ($migrations as $name => $migration) {
+      drush_print("\n" . dt('@migration Audit', array('@migration' => $name)) . "\n");
+
+      $source = $migration->getSource();
+      $destination = $migration->getDestination();
+      if (empty($source)) {
+        drush_print(dt('Missing a source.'));
+      }
+      if (empty($destination)) {
+        drush_print(dt('Missing a destination.'));
+      }
+
+      $field_mappings = $migration->getFieldMappings();
+      $source_fields = $source->fields();
+      $destination_fields = $destination->fields();
+
+      $unused_sources = array();
+      $used_destinations = array();
+      $problems = array(
+        'noted_issues' => array(),
+        'sources_unmapped' => array(),
+        'sources_missing' => array(),
+        'destinations_unmapped' => array(),
+        'destinations_missing' => array(),
+      );
+      foreach ($field_mappings as $mapping) {
+        $source_field = $mapping->getSourceField();
+        $destination_field = $mapping->getDestinationField();
+
+        $used_sources[$source_field] = TRUE;
+        $used_destinations[$destination_field] = TRUE;
+
+        $issue_priority = $mapping->getIssuePriority();
+        if (!is_null($issue_priority) && $issue_priority != MigrateFieldMapping::ISSUE_PRIORITY_OK) {
+          $problems['noted_issues'][] = array(
+            dt('Source') => $source_field,
+            dt('Destination') => $destination_field,
+            dt('Priority') => MigrateFieldMapping::$priorities[$issue_priority],
+            dt('Description') => $mapping->getDescription(),
+          );
+        }
+
+        // Validate source and destination fields actually exist
+        if (!is_null($source_field) && !isset($source_fields[$source_field])) {
+          $problems['sources_missing'][] = $source_field;
+        }
+        if (!is_null($destination_field) && !isset($destination_fields[$destination_field])) {
+          $problems['destinations_missing'][] = $destination_field;
+        }
+      }
+
+      $problems['sources_unmapped'] = array_diff_key($source_fields, $used_sources);
+      $problems['destinations_unmapped'] = array_diff_key($destination_fields, $used_destinations);
+
+      $problems = array_filter($problems);
+      if (empty($problems)) {
+        drush_print(dt('No problems found.') . "\n", 1);
+      }
+      else {
+        foreach ($problems as $type => $some_problems) {
+          drush_print($problem_descriptions[$type]);
+          // Print arrays as tables.
+          if (is_array($some_problems[0])) {
+            $table = array_merge(array(array_keys($some_problems[0])), $some_problems);
+            drush_print_table($table, TRUE);
+          }
+          // Print strings line by line.
+          else {
+            foreach ($some_problems as $problem) {
+              drush_print($problem, 1);
+            }
+            drush_print('');
+          }
+        }
+      }
+    }
+  }
+  catch (MigrateException $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
+}
+
+/**
  * Roll back one specified migration
  */
 function drush_migrate_rollback($args = NULL) {
@@ -621,6 +735,11 @@ function drush_migrate_fields_source_validate($args = NULL) {
 
 // Implement drush_hook_COMMAND_validate().
 function drush_migrate_mappings_validate($args = NULL) {
+  return drush_migrate_validate_common($args);
+}
+
+// Implement drush_hook_COMMAND_validate().
+function drush_migrate_audit_validate($args = NULL) {
   return drush_migrate_validate_common($args);
 }
 

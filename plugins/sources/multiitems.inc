@@ -28,7 +28,7 @@ abstract class MigrateItems {
    * Implementors are expected to return an array of unique IDs, suitable for
    * passing to the MigrateItem class to retrieve the data for a single item.
    *
-   * @return array
+   * @return Mixed, iterator or array
    */
   abstract public function getIdList();
 
@@ -82,6 +82,13 @@ class MigrateSourceMultiItems extends MigrateSource {
    * @var array
    */
   protected $fields = array();
+
+  /**
+   * Iterator of IDs from the listing class.
+   *
+   * @var Iterator
+   */
+  protected $idIterator;
 
   /**
    * Keep the current source ID handy while iterating.
@@ -140,18 +147,24 @@ class MigrateSourceMultiItems extends MigrateSource {
    * Implementation of Iterator::rewind() - called before beginning a foreach loop.
    */
   public function rewind() {
-    $migration = Migration::currentMigration();
     migrate_instrument_start('MigrateSourceList rewind');
+
     $this->numProcessed = 0;
     $this->numIgnored = 0;
-    $idlist = $migration->getOption('idlist');
-    if ($idlist) {
-      $this->idList = explode(',', $idlist);
+
+    $migration = Migration::currentMigration();
+    $idList = $migration->getOption('idlist');
+    if ($idList) {
+      $idList = explode(',', $idList);
     }
     else {
-      $this->idList = $this->itemsClass->getIdList();
+      $idList = $this->itemsClass->getIdList();
     }
+    $this->idIterator = ($idList instanceof Iterator) ? $idList : new ArrayIterator($idList);
+    $this->idIterator->rewind();
+
     migrate_instrument_stop('MigrateSourceList rewind');
+
     // Load up the first row
     $this->next();
   }
@@ -170,7 +183,10 @@ class MigrateSourceMultiItems extends MigrateSource {
     $itemlimit = $migration->getItemLimit();
 
     // Get next item (next ID not already in the map, unless needs_update=1)
-    while ($this->id = array_shift($this->idList)) {
+    while ($this->idIterator->valid()) {
+      $this->id = $this->idIterator->current();
+      $this->idIterator->next();
+
       // Skip empty IDs
       if (empty($this->id)) {
         continue;

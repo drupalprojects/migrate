@@ -6,6 +6,7 @@ Features and enhancements
 - #1290706 - Centralize loading of XML.
 
 Bug fixes
+- #1285290 - Add migrate_decode_exception() for exception handling.
 - #1292462 - Group missing from drush options.
 - #1290122 - Force destinations to implement __toString().
 - #1290120 - Warnings updating users if roles not set.

@@ -530,7 +530,7 @@ abstract class MigrationBase {
    *  in contexts where this doesn't make sense.
    */
   public function handleException($exception, $save = TRUE) {
-    $result = _drupal_decode_exception($exception);
+    $result = migrate_decode_exception($exception);
     $message = $result['!message'] . ' (' . $result['%file'] . ':' . $result['%line'] . ')';
     if ($save) {
       $this->saveMessage($message);

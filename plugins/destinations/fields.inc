@@ -190,6 +190,9 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
+    if (empty($values[0])) {
+      $values = array();
+    }
     if (isset($arguments['source_type']) && $arguments['source_type'] == 'tid') {
       // Nothing to do. We have tids already.
       $tids = $values;

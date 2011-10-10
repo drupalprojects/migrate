@@ -180,7 +180,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         // term_hierarchy table.
         unset($term->parent['arguments']);
       }
-      if (!isset($term->parent)) {
+      if (empty($term->parent)) {
         $term->parent = array(0);
       }
       if (!isset($term->format)) {

@@ -7,6 +7,9 @@
 
 /**
  * Implementation of MigrateSource, to handle imports from CVV file.
+ *
+ * If the CSV file contains non-ASCII characters, make sure it includes a
+ * UTF BOM (Byte Order Marker) so they are interpreted correctly.
  */
 class MigrateSourceCSV extends MigrateSource {
   /**

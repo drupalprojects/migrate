@@ -7,6 +7,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1284592 - Fixed error on empty term parents.
 - #1300258 - Fixed error on unfulfilled term references.
 - #1292462 - Group missing from drush options.
 - #1290122 - Force destinations to implement __toString().

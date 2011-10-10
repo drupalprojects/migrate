@@ -361,7 +361,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    * @param source_path
    *   Path to source file.
    * @param file_function
-   *   file_fast, file_move, or file_copy.
+   *   file_fast, file_move, file_copy, or file_link.
    * @param file_replace
    *   Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.
    * @param language

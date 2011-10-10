@@ -79,7 +79,7 @@ function migrate_decode_exception($exception) {
       $message .= ": " . $exception->query_string . "; " . print_r($exception->args, TRUE);
     }
   }
-  $caller = _drupal_get_last_caller($backtrace);
+  $caller = migrate_get_last_caller($backtrace);
 
   return array(
     '%type' => get_class($exception),
@@ -88,4 +88,40 @@ function migrate_decode_exception($exception) {
     '%file' => $caller['file'],
     '%line' => $caller['line'],
   );
+}
+
+/**
+ * Gets the last caller from a backtrace.
+ *
+ * @param $backtrace
+ *   A standard PHP backtrace.
+ * @return
+ *   An associative array with keys 'file', 'line' and 'function'.
+ */
+function migrate_get_last_caller($backtrace) {
+  // Errors that occur inside PHP internal functions do not generate
+  // information about file and line. Ignore black listed functions.
+  $blacklist = array('debug');
+  while (($backtrace && !isset($backtrace[0]['line'])) ||
+         (isset($backtrace[1]['function']) && in_array($backtrace[1]['function'], $blacklist))) {
+    array_shift($backtrace);
+  }
+
+  // The first trace is the call itself.
+  // It gives us the line and the file of the last call.
+  $call = $backtrace[0];
+
+  // The second call give us the function where the call originated.
+  if (isset($backtrace[1])) {
+    if (isset($backtrace[1]['class'])) {
+      $call['function'] = $backtrace[1]['class'] . $backtrace[1]['type'] . $backtrace[1]['function'] . '()';
+    }
+    else {
+      $call['function'] = $backtrace[1]['function'] . '()';
+    }
+  }
+  else {
+    $call['function'] = 'main()';
+  }
+  return $call;
 }

@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of MigrateSource, to handle imports from CVV file.
+ * Implementation of MigrateSource, to handle imports from CSV file.
  *
  * If the CSV file contains non-ASCII characters, make sure it includes a
  * UTF BOM (Byte Order Marker) so they are interpreted correctly.
@@ -45,7 +45,7 @@ class MigrateSourceCSV extends MigrateSource {
   /**
    * Simple initialization.
    *
-   * @param atring $path
+   * @param string $path
    *  The path to the source file
    * @param array $csvcolumns
    *  Keys are integers. values are array(field name, description).

@@ -9,7 +9,7 @@
  */
 
 /**
- * Implementation of MigrateSource, to handle imports from CVV file.
+ * Implementation of MigrateSource, to handle imports from CSV file.
  */
 class MigrateSourceCSV extends MigrateSource {
   /**
@@ -45,7 +45,7 @@ class MigrateSourceCSV extends MigrateSource {
   /**
    * Simple initialization.
    *
-   * @param atring $path
+   * @param string $path
    *  The path to the source file
    * @param array $csvcolumns
    *  Keys are integers. values are array(field name, description).

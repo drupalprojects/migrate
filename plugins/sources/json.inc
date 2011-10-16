@@ -55,8 +55,8 @@ class MigrateListJSON extends MigrateList {
         return $this->getIDsFromJSON($data);
       }
     }
-    $migration = Migration::currentMigration();
-    $migration->showMessage(t('Loading of !listurl failed:',
+
+    Migration::displayMessage(t('Loading of !listurl failed:',
         array('!listurl' => $this->listUrl)));
     return NULL;
   }

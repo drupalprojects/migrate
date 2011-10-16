@@ -23,6 +23,7 @@ Migrate 2.2 RC2
 ===============
 
 Features and enhancements
+- #1304444 - Added static displayMessage(), deprecating showMessage().
 - #1226768 - Improved exception handling.
 - #1230294 - Get correct count of CSV with embedded newlines.
 - #1185632 - Handle (potentially multiple) headers in CSV source plugin.

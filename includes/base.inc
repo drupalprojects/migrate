@@ -162,11 +162,23 @@ abstract class MigrationBase {
    * Name of a function for displaying feedback. It must take the message to display
    * as its first argument, and a (string) message type as its second argument
    * (see drush_log()).
+   * Deprecated in favor of the static displayFunction - remove in next API release.
    * @var string
    */
   protected $outputFunction;
   public function setOutputFunction($output_function) {
     $this->outputFunction = $output_function;
+  }
+
+  /**
+   * Name of a function for displaying feedback. It must take the message to display
+   * as its first argument, and a (string) message type as its second argument
+   * (see drush_log()).
+   * @var string
+   */
+  protected static $displayFunction;
+  public function setDisplayFunction($display_function) {
+    self::$displayFunction = $display_function;
   }
 
   /**
@@ -329,13 +341,15 @@ abstract class MigrationBase {
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');
 
-    // Default the outputFunction based on context
+    // Default the displayFunction outputFunction based on context
     if (function_exists('drush_log')) {
-      $this->outputFunction = 'drush_log';
+      self::$displayFunction = 'drush_log';
     }
     else {
-      $this->outputFunction = 'drupal_set_message';
+      self::$displayFunction = 'drupal_set_message';
     }
+    // Maintain deprecated version for now
+    $this->outputFunction = self::$displayFunction;
 
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));
@@ -471,7 +485,21 @@ abstract class MigrationBase {
         break;
     }
 
-    $this->showMessage($message, $level);
+    self::displayMessage($message, $level);
+  }
+
+  /**
+   * Output the given message appropriately (drush_print/drupal_set_message/etc.)
+   * Deprecated in favor of static displayMessage(), remove in next API update.
+   *
+   * @param string $message
+   *  The message to output.
+   * @param int $level
+   *  Optional message severity as understood by drupal_set_message and drush_log
+   *  (defaults to 'error').
+   */
+  public function showMessage($message, $level = 'error') {
+    call_user_func(self::$displayFunction, $message, $level);
   }
 
   /**
@@ -483,8 +511,8 @@ abstract class MigrationBase {
    *  Optional message severity as understood by drupal_set_message and drush_log
    *  (defaults to 'error').
    */
-  public function showMessage($message, $level = 'error') {
-    call_user_func($this->outputFunction, $message, $level);
+  static public function displayMessage($message, $level = 'error') {
+    call_user_func(self::$displayFunction, $message, $level);
   }
 
   /**
@@ -535,7 +563,7 @@ abstract class MigrationBase {
     if ($save) {
       $this->saveMessage($message);
     }
-    $this->showMessage($message);
+    self::displayMessage($message);
   }
 
   /**
@@ -904,7 +932,7 @@ abstract class MigrationBase {
     $usage = memory_get_usage();
     $pct_memory = $usage/$this->memoryLimit;
     if ($pct_memory > $this->memoryThreshold) {
-      $this->showMessage(
+      self::displayMessage(
         t('Memory usage is !usage (!pct% of limit !limit), starting new batch',
           array('!pct' => round($pct_memory*100), '!usage' => format_size(memory_get_usage()), '!limit' => format_size($this->memoryLimit))),
             'warning');

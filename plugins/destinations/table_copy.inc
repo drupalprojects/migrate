@@ -69,7 +69,7 @@ class MigrateDestinationTableCopy extends MigrateDestination {
     }
     catch (MigrateException $e) {
       $migration->saveMessage($e->getMessage(), $e->getLevel());
-      $migration->showMessage($e->getMessage());
+      Migration::displayMessage($e->getMessage());
     }
     catch (Exception $e) {
       $this->handleException($e);

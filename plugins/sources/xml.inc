@@ -61,11 +61,10 @@ class MigrateListXML extends MigrateList {
       return $this->getIDsFromXML($xml);
     }
     else {
-      $migration = Migration::currentMigration();
-      $migration->showMessage(t('Loading of !listurl failed:',
+      Migration::displayMessage(t('Loading of !listurl failed:',
           array('!listurl' => $this->listUrl)));
       foreach (libxml_get_errors() as $error) {
-        $migration->showMessage($error);
+        Migration::displayMessage($error->message);
       }
       return NULL;
     }
@@ -223,7 +222,7 @@ abstract class XMLMigration extends Migration {
   protected function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
-      $this->showMessage(
+      Migration::displayMessage(
         t('!name addFieldMapping: !dest was previously mapped, overridden',
           array('!name' => $this->machineName, '!dest' => $destination_field)),
         'warning');
@@ -352,13 +351,12 @@ class MigrateItemsXML extends MigrateItems {
     if (!$this->xml && !empty($this->xmlUrl)) {
       $this->xml = simplexml_load_file($this->xmlUrl);
       if (!$this->xml) {
-        $migration = Migration::currentMigration();
-        $migration->showMessage(t(
+        Migration::displayMessage(t(
           'Loading of !xmlUrl failed:',
           array('!xmlUrl' => $this->xmlUrl)
         ));
         foreach (libxml_get_errors() as $error) {
-          $migration->showMessage($error);
+          Migration::displayMessage($error->message);
         }
       }
     }

@@ -241,7 +241,7 @@ class MigrateSourceCSV extends MigrateSource {
 
       // Add some debugging, just for the first row.
       if (empty($this->numProcessed)) {
-        $migration->showMessage(print_r($this->currentRow, TRUE), 'debug');
+        Migration::displayMessage(print_r($this->currentRow, TRUE), 'debug');
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean

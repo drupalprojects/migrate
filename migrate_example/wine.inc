@@ -74,11 +74,11 @@ class WinePrepMigration extends MigrationBase {
     if (module_exists('auto_nodetitle')) {
       self::$wasEnabled = TRUE;
       module_disable(array('auto_nodetitle'));
-      $this->showMessage(t('Disabled auto_nodetitle module'), 'success');
+      self::displayMessage(t('Disabled auto_nodetitle module'), 'success');
     }
     else {
       self::$wasEnabled = FALSE;
-      $this->showMessage(t('Auto_nodetitle is already disabled'), 'success');
+      self::displayMessage(t('Auto_nodetitle is already disabled'), 'success');
     }
     // Must return one of the MigrationBase RESULT constants
     return MigrationBase::RESULT_COMPLETED;
@@ -809,14 +809,14 @@ class WineFinishMigration extends MigrationBase {
     if (!module_exists('auto_nodetitle')) {
       if (WinePrepMigration::$wasEnabled) {
         module_enable(array('auto_nodetitle'));
-        $this->showMessage(t('Re-enabled auto_nodetitle module'), 'success');
+        self::displayMessage(t('Re-enabled auto_nodetitle module'), 'success');
       }
       else {
-        $this->showMessage(t('auto_nodetitle was not originally enabled'), 'success');
+        self::displayMessage(t('auto_nodetitle was not originally enabled'), 'success');
       }
     }
     else {
-      $this->showMessage(t('Auto_nodetitle module already enabled'), 'success');
+      self::displayMessage(t('Auto_nodetitle module already enabled'), 'success');
     }
     return Migration::RESULT_COMPLETED;
   }

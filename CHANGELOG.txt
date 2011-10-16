@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1304444 - Added static displayMessage(), deprecating showMessage().
 - #1290706 - Centralize loading of XML.
 - #1254398 - Prevent accidental emailing during migration.
 

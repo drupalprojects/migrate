@@ -168,7 +168,7 @@ abstract class Migration extends MigrationBase {
   protected function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
-      $this->showMessage(
+      self::displayMessage(
         t('!name addFieldMapping: !dest was previously mapped, overridden',
           array('!name' => $this->machineName, '!dest' => $destination_field)),
         'warning');
@@ -521,12 +521,12 @@ abstract class Migration extends MigrationBase {
         else {
           $message = t('New object was not saved, no error provided');
           $this->saveMessage($message);
-          $this->showMessage($message);
+          self::displayMessage($message);
         }
       }
       catch (MigrateException $e) {
         $this->saveMessage($e->getMessage(), $e->getLevel());
-        $this->showMessage($e->getMessage());
+        self::displayMessage($e->getMessage());
       }
       catch (Exception $e) {
         $this->handleException($e);
@@ -673,14 +673,14 @@ abstract class Migration extends MigrationBase {
               '!time' => $time,
               '!perminute' => $perminute,
               '!name' => $this->machineName));
-    $this->showMessage($message, $type);
+    self::displayMessage($message, $type);
 
     // Report on lookup_cache hit rate. Only visible at 'debug' level.
     if ($result != Migration::RESULT_INCOMPLETE && !empty($this->counts['lookup_cache'])) {
       foreach ($this->counts['lookup_cache'] as $name => $tallies) {
         $tallies += array('hit' => 0, 'miss_hit' => 0, 'miss_miss' => 0); // Set defaults to avoid NOTICE.
         $sum = $tallies['hit']+$tallies['miss_hit']+$tallies['miss_miss'];
-        $this->showMessage(
+        self::displayMessage(
           t('Lookup cache: !mn SM=!name !hit hit, !miss_hit miss_hit, !miss_miss miss_miss (!total total).', array(
                 '!mn' => $this->machineName,
                 '!name' => $name,

@@ -186,6 +186,14 @@ class WineRoleMigration extends XMLMigration {
       MigrateDestinationRole::getKeySchema()
     );
 
+    // IMPORTANT: Do not try this at home! We have included importable files
+    // with the migrate_example module so it can be very simply installed and
+    // run, but you should never include any data you want to keep private
+    // (especially user data like email addresses, phone numbers, etc.) in the
+    // module directory. Your source data should be outside of the webroot, and
+    // should not be anywhere where it may get committed into a revision control
+    // system.
+
     // This can also be an URL instead of a file path.
     $xml_folder = drupal_get_path('module', 'migrate_example') . '/xml/';
     $items_url = $xml_folder . 'positions.xml';
@@ -333,6 +341,15 @@ class WineProducerXMLMigration extends XMLMigration {
       MigrateDestinationNode::getKeySchema()
     );
 
+    // IMPORTANT: Do not try this at home! We have included importable files
+    // with the migrate_example module so it can be very simply installed and
+    // run, but you should never include any data you want to keep private
+    // (especially user data like email addresses, phone numbers, etc.) in the
+    // module directory. Your source data should be outside of the webroot, and
+    // should not be anywhere where it may get committed into a revision control
+    // system.
+
+    // This can also be an URL instead of a file path.
     $xml_folder = drupal_get_path('module', 'migrate_example') . '/xml/';
     $list_url = $xml_folder . 'index.xml';
     // Each ID retrieved from the list URL will be plugged into :id in the
@@ -403,6 +420,13 @@ class WineProducerMultiXMLMigration extends XMLMigration {
       MigrateDestinationNode::getKeySchema()
     );
 
+    // IMPORTANT: Do not try this at home! We have included importable files
+    // with the migrate_example module so it can be very simply installed and
+    // run, but you should never include any data you want to keep private
+    // (especially user data like email addresses, phone numbers, etc.) in the
+    // module directory. Your source data should be outside of the webroot, and
+    // should not be anywhere where it may get committed into a revision control
+    // system.
 
     // This can also be an URL instead of a file path.
     $xml_folder = drupal_get_path('module', 'migrate_example') . '/xml/';

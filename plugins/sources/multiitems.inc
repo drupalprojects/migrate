@@ -91,12 +91,6 @@ class MigrateSourceMultiItems extends MigrateSource {
   protected $idIterator;
 
   /**
-   * Keep the current source ID handy while iterating.
-   * @var string
-   */
-  protected $id;
-
-  /**
    * Simple initialization.
    */
   public function __construct(MigrateItems $items_class, $fields = array(), $options = array()) {
@@ -184,11 +178,11 @@ class MigrateSourceMultiItems extends MigrateSource {
 
     // Get next item (next ID not already in the map, unless needs_update=1)
     while ($this->idIterator->valid()) {
-      $this->id = $this->idIterator->current();
+      $id = $this->idIterator->current();
       $this->idIterator->next();
 
       // Skip empty IDs
-      if (empty($this->id)) {
+      if (empty($id)) {
         continue;
       }
       // Enforce the itemlimit
@@ -196,19 +190,19 @@ class MigrateSourceMultiItems extends MigrateSource {
         return;
       }
       // Check the map - if it's already mapped, and not marked for update, skip it
-      $map_row = $migration->getMap()->getRowBySource(array($this->id));
+      $map_row = $migration->getMap()->getRowBySource(array($id));
       if ($map_row && $map_row['needs_update'] == 0) {
         continue;
       }
       // TODO: Also check message table (non-informational entries here indicate failed items, we don't
       // want to run through them again)
-      $this->currentRow = $this->itemsClass->getItem($this->id);
+      $this->currentRow = $this->itemsClass->getItem($id);
       if ($this->currentRow) {
-        $this->currentKey = array($this->id);
+        $this->currentKey = array($id);
         // Save the ID using the map source key - it will be used for mapping
         $sourceKey = $migration->getMap()->getSourceKey();
         $key_name = key($sourceKey);
-        $this->currentRow->$key_name = $this->id;
+        $this->currentRow->$key_name = $id;
         // Add map info to the row, if present
         if ($map_row) {
           foreach ($map_row as $field => $value) {

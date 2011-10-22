@@ -988,7 +988,7 @@ abstract class MigrationBase {
   }
 
   /**
-   * Test whether we're approaching the PHP time limit. If so, output a message.
+   * Test whether we're approaching the PHP time limit.
    *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.
@@ -1008,7 +1008,7 @@ abstract class MigrationBase {
   }
 
   /**
-   * Test whether we've exceeded the designated time limit. If so, output a message.
+   * Test whether we've exceeded the designated time limit.
    *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.

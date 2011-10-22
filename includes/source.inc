@@ -21,13 +21,6 @@ abstract class MigrateSource implements Iterator {
   protected $currentRow;
 
   /**
-   * Number of eligible rows processed so far (used for itemlimit checking)
-   *
-   * @var int
-   */
-  protected $numProcessed = 0;
-
-  /**
    * Number of rows intentionally ignored (prepareRow() returned FALSE)
    *
    * @var int

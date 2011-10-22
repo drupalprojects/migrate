@@ -25,13 +25,6 @@ class MigrateSourceSQL extends MigrateSource {
   protected $result;
 
   /**
-   * Number of eligible rows processed so far (used for itemlimit checking)
-   *
-   * @var int
-   */
-  protected $numProcessed = 0;
-
-  /**
    * List of available source fields.
    *
    * @var array
@@ -328,13 +321,6 @@ class MigrateSourceSQL extends MigrateSource {
     $migration = Migration::currentMigration();
     $this->currentRow = NULL;
     $this->currentKey = NULL;
-    // If we couldn't add the itemlimit to the query directly, enforce it here
-    if (!$this->mapJoinable) {
-      $itemlimit = $migration->getItemLimit();
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        return;
-      }
-    }
 
     // get next row
     migrate_instrument_start('MigrateSourceSQL next');

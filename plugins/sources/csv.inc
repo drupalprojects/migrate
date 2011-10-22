@@ -13,13 +13,6 @@
  */
 class MigrateSourceCSV extends MigrateSource {
   /**
-   * Number of eligible rows processed so far (used for itemlimit checking)
-   *
-   * @var int
-   */
-  protected $numProcessed = 0;
-
-  /**
    * List of available source fields.
    *
    * @var array
@@ -181,11 +174,6 @@ class MigrateSourceCSV extends MigrateSource {
     $migration = Migration::currentMigration();
     $this->currentRow = NULL;
     $this->currentKey = NULL;
-
-    $itemlimit = $migration->getItemLimit();
-    if ($itemlimit && $this->numProcessed >= $itemlimit) {
-      return;
-    }
 
     // get next row
     migrate_instrument_start('MigrateSourceCSV next');

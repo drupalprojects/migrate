@@ -179,13 +179,10 @@ class MigrateSourceList extends MigrateSource {
    */
   public function next() {
     $migration = Migration::currentMigration();
-    migrate_instrument_start('MigrateSourceList next');
     $this->currentRow = NULL;
     $this->currentKey = NULL;
 
-    // Enforce the itemlimit
-    $itemlimit = $migration->getItemLimit();
-
+    migrate_instrument_start('MigrateSourceList next');
     // Get next item (next ID not already in the map, unless needs_update=1)
     while ($this->idIterator->valid()) {
       $id = $this->idIterator->current();
@@ -195,20 +192,19 @@ class MigrateSourceList extends MigrateSource {
       if (empty($id)) {
         continue;
       }
-      // Enforce the itemlimit
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        return;
-      }
+
       // Check the map - if it's already mapped, and not marked for update, skip it
       $map_row = $migration->getMap()->getRowBySource(array($id));
       if ($map_row && $map_row['needs_update'] == 0) {
         continue;
       }
+
       // TODO: Also check message table (non-informational entries here indicate failed items, we don't
       // want to run through them again)
       $this->currentRow = $this->itemClass->getItem($id);
       if ($this->currentRow) {
         $this->currentKey = array($id);
+
         // Save the ID using the map source key - it will be used for mapping
         $sourceKey = $migration->getMap()->getSourceKey();
         $key_name = key($sourceKey);

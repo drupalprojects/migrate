@@ -41,13 +41,6 @@ class MigrateSourceOracle extends MigrateSource {
   protected $result;
 
   /**
-   * Number of eligible rows processed so far (used for itemlimit checking)
-   *
-   * @var int
-   */
-  protected $numProcessed = 0;
-
-  /**
    * Character set to use in retrieving data.
    *
    * @var string
@@ -225,19 +218,12 @@ class MigrateSourceOracle extends MigrateSource {
    * as well as explicitly from rewind().
    */
   public function next() {
-    migrate_instrument_start('MigrateSourceOracle next');
-
     $migration = Migration::currentMigration();
+    $this->currentRow = NULL;
+    $this->currentKey = NULL;
 
-    // Enforce the itemlimit
-    $itemlimit = $migration->getItemLimit();
+    migrate_instrument_start('MigrateSourceOracle next');
     while ($this->currentRow = $this->getNextObject()) {
-      // Enforce the itemlimit
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        $this->currentRow = NULL;
-        return;
-      }
-
       // Check the map - if it's already mapped, and not marked for update, skip it
       $map = $migration->getMap();
       $this->currentKey = array();

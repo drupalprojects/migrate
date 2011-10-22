@@ -441,7 +441,7 @@ abstract class Migration extends MigrationBase {
         if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
           break;
         }
-        if ($itemlimit && ($this->total_processed >= $itemlimit)) {
+        if ($this->itemOptionExceeded()) {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();
@@ -498,6 +498,9 @@ abstract class Migration extends MigrationBase {
         break;
       }
       if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
+        break;
+      }
+      if ($this->itemOptionExceeded()) {
         break;
       }
 
@@ -573,6 +576,20 @@ abstract class Migration extends MigrationBase {
    */
   public function importedCount() {
     return $this->map->importedCount();
+  }
+
+  /**
+   * Test whether we've exceeded the designated item limit.
+   *
+   * @return boolean
+   *  TRUE if the threshold is exceeded, FALSE if not.
+   */
+  protected function itemOptionExceeded() {
+    $itemlimit = $this->getItemLimit();
+    if ($itemlimit && $this->total_processed >= $itemlimit) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**

@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1231492 - Added source handler for retrieving content from file directories.
 - #1290706 - Centralize loading of XML.
 - #1295040 - Support --update functionality in UI.
 - #1304444 - Added static displayMessage(), deprecating showMessage().

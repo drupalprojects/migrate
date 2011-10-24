@@ -61,10 +61,12 @@ class MigrateListXML extends MigrateList {
       return $this->getIDsFromXML($xml);
     }
     else {
-      Migration::displayMessage(t('Loading of !listurl failed:',
-          array('!listurl' => $this->listUrl)));
+      Migration::displayMessage(t(
+        'Loading of !listUrl failed:',
+        array('!listUrl' => $this->listUrl)
+      ));
       foreach (libxml_get_errors() as $error) {
-        Migration::displayMessage($error->message);
+        Migration::displayMessage(MigrateItemsXML::parseLibXMLError($error));
       }
       return NULL;
     }
@@ -222,7 +224,7 @@ abstract class XMLMigration extends Migration {
   protected function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
-      Migration::displayMessage(
+      self::displayMessage(
         t('!name addFieldMapping: !dest was previously mapped, overridden',
           array('!name' => $this->machineName, '!dest' => $destination_field)),
         'warning');
@@ -356,11 +358,45 @@ class MigrateItemsXML extends MigrateItems {
           array('!xmlUrl' => $this->xmlUrl)
         ));
         foreach (libxml_get_errors() as $error) {
-          Migration::displayMessage($error->message);
+          Migration::displayMessage(self::parseLibXMLError($error));
         }
       }
     }
     return $this->xml;
+  }
+
+  /**
+   * Parses a LibXMLError to a error message string.
+   * @param LibXMLError $error
+   * @return string
+   */
+  public static function parseLibXMLError(LibXMLError $error) {
+    $error_code_name = 'Unknown Error';
+    switch ($error->level) {
+      case LIBXML_ERR_WARNING:
+        $error_code_name = t('Warning');
+        break;
+      case LIBXML_ERR_ERROR:
+        $error_code_name = t('Error');
+        break;
+      case LIBXML_ERR_FATAL:
+        $error_code_name = t('Fatal Error');
+        break;
+    }
+    return t(
+       "!libxmlerrorcodename !libxmlerrorcode: !libxmlerrormessage\n" .
+      "Line: !libxmlerrorline\n" .
+      "Column: !libxmlerrorcolumn\n" .
+      "File: !libxmlerrorfile",
+      array(
+        '!libxmlerrorcodename' => $error_code_name,
+        '!libxmlerrorcode' => $error->code,
+        '!libxmlerrormessage' => trim($error->message),
+        '!libxmlerrorline' => $error->line,
+        '!libxmlerrorcolumn' => $error->column,
+        '!libxmlerrorfile' => (($error->file)) ? $error->file : NULL,
+      )
+    );
   }
 
   /**

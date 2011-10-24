@@ -3,7 +3,10 @@ Next release
 ============
 
 Features and enhancements
+- #1314448 - Added tnid to node destination handler.
+- #1231492 - Added source handler for retrieving content from file directories.
 - #1290706 - Centralize loading of XML.
+- #1295040 - Support --update functionality in UI.
 
 Bug fixes
 - #1285290 - Add migrate_decode_exception() for exception handling.
@@ -62,9 +65,6 @@ Migrate 2.1
 ===========
 
 Features and enhancements:
-- #1231492 - Added source handler for retrieving content from file directories.
-- #1290706 - Centralize loading of XML.
-- #1295040 - Support --update functionality in UI.
 - #1025754 - Added support for multi-value source keys to handleSourceMigration().
 - #1161584 - Added lookupSourceID() and lookupDestinationID() to MigrateMap.
 

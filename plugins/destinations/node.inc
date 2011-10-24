@@ -69,6 +69,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields['sticky'] = t('Node: Sticky at top of lists');
     $fields['revision'] = t('Node: Create new revision');
     $fields['language'] = t('Node: Language (fr, en, ...)');
+    $fields['tnid'] = t('Node: The translation set id for this node');
 
     $node_type = node_type_load($this->bundle);
     if ($node_type->has_title) {

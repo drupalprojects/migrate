@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1314448 - Added tnid to node destination handler.
 - #1231492 - Added source handler for retrieving content from file directories.
 - #1290706 - Centralize loading of XML.
 - #1295040 - Support --update functionality in UI.

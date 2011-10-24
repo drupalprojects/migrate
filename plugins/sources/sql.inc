@@ -12,7 +12,7 @@ class MigrateSourceSQL extends MigrateSource {
   /**
    * The SQL query objects from which to obtain data, and counts of data
    *
-   * @var SelectQuery
+   * @var SelectQueryInterface
    */
   protected $originalQuery, $query, $countQuery;
 
@@ -82,20 +82,20 @@ class MigrateSourceSQL extends MigrateSource {
   /**
    * Simple initialization.
    *
-   * @param SelectQuery $query
+   * @param SelectQueryInterface $query
    *  The query we are iterating over.
    * @param array $fields
    *  Optional - keys are field names, values are descriptions. Use to override
    *  the default descriptions, or to add additional source fields which the
    *  migration will add via other means (e.g., prepareRow()).
-   * @param SelectQuery $count_query
+   * @param SelectQueryInterface $count_query
    *  Optional - an explicit count query, primarily used when counting the
    *  primary query is slow.
    * @param boolean $options
    *  Options applied to this source.
    */
-  public function __construct(SelectQuery $query, array $fields = array(),
-       SelectQuery $count_query = NULL, array $options = array()) {
+  public function __construct(SelectQueryInterface $query, array $fields = array(),
+       SelectQueryInterface $count_query = NULL, array $options = array()) {
     parent::__construct($options);
     $this->originalQuery = $query;
     $this->query = clone $query;

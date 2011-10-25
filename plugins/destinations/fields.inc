@@ -73,17 +73,18 @@ abstract class MigrateFieldHandler extends MigrateHandler {
 }
 
 /**
- * Base class to provide simplify creating field handlers for fields with a
- * single value.
+ * Base class for creating field handlers for fields with a single value.
  *
- * To use it just extend it and pass the field types and value to the parent
- * constructor:
- *
- * class MigrateEmailFieldHandler extends MigrateSimpleFieldHandler {
- *   public function __construct() {
- *     parent::__construct(array('link'), 'url');
+ * To use this class just extend it and pass key where the field's value should
+ * be stored to the constructor, then register the type(s):
+ * @code
+ *   class MigrateLinkFieldHandler extends MigrateSimpleFieldHandler {
+ *     public function __construct() {
+ *       parent::__construct('url');
+ *       $this->registerTypes(array('link'));
+ *     }
  *   }
- * }
+ * @endcode
  */
 abstract class MigrateSimpleFieldHandler extends MigrateFieldHandler {
   protected $fieldValueKey = 'value';

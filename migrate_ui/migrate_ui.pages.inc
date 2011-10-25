@@ -330,8 +330,11 @@ function migrate_ui_batch($operation, $machine_name, $limit, $update, &$context)
       }
       break;
     case MigrationBase::RESULT_SKIPPED:
-      $_migrate_messages[] = t('Skipped !name due to unfulfilled dependencies',
-        array('!name' => $machine_name));
+      $_migrate_messages[] = t("Skipped !name due to unfulfilled dependencies: !depends",
+        array(
+          '!name' => $machine_name,
+          '!depends' => implode(", ", $migration->incompleteDependencies()),
+        ));
       $context['finished'] = 1;
       break;
     case MigrationBase::RESULT_STOPPED:

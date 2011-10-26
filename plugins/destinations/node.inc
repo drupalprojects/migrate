@@ -67,6 +67,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields['promote'] = t('Node: Promoted to front page');
     $fields['sticky'] = t('Node: Sticky at top of lists');
     $fields['revision'] = t('Node: Create new revision');
+    $fields['log'] = t('Node: Revision Log message');
     $fields['language'] = t('Node: Language (fr, en, ...)');
     $fields['tnid'] = t('Node: The translation set id for this node');
 

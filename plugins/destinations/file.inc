@@ -260,19 +260,12 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     }
 
     migrate_instrument_start('file_save');
-    // Save this file to DB.
-    if ($existing_files = file_load_multiple(array(), array('uri' => $file->uri))) {
-      // Existing record exists. Reuse it.
-      $file = reset($existing_files);
-      // TODO: Do we really need to save again? Copied from File Field.
-      // $file = file_save($file);
-    }
-    else {
+    if (!file_load_multiple(array(), array('uri' => $file->uri))) {
       // Get this orphaned file into the file table.
       $file->fid = NULL;
       $file->status |= FILE_STATUS_PERMANENT; // Save a write in file_field_presave().
-      $file = file_save($file);
     }
+    $file = file_save($file);
     migrate_instrument_stop('file_save');
     $this->complete($file, $row);
 

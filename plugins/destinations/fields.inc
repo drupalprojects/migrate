@@ -72,6 +72,62 @@ abstract class MigrateFieldHandler extends MigrateHandler {
   abstract public function prepare($entity, array $instance, array $values);
 }
 
+/**
+ * Base class to provide simplify creating field handlers for fields with a
+ * single value.
+ *
+ * To use it just extend it and pass the field types and value to the parent
+ * constructor:
+ *
+ * class MigrateEmailFieldHandler extends MigrateSimpleFieldHandler {
+ *   public function __construct() {
+ *     parent::__construct(array('link'), 'url');
+ *   }
+ * }
+ */
+abstract class MigrateSimpleFieldHandler extends MigrateFieldHandler {
+  protected $fieldValueKey = 'value';
+
+  protected $skipEmpty = FALSE;
+
+  /**
+   * Construct a simple field handler.
+   *
+   * @param $options
+   *   Array of options (rather than unnamed parameters so you don't have to
+   *   what TRUE or FALSE means). The following keys are used:
+   *   - 'value_key' string with the name of the key in the fields value array.
+   *   - 'skip_empty' Boolean indicating that empty values should not be saved.
+   */
+  public function __construct($options) {
+    if (isset($options['value_key'])) {
+      $this->fieldValueKey = $options['value_key'];
+    }
+    if (isset($options['skip_empty'])) {
+      $this->skipEmpty = $options['skip_empty'];
+    }
+  }
+
+  public function prepare($entity, array $instance, array $values) {
+    if (isset($values['arguments'])) {
+      unset($values['arguments']);
+    }
+
+    // Let the derived class skip empty values.
+    if ($this->skipEmpty) {
+      $values = array_filter($values);
+    }
+
+    // Setup the Field API array for saving.
+    $delta = 0;
+    foreach ($values as $value) {
+      $return[$delta][$this->fieldValueKey] = $value;
+      $delta++;
+    }
+    return isset($return) ? $return : NULL;
+  }
+}
+
 class MigrateTextFieldHandler extends MigrateFieldHandler {
   public function __construct() {
     $this->registerTypes(array('text', 'text_long', 'text_with_summary'));
@@ -123,23 +179,14 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
   }
 }
 
-class MigrateValueFieldHandler extends MigrateFieldHandler {
+class MigrateValueFieldHandler extends MigrateSimpleFieldHandler {
   public function __construct() {
+    parent::__construct(array(
+      'value_key' => 'value',
+      'skip_empty' => FALSE,
+    ));
     $this->registerTypes(array('value', 'list', 'list_boolean', 'list_number',
       'list_text', 'number_integer', 'number_decimal', 'number_float'));
-  }
-
-  public function prepare($entity, array $instance, array $values) {
-    // Setup the standard Field API array for saving.
-    $delta = 0;
-    foreach ($values as $value) {
-      $return[$delta]['value'] = $value;
-      $delta++;
-    }
-    if (!isset($return)) {
-      $return = NULL;
-    }
-    return $return;
   }
 }
 
@@ -395,59 +442,23 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
   }
 }
 
-class MigrateNodeReferenceFieldHandler extends MigrateFieldHandler {
+class MigrateNodeReferenceFieldHandler extends MigrateSimpleFieldHandler {
   public function __construct() {
+    parent::__construct(array(
+      'value_key' => 'nid',
+      'skip_empty' => TRUE,
+    ));
     $this->registerTypes(array('nodereference'));
-  }
-
-  public function prepare($entity, array $instance, array $values) {
-    if (isset($values['arguments'])) {
-      $arguments = $values['arguments'];
-      unset($values['arguments']);
-    }
-    else {
-      $arguments = array();
-    }
-
-    // Setup the standard Field API array for saving.
-    $delta = 0;
-    $return = array();
-    foreach ($values as $value) {
-      // Don't save empty references
-      if ($value) {
-        $return[$delta]['nid'] = $value;
-        $delta++;
-      }
-    }
-    return $return;
   }
 }
 
-class MigrateUserReferenceFieldHandler extends MigrateFieldHandler {
+class MigrateUserReferenceFieldHandler extends MigrateSimpleFieldHandler {
   public function __construct() {
+    parent::__construct(array(
+      'value_key' => 'nid',
+      'skip_empty' => TRUE,
+    ));
     $this->registerTypes(array('userreference'));
-  }
-
-  public function prepare($entity, array $instance, array $values) {
-    if (isset($values['arguments'])) {
-      $arguments = $values['arguments'];
-      unset($values['arguments']);
-    }
-    else {
-      $arguments = array();
-    }
-
-    // Setup the standard Field API array for saving.
-    $delta = 0;
-    $return = array();
-    foreach ($values as $value) {
-      // Don't save empty references
-      if ($value) {
-        $return[$delta]['uid'] = $value;
-        $delta++;
-      }
-    }
-    return $return;
   }
 }
 

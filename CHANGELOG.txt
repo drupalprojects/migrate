@@ -9,6 +9,8 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1305338 - Corrected type-hint in MigrateSourceSQL constructor.
+- #1305910 - MigrateDestinationTable now tracks inserted/updated records.
 - #1285290 - Add migrate_decode_exception() for exception handling.
 - #1292462 - Group missing from drush options.
 - #1290122 - Force destinations to implement __toString().

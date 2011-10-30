@@ -12,6 +12,8 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1305338 - Corrected type-hint in MigrateSourceSQL constructor.
+- #1305910 - MigrateDestinationTable now tracks inserted/updated records.
 - #1284592 - Fixed error on empty term parents.
 - #1300258 - Fixed error on unfulfilled term references.
 - #1292462 - Group missing from drush options.

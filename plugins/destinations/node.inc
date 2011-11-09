@@ -130,7 +130,9 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
                    ->execute()
                    ->fetchAssoc();
       $node->vid = $values['vid'];
-      $node->tnid = $values['tnid'];
+      if (empty($row->tnid)) {
+        $node->tnid = $values['tnid'];
+      }
     }
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       if (!isset($node->nid)) {

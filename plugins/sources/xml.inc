@@ -437,17 +437,15 @@ class MigrateItemsXML extends MigrateItems {
 
     $this->cache_ids = NULL;
     $ids = array();
-    $full_xpath = $this->itemXpath . '/' . $this->itemIDXpath;
+    $result = $xml->xpath($this->itemXpath);
 
-    $result = $xml->xpath($full_xpath);
+    $ids = array();
     if ($result) {
-      if (count($result) > 1) {
-        foreach ($result as $id) {
+      foreach ($result as $element) {
+        $id = $this->getItemID($element);
+        if (!is_null($id)) {
           $ids[] = (string)$id;
         }
-      }
-      else {
-        $ids[] = (string)$result[0];
       }
     }
     $this->cache_ids = array_unique($ids);
@@ -507,16 +505,7 @@ class MigrateItemsXML extends MigrateItems {
     $result = $xml->xpath($this->itemXpath);
 
     if ($result) {
-      if (count($result) > 1) {
-        foreach ($result as $item_xml) {
-          $id = $this->getItemID($item_xml);
-          $item = new stdclass;
-          $item->xml = $item_xml;
-          $items[$id] = $item;
-        }
-      }
-      else {
-        $item_xml = $result[0];
+      foreach ($result as $item_xml) {
         $id = $this->getItemID($item_xml);
         $item = new stdclass;
         $item->xml = $item_xml;

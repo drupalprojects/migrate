@@ -879,7 +879,15 @@ abstract class Migration extends MigrationBase {
     $results = array();
     // Each $source_key will be an array of key values
     foreach ($source_keys as $source_key) {
-      if (empty($source_key)) {
+      // If any source keys are empty, skip this set
+      $continue = FALSE;
+      foreach ($source_key as $value) {
+        if (empty($value) && $value !== 0 && $value !== '0') {
+          $continue = TRUE;
+          break;
+        }
+      }
+      if ($continue || empty($source_key)) {
         continue;
       }
       // Loop through each source migration, checking for an existing dest ID.

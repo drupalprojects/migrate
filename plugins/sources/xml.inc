@@ -436,7 +436,6 @@ class MigrateItemsXML extends MigrateItems {
     }
 
     $this->cache_ids = NULL;
-    $ids = array();
     $result = $xml->xpath($this->itemXpath);
 
     $ids = array();

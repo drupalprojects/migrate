@@ -10,6 +10,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1336880 - Fix XPath handling in MigrateItemsXML::getIDSFromXML.
 - #1334546 - Validate compound keys passed to handleSourceMigration().
 - #1305338 - Corrected type-hint in MigrateSourceSQL constructor.
 - #1305910 - MigrateDestinationTable now tracks inserted/updated records.

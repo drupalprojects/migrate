@@ -618,13 +618,18 @@ function migrate_migration_info($form_state, $migration) {
       $source_field = $mapping->getSourceField();
       $destination_field = $mapping->getDestinationField();
       if (!is_null($source_field) && !isset($source_fields[$source_field])) {
-        drupal_set_message(t('!source used as source field in mapping but not in
-          list of source fields', array('!source' => $source_field)),
+        drupal_set_message(t('"!source" was used as source field in the
+          "!destination" mapping but is not in list of source fields', array(
+            '!source' => $source_field,
+            '!destination' => $destination_field
+          )),
         'warning');
       }
       if (!is_null($destination_field) && !isset($destination_fields[$destination_field])) {
-        drupal_set_message(t('!destination used as destination field in mapping but not in
-          list of destination fields', array('!destination' => $destination_field)),
+        drupal_set_message(t('"!destination" was used as destination field in
+          "!source" mapping but is not in list of destination fields', array(
+            '!source' => $source_field,
+            '!destination' => $destination_field)),
         'warning');
       }
       $descriptions[$mapping->getIssueGroup()][] = $mapping;

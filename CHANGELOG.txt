@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1330552 - Provide more detail on bad field mappings.
 - #1321078 - Display incomplete dependencies in the error message.
 - #1321062 - Simple base class for field handlers.
 - #1314448 - Added tnid to node destination handler.

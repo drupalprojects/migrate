@@ -384,10 +384,7 @@ class MigrateSourceSQL extends MigrateSource {
       // Allow the Migration to prepare this row. prepareRow() can return boolean
       // FALSE to stop processing this row. To add/modify fields on the
       // result, modify $row by reference.
-      $return = TRUE;
-      if (method_exists($migration, 'prepareRow')) {
-        $return = $migration->prepareRow($this->currentRow);
-      }
+      $return = $migration->prepareRow($this->currentRow);
 
       if ($return !== FALSE) {
         $this->numProcessed++;

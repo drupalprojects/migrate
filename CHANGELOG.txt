@@ -3,7 +3,8 @@ Next release
 ============
 
 Features and enhancements
-- #1336534 - Added MigrateSourceXML for efficient handline of large XML files.
+- #1342322 - Added default implementation of prepareRow(), simplifying source plugins.
+- #1336534 - Added MigrateSourceXML for efficient handling of large XML files.
 - #1330552 - Provide more detail on bad field mappings.
 - #1321078 - Display incomplete dependencies in the error message.
 - #1321062 - Simple base class for field handlers.

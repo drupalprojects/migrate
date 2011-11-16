@@ -128,6 +128,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *  Raw source data object - passed through to prepare handlers.
    */
   public function prepare($entity, stdClass $source_row) {
+    parent::prepare($entity, $source_row);
     if (!empty($this->copyBlob)) {
       if (empty($entity->filename)) {
         throw new MigrateException("You must map to filename field for copy_blob migrations.");

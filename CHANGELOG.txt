@@ -4,6 +4,7 @@ Next release
 
 Features and enhancements
 - #1336534 - Added MigrateSourceXML for efficient handline of large XML files.
+- #1330552 - Provide more detail on bad field mappings.
 - #1321078 - Display incomplete dependencies in the error message.
 - #1321062 - Simple base class for field handlers.
 - #1314448 - Added tnid to node destination handler.
@@ -15,6 +16,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1340204 - MigrateDestinationFile::prepare() didn't call parent::prepare().
 - #1336880 - Fix XPath handling in MigrateItemsXML::getIDSFromXML.
 - #1334546 - Validate compound keys passed to handleSourceMigration().
 - #1305338 - Corrected type-hint in MigrateSourceSQL constructor.

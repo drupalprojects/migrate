@@ -556,6 +556,19 @@ abstract class Migration extends MigrationBase {
     return $return;
   }
 
+  /**
+   * Default implementation of prepareRow(). This method is called from the source
+   * plugin upon first pulling the raw data from the source.
+   *
+   * @param $row
+   *  Object containing raw source data.
+   * @return bool
+   *  TRUE to process this row, FALSE to have the source skip it.
+   */
+  public function prepareRow($row) {
+    return TRUE;
+  }
+  
   ////////////////////////////////////////////////////////////////////
   // Utility methods
 

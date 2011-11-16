@@ -912,10 +912,7 @@ class MigrateSourceXML extends MigrateSource {
             (!empty($map_row) && $map_row['needs_update'] == 1)))
          ) {
         // But, prepareRow() can reject such a row by returning FALSE.
-        $return = TRUE;
-        if (method_exists($migration, 'prepareRow')) {
-          $return = $migration->prepareRow($this->currentRow);
-        }
+        $return = $migration->prepareRow($this->currentRow);
         // We're explicitly skipping this row
         if ($return === FALSE) {
           $this->numIgnored++;

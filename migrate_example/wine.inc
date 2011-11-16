@@ -468,6 +468,75 @@ class WineProducerMultiXMLMigration extends XMLMigration {
   }
 }
 
+/**
+ * TIP: An alternative approach using MigrateSourceSQL. This uses a different
+ * XML library, which advances element-by-element through the XML file rather
+ * than reading in the whole file. This source will work better with large XML
+ * files, but is slower for small files and has a more restrictive query lanaguage
+ * for selecting the elements to process.
+ */
+class WineProducerXMLPullMigration extends XMLMigration {
+  public function __construct() {
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+    $this->description = t('XML feed (pull) of wine producers of the world');
+    $this->dependencies = array('WineRegion', 'WineUser');
+
+    $fields = array(
+      'name' => t('Producer name'),
+      'description' => t('Description of producer'),
+      'authorid' => t('Numeric ID of the author'),
+      'region' => t('Name of region'),
+    );
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'sourceid' => array(
+          'type' => 'varchar',
+          'length' => 4,
+          'not null' => TRUE,
+        )
+      ),
+      MigrateDestinationNode::getKeySchema()
+    );
+
+    // IMPORTANT: Do not try this at home! We have included importable files
+    // with the migrate_example module so it can be very simply installed and
+    // run, but you should never include any data you want to keep private
+    // (especially user data like email addresses, phone numbers, etc.) in the
+    // module directory. Your source data should be outside of the webroot, and
+    // should not be anywhere where it may get committed into a revision control
+    // system.
+
+    // This can also be an URL instead of a file path.
+    $xml_folder = drupal_get_path('module', 'migrate_example') . '/xml/';
+    $items_url = $xml_folder . 'producers2.xml';
+
+    // As with MigrateSourceMultiItems, this applies where there is not a separate
+    // list of IDs to process - the source XML file is entirely self-contained.
+    // For the ID path, and xpath for each component, we can use the full xpath
+    // syntax as usual. However, the syntax to select the elements that correspond
+    // to objects to import is more limited. It must be a fully-qualified path
+    // to the element (i.e., /producers/producer rather than just //producer).
+    $item_xpath = '/producers/producer';  // relative to document
+    $item_ID_xpath = 'sourceid';          // relative to item_xpath
+
+    $this->source = new MigrateSourceXML($items_url, $item_xpath, $item_ID_xpath,
+      $fields);
+
+    $this->destination = new MigrateDestinationNode('migrate_example_producer');
+    $this->addFieldMapping('title', 'name')
+         ->xpath('name');
+    $this->addFieldMapping('uid', 'authorid')
+         ->xpath('authorid')
+         ->sourceMigration('WineUser')
+         ->defaultValue(1);
+    $this->addFieldMapping('migrate_example_wine_regions', 'region')
+         ->xpath('region');
+    $this->addFieldMapping('body', 'description')
+         ->xpath('description');
+  }
+}
+
 // TODO: Add node_reference field pointing to producer
 class WineWineMigration extends AdvancedExampleMigration {
   public function __construct() {

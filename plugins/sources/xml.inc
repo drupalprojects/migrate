@@ -574,3 +574,372 @@ class MigrateItemsXML extends MigrateItems {
     }
   }
 }
+
+/**
+ * Makes an XMLReader object iterable, returning elements matching a restricted
+ * xpath-like syntax.
+ */
+class MigrateXMLReader extends XMLReader implements Iterator {
+
+  /**
+   * URL of the source XML file.
+   *
+   * @var string
+   */
+  public $url;
+
+  /**
+   * Array of the element names from the query, 0-based from the first (root)
+   * element. For example, '//file/article' would be stored as
+   * array(0 => 'file', 1 => 'article').
+   *
+   * @var array
+   */
+  protected $elementsToMatch = array();
+
+  /**
+   * If the element query is filtering by an attribute name=value, the name of
+   * the attribute in question.
+   *
+   * @var string
+   */
+  protected $attributeName = NULL;
+
+  /**
+   * If the element query is filtering by an attribute name=value, the value of
+   * the attribute in question.
+   *
+   * @var string
+   */
+  protected $attributeValue = NULL;
+
+  /**
+   * Array representing the path to the current element as we traverse the XML.
+   * For example, if in an XML string like '<file><article>...</article></file>'
+   * we are positioned within the article element, currentPath will be
+   * array(0 => 'file', 1 => 'article').
+   *
+   * @var array
+   */
+  protected $currentPath = array();
+
+  /**
+   * Query string used to retrieve the elements from the XML file. 
+   *
+   * @var string
+   */
+  public $elementQuery;
+
+  /**
+   * Xpath query string used to retrieve the primary key value from each element.
+   *
+   * @var string
+   */
+  public $idQuery;
+
+  /**
+   * Current element object when iterating.
+   *
+   * @var SimpleXMLElement
+   */
+  protected $currentElement = NULL;
+
+  /**
+   * Value of the ID for the current element when iterating.
+   *
+   * @var string
+   */
+  protected $currentId = NULL;
+
+  /**
+   * Prepares our extensions to the XMLReader object.
+   *
+   * @param $xml_url
+   *  URL of the XML file to be parsed.
+   * @param $element_query
+   *  Query string in a restricted xpath format, for selecting elements to be
+   *  returned by the interator. Supported syntax:
+   *  - The full path to the element must be specified; i.e., /file/article
+   *    rather than //article.
+   *  - The elements may be filtered by attribute value by appending
+   *    [@attribute="value"].
+   * @param $id_query
+   *  Query string to the unique identifier for an element, relative to the root
+   *  of that element. This supports the full xpath syntax.
+   */
+  public function __construct($xml_url, $element_query, $id_query) {
+    $this->url = $xml_url;
+    $this->elementQuery = $element_query;
+    $this->idQuery = $id_query;
+    // Parse the element query. First capture group is the element path, second
+    // (if present) is the attribute.
+    preg_match_all('|^/([^\[]+)(.*)$|', $element_query, $matches);
+    $element_path = $matches[1][0];
+    $this->elementsToMatch = explode('/', $element_path);
+    $attribute_query = $matches[2][0];
+    if ($attribute_query) {
+      // Matches [@attribute="value"] (with either single- or double-quotes).
+      preg_match_all('|^\[@([^=]+)=[\'"](.*)[\'"]\]$|', $attribute_query, $matches);
+      $this->attributeName = $matches[1][0];
+      $this->attributeValue = $matches[2][0];
+    }
+  }
+
+  /**
+   * Implementation of Iterator::rewind().
+   *
+   * @return void
+   */
+  public function rewind() {
+    // (Re)open the provided URL.
+    $this->close();
+    $status = $this->open($this->url);
+    if (!$status) {
+      Migration::displayMessage(t('Could not open XML file !url',
+                                array('!url' => $this->url)));
+    }
+
+    // Reset our path tracker
+    $this->currentPath = array();
+
+    // Load the first matching element and its ID.
+    $this->next();
+  }
+
+  /**
+   * Implementation of Iterator::next().
+   *
+   * @return void
+   */
+  public function next() {
+    migrate_instrument_start('MigrateXMLReader::next');
+    $this->currentElement = $this->currentId = NULL;
+
+    // Loop over each node in the XML file, looking for elements at a path
+    // matching the input query string (represented in $this->elementsToMatch).
+    while ($this->read()) {
+      if ($this->nodeType == XMLREADER::ELEMENT) {
+        $this->currentPath[$this->depth] = $this->localName;
+        if ($this->currentPath == $this->elementsToMatch) {
+          // We're positioned to the right element path - if filtering on an
+          // attribute, check that as well before accepting this element.
+          if (empty($this->attributeName) ||
+              ($this->getAttribute($this->attributeName) == $this->attributeValue)) {
+            // We've found a matching element - get a SimpleXML object representing it.
+            // We must associate the DOMNode with a DOMDocument to be able to import
+            // it into SimpleXML.
+            // Despite appearances, this is almost twice as fast as
+            // simplexml_load_string($this->readOuterXML());
+            $node = $this->expand();
+            $dom = new DOMDocument();
+            $node = $dom->importNode($node, TRUE);
+            $dom->appendChild($node);
+            $this->currentElement = simplexml_import_dom($node);
+            $this->currentId = (string)reset($this->currentElement->xpath($this->idQuery));
+            break;
+          }
+        }
+      }
+      elseif ($this->nodeType == XMLREADER::END_ELEMENT) {
+        // Trim currentPath as we exit each element
+        unset($this->currentPath[$this->depth]);
+      }
+    }
+    migrate_instrument_stop('MigrateXMLReader::next');
+  }
+
+  /**
+   * Implementation of Iterator::current().
+   *
+   * @return null|SimpleXMLElement
+   */
+  public function current() {
+    return $this->currentElement;
+  }
+
+  /**
+   * Implementation of Iterator::key().
+   *
+   * @return null|string
+   */
+  public function key() {
+    return $this->currentId;
+  }
+
+  /**
+   * Implementation of Iterator::valid().
+   *
+   * @return bool
+   */
+  public function valid() {
+    return !empty($this->currentElement);
+  }
+}
+
+/**
+ * Implementation of MigrateSource, to handle imports from XML files.
+ */
+class MigrateSourceXML extends MigrateSource {
+
+  /**
+   * The MigrateXMLReader object serving as a cursor over the XML source.
+   *
+   * @var MigrateXMLReader
+   */
+  protected $reader;
+
+  /**
+   * List of available source fields.
+   *
+   * @var array
+   */
+  protected $fields = array();
+
+  /**
+   * Source constructor.
+   *
+   * @param string $url
+   *  URL of the XML source data.
+   * @param string $element_query
+   *  Query string used to recognize elements being iterated.
+   * @param string $id_query
+   *  Xpath query string used to retrieve the primary key value from each element.
+   * @param array $fields
+   *  Optional - keys are field names, values are descriptions. Use to override
+   *  the default descriptions, or to add additional source fields which the
+   *  migration will add via other means (e.g., prepareRow()).
+   * @param boolean $options
+   *  Options applied to this source. In addition to the standard MigrateSource
+   *  options, we support:
+   *  - reader_class: The reader class to instantiate for traversing the XML -
+   *    defaults to MigrateXMLReader (any substitutions must be derived from
+   *    MigrateXMLReader).
+   */
+  public function __construct($url, $element_query, $id_query, array $fields = array(),
+       array $options = array()) {
+    parent::__construct($options);
+    if (empty($options['reader_class'])) {
+      $reader_class = 'MigrateXMLReader';
+    }
+    else {
+      $reader_class = $options['reader_class'];
+    }
+    $this->reader = new $reader_class($url, $element_query, $id_query);
+    $this->fields = $fields;
+  }
+
+  /**
+   * Return a string representing the source query.
+   *
+   * @return string
+   */
+  public function __toString() {
+    return 'url = ' . $this->reader->url .
+           ' | item xpath = ' . $this->reader->elementQuery .
+           ' | item ID xpath = ' . $this->reader->idQuery;
+  }
+
+  /**
+   * Returns a list of fields available to be mapped from the source query.
+   *
+   * @return array
+   *  Keys: machine names of the fields (to be passed to addFieldMapping)
+   *  Values: Human-friendly descriptions of the fields.
+   */
+  public function fields() {
+    return $this->fields;
+  }
+
+  /**
+   * Return a count of all available source records.
+   */
+  public function computeCount() {
+    $count = 0;
+    foreach ($this->reader as $element) {
+      $count++;
+    }
+    return $count;
+  }
+
+  /**
+   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
+   */
+  public function rewind() {
+    $this->numProcessed = 0;
+    $this->numIgnored = 0;
+    // Save the ID list if any
+    $migration = Migration::currentMigration();
+    if ($migration->getOption('idlist')) {
+      $this->idlist = explode(',', $migration->getOption('idlist'));
+    }
+    else {
+      $this->idlist = array();
+    }
+
+    // Set the reader back to the beginning of the file (positioned to the
+    // first matching element), then apply our logic to make sure we have the
+    // first element fulfilling our logic (idlist/map/prepareRow()).
+    $this->reader->rewind();
+    $this->next();
+  }
+
+  /**
+   * Implementation of Iterator::next().
+   */
+  public function next() {
+    migrate_instrument_start('MigrateSourceXML next');
+    $migration = Migration::currentMigration();
+    $map = $migration->getMap();
+    $sourceKey = $map->getSourceKey();
+    $key_name = key($sourceKey);
+    $this->currentRow = NULL;
+    $this->currentKey = NULL;
+    // We start out positioned on the next candidate - verify that we want
+    // to take this row, and if not loop till we find one.
+    for (; $this->reader->valid(); $this->reader->next()) {
+      $this->currentKey = array($this->reader->key());
+      $this->currentRow = new stdClass;
+      $this->currentRow->$key_name = $this->reader->key();
+      $this->currentRow->xml = $this->reader->current();
+      $map_row = $map->getRowBySource($this->currentKey);
+
+      // We accept the current row if:
+      // - It's specified in an idlist, or there's no idlist and:
+      //   - it hasn't been imported, or
+      //   - it's been imported, and is marked needs_update.
+      if ((!empty($this->idlist) && in_array(reset($this->currentKey), $this->idlist)) ||
+          (empty($this->idlist) && ((empty($map_row)) ||
+            (!empty($map_row) && $map_row['needs_update'] == 1)))
+         ) {
+        // But, prepareRow() can reject such a row by returning FALSE.
+        $return = TRUE;
+        if (method_exists($migration, 'prepareRow')) {
+          $return = $migration->prepareRow($this->currentRow);
+        }
+        // We're explicitly skipping this row
+        if ($return === FALSE) {
+          $this->numIgnored++;
+        }
+        else {
+          // Found a keeper, count it and add any map data to the row.
+          $this->numProcessed++;
+          if (isset($map_row) && is_array($map_row)) {
+            foreach ($map_row as $field => $value) {
+              $field = 'migrate_map_' . $field;
+              $this->currentRow->$field = $value;
+            }
+          }
+
+          // Since we're breaking early, position the reader to the next item.
+          $this->reader->next();
+          break;
+        }
+      }
+      // If we reach this point, we've rejected the row
+      $this->currentRow = NULL;
+      $this->currentKey = NULL;
+    }
+
+    migrate_instrument_stop('MigrateSourceXML next');
+  }
+}

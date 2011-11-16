@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1336534 - Added MigrateSourceXML for efficient handline of large XML files.
 - #1321078 - Display incomplete dependencies in the error message.
 - #1321062 - Simple base class for field handlers.
 - #1314448 - Added tnid to node destination handler.

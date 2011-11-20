@@ -38,13 +38,13 @@ function migrate_drush_help($section) {
  */
 function migrate_drush_command() {
   $migration_options = array(
-    '--limit' => 'Limit on the length of each migration process, expressed in seconds or number of items',
-    '--feedback' => 'Frequency of progress messages, in seconds or items processed',
-    '--idlist' => 'A comma delimited list of ids to import or rollback. If unspecified, migrate imports all pending items or rolls back all items for the content set.',
-    '--all' => 'Process all migrations that come after the specified migration. If no value is supplied, all migrations are processed.',
-    '--instrument' => 'Capture performance information (timer, memory, or all)',
-    '--force' => 'Force an operation to run, even if all dependencies are not satisfied',
-    '--group' => 'Name of the migration group to run',
+    'limit' => 'Limit on the length of each migration process, expressed in seconds or number of items',
+    'feedback' => 'Frequency of progress messages, in seconds or items processed',
+    'idlist' => 'A comma delimited list of ids to import or rollback. If unspecified, migrate imports all pending items or rolls back all items for the content set.',
+    'all' => 'Process all migrations that come after the specified migration. If no value is supplied, all migrations are processed.',
+    'instrument' => 'Capture performance information (timer, memory, or all)',
+    'force' => 'Force an operation to run, even if all dependencies are not satisfied',
+    'group' => 'Name of the migration group to run',
   );
   $items['migrate-status'] = array(
     'description' => 'List all migrations with current status.',
@@ -64,8 +64,8 @@ function migrate_drush_command() {
   $items['migrate-fields-destination'] = array(
     'description' => 'List the fields available for mapping in a destination.',
     'options' => array(
-      'all' => $migration_options['--all'],
-      'group' => $migration_options['--group'],
+      'all' => $migration_options['all'],
+      'group' => $migration_options['group'],
     ),
     'arguments' => array(
       'migration' => 'Name of the migration or destination class to query for fields',
@@ -82,8 +82,8 @@ function migrate_drush_command() {
       'migration' => 'Name of the migration or destination class to query for fields',
     ),
     'options' => array(
-      'all' => $migration_options['--all'],
-      'group' => $migration_options['--group'],
+      'all' => $migration_options['all'],
+      'group' => $migration_options['group'],
     ),
     'examples' => array(
       'migrate-fields-destination MyNode' => 'List fields in the source query for the MyNode migration',
@@ -94,8 +94,8 @@ function migrate_drush_command() {
   $items['migrate-mappings'] = array(
     'description' => 'View information on all field mappings in a migration.',
     'options' => array(
-      'all' => $migration_options['--all'],
-      'group' => $migration_options['--group'],
+      'all' => $migration_options['all'],
+      'group' => $migration_options['group'],
       'csv' => 'Export information as a CSV',
       'full' => 'Include more information on each mapping',
     ),
@@ -112,8 +112,8 @@ function migrate_drush_command() {
   $items['migrate-audit'] = array(
     'description' => 'View information on problems in a migration.',
     'options' => array(
-      'all' => $migration_options['--all'],
-      'group' => $migration_options['--group'],
+      'all' => $migration_options['all'],
+      'group' => $migration_options['group'],
     ),
     'arguments' => array(
       'migration' => 'Name of the migration',
@@ -142,12 +142,12 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mr'),
   );
-  $migration_options['--update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
-  $migration_options['--needs-update'] =
+  $migration_options['update'] = 'In addition to processing unimported items from the source, update previously-imported items with new data';
+  $migration_options['needs-update'] =
     'Reimport up to 10K records where needs_update=1. This option is only needed when your Drupal DB is on a different DB server from your source data. Otherwise, these records get migrated with just migrate-import.';
-  $migration_options['--stop'] = 'Stop specified migration(s) if applicable.';
-  $migration_options['--rollback'] = 'Rollback specified migration(s) if applicable.';
-  $migration_options['--file_function'] = 'Override file function to use when migrating images.';
+  $migration_options['stop'] = 'Stop specified migration(s) if applicable.';
+  $migration_options['rollback'] = 'Rollback specified migration(s) if applicable.';
+  $migration_options['file_function'] = 'Override file function to use when migrating images.';
   $items['migrate-import'] = array(
     'description' => 'Perform one or more migration processes',
     'options' => $migration_options,
@@ -170,7 +170,7 @@ function migrate_drush_command() {
   );
   $items['migrate-stop'] = array(
     'description' => 'Stop an active migration operation',
-    'options' => array('--all' => 'Stop all active migration operations'),
+    'options' => array('all' => 'Stop all active migration operations'),
     'arguments' => array(
       'migration' => 'Name of migration to stop',
     ),
@@ -183,7 +183,7 @@ function migrate_drush_command() {
   );
   $items['migrate-reset-status'] = array(
     'description' => 'Reset a active migration\'s status to idle',
-    'options' => array('--all' => 'Reset all active migration operations'),
+    'options' => array('all' => 'Reset all active migration operations'),
     'arguments' => array(
       'migration' => 'Name of migration to reset',
     ),

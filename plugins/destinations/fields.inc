@@ -596,7 +596,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
             migrate_instrument_stop('file_link: select existing');
             if (!$file) {
               migrate_instrument_start('file_link: create file record');
-              $file = new stdClass;
+              $file = clone $source;
               $file->uri = $full_path;
               $file->uid = isset($entity->uid) ? $entity->uid : 0;
               $file->status |= FILE_STATUS_PERMANENT;

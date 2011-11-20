@@ -579,7 +579,14 @@ class MigrateItemsXML extends MigrateItems {
  * Makes an XMLReader object iterable, returning elements matching a restricted
  * xpath-like syntax.
  */
-class MigrateXMLReader extends XMLReader implements Iterator {
+class MigrateXMLReader implements Iterator {
+
+  /**
+   * The XMLReader we are encapsulating.
+   *
+   * @var XMLReader
+   */
+  public $reader;
 
   /**
    * URL of the source XML file.
@@ -668,6 +675,7 @@ class MigrateXMLReader extends XMLReader implements Iterator {
    *  of that element. This supports the full xpath syntax.
    */
   public function __construct($xml_url, $element_query, $id_query) {
+    $this->reader = new XMLReader;
     $this->url = $xml_url;
     $this->elementQuery = $element_query;
     $this->idQuery = $id_query;
@@ -692,8 +700,8 @@ class MigrateXMLReader extends XMLReader implements Iterator {
    */
   public function rewind() {
     // (Re)open the provided URL.
-    $this->close();
-    $status = $this->open($this->url);
+    $this->reader->close();
+    $status = $this->reader->open($this->url);
     if (!$status) {
       Migration::displayMessage(t('Could not open XML file !url',
                                 array('!url' => $this->url)));
@@ -717,9 +725,9 @@ class MigrateXMLReader extends XMLReader implements Iterator {
 
     // Loop over each node in the XML file, looking for elements at a path
     // matching the input query string (represented in $this->elementsToMatch).
-    while ($this->read()) {
-      if ($this->nodeType == XMLREADER::ELEMENT) {
-        $this->currentPath[$this->depth] = $this->localName;
+    while ($this->reader->read()) {
+      if ($this->reader->nodeType == XMLREADER::ELEMENT) {
+        $this->currentPath[$this->reader->depth] = $this->reader->localName;
         if ($this->currentPath == $this->elementsToMatch) {
           // We're positioned to the right element path - if filtering on an
           // attribute, check that as well before accepting this element.
@@ -730,19 +738,20 @@ class MigrateXMLReader extends XMLReader implements Iterator {
             // it into SimpleXML.
             // Despite appearances, this is almost twice as fast as
             // simplexml_load_string($this->readOuterXML());
-            $node = $this->expand();
+            $node = $this->reader->expand();
             $dom = new DOMDocument();
             $node = $dom->importNode($node, TRUE);
             $dom->appendChild($node);
             $this->currentElement = simplexml_import_dom($node);
-            $this->currentId = (string)reset($this->currentElement->xpath($this->idQuery));
+            $idnode = $this->currentElement->xpath($this->idQuery);
+            $this->currentId = (string)reset($idnode);
             break;
           }
         }
       }
-      elseif ($this->nodeType == XMLREADER::END_ELEMENT) {
+      elseif ($this->reader->nodeType == XMLREADER::END_ELEMENT) {
         // Trim currentPath as we exit each element
-        unset($this->currentPath[$this->depth]);
+        unset($this->currentPath[$this->reader->depth]);
       }
     }
     migrate_instrument_stop('MigrateXMLReader::next');

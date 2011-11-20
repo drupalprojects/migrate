@@ -37,8 +37,6 @@ function migrate_drush_help($section) {
  * Implementation of hook_drush_command().
  */
 function migrate_drush_command() {
-  static $commands = FALSE;
-
   $migration_options = array(
     '--limit' => 'Limit on the length of each migration process, expressed in seconds or number of items',
     '--feedback' => 'Frequency of progress messages, in seconds or items processed',

@@ -17,6 +17,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1342736 - drush options don't need -- prefix.
 - #1340204 - MigrateDestinationFile::prepare() didn't call parent::prepare().
 - #1336880 - Fix XPath handling in MigrateItemsXML::getIDSFromXML.
 - #1334546 - Validate compound keys passed to handleSourceMigration().

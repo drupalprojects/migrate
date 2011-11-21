@@ -812,14 +812,20 @@ abstract class MigrationBase {
 
       // Complete the log record
       if ($this->logHistory) {
-        db_merge('migrate_log')
-          ->key(array('mlid' => $this->logID))
-          ->fields(array(
-            'endtime' => microtime(TRUE) * 1000,
-            'finalhighwater' => $this->getHighwater(),
-            'numprocessed' => $this->total_processed,
-          ))
-          ->execute();
+        try {
+          db_merge('migrate_log')
+            ->key(array('mlid' => $this->logID))
+            ->fields(array(
+              'endtime' => microtime(TRUE) * 1000,
+              'finalhighwater' => $this->getHighwater(),
+              'numprocessed' => $this->total_processed,
+            ))
+            ->execute();
+        }
+        catch (PDOException $e) {
+          Migration::displayMessage(t('Could not log operation on migration !name - possibly MigrationBase::beginProcess() was not called',
+                                    array('!name' => $this->machineName)));
+        }
       }
 
       $this->processing = FALSE;

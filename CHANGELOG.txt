@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1337810 - Documented hooks in migrate.api.php.
 - #1342322 - Added default implementation of prepareRow(), simplifying source plugins.
 - #1336534 - Added MigrateSourceXML for efficient handling of large XML files.
 - #1330552 - Provide more detail on bad field mappings.

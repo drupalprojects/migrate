@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1331912 - Catch exception due to skipped beginProcess().
 - #1337810 - Documented hooks in migrate.api.php.
 - #1342322 - Added default implementation of prepareRow(), simplifying source plugins.
 - #1336534 - Added MigrateSourceXML for efficient handling of large XML files.

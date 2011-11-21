@@ -14,6 +14,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1342686 - Generalized needs-update support.
 - #1342736 - drush options don't need -- prefix.
 - #1336880 - Fix XPath handling in MigrateItemsXML::getIDSFromXML.
 - #1334546 - Validate compound keys passed to handleSourceMigration().

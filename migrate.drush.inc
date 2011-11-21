@@ -894,13 +894,12 @@ function drush_migrate_import($args = NULL) {
         $migration->prepareUpdate();
       }
       if (drush_get_option('needs-update')) {
-        $needs_update = db_select('migrate_map_' . strtolower($machine_name), 'map')
-                          ->fields('map', array('sourceid1'))
-                          ->condition('needs_update', 1)
-                          ->range(0, 10000)
-                          ->execute()
-                          ->fetchAllKeyed(0, 0);
-        $options['idlist'] = implode(',', $needs_update);
+        $map_rows = $migration->getMap()->getRowsNeedingUpdate(10000);
+        $idlist = array();
+        foreach ($map_rows as $row) {
+          $idlist[] = $row->sourceid1;
+        }
+        $options['idlist'] = implode(',', $idlist);
       }
       // The goal here is to do one migration in the parent process and then
       // spawn subshells as needed when memory is depleted. We show feedback

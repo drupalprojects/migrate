@@ -193,6 +193,27 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
+   * Retrieve an array of map rows marked as needing update.
+   *
+   * @param int $count
+   *  Maximum rows to return; defaults to 10,000
+   * @return array
+   *  Array of map row objects with needs_update==1.
+   */
+  public function getRowsNeedingUpdate($count = 10000) {
+    $rows = array();
+    $result = db_select($this->mapTable, 'map')
+                      ->fields('map')
+                      ->condition('needs_update', 1)
+                      ->range(0, $count)
+                      ->execute();
+    foreach ($result as $row) {
+      $rows[] = $row;
+    }
+    return $rows;
+  }
+
+  /**
    * Given a (possibly multi-field) destination key, return the (possibly multi-field)
    * source key mapped to it.
    *

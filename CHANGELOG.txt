@@ -19,6 +19,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1349246 - Postgres error updating migrate_log.
 - #1342686 - Generalized needs-update support.
 - #1341598 - filename/filemime not set in file_link/file_blob cases.
 - #1342736 - drush options don't need -- prefix.

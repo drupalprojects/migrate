@@ -51,9 +51,6 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    *
    * @param boolean $copy_file
    *  TRUE to have the file copied from the provided URI to Drupal. Defaults to FALSE.
-   * @param boolean $copy_blob
-   *  TRUE to the binary value written to filesystem at $copy_destination. When this
-   *  is TRUE, $copy_file should be FALSE. Defaults to FALSE.
    * @param string $copy_destination
    *  If $copy_file is TRUE, the scheme/directory to use as the destination for the copied file.
    *  Defaults to 'public://'.
@@ -64,11 +61,14 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    * @param boolean $preserve_files
    *  TRUE will add a self-reference to each file created, so it is not deleted
    *  on rollback of fields referencing it.
+   * @param boolean $copy_blob
+   *  TRUE to the binary value written to filesystem at $copy_destination. When this
+   *  is TRUE, $copy_file should be FALSE. Defaults to FALSE.
    */
   static public function options($copy_file, $copy_destination, $language,
-      $text_format, $preserve_files = FALSE) {
-    return compact('copy_file', 'copy_blob', 'copy_destination', 'language',
-      'text_format', 'preserve_files');
+      $text_format, $preserve_files = FALSE, $copy_blob = FALSE) {
+    return compact('copy_file', 'copy_destination', 'language',
+      'text_format', 'preserve_files', 'copy_blob');
   }
 
   /**

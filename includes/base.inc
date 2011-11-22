@@ -764,7 +764,7 @@ abstract class MigrationBase {
                      ->fields(array(
                        'machine_name' => $this->machineName,
                        'process_type' => $newStatus,
-                       'starttime' => microtime(TRUE) * 1000,
+                       'starttime' => round(microtime(TRUE) * 1000),
                        'initialHighwater' => $this->getHighwater(),
                        ))
                      ->execute();
@@ -798,7 +798,7 @@ abstract class MigrationBase {
           db_merge('migrate_log')
             ->key(array('mlid' => $this->logID))
             ->fields(array(
-              'endtime' => microtime(TRUE) * 1000,
+              'endtime' => round(microtime(TRUE) * 1000),
               'finalhighwater' => $this->getHighwater(),
               'numprocessed' => $this->total_processed,
             ))

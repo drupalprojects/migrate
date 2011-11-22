@@ -15,6 +15,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1349246 - Postgres error updating migrate_log.
 - #1342686 - Generalized needs-update support.
 - #1342736 - drush options don't need -- prefix.
 - #1336880 - Fix XPath handling in MigrateItemsXML::getIDSFromXML.

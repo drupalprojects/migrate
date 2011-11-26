@@ -985,7 +985,7 @@ abstract class Migration extends MigrationBase {
    */
   protected function createStubWrapper(array $source_key, $migration = NULL) {
     if (method_exists($this, 'createStub')) {
-      $destids = $this->createStub($migration);
+      $destids = $this->createStub($migration, $source_key);
       if ($destids) {
         // Fake a data row with the source key in it
         $map_source_key = $this->map->getSourceKey();

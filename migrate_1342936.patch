@@ -1,0 +1,38 @@
+From cb70fa988301e56323a2fa2d63338727183add70 Mon Sep 17 00:00:00 2001
+From: andrew morton <drewish@zivtech.com>
+Date: Tue, 22 Nov 2011 12:26:23 -0800
+Subject: [PATCH] Issue #1342936 by drewish: Pass source key in calls to Migration::createStub().
+
+---
+ CHANGELOG.txt          |    1 +
+ includes/migration.inc |    2 +-
+ 2 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/CHANGELOG.txt b/CHANGELOG.txt
+index d760098..bede273 100644
+--- a/CHANGELOG.txt
++++ b/CHANGELOG.txt
+@@ -3,6 +3,7 @@ Next release
+ ============
+ 
+ Features and enhancements
++- #1342936 - Pass source key in calls to Migration::createStub().
+ - #1331912 - Catch exception due to skipped beginProcess().
+ - #1337810 - Documented hooks in migrate.api.ph.
+ - #1342322 - Added default implementation of prepareRow(), simplifying source plugins.
+diff --git a/includes/migration.inc b/includes/migration.inc
+index 7ae1810..ed0dd3e 100644
+--- a/includes/migration.inc
++++ b/includes/migration.inc
+@@ -977,7 +977,7 @@ abstract class Migration extends MigrationBase {
+    */
+   protected function createStubWrapper(array $source_key, $migration = NULL) {
+     if (method_exists($this, 'createStub')) {
+-      $destids = $this->createStub($migration);
++      $destids = $this->createStub($migration, $source_key);
+       if ($destids) {
+         // Fake a data row with the source key in it
+         $map_source_key = $this->map->getSourceKey();
+-- 
+1.7.0.4
+

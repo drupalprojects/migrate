@@ -592,6 +592,14 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Get the number of records marked as needing update.
+   * @return int
+   */
+  public function updateCount() {
+    return $this->map->updateCount();
+  }
+
+  /**
    * Get the number of source records which failed to import.
    * TODO: Doesn't yet account for informationals, or multiple errors for
    * a source record.

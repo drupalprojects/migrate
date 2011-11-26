@@ -340,9 +340,28 @@ class MigrateSQLMap extends MigrateMap {
     ->execute();
   }
 
+  /**
+   * Returns a count of records in the map table (i.e., the number of
+   * records which have been imported for this migration).
+   *
+   * @return int
+   */
   public function importedCount() {
     $query = $this->connection->select($this->mapTable);
     $query->addExpression('COUNT(*)', 'count');
+    $count = $query->execute()->fetchField();
+    return $count;
+  }
+
+  /**
+   * Returns a count of records which are marked as needing update.
+   *
+   * @return int
+   */
+  public function updateCount() {
+    $query = $this->connection->select($this->mapTable);
+    $query->addExpression('COUNT(*)', 'count');
+    $query->condition('needs_update', 1);
     $count = $query->execute()->fetchField();
     return $count;
   }

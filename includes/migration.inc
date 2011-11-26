@@ -592,6 +592,14 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Get the number of records marked as needing update.
+   * @return int
+   */
+  public function updateCount() {
+    return $this->map->updateCount();
+  }
+
+  /**
    * Test whether we've exceeded the designated item limit.
    *
    * @return boolean

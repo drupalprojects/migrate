@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1335110 - Automatically lowercase MD5 passwords.
 - #1331912 - Catch exception due to skipped beginProcess().
 - #1337810 - Documented hooks in migrate.api.ph.
 - #1342322 - Added default implementation of prepareRow(), simplifying source plugins.

@@ -171,6 +171,18 @@ class MigrateSourceSQL extends MigrateSource {
           $field_info['table'] . '.' . $field_info['field']);
       }
     }
+    else {
+      // Detect available fields
+      $detection_query = clone $this->query;
+      $result = $detection_query->range(0, 1)->execute();
+      $row = $result->fetchAssoc();
+      if (is_array($row)) {
+        foreach ($row as $field_name => $field_value) {
+          // Lower case, because Drupal forces lowercase on fetch
+          $fields[drupal_strtolower($field_name)] = t('Example Content: ') . $field_value;
+        }
+      }
+    }
 
 /*
  * Handle queries without explicit field lists

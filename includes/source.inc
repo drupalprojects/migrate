@@ -65,13 +65,22 @@ abstract class MigrateSource implements Iterator {
   abstract public function fields();
 
   /**
-   * Whether this instance should cache the source count;
+   * Whether this instance should cache the source count.
+   *
    * @var boolean
    */
   protected $cacheCounts = FALSE;
 
   /**
+   * Whether this instance should not attempt to count the source.
+   *
+   * @var boolean
+   */
+  protected $skipCount = FALSE;
+
+  /**
    * Return a count of available source records, from the cache if appropriate.
+   * Returns -1 if the source is not countable.
    *
    * @param boolean $refresh
    */
@@ -115,6 +124,9 @@ abstract class MigrateSource implements Iterator {
   public function __construct($options = array()) {
     if (!empty($options['cache_counts'])) {
       $this->cacheCounts = TRUE;
+    }
+    if (!empty($options['skip_count'])) {
+      $this->skipCount = TRUE;
     }
   }
 

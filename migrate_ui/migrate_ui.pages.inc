@@ -43,6 +43,10 @@ function _migrate_ui_dashboard_form() {
     $has_counts = TRUE;
     if (method_exists($migration, 'sourceCount')) {
       $total = $migration->sourceCount();
+      if ($total < 0) {
+        $has_counts = FALSE;
+        $total = t('N/A');
+      }
     }
     else {
       $has_counts = FALSE;
@@ -314,7 +318,7 @@ function migrate_ui_batch($operation, $machine_name, $limit, &$context) {
       $context['finished'] = .5;
       if (method_exists($migration, 'sourceCount')) {
         $total = $migration->sourceCount();
-        if ($total && method_exists($migration, 'importedCount')) {
+        if ($total > 0 && method_exists($migration, 'importedCount')) {
           $imported = $migration->importedCount();
           switch ($operation) {
             case 'import':

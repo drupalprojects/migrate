@@ -268,6 +268,10 @@ function drush_migrate_status($name = NULL) {
       $has_counts = TRUE;
       if (method_exists($migration, 'sourceCount')) {
         $total = $migration->sourceCount($refresh);
+        if ($total < 0) {
+          $has_counts = FALSE;
+          $total = dt('N/A');
+        }
       }
       else {
         $has_counts = FALSE;

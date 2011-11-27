@@ -263,6 +263,11 @@ abstract class Migration extends MigrationBase {
    */
   public function isComplete() {
     $total = $this->source->count(TRUE);
+    // If the source is uncountable, we have no way of knowing if it's
+    // complete, so stipulate that it is.
+    if ($total < 0) {
+      return TRUE;
+    }
     $imported = $this->importedCount();
     $errors = $this->errorCount();
     return $total <= ($imported + $errors);

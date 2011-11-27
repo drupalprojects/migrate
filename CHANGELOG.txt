@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1341776 - Add option to skip source counting.
 - #1342936 - Pass source key in calls to Migration::createStub().
 - #1335110 - Automatically lowercase MD5 passwords.
 - #1331912 - Catch exception due to skipped beginProcess().

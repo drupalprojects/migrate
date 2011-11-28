@@ -398,7 +398,8 @@ function migrate_ui_messages($migration) {
   }
 
   // TODO: need a general MigrateMap API
-  $messages = db_select($migration->getMap()->getMessageTable(), 'msg')
+  $messages = $migration->getMap()->getConnection()
+              ->select($migration->getMap()->getMessageTable(), 'msg')
               ->extend('PagerDefault')
               ->limit(500)
               ->fields('msg')

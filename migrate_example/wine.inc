@@ -49,11 +49,12 @@ abstract class AdvancedExampleMigration extends Migration {
  * TIP: While usually you'll create true migrations - processes that copy data
  * from some source into Drupal - you can also define processing steps for either
  * the import or rollback stages that take other actions. In this case, we want
- * to disable auto_nodetitle while the migration steps run.
+ * to disable auto_nodetitle while the migration steps run. We'll re-enable it
+ * over in WineFinishMigration.
  */
 class WinePrepMigration extends MigrationBase {
-  // Remember whether the auto_nodetitle was originally enabled, so we know whether
-  // to re-enable it
+  // Track whether the auto_nodetitle was originally enabled so we know whether
+  // to re-enable it. This is public so WineFinishMigration can reference it.
   public static $wasEnabled = FALSE;
 
   public function __construct() {
@@ -774,6 +775,10 @@ class WineTableMigration extends AdvancedExampleMigration {
   }
 }
 
+/**
+ * This migration works with WinePrepMigration to make ensure auto_nodetitle
+ * is re-enabled if we disabled it.
+ */
 class WineFinishMigration extends MigrationBase {
   public function __construct() {
     parent::__construct(MigrateGroup::getInstance('wine', array('default')));

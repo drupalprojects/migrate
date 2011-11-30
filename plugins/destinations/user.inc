@@ -178,7 +178,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $newaccount = user_save($old_account, (array)$account);
     migrate_instrument_stop('user_save');
     if ($newaccount) {
-      if ($this->md5Passwords) {
+      if ($this->md5Passwords && !empty($account->pass)) {
         // Ape the Drupal 6 -> Drupal 7 upgrade, which encrypts the MD5 text in the
         // modern way, and marks it with a prepended U so it recognizes and fixes it
         // up at login time.

@@ -191,7 +191,8 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     $migration = Migration::currentMigration();
     $destination = $migration->getDestination();
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
-
+    $max_length = isset($field_info['settings']['max_length']) ?
+      $field_info['settings']['max_length'] : 0;
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -203,7 +204,23 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       $format = isset($arguments['format']) ?
         $arguments['format'] : $destination->getTextFormat();
       $item['format'] = $item['value_format'] = $format;
-      $item['value'] = $value;
+      // Make sure the value will fit
+      if ($max_length) {
+        $item['value'] = drupal_substr($value, 0, $max_length);
+        if (!empty($arguments['track_overflow'])) {
+          $value_length = drupal_strlen($value);
+          if ($value_length > $max_length) {
+            $migration->saveMessage(
+              t('Value for field !field exceeds max length of !max_length, actual length is !length',
+                array('!field' => $instance['field_name'], '!max_length' => $max_length,
+                  '!length' => $value_length)),
+              Migration::MESSAGE_INFORMATIONAL);
+          }
+        }
+      }
+      else {
+        $item['value'] = $value;
+      }
 
       $return[$language][$delta] = $item;
       $delta++;

@@ -17,7 +17,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       'nid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
         'description' => 'ID of destination node',
       ),
     );

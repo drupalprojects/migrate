@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1355940 - Track all source rows in the map table.
 - #941440 - Autodetection of source fields when unspecified.
 - #1341776 - Add option to skip source counting.
 - #1342936 - Pass source key in calls to Migration::createStub().

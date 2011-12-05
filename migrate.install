@@ -269,3 +269,57 @@ function migrate_update_7007() {
   $ret[] = t('Added arguments column to migrate_status table');
   return $ret;
 }
+
+/**
+ * Update map tables to reflect change of needs_update to a status column.
+ */
+function migrate_update_7008() {
+  $ret = array();
+  foreach (migrate_migrations() as $migration) {
+    if (is_a($migration, 'Migration')) {
+      // Since we're now tracking failed/ignored rows in the map table,
+      // destination keys need to be nullable
+      $map = $migration->getMap();
+      $map_connection = $map->getConnection();
+      $map_table = $map->getMapTable();
+      $destination = $migration->getDestination();
+      $key_schema = $destination->getKeySchema();
+      $index = 1;
+      foreach ($key_schema as $field_schema) {
+        $field = 'destid' . $index++;
+        $field_schema['not null'] = FALSE;
+        $map_connection->schema()->changeField($map_table, $field, $field,
+                                               $field_schema);
+        $ret[] = t('Changed !table.!field to be non-null',
+          array('!table' => $map_table, '!field' => $field));
+      }
+
+      // Add any existing failures to the map table
+      $msg_table = $map->getMessageTable();
+      $msg_marked = FALSE;
+      $result = $map_connection->select($msg_table, 'msg')
+                ->fields('msg')
+                ->condition('level', Migration::MESSAGE_INFORMATIONAL, '<>')
+                ->execute();
+      foreach ($result as $row) {
+        $keys = array();
+        $index = 1;
+        foreach ($row as $field => $value) {
+          if (substr($field, 0, 8) == 'sourceid') {
+            $keys['sourceid' . $index++] = $value;
+          }
+        }
+        $map_connection->merge($map_table)
+                       ->key($keys)
+                       ->fields(array('needs_update' => MigrateMap::STATUS_FAILED))
+                       ->execute();
+        $msg_marked = TRUE;
+      }
+      if ($msg_marked) {
+        $ret[] = t('Marked failures in !table', array('!table' => $map_table));
+      }
+    }
+  }
+
+  return $ret;
+}

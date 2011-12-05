@@ -64,9 +64,9 @@ abstract class Migration extends MigrationBase {
    * Specify value of needs_update for current map row. Usually set by
    * MigrateFieldHandler implementations.
    *
-   * @var boolean
+   * @var int
    */
-  public $needsUpdate = FALSE;
+  public $needsUpdate = MigrateMap::STATUS_IMPORTED;
 
   /**
    * Simple mappings between destination fields (keys) and source fields (values).
@@ -268,9 +268,8 @@ abstract class Migration extends MigrationBase {
     if ($total < 0) {
       return TRUE;
     }
-    $imported = $this->importedCount();
-    $errors = $this->errorCount();
-    return $total <= ($imported + $errors);
+    $processed = $this->processedCount();
+    return $total <= $processed;
   }
 
   /**
@@ -392,15 +391,19 @@ abstract class Migration extends MigrationBase {
 
         // Note that bulk rollback is only supported for single-column keys
         $sourceids[] = $this->currentSourceKey;
-        $destids[] = $destination_key->destid1;
+        if (!empty($destination_key->destid1)) {
+          $destids[] = $destination_key->destid1;
+        }
 
         $batch_count++;
         if ($batch_count >= $this->rollbackBatchSize) {
           try {
             if ($this->systemOfRecord == Migration::SOURCE) {
-              migrate_instrument_start('destination bulkRollback');
-              $this->destination->bulkRollback($destids);
-              migrate_instrument_stop('destination bulkRollback');
+              if (!empty($destids)) {
+                migrate_instrument_start('destination bulkRollback');
+                $this->destination->bulkRollback($destids);
+                migrate_instrument_stop('destination bulkRollback');
+              }
             }
             // Keep track in case of interruption
             migrate_instrument_start('rollback map/message update');
@@ -425,9 +428,11 @@ abstract class Migration extends MigrationBase {
       }
       if ($batch_count > 0) {
         if ($this->systemOfRecord == Migration::SOURCE) {
-          migrate_instrument_start('destination bulkRollback');
-          $this->destination->bulkRollback($destids);
-          migrate_instrument_stop('destination bulkRollback');
+          if (!empty($destids)) {
+            migrate_instrument_start('destination bulkRollback');
+            $this->destination->bulkRollback($destids);
+            migrate_instrument_stop('destination bulkRollback');
+          }
           $this->total_processed += $batch_count;
           $this->total_successes += $batch_count;
           $this->processed_since_feedback += $batch_count;
@@ -459,9 +464,19 @@ abstract class Migration extends MigrationBase {
         // Rollback one record
         try {
           if ($this->systemOfRecord == Migration::SOURCE) {
-            migrate_instrument_start('destination rollback');
-            $this->destination->rollback((array)$destination_key);
-            migrate_instrument_stop('destination rollback');
+            // Skip when the destination key is null
+            $skip = FALSE;
+            foreach ($destination_key as $key_value) {
+              if (is_null($key_value)) {
+                $skip = TRUE;
+                break;
+              }
+            }
+            if (!$skip) {
+              migrate_instrument_start('destination rollback');
+              $this->destination->rollback((array)$destination_key);
+              migrate_instrument_stop('destination rollback');
+            }
           }
 
           migrate_instrument_start('rollback map/message update');
@@ -527,16 +542,19 @@ abstract class Migration extends MigrationBase {
           $this->total_successes++;
         }
         else {
+          $this->map->saveIDMapping($this->sourceValues, array(), MigrateMap::STATUS_FAILED);
           $message = t('New object was not saved, no error provided');
           $this->saveMessage($message);
           self::displayMessage($message);
         }
       }
       catch (MigrateException $e) {
+        $this->map->saveIDMapping($this->sourceValues, array(), MigrateMap::STATUS_FAILED);
         $this->saveMessage($e->getMessage(), $e->getLevel());
         self::displayMessage($e->getMessage());
       }
       catch (Exception $e) {
+        $this->map->saveIDMapping($this->sourceValues, array(), MigrateMap::STATUS_FAILED);
         $this->handleException($e);
       }
       $this->total_processed++;
@@ -547,7 +565,7 @@ abstract class Migration extends MigrationBase {
 
       // Reset row properties.
       unset($this->sourceValues, $this->destinationValues);
-      $this->needsUpdate = FALSE;
+      $this->needsUpdate = MigrateMap::STATUS_IMPORTED;
 
       // TODO: Temporary. Remove when http://drupal.org/node/375494 is committed.
       // TODO: Should be done in MigrateDestinationEntity
@@ -585,6 +603,15 @@ abstract class Migration extends MigrationBase {
    */
   public function sourceCount($refresh = FALSE) {
     return $this->source->count($refresh);
+  }
+
+  /**
+   * Get the number of source records processed.
+   * @return int
+   *  Number of processed records.
+   */
+  public function processedCount() {
+    return $this->map->processedCount();
   }
 
   /**
@@ -999,7 +1026,7 @@ abstract class Migration extends MigrationBase {
         foreach ($map_source_key as $key => $definition) {
           $data_row->$key = $source_key[$i++];
         }
-        $this->map->saveIDMapping($data_row, $destids, TRUE);
+        $this->map->saveIDMapping($data_row, $destids, MigrateMap::STATUS_NEEDS_UPDATE);
       }
     }
     else {
@@ -1017,7 +1044,7 @@ abstract class Migration extends MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
-    $output = $this->map->saveMessage($this->currentSourceKey, $message, $level);
+    $this->map->saveMessage($this->currentSourceKey, $message, $level);
   }
 
   /**

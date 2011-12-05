@@ -732,7 +732,7 @@ class MigrateXMLReader implements Iterator {
           // We're positioned to the right element path - if filtering on an
           // attribute, check that as well before accepting this element.
           if (empty($this->attributeName) ||
-              ($this->getAttribute($this->attributeName) == $this->attributeValue)) {
+              ($this->reader->getAttribute($this->attributeName) == $this->attributeValue)) {
             // We've found a matching element - get a SimpleXML object representing it.
             // We must associate the DOMNode with a DOMDocument to be able to import
             // it into SimpleXML.
@@ -918,15 +918,10 @@ class MigrateSourceXML extends MigrateSource {
       //   - it's been imported, and is marked needs_update.
       if ((!empty($this->idlist) && in_array(reset($this->currentKey), $this->idlist)) ||
           (empty($this->idlist) && ((empty($map_row)) ||
-            (!empty($map_row) && $map_row['needs_update'] == 1)))
+            (!empty($map_row) && $map_row['needs_update'] == MigrateMap::STATUS_NEEDS_UPDATE)))
          ) {
         // But, prepareRow() can reject such a row by returning FALSE.
-        $return = $migration->prepareRow($this->currentRow);
-        // We're explicitly skipping this row
-        if ($return === FALSE) {
-          $this->numIgnored++;
-        }
-        else {
+        if ($this->prepareRow()) {
           // Found a keeper, count it and add any map data to the row.
           $this->numProcessed++;
           if (isset($map_row) && is_array($map_row)) {

@@ -279,13 +279,14 @@ function drush_migrate_status($name = NULL) {
       }
       if (method_exists($migration, 'importedCount')) {
         $imported = $migration->importedCount();
+        $processed = $migration->processedCount();
       }
       else {
         $has_counts = FALSE;
         $imported = dt('N/A');
       }
       if ($has_counts) {
-        $unimported = $total - $imported;
+        $unimported = $total - $processed;
       }
       else {
         $unimported = dt('N/A');

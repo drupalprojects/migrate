@@ -231,7 +231,7 @@ class MigrateSourceOracle extends MigrateSource {
         $this->currentKey[$field_name] = $this->currentRow->$field_name;
       }
       $map_row = $map->getRowBySource($this->currentKey);
-      if ($map_row && $map_row['needs_update'] == 0) {
+      if ($map_row && $map_row['needs_update'] != MigrateMap::STATUS_NEEDS_UPDATE) {
         continue;
       }
       // Add map info to the row, if present
@@ -245,14 +245,9 @@ class MigrateSourceOracle extends MigrateSource {
       // Allow the Migration to prepare this row. prepareRow() can return boolean
       // FALSE to stop processing this row. To add/modify fields on the
       // result, modify $row by reference.
-      $return = $migration->prepareRow($this->currentRow);
-
-      if ($return !== FALSE) {
+      if ($this->prepareRow()) {
         $this->numProcessed++;
         break;
-      }
-      else {
-        $this->numIgnored++;
       }
     }
     if (!is_object($this->currentRow)) {

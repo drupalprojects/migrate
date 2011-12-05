@@ -460,7 +460,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
         if (!$remote) {
           $migration->saveMessage(t('Source file does not exist: !path',
             array('!path' => $full_path)), Migration::MESSAGE_WARNING);
-          $migration->needsUpdate = TRUE;
+          $migration->needsUpdate = MigrateMap::STATUS_NEEDS_UPDATE;
           return;
         }
       }
@@ -579,7 +579,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
                 $migration->saveMessage($message, MigrationBase::MESSAGE_INFORMATIONAL);
               }
               $message_saved = TRUE;
-              // TODO     $migration->needsUpdate = TRUE;
+              // TODO     $migration->needsUpdate = MigrateMap::STATUS_NEEDS_UPDATE;
               continue;
             }
             migrate_instrument_stop('file_link: file_exists');

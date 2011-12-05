@@ -185,7 +185,7 @@ class MigrateSourceMultiItems extends MigrateSource {
 
       // Check the map - if it's already mapped, and not marked for update, skip it
       $map_row = $migration->getMap()->getRowBySource(array($id));
-      if ($map_row && $map_row['needs_update'] == 0) {
+      if ($map_row && $map_row['needs_update'] != MigrateMap::STATUS_NEEDS_UPDATE) {
         continue;
       }
 
@@ -208,16 +208,10 @@ class MigrateSourceMultiItems extends MigrateSource {
         // Allow the Migration to prepare this row. prepareRow() can return boolean
         // FALSE to stop processing this row. To add/modify fields on the
         // result, modify $row by reference.
-        $return = $migration->prepareRow($this->currentRow);
-
-        if ($return !== FALSE) {
+        if ($this->prepareRow()) {
           // OK, got a valid one, break out and return
           $this->numProcessed++;
           break;
-        }
-        else {
-          $this->numIgnored++;
-          $this->currentRow = NULL;
         }
       }
       else {

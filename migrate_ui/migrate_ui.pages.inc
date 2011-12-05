@@ -54,13 +54,14 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     }
     if (method_exists($migration, 'importedCount')) {
       $imported = $migration->importedCount();
+      $processed = $migration->processedCount();
     }
     else {
       $has_counts = FALSE;
       $imported = t('N/A');
     }
     if ($has_counts) {
-      $unimported = $total - $imported;
+      $unimported = $total - $processed;
     }
     else {
       $unimported = t('N/A');
@@ -321,14 +322,14 @@ function migrate_ui_batch($operation, $machine_name, $limit, &$context) {
       if (method_exists($migration, 'sourceCount')) {
         $total = $migration->sourceCount();
         if ($total > 0 && method_exists($migration, 'importedCount')) {
-          $imported = $migration->importedCount();
+          $processed = $migration->processedCount();
           switch ($operation) {
             case 'import':
               $to_update = $migration->updateCount();
-              $context['finished'] = ($imported-$to_update)/$total;
+              $context['finished'] = ($processed-$to_update)/$total;
               break;
             case 'rollback':
-              $context['finished'] = ($total-$imported)/$total;
+              $context['finished'] = ($total-$processed)/$total;
               break;
           }
         }

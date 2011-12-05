@@ -40,7 +40,6 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
       'fid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
         'description' => 'file_managed ID',
       ),
     );

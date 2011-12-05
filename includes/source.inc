@@ -156,4 +156,27 @@ abstract class MigrateSource implements Iterator {
   public function valid() {
     return !is_null($this->currentRow);
   }
+
+  /**
+   * Give the calling migration a shot at manipulating, and possibly rejecting,
+   * the source row.
+   *
+   * @return bool
+   *  FALSE if the row is to be skipped.
+   */
+  protected function prepareRow() {
+    $migration = Migration::currentMigration();
+    $return = $migration->prepareRow($this->currentRow);
+    // We're explicitly skipping this row - keep track in the map table
+    if ($return === FALSE) {
+      $migration->getMap()->saveIDMapping($this->currentRow, array(NULL), MigrateMap::STATUS_IGNORED);
+      $this->numIgnored++;
+      $this->currentRow = NULL;
+      $this->currentKey = NULL;
+    }
+    else {
+      $return = TRUE;
+    }
+    return $return;
+  }
 }

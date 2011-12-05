@@ -456,7 +456,7 @@ class MigrateNodeReferenceFieldHandler extends MigrateSimpleFieldHandler {
 class MigrateUserReferenceFieldHandler extends MigrateSimpleFieldHandler {
   public function __construct() {
     parent::__construct(array(
-      'value_key' => 'nid',
+      'value_key' => 'uid',
       'skip_empty' => TRUE,
     ));
     $this->registerTypes(array('userreference'));

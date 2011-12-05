@@ -202,7 +202,7 @@ class MigrateSQLMap extends MigrateMap {
    * @return array
    *  Array of map row objects with needs_update==1.
    */
-  public function getRowsNeedingUpdate($count = 10000) {
+  public function getRowsNeedingUpdate($count) {
     $rows = array();
     $result = db_select($this->mapTable, 'map')
                       ->fields('map')

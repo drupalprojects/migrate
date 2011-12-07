@@ -72,6 +72,13 @@ abstract class MigrateSource implements Iterator {
   protected $cacheCounts = FALSE;
 
   /**
+   * Key to use for caching counts.
+   *
+   * @var string
+   */
+  protected $cacheKey;
+
+  /**
    * Whether this instance should not attempt to count the source.
    *
    * @var boolean
@@ -85,16 +92,19 @@ abstract class MigrateSource implements Iterator {
    * @param boolean $refresh
    */
   public function count($refresh = FALSE) {
-    $cache_key = md5((string)$this);
+    if (!isset($this->cacheKey)) {
+      $this->cacheKey = md5((string)$this);
+    }
+
     // If a refresh is requested, or we're not caching counts, ask the derived
     // class to get the count from the source.
     if ($refresh || !$this->cacheCounts) {
       $count = $this->computeCount();
-      cache_set($cache_key, $count, 'cache');
+      cache_set($this->cacheKey, $count, 'cache');
     }
     else {
       // Caching is in play, first try to retrieve a cached count.
-      $cache_object = cache_get($cache_key, 'cache');
+      $cache_object = cache_get($this->cacheKey, 'cache');
       if (is_object($cache_object)) {
         // Success
         $count = $cache_object->data;
@@ -103,7 +113,7 @@ abstract class MigrateSource implements Iterator {
         // No cached count, ask the derived class to count 'em up, and cache
         // the result
         $count = $this->computeCount();
-        cache_set($cache_key, $count, 'cache');
+        cache_set($this->cacheKey, $count, 'cache');
       }
     }
     return $count;
@@ -127,6 +137,9 @@ abstract class MigrateSource implements Iterator {
     }
     if (!empty($options['skip_count'])) {
       $this->skipCount = TRUE;
+    }
+    if (!empty($options['cache_key'])) {
+      $this->cacheKey = $options['cache_key'];
     }
   }
 

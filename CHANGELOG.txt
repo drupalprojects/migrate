@@ -18,6 +18,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1364034 - Add cache_key option to sources, for disambiguation.
 - #1361258 - MigrateUserReferenceFieldHandler uses wrong value key.
 - #1354162 - Make sure messages are retrieved from the right connection.
 - #1352648 - Update mode reapplied on each batch in UI.

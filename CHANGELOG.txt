@@ -26,6 +26,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1372204 - Fix loss of pictures when updating users.
 - #1364034 - Add cache_key option to sources, for disambiguation.
 - #1354162 - Make sure messages are retrieved from the right connection.
 - #1352648 - Update mode reapplied on each batch in UI.

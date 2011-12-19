@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #519906 - Added support for the core poll module (choices and votes).
 - #1355940 - Track all source rows in the map table.
 - #1358650 - Truncate text fields according to configured max_length.
 - #941440 - Autodetection of source fields when unspecified.

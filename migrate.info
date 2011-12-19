@@ -21,6 +21,7 @@ files[] = plugins/destinations/comment.inc
 files[] = plugins/destinations/file.inc
 files[] = plugins/destinations/path.inc
 files[] = plugins/destinations/fields.inc
+files[] = plugins/destinations/poll.inc
 files[] = plugins/destinations/table.inc
 files[] = plugins/destinations/table_copy.inc
 files[] = plugins/sources/csv.inc

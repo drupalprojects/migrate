@@ -3,6 +3,9 @@ Next release
 ============
 
 Features and enhancements
+- #1366588 - Source plugin support has been refactored to put more of the common
+             processing in the base class. When implementing a source plugin,
+             implement performRewind() and getNextRow().
 - #519906 - Added support for the core poll module (choices and votes).
 - #1355940 - Track all source rows in the map table.
 - #1358650 - Truncate text fields according to configured max_length.

@@ -136,44 +136,35 @@ class MigrateSourceMSSQL extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
+   * Implementation of MigrateSource::performRewind().
    */
-  public function rewind() {
-    $migration = Migration::currentMigration();
-    $this->result = NULL;
-    $this->currentRow = NULL;
-    $this->numProcessed = 0;
-    $this->numIgnored = 0;
-    $map = $migration->getMap();
-
-    $keys = array();
-    foreach ($map->getSourceKey() as $field_name => $field_schema) {
-      // Allow caller to provide an alias to table containing the primary key.
-      if (!empty($field_schema['alias'])) {
-        $field_name = $field_schema['alias'] . '.' . $field_name;
-      }
-      $keys[] = $field_name;
-    }
-
+  public function performRewind() {
     /*
      * Replace :criteria placeholder with idlist or highwater clauses. We
      * considered supporting both but it is not worth the complexity. Run twice
      * instead.
      */
-    $idlist = $migration->getOption('idlist');
-    if (isset($idlist)) {
+    if (!empty($this->idList)) {
+      $keys = array();
+      foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
+        // Allow caller to provide an alias to table containing the primary key.
+        if (!empty($field_schema['alias'])) {
+          $field_name = $field_schema['alias'] . '.' . $field_name;
+        }
+        $keys[] = $field_name;
+      }
+
       // TODO: Sanitize. not critical as this is admin supplied data in drush.
       $this->query = str_replace(':criteria',
-        $keys[0] . ' IN (' . $idlist . ')', $this->query);
+        $keys[0] . ' IN (' . $this->idList . ')', $this->query);
     }
     else {
-      $highwaterField = $migration->getHighwaterField();
-      if (isset($highwaterField['name']) && $highwater = $migration->getHighwater()) {
-        if (empty($highwaterField['alias'])) {
-          $highwater_name = $highwaterField['name'];
+      if (isset($this->highwaterField['name']) && $highwater = $this->activeMigration->getHighwater()) {
+        if (empty($this->highwaterField['alias'])) {
+          $highwater_name = $this->highwaterField['name'];
         }
         else {
-          $highwater_name = $highwaterField['alias'] . '.' . $highwaterField['name'];
+          $highwater_name = $this->highwaterField['alias'] . '.' . $this->highwaterField['name'];
         }
         $this->query = str_replace(':criteria', "$highwater_name > '$highwater'", $this->query);
       }
@@ -188,72 +179,28 @@ class MigrateSourceMSSQL extends MigrateSource {
     $this->connect();
     $this->result = mssql_query($this->query, $this->connection, $this->batchSize);
     migrate_instrument_stop('mssql_query');
-
-    $this->next();
   }
 
   /**
-   * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
-   * as well as explicitly from rewind().
+   * Implementation of MigrateSource::getNextRow().
+   *
+   * Returns the next row of the result set as an object, dealing with the
+   * difference between the end of the batch and the end of all data.
    */
-  public function next() {
-    $migration = Migration::currentMigration();
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
-
-    migrate_instrument_start('MigrateSourceMSSQL next');
-    while ($this->currentRow = $this->getNextObject()) {
-      // Check the map - if it's already mapped, and not marked for update, skip it
-      $map = $migration->getMap();
-      $this->currentKey = array();
-      foreach ($map->getSourceKey() as $field_name => $field_schema) {
-        $this->currentKey[$field_name] = $this->currentRow->$field_name;
-      }
-      $map_row = $map->getRowBySource($this->currentKey);
-      if ($map_row && $map_row['needs_update'] != MigrateMap::STATUS_NEEDS_UPDATE) {
-        continue;
-      }
-
-      // Allow the Migration to prepare this row. prepareRow() can return boolean
-      // FALSE to stop processing this row. To add/modify fields on the
-      // result, modify $row by reference.
-      if ($this->prepareRow()) {
-        $this->numProcessed++;
-        break;
-      }
-    }
-    if (!is_object($this->currentRow)) {
-      $this->currentRow = NULL;
-    }
-    migrate_instrument_stop('MigrateSourceMSSQL next');
-  }
-
-  /**
-   * Convenience function to return the next row of the result set as an
-   * object, dealing with the difference between the end of the batch and the
-   * end of all data.
-   */
-  public function getNextObject() {
-    migrate_instrument_start('mssql_fetch_object');
+  public function getNextRow() {
     $row = mssql_fetch_object($this->result);
-    migrate_instrument_stop('mssql_fetch_object');
 
     // Might be totally out of data, or just out of this batch - request another
     // batch and see
     if (!is_object($row)) {
-      migrate_instrument_start('mssql_fetch_batch');
       mssql_fetch_batch($this->result);
-      migrate_instrument_stop('mssql_fetch_batch');
-
-      migrate_instrument_start('mssql_fetch_object');
       $row = mssql_fetch_object($this->result);
-      migrate_instrument_stop('mssql_fetch_object');
     }
     if (is_object($row)) {
       return $row;
     }
     else {
-      return FALSE;
+      return NULL;
     }
   }
 }

@@ -148,42 +148,30 @@ class MigrateSourceList extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
+   * Implementation of MigrateSource::performRewind().
+   *
+   * @return void
    */
-  public function rewind() {
-    migrate_instrument_start('MigrateSourceList rewind');
-
-    $this->numProcessed = 0;
-    $this->numIgnored = 0;
-
-    $migration = Migration::currentMigration();
-    $idList = $migration->getOption('idlist');
-    if ($idList) {
-      $idList = explode(',', $idList);
+  public function performRewind() {
+    // If there isn't a specific ID list passed in, get it from the list class.
+    if ($this->idList) {
+      $this->idsToProcess = $this->idList;
     }
     else {
-      $idList = $this->listClass->getIdList();
+      $this->idsToProcess = $this->listClass->getIdList();
     }
-    $this->idIterator = ($idList instanceof Iterator) ? $idList : new ArrayIterator($idList);
+    $this->idIterator = ($this->idsToProcess instanceof Iterator) ?
+      $this->idsToProcess : new ArrayIterator($this->idsToProcess);
     $this->idIterator->rewind();
-
-    migrate_instrument_stop('MigrateSourceList rewind');
-
-    // Load up the first row
-    $this->next();
   }
 
   /**
-   * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
-   * as well as explicitly from rewind().
+   * Implementation of MigrateSource::getNextRow().
+   *
+   * @return null|stdClass
    */
-  public function next() {
-    $migration = Migration::currentMigration();
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
-
-    migrate_instrument_start('MigrateSourceList next');
-    // Get next item (next ID not already in the map, unless needs_update=1)
+  public function getNextRow() {
+    $row = NULL;
     while ($this->idIterator->valid()) {
       $id = $this->idIterator->current();
       $this->idIterator->next();
@@ -193,43 +181,16 @@ class MigrateSourceList extends MigrateSource {
         continue;
       }
 
-      // Check the map - if it's already mapped, and not marked for update, skip it
-      $map_row = $migration->getMap()->getRowBySource(array($id));
-      if ($map_row && $map_row['needs_update'] != MigrateMap::STATUS_NEEDS_UPDATE) {
-        continue;
-      }
-
-      // TODO: Also check message table (non-informational entries here indicate failed items, we don't
-      // want to run through them again)
-      $this->currentRow = $this->itemClass->getItem($id);
-      if ($this->currentRow) {
-        $this->currentKey = array($id);
-
+      // Got a good ID, get the data and get out.
+      $row = $this->itemClass->getItem($id);
+      if ($row) {
         // Save the ID using the map source key - it will be used for mapping
-        $sourceKey = $migration->getMap()->getSourceKey();
+        $sourceKey = $this->activeMap->getSourceKey();
         $key_name = key($sourceKey);
-        $this->currentRow->$key_name = $id;
-        // Add map info to the row, if present
-        if ($map_row) {
-          foreach ($map_row as $field => $value) {
-            $field = 'migrate_map_' . $field;
-            $this->currentRow->$field = $value;
-          }
-        }
-        // Allow the Migration to prepare this row. prepareRow() can return boolean
-        // FALSE to stop processing this row. To add/modify fields on the
-        // result, modify $row by reference.
-        if ($this->prepareRow()) {
-          // OK, got a valid one, break out and return
-          $this->numProcessed++;
-          break;
-        }
+        $row->$key_name = $id;
       }
-      else {
-        $this->currentKey = NULL;
-      }
+      break;
     }
-
-    migrate_instrument_stop('MigrateSourceList next');
+    return $row;
   }
 }

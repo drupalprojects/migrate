@@ -871,76 +871,32 @@ class MigrateSourceXML extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
+   * Implementation of MigrateSource::performRewind().
    */
-  public function rewind() {
-    $this->numProcessed = 0;
-    $this->numIgnored = 0;
-    // Save the ID list if any
-    $migration = Migration::currentMigration();
-    if ($migration->getOption('idlist')) {
-      $this->idlist = explode(',', $migration->getOption('idlist'));
-    }
-    else {
-      $this->idlist = array();
-    }
-
+  public function performRewind() {
     // Set the reader back to the beginning of the file (positioned to the
     // first matching element), then apply our logic to make sure we have the
     // first element fulfilling our logic (idlist/map/prepareRow()).
     $this->reader->rewind();
-    $this->next();
   }
 
   /**
-   * Implementation of Iterator::next().
+   * Implementation of MigrationSource::getNextRow().
    */
-  public function next() {
+  public function getNextRow() {
     migrate_instrument_start('MigrateSourceXML next');
-    $migration = Migration::currentMigration();
-    $map = $migration->getMap();
-    $sourceKey = $map->getSourceKey();
+    $sourceKey = $this->activeMap->getSourceKey();
     $key_name = key($sourceKey);
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
+    $row = NULL;
+
     // We start out positioned on the next candidate - verify that we want
     // to take this row, and if not loop till we find one.
     for (; $this->reader->valid(); $this->reader->next()) {
-      $this->currentKey = array($this->reader->key());
-      $this->currentRow = new stdClass;
-      $this->currentRow->$key_name = $this->reader->key();
-      $this->currentRow->xml = $this->reader->current();
-      $map_row = $map->getRowBySource($this->currentKey);
-
-      // We accept the current row if:
-      // - It's specified in an idlist, or there's no idlist and:
-      //   - it hasn't been imported, or
-      //   - it's been imported, and is marked needs_update.
-      if ((!empty($this->idlist) && in_array(reset($this->currentKey), $this->idlist)) ||
-          (empty($this->idlist) && ((empty($map_row)) ||
-            (!empty($map_row) && $map_row['needs_update'] == MigrateMap::STATUS_NEEDS_UPDATE)))
-         ) {
-        // But, prepareRow() can reject such a row by returning FALSE.
-        if ($this->prepareRow()) {
-          // Found a keeper, count it and add any map data to the row.
-          $this->numProcessed++;
-          if (isset($map_row) && is_array($map_row)) {
-            foreach ($map_row as $field => $value) {
-              $field = 'migrate_map_' . $field;
-              $this->currentRow->$field = $value;
-            }
-          }
-
-          // Since we're breaking early, position the reader to the next item.
-          $this->reader->next();
-          break;
-        }
-      }
-      // If we reach this point, we've rejected the row
-      $this->currentRow = NULL;
-      $this->currentKey = NULL;
+      $row = new stdClass;
+      $row->$key_name = $this->reader->key();
+      $row->xml = $this->reader->current();
     }
 
-    migrate_instrument_stop('MigrateSourceXML next');
+    return $row;
   }
 }

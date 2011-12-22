@@ -117,6 +117,16 @@ abstract class MigrateSource implements Iterator {
   protected $skipCount = FALSE;
 
   /**
+   * By default, next() will directly read the map row and add it to the data
+   * row. A source plugin implementation may do this itself (in particular, the
+   * SQL source can incorporate the map table into the query) - if so, it should
+   * set this TRUE so we don't duplicate the effort.
+   *
+   * @var bool
+   */
+  protected $mapRowAdded = FALSE;
+
+  /**
    * Return a count of available source records, from the cache if appropriate.
    * Returns -1 if the source is not countable.
    *
@@ -246,8 +256,17 @@ abstract class MigrateSource implements Iterator {
         $this->currentKey[$field_name] = $row->$field_name;
       }
 
-      // Pick up the existing map row, if any
-      $map_row = $this->activeMap->getRowBySource($this->currentKey);
+      // Pick up the existing map row, if any, unless getNextRow() did it.
+      if (!$this->mapRowAdded) {
+        $map_row = $this->activeMap->getRowBySource($this->currentKey);
+        // Add map info to the row, if present
+        if ($map_row) {
+          foreach ($map_row as $field => $value) {
+            $field = 'migrate_map_' . $field;
+            $row->$field = $value;
+          }
+        }
+      }
 
       // First, determine if this row should be passed to prepareRow(), or skipped
       // entirely. The rules are:
@@ -265,11 +284,11 @@ abstract class MigrateSource implements Iterator {
       }
       // 2. If the row is not in the map (we have never tried to import it before),
       //    we always want to try it.
-      elseif (!$map_row) {
+      elseif (!isset($row->migrate_map_destid1)) {
         // Fall through
       }
       // 3. If the row is marked as needing update, pass it.
-      elseif ($map_row['needs_update'] == MigrateMap::STATUS_NEEDS_UPDATE) {
+      elseif ($row->migrate_map_needs_update == MigrateMap::STATUS_NEEDS_UPDATE) {
         // Fall through
       }
       // 4. At this point, we have a row which has previously been imported and
@@ -289,13 +308,6 @@ abstract class MigrateSource implements Iterator {
         // Skip
         $this->currentRow = NULL;
         continue;
-      }
-      // Add map info to the row, if present
-      if ($map_row) {
-        foreach ($map_row as $field => $value) {
-          $field = 'migrate_map_' . $field;
-          $row->$field = $value;
-        }
       }
 
       // Allow the Migration to prepare this row. prepareRow() can return boolean

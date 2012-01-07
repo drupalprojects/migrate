@@ -36,22 +36,29 @@ function migrate_migrations() {
             ->execute();
   foreach ($result as $row) {
     if (class_exists($row->class_name)) {
-      $migration = MigrationBase::getInstance($row->machine_name,
-        $row->class_name, unserialize($row->arguments));
-      $dependencies = $migration->getDependencies();
-      if (count($dependencies) > 0) {
-        // Set classes with dependencies aside for reordering
-        $dependent_migrations[$row->machine_name] = $migration;
-        $required_migrations += $dependencies;
+      $reflect = new ReflectionClass($row->class_name);
+      if (!$reflect->isAbstract() && $reflect->isSubclassOf('MigrationBase')) {
+        $migration = MigrationBase::getInstance($row->machine_name,
+          $row->class_name, unserialize($row->arguments));
+        $dependencies = $migration->getDependencies();
+        if (count($dependencies) > 0) {
+          // Set classes with dependencies aside for reordering
+          $dependent_migrations[$row->machine_name] = $migration;
+          $required_migrations += $dependencies;
+        }
+        else {
+          // No dependencies, just add
+          $migrations[$row->machine_name] = $migration;
+        }
       }
       else {
-        // No dependencies, just add
-        $migrations[$row->machine_name] = $migration;
+        MigrationBase::displayMessage(t('Class !class is no longer a valid concrete migration class',
+                                      array('!class' => $row->class_name)));
       }
     }
     else {
-      // TODO: Message (as appropriate for either drush or web UI) that the migration's
-      // class is no more
+      MigrationBase::displayMessage(t('Class !class no longer exists',
+                                    array('!class' => $row->class_name)));
     }
   }
 

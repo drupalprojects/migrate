@@ -274,6 +274,12 @@ function migrate_update_7007() {
  * Update map tables to reflect change of needs_update to a status column.
  */
 function migrate_update_7008() {
+  // Updates can be run when the module is disabled, which would mean the
+  // call to migrate_migrations() will fail. Just bail in that case...
+  if (!module_exists('migrate')) {
+    throw new DrupalUpdateException(t('This update cannot be run while the Migrate ' .
+      'module is disabled - you must enable Migrate to run this update.'));
+  }
   $ret = array();
   foreach (migrate_migrations() as $migration) {
     if (is_a($migration, 'Migration')) {

@@ -317,6 +317,7 @@ abstract class MigrationBase {
     }
 
     // Record the memory limit in bytes
+    // @todo: Most of the rest of this could be static members
     $limit = trim(ini_get('memory_limit'));
     if ($limit == '-1') {
       $this->memoryLimit = PHP_INT_MAX;
@@ -341,19 +342,25 @@ abstract class MigrationBase {
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');
 
-    // Default the displayFunction outputFunction based on context
-    if (function_exists('drush_log')) {
-      self::$displayFunction = 'drush_log';
-    }
-    else {
-      self::$displayFunction = 'drupal_set_message';
-    }
     // Maintain deprecated version for now
     $this->outputFunction = self::$displayFunction;
 
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));
   }
+
+  /**
+    * Initialize static members, before any class instances are created.
+    */
+   static public function staticInitialize() {
+     // Default the displayFunction outputFunction based on context
+     if (function_exists('drush_log')) {
+       self::$displayFunction = 'drush_log';
+     }
+     else {
+       self::$displayFunction = 'drupal_set_message';
+     }
+   }
 
   /**
    * Register a new migration process in the migrate_status table. This will
@@ -512,7 +519,9 @@ abstract class MigrationBase {
    *  (defaults to 'error').
    */
   static public function displayMessage($message, $level = 'error') {
-    call_user_func(self::$displayFunction, $message, $level);
+    if (isset(self::$displayFunction)) {
+      call_user_func(self::$displayFunction, $message, $level);
+    }
   }
 
   /**
@@ -1015,3 +1024,7 @@ abstract class MigrationBase {
     return $time;
   }
 }
+
+// Make sure static members (in particular, $displayFunction) get
+// initialized even if there are no class instances.
+MigrationBase::staticInitialize();

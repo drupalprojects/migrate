@@ -733,6 +733,20 @@ abstract class MigrationBase {
   }
 
   /**
+   * Returns an array of the migration's dependencies that are incomplete.
+   */
+  public function incompleteDependencies() {
+    $incomplete = array();
+    foreach ($this->getDependencies() as $dependency) {
+      $migration = MigrationBase::getInstance($dependency);
+      if (!$migration->isComplete()) {
+        $incomplete[] = $dependency;
+      }
+    }
+    return $incomplete;
+  }
+
+  /**
    * Begin a process, ensuring only one process can be active
    * at once on a given migration.
    *

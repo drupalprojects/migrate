@@ -913,9 +913,12 @@ function drush_migrate_import($args = NULL) {
         // Our first pass and in the parent process. Run a migration right here.
         $return = $migration->processImport($options);
         if ($return == MigrationBase::RESULT_SKIPPED) {
-          drush_log(dt('Skipping migration !name due to unfulfilled dependencies -
-              use the --force option to run it anyway',
-            array('!name' => $machine_name)), 'warning');
+          drush_log(dt("Skipping migration !name due to unfulfilled dependencies:\n  !depends\nUse the --force option to run it anyway.",
+            array(
+              '!name' => $machine_name,
+              '!depends' => implode("\n  ", $migration->incompleteDependencies()),
+            )),
+            'warning');
         }
         elseif ($return == MigrationBase::RESULT_STOPPED) {
           break;
@@ -930,8 +933,12 @@ function drush_migrate_import($args = NULL) {
           // 'object' holds the return code we care about.
           $return = $return['object'];
           if ($return == MigrationBase::RESULT_SKIPPED) {
-            drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
-              array('!name' => $machine_name)), 'warning');
+            drush_log(dt("Skipping migration !name due to unfulfilled dependencies:\n  !depends\nUse the --force option to run it anyway.",
+              array(
+                '!name' => $machine_name,
+                '!depends' => implode("\n  ", $migration->incompleteDependencies()),
+              )),
+              'warning');
           }
           elseif ($return == MigrationBase::RESULT_STOPPED) {
             $stop = TRUE;
@@ -944,8 +951,12 @@ function drush_migrate_import($args = NULL) {
         // I'm in a subshell. Import then set return value so parent process can respawn or move on.
         $return = $migration->processImport($options);
         if ($return == MigrationBase::RESULT_SKIPPED) {
-          drush_log(dt('Skipping migration !name due to unfulfilled dependencies',
-            array('!name' => $machine_name)), 'warning');
+          drush_log(dt("Skipping migration !name due to unfulfilled dependencies:\n  !depends\n",
+            array(
+              '!name' => $machine_name,
+              '!depends' => implode("\n  ", $migration->incompleteDependencies()),
+            )),
+            'warning');
         }
         drush_backend_set_result($return);
       }

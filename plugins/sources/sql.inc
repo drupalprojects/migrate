@@ -364,7 +364,7 @@ class MigrateSourceSQL extends MigrateSource {
           if (!$map_row) {
             // Unmigrated row, take it
           }
-          elseif ($map_row && $map_row['needs_update'] == 1) {
+          elseif ($map_row && $map_row['needs_update'] == MigrateMap::STATUS_NEEDS_UPDATE) {
             // We always want to take this row if needs_update = 1
           }
           else {
@@ -405,14 +405,9 @@ class MigrateSourceSQL extends MigrateSource {
       // Allow the Migration to prepare this row. prepareRow() can return boolean
       // FALSE to stop processing this row. To add/modify fields on the
       // result, modify $row by reference.
-      $return = $migration->prepareRow($this->currentRow);
-
-      if ($return !== FALSE) {
+      if ($this->prepareRow()) {
         $this->numProcessed++;
         break;
-      }
-      else {
-        $this->numIgnored++;
       }
     }
     if (!is_object($this->currentRow)) {

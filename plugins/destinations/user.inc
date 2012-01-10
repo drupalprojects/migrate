@@ -18,7 +18,6 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       'uid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
         'description' => 'ID of destination user',
       ),
     );

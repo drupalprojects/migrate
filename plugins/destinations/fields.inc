@@ -291,7 +291,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
                 $migration->saveMessage($message, MigrationBase::MESSAGE_INFORMATIONAL);
               }
               $message_saved = TRUE;
-              $migration->needsUpdate = TRUE;
+              $migration->needsUpdate = MigrateMap::STATUS_NEEDS_UPDATE;
               continue;
             }
           }
@@ -346,7 +346,7 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
               $migration->saveMessage($message, MigrationBase::MESSAGE_INFORMATIONAL);
             }
             $message_saved = TRUE;
-      // TODO     $migration->needsUpdate = TRUE;
+      // TODO     $migration->needsUpdate = MigrateMap::STATUS_NEEDS_UPDATE;
             continue;
           }
           migrate_instrument_stop('file_link: file_exists');

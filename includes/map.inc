@@ -11,6 +11,14 @@
  */
 abstract class MigrateMap implements Iterator {
   /**
+   * Codes reflecting the current status of a map row.
+   */
+  const STATUS_IMPORTED = 0;
+  const STATUS_NEEDS_UPDATE = 1;
+  const STATUS_IGNORED = 2;
+  const STATUS_FAILED = 3;
+
+  /**
    * Arrays of key fields for the source and destination. Array keys are the
    * field names - array values are specific to the concrete map class.
    *
@@ -41,10 +49,10 @@ abstract class MigrateMap implements Iterator {
    *
    * @param $source_row
    * @param $dest_ids
-   * @param $needs_update
+   * @param $stats
    */
   abstract public function saveIDMapping(stdClass $source_row, array $dest_ids,
-    $needs_update = FALSE);
+    $status = MigrateMap::STATUS_IMPORTED);
 
   /**
    * Record a message related to a source record
@@ -63,6 +71,11 @@ abstract class MigrateMap implements Iterator {
    * ready to be re-imported.
    */
   abstract public function prepareUpdate();
+
+  /**
+   * Report the number of processed items in the map
+   */
+  abstract public function processedCount();
 
   /**
    * Report the number of imported items in the map

@@ -4,6 +4,9 @@ Next release
 
 Features and enhancements
 - #1364326 - Default --limit option to items.
+- #1366588 - Source plugin support has been refactored to put more of the common
+             processing in the base class. When implementing a source plugin,
+             implement performRewind() and getNextRow().
 - #1355940 - Track all source rows in the map table.
 - #941440 - Autodetection of source fields when unspecified.
 - #1341776 - Add option to skip source counting.

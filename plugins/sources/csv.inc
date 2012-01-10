@@ -2,14 +2,14 @@
 
 /**
  * @file
- * Define a MigrateSource for importing from comma separated values file.
+ * Define a MigrateSource for importing from comma separated values files.
  *
  * If the CSV file contains non-ASCII characters, make sure it includes a
  * UTF BOM (Byte Order Marker) so they are interpreted correctly.
  */
 
 /**
- * Implementation of MigrateSource, to handle imports from CSV file.
+ * Implementation of MigrateSource, to handle imports from CSV files.
  */
 class MigrateSourceCSV extends MigrateSource {
   /**
@@ -33,7 +33,12 @@ class MigrateSourceCSV extends MigrateSource {
    */
   protected $fgetcsv = array();
 
-  protected $usingHighwater = FALSE;
+  /**
+   * File handle for the CSV file being iterated.
+   *
+   * @var resource
+   */
+  protected $csvHandle = NULL;
 
   /**
    * The number of rows in the CSV file before the data starts.
@@ -72,7 +77,7 @@ class MigrateSourceCSV extends MigrateSource {
       $this->fgetcsv[$key] = isset($options[$key]) ? $options[$key] : $default;
     }
     // One can either pass in an explicit list of column names to use, or if we have
-    // a header row use the names from that
+    // a header row we can use the names from that
     if ($this->headerRows && empty($csvcolumns)) {
       $this->csvcolumns = array();
       $result = fopen($this->file, 'r');
@@ -112,7 +117,7 @@ class MigrateSourceCSV extends MigrateSource {
    *  Values: Human-friendly descriptions of the fields.
    */
   public function fields() {
-    foreach ($this->csvcolumns as $int => $values) {
+    foreach ($this->csvcolumns as $values) {
       $fields[$values[0]] = $values[1];
     }
 
@@ -153,45 +158,32 @@ class MigrateSourceCSV extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
+   * Implementation of MigrateSource::performRewind().
+   *
+   * @return void
    */
-  public function rewind() {
-    $migration = Migration::currentMigration();
-    $this->result = NULL;
-    $this->currentRow = NULL;
-    $this->numProcessed = 0;
-    $this->numIgnored = 0;
-
-    migrate_instrument_start('MigrateSourceCSV execute');
-    $this->result = fopen($this->file, 'r');
-    migrate_instrument_stop('MigrateSourceCSV execute');
-
-    // Load up the first row, skipping the header if necessary
-    for ($i = 0; $i < $this->headerRows; $i++) {
-      fgets($this->result);
+  public function performRewind() {
+    // Close any previously-opened handle
+    if (!is_null($this->csvHandle)) {
+      fclose($this->csvHandle);
     }
-    $this->next();
+    // Load up the first row, skipping the header(s) if necessary
+    $this->csvHandle = fopen($this->file, 'r');
+    for ($i = 0; $i < $this->headerRows; $i++) {
+      fgets($this->csvHandle);
+    }
   }
 
   /**
-   * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
-   * as well as explicitly from rewind().
+   * Implementation of MigrateSource::getNextRow().
+   * Return the next line of the source CSV file as an object.
+   *
+   * @return null|object
    */
-  public function next() {
-    $migration = Migration::currentMigration();
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
-
-    $itemlimit = $migration->getItemLimit();
-    if ($itemlimit && $this->numProcessed >= $itemlimit) {
-      return;
-    }
-
-    // get next row
-    migrate_instrument_start('MigrateSourceCSV next');
-    $map = $migration->getMap();
+  public function getNextRow() {
     // @todo $this->fgetcsv['escape'] not used as it gives warning in 5.2 - http://drupal.org/node/1039808.
-    while ($row = fgetcsv($this->result, $this->fgetcsv['length'], $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'])) {
+    $row = fgetcsv($this->csvHandle, $this->fgetcsv['length'], $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure']);
+    if ($row) {
       // Set meaningful keys for the columns mentioned in $this->csvcolumns().
       foreach ($this->csvcolumns as $int => $values) {
         list($key, $description) = $values;
@@ -199,57 +191,12 @@ class MigrateSourceCSV extends MigrateSource {
         $row[$key] = $row[$int];
         unset($row[$int]);
       }
-      $this->currentRow = (object) $row;
-
-      foreach ($map->getSourceKey() as $field_name => $field_schema) {
-        $this->currentKey[$field_name] = $this->currentRow->$field_name;
-      }
-
-      $map_row = $migration->getMap()->getRowBySource($this->currentKey);
-      if (!$map_row) {
-        // Unmigrated row, take it
-      }
-      elseif ($map_row && $map_row['needs_update'] == MigrateMap::STATUS_NEEDS_UPDATE) {
-        // We always want to take this row if needs_update = 1
-      }
-      else {
-        if ($this->usingHighwater) {
-          // With highwater, we want to take this row if it's above the highwater
-          // mark
-          $highwaterField = $migration->getHighwaterField();
-          $highwaterField = $highwaterField['name'];
-          if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
-            $this->currentRow = NULL;
-            continue;
-          }
-        }
-        else {
-          // With no highwater, we want to take this row if it's not in the map table
-          if ($map_row) {
-            $this->currentRow = NULL;
-            continue;
-          }
-        }
-      }
-      // Add map info to the row, if present
-      if ($map_row) {
-        foreach ($map_row as $field => $value) {
-          $field = 'migrate_map_' . $field;
-          $this->currentRow->$field = $value;
-        }
-      }
-
-      // Allow the Migration to prepare this row. prepareRow() can return boolean
-      // FALSE to stop processing this row. To add/modify fields on the
-      // result, modify $row by reference.
-      if ($this->prepareRow()) {
-        $this->numProcessed++;
-        break;
-      }
+      return (object)$row;
     }
-    if (!is_object($this->currentRow)) {
-      $this->currentRow = NULL;
+    else {
+      fclose($this->csvHandle);
+      $this->csvHandle = NULL;
+      return NULL;
     }
-    migrate_instrument_stop('MigrateSourceCSV next');
   }
 }

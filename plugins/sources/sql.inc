@@ -231,20 +231,14 @@ class MigrateSourceSQL extends MigrateSource {
   /**
    * Implementation of Iterator::rewind() - called before beginning a foreach loop.
    */
-  public function rewind() {
-    $migration = Migration::currentMigration();
+  public function performRewind() {
     $this->result = NULL;
-    $this->currentRow = NULL;
-    $this->numProcessed = 0;
-    $this->numIgnored = 0;
-    $this->highwaterSeen = FALSE;
     $this->query = clone $this->originalQuery;
 
     // Get the keys, for potential use in joining map/message table, or enforcing
     // idlist
-    $map = $migration->getMap();
     $keys = array();
-    foreach ($map->getSourceKey() as $field_name => $field_schema) {
+    foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
       if (isset($field_schema['alias'])) {
         $field_name = $field_schema['alias'] . '.' . $field_name;
       }
@@ -262,16 +256,15 @@ class MigrateSourceSQL extends MigrateSource {
     //      items with needs_update=1
     //    For now, we set mapJoinable=FALSE in this case, until we work out exactly
     //    how to manipulate the query.
-    if ($migration->getOption('idlist')) {
+    if ($this->idList) {
       // Only supp for single-field key
-      $this->query->condition($keys[0], explode(',', $migration->getOption('idlist')), 'IN');
+      $this->query->condition($keys[0], $this->idList, 'IN');
       $this->usingHighwater = FALSE;
       // We won't join with the map, but we want to add its data to the row later
       $this->mapJoinable = FALSE;
     }
     else {
-      $highwaterField = $migration->getHighwaterField();
-      $this->usingHighwater = isset($highwaterField['name']);
+      $this->usingHighwater = isset($this->highwaterField['name']);
       if ($this->usingHighwater) {
         $this->mapJoinable = FALSE;
       }
@@ -286,7 +279,7 @@ class MigrateSourceSQL extends MigrateSource {
         $map_join = $map_condition = '';
         $count = 1;
 
-        foreach ($map->getSourceKey() as $field_name => $field_schema) {
+        foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
           if (isset($field_schema['alias'])) {
             $field_name = $field_schema['alias'] . '.' . $field_name;
           }
@@ -305,7 +298,7 @@ class MigrateSourceSQL extends MigrateSource {
             $map_condition .= "map.$map_key IS NULL";
           }
         }
-        $this->query->leftJoin($map->getMapTable(), 'map', $map_join);
+        $this->query->leftJoin($this->activeMap->getMapTable(), 'map', $map_join);
         $map_condition .= ' OR map.needs_update = 1';
         $this->query->where($map_condition);
 
@@ -313,13 +306,13 @@ class MigrateSourceSQL extends MigrateSource {
         // import hook will need it to identify the existing destination object.
         // Alias to reduce possible collisions.
         $count = 1;
-        foreach ($map->getDestinationKey() as $field_name => $field_schema) {
+        foreach ($this->activeMap->getDestinationKey() as $field_name => $field_schema) {
           $map_key = 'destid' . $count++;
           $this->query->addField('map', $map_key, "migrate_map_$map_key");
         }
         $this->query->addField('map', 'needs_update');
-        if ($migration->getItemLimit()) {
-          $this->query->range(0, $migration->getItemLimit());
+        if ($this->activeMigration->getItemLimit()) {
+          $this->query->range(0, $this->activeMigration->getItemLimit());
         }
       }
     }
@@ -327,92 +320,14 @@ class MigrateSourceSQL extends MigrateSource {
     migrate_instrument_start('MigrateSourceSQL execute');
     $this->result = $this->query->execute();
     migrate_instrument_stop('MigrateSourceSQL execute');
-
-    // Load up the first row
-    $this->next();
   }
 
   /**
-   * Implementation of Iterator::next() - called at the bottom of the loop implicitly,
-   * as well as explicitly from rewind().
+   * Implementation of MigrateSource::getNextRow().
+   *
+   * @return object
    */
-  public function next() {
-    $migration = Migration::currentMigration();
-    $this->currentRow = NULL;
-    $this->currentKey = NULL;
-    // If we couldn't add the itemlimit to the query directly, enforce it here
-    if (!$this->mapJoinable) {
-      $itemlimit = $migration->getItemLimit();
-      if ($itemlimit && $this->numProcessed >= $itemlimit) {
-        return;
-      }
-    }
-
-    // get next row
-    migrate_instrument_start('MigrateSourceSQL next');
-    $map = $migration->getMap();
-    while ($this->currentRow = $this->result->fetchObject()) {
-      foreach ($map->getSourceKey() as $field_name => $field_schema) {
-        $this->currentKey[$field_name] = $this->currentRow->$field_name;
-      }
-
-      if (!$this->mapJoinable) {
-        $map_row = $migration->getMap()->getRowBySource($this->currentKey);
-        // If we're processing an idlist, we don't want to follow the logic for skipping
-        // rows, but we still want to add the map data to the row.
-        if (!$migration->getOption('idlist')) {
-          if (!$map_row) {
-            // Unmigrated row, take it
-          }
-          elseif ($map_row && $map_row['needs_update'] == MigrateMap::STATUS_NEEDS_UPDATE) {
-            // We always want to take this row if needs_update = 1
-          }
-          else {
-            if ($this->usingHighwater) {
-              if ($this->highwaterSeen) {
-                // We've passed the highwater mark previously, so no need to check again
-              }
-              else {
-                // With highwater, we want to take this row if it's above the highwater
-                // mark
-                $highwaterField = $migration->getHighwaterField();
-                $highwaterField = $highwaterField['name'];
-                if ($this->currentRow->$highwaterField <= $migration->getHighwater()) {
-                  continue;
-                }
-                else {
-                  $this->highwaterSeen = TRUE;
-                }
-              }
-            }
-            else {
-              // With no highwater, we want to take this row if it's not in the map table
-              if ($map_row) {
-                continue;
-              }
-            }
-          }
-        }
-        // Add map info to the row, if present
-        if ($map_row) {
-          foreach ($map_row as $field => $value) {
-            $field = 'migrate_map_' . $field;
-            $this->currentRow->$field = $value;
-          }
-        }
-      }
-
-      // Allow the Migration to prepare this row. prepareRow() can return boolean
-      // FALSE to stop processing this row. To add/modify fields on the
-      // result, modify $row by reference.
-      if ($this->prepareRow()) {
-        $this->numProcessed++;
-        break;
-      }
-    }
-    if (!is_object($this->currentRow)) {
-      $this->currentRow = NULL;
-    }
-    migrate_instrument_stop('MigrateSourceSQL next');
+  public function getNextRow() {
+    return $this->result->fetchObject();
   }
 }

@@ -115,6 +115,7 @@ class MigrateDestinationTable extends MigrateDestination {
 
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
       foreach ($this->schema['primary key'] as $key) {
+        $primary_key[] = $key;
         if (!isset($entity->{$key})) {
           throw new MigrateException(t('System-of-record is DESTINATION, but no destination id provided'));
         }

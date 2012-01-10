@@ -31,6 +31,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1389008 - Set key in DESTINATION case for MigrateDestinationTable.
 - #1389572 - Handle db updates when disabled.
 - #1386494 - Gracefully handle no-longer-valid classes.
 - #1372204 - Fix loss of pictures when updating users.

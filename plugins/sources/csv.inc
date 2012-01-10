@@ -3,22 +3,15 @@
 /**
  * @file
  * Define a MigrateSource for importing from comma separated values files.
- *
- * If the CSV file contains non-ASCII characters, make sure it includes a
- * UTF BOM (Byte Order Marker) so they are interpreted correctly.
  */
 
 /**
  * Implementation of MigrateSource, to handle imports from CSV files.
+ *
+ * If the CSV file contains non-ASCII characters, make sure it includes a
+ * UTF BOM (Byte Order Marker) so they are interpreted correctly.
  */
 class MigrateSourceCSV extends MigrateSource {
-  /**
-   * Number of eligible rows processed so far (used for itemlimit checking)
-   *
-   * @var int
-   */
-  protected $numProcessed = 0;
-
   /**
    * List of available source fields.
    *

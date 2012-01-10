@@ -100,7 +100,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
    */
   public function import(stdClass $term, stdClass $row) {
     $migration = Migration::currentMigration();
-
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
       $term->tid = $row->migrate_map_destid1;
@@ -183,7 +182,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       if (!isset($term->format)) {
         $term->format = $this->textFormat;
       }
-
       $this->prepare($term, $row);
     }
 

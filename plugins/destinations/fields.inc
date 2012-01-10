@@ -44,6 +44,7 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
     migrate_instrument_stop('MigrateDestinationEntity->prepareFields');
   }
 
+
   public function complete($entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->completeFields');
     // Look for Field API fields attached to this destination and handle appropriately
@@ -68,8 +69,11 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
 }
 
 abstract class MigrateFieldHandler extends MigrateHandler {
-  // abstract function arguments(...)
-  abstract public function prepare($entity, array $instance, array $values);
+  // Derived classes are expected to implement one or both of the prepare/complete
+  // handlers.
+
+  // abstract public function prepare($entity, array $instance, array $values);
+  // abstract public function complete($entity, array $instance, array $values);
 }
 
 /**
@@ -159,6 +163,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
 
     $migration = Migration::currentMigration();
     $destination = $migration->getDestination();
+    $max_length = isset($instance['max_length']) ? $instance['max_length'] : 0;
 
     // Setup the standard Field API array for saving.
     $delta = 0;
@@ -170,7 +175,23 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       $format = isset($arguments['format']) ?
         $arguments['format'] : $destination->getTextFormat();
       $item['format'] = $item['value_format'] = $format;
-      $item['value'] = $value;
+      // Make sure the value will fit
+      if ($max_length) {
+        $item['value'] = drupal_substr($value, 0, $max_length);
+        if (!empty($arguments['track_overflow'])) {
+          $value_length = drupal_strlen($value);
+          if ($value_length > $max_length) {
+            $migration->saveMessage(
+              t('Value for field !field exceeds max length of !max_length, actual length is !length',
+                array('!field' => $instance['field_name'], '!max_length' => $max_length,
+                  '!length' => $value_length)),
+              Migration::MESSAGE_INFORMATIONAL);
+          }
+        }
+      }
+      else {
+        $item['value'] = $value;
+      }
 
       $return[$delta] = $item;
       $delta++;

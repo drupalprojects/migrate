@@ -41,13 +41,6 @@ class MigrateSourceOracle extends MigrateSource {
   protected $result;
 
   /**
-   * Number of eligible rows processed so far (used for itemlimit checking)
-   *
-   * @var int
-   */
-  protected $numProcessed = 0;
-
-  /**
    * Character set to use in retrieving data.
    *
    * @var string
@@ -207,8 +200,6 @@ class MigrateSourceOracle extends MigrateSource {
       throw new Exception($e['message'] . "\n" . $e['sqltext']);
     }
     migrate_instrument_stop('oracle_query');
-
-    $this->next();
   }
 
   /**

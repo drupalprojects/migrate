@@ -5,14 +5,14 @@
  */
 
 /**
- * Menu callback for dashboard page
+ * Menu callback
  */
 function migrate_ui_dashboard() {
   return drupal_get_form('_migrate_ui_dashboard_form');
 }
 
 /**
- * Form definition for dashboard page
+ * Form for reviewing migrations.
  */
 function _migrate_ui_dashboard_form() {
   drupal_add_css(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css');
@@ -61,7 +61,6 @@ function _migrate_ui_dashboard_form() {
       $imported = t('N/A');
     }
     if ($has_counts) {
-      $unimported = $total - $imported;
       $unimported = $total - $processed;
     }
     else {
@@ -750,9 +749,7 @@ function _migrate_ui_configure_form() {
     $row['module'] = $module;
     $row['class'] = $class_name;
     $row['types'] = implode(', ', $handler->getTypesHandled());
-    if (!in_array($class_name, $disabled)) {
-      $default_values[$class_name] = TRUE;
-    }
+    $default_values[$class_name] = !in_array($class_name, $disabled);
     $rows[$class_name] = $row;
   }
   $build['destination']['destination_handlers'] = array(
@@ -789,9 +786,7 @@ function _migrate_ui_configure_form() {
     $row['module'] = $module;
     $row['class'] = $class_name;
     $row['types'] = implode(', ', $handler->getTypesHandled());
-    if (!in_array($class_name, $disabled)) {
-      $default_values[$class_name] = TRUE;
-    }
+    $default_values[$class_name] = !in_array($class_name, $disabled);
     $rows[$class_name] = $row;
   }
   $build['field']['field_handlers'] = array(

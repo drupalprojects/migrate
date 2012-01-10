@@ -732,7 +732,7 @@ class MigrateXMLReader implements Iterator {
           // We're positioned to the right element path - if filtering on an
           // attribute, check that as well before accepting this element.
           if (empty($this->attributeName) ||
-                  ($this->reader->getAttribute($this->attributeName) == $this->attributeValue)) {
+              ($this->reader->getAttribute($this->attributeName) == $this->attributeValue)) {
             // We've found a matching element - get a SimpleXML object representing it.
             // We must associate the DOMNode with a DOMDocument to be able to import
             // it into SimpleXML.

@@ -157,8 +157,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         'language' => $this->language,
         'subject' => '',
         'comment' => '',
-        'uid' => 0,
         'status' => COMMENT_PUBLISHED,
+        'uid' => 0,
         'cid' => 0,
         'pid' => 0,
         'format' => filter_fallback_format(),
@@ -168,18 +168,18 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
           $comment->$field = $value;
         }
       }
+
       $this->prepare($comment, $row);
-    }
+      // Make sure we have a nid
+      if (!isset($comment->nid) || !$comment->nid) {
+        throw new MigrateException(t('No node ID provided for comment'));
+      }
 
-    // Make sure we have a nid
-    if (!isset($comment->nid) || !$comment->nid) {
-      throw new MigrateException(t('No node ID provided for comment'));
-    }
-
-    // comment_save() hardcodes hostname, so if we're trying to set it we
-    // need to save it and apply it after
-    if (isset($comment->hostname)) {
-      $hostname = $comment->hostname;
+      // comment_save() hardcodes hostname, so if we're trying to set it we
+      // need to save it and apply it after
+      if (isset($comment->hostname)) {
+        $hostname = $comment->hostname;
+      }
     }
 
     // Convert to unix timestamp as needed

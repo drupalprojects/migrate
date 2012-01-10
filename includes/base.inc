@@ -350,17 +350,17 @@ abstract class MigrationBase {
   }
 
   /**
-    * Initialize static members, before any class instances are created.
-    */
-   static public function staticInitialize() {
-     // Default the displayFunction outputFunction based on context
-     if (function_exists('drush_log')) {
-       self::$displayFunction = 'drush_log';
-     }
-     else {
-       self::$displayFunction = 'drupal_set_message';
-     }
-   }
+   * Initialize static members, before any class instances are created.
+   */
+  static public function staticInitialize() {
+    // Default the displayFunction outputFunction based on context
+    if (function_exists('drush_log')) {
+      self::$displayFunction = 'drush_log';
+    }
+    else {
+      self::$displayFunction = 'drupal_set_message';
+    }
+  }
 
   /**
    * Register a new migration process in the migrate_status table. This will
@@ -973,7 +973,7 @@ abstract class MigrationBase {
   }
 
   /**
-   * Test whether we're approaching the PHP time limit. If so, output a message.
+   * Test whether we're approaching the PHP time limit.
    *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.
@@ -993,7 +993,7 @@ abstract class MigrationBase {
   }
 
   /**
-   * Test whether we've exceeded the designated time limit. If so, output a message.
+   * Test whether we've exceeded the designated time limit.
    *
    * @return boolean
    *  TRUE if the threshold is exceeded, FALSE if not.

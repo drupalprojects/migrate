@@ -105,7 +105,7 @@ class MigrateSQLMap extends MigrateMap {
           'size' => 'tiny',
           'unsigned' => TRUE,
           'not null' => TRUE,
-          'default' =>  MigrateMap::STATUS_IMPORTED,
+          'default' => MigrateMap::STATUS_IMPORTED,
           'description' => 'Indicates current status of the source row',
         );
         $fields['last_imported'] = array(
@@ -312,12 +312,12 @@ class MigrateSQLMap extends MigrateMap {
     $count = 1;
     if (is_array($source_key)) {
       foreach ($source_key as $key_value) {
+        $fields['sourceid' . $count++] = $key_value;
         // If any key value is empty, we can't save - print out and abort
         if (empty($key_value)) {
           print($message);
           return;
         }
-        $fields['sourceid' . $count++] = $key_value;
       }
       $fields['level'] = $level;
       $fields['message'] = $message;
@@ -356,7 +356,7 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
-  +   * Returns a count of imported records in the map table.
+   * Returns a count of imported records in the map table.
    *
    * @return int
    */
@@ -376,7 +376,7 @@ class MigrateSQLMap extends MigrateMap {
   public function updateCount() {
     $query = $this->connection->select($this->mapTable);
     $query->addExpression('COUNT(*)', 'count');
-    $query->condition('needs_update', 1);
+    $query->condition('needs_update', MigrateMap::STATUS_NEEDS_UPDATE);
     $count = $query->execute()->fetchField();
     return $count;
   }

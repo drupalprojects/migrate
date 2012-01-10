@@ -49,7 +49,7 @@ abstract class MigrateMap implements Iterator {
    *
    * @param $source_row
    * @param $dest_ids
-   * @param $stats
+   * @param $status
    */
   abstract public function saveIDMapping(stdClass $source_row, array $dest_ids,
     $status = MigrateMap::STATUS_IMPORTED);

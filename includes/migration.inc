@@ -451,7 +451,7 @@ abstract class Migration extends MigrationBase {
         if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
           break;
         }
-        if ($itemlimit && ($this->total_processed >= $itemlimit)) {
+        if ($this->itemOptionExceeded()) {
           break;
         }
         $this->currentSourceKey = $this->map->getCurrentKey();
@@ -520,6 +520,9 @@ abstract class Migration extends MigrationBase {
       if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
         break;
       }
+      if ($this->itemOptionExceeded()) {
+        break;
+      }
 
       $this->currentSourceKey = $this->source->getCurrentKey();
 
@@ -530,9 +533,6 @@ abstract class Migration extends MigrationBase {
       $this->applyMappings();
 
       try {
-        // Wipe old messages
-        $this->map->delete($this->currentSourceKey, TRUE);
-
         migrate_instrument_start('destination import', TRUE);
         $ids = $this->destination->import($this->destinationValues, $this->sourceValues);
         migrate_instrument_stop('destination import');
@@ -606,13 +606,13 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-    * Get the number of source records processed.
-    * @return int
-    *  Number of processed records.
-    */
-   public function processedCount() {
-     return $this->map->processedCount();
-   }
+   * Get the number of source records processed.
+   * @return int
+   *  Number of processed records.
+   */
+  public function processedCount() {
+    return $this->map->processedCount();
+  }
 
   /**
    * Get the number of records successfully imported.
@@ -629,6 +629,20 @@ abstract class Migration extends MigrationBase {
    */
   public function updateCount() {
     return $this->map->updateCount();
+  }
+
+  /**
+   * Test whether we've exceeded the designated item limit.
+   *
+   * @return boolean
+   *  TRUE if the threshold is exceeded, FALSE if not.
+   */
+  protected function itemOptionExceeded() {
+    $itemlimit = $this->getItemLimit();
+    if ($itemlimit && $this->total_processed >= $itemlimit) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**
@@ -1030,7 +1044,7 @@ abstract class Migration extends MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
-      $this->map->saveMessage($this->currentSourceKey, $message, $level);
+    $this->map->saveMessage($this->currentSourceKey, $message, $level);
   }
 
   /**

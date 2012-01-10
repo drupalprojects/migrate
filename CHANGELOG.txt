@@ -4,6 +4,7 @@ Next release
 
 Features and enhancements
 - #1364326 - Default --limit option to items.
+- #1337640 - Properly optimize the SQL source query for highwater marks.
 - #1366588 - Source plugin support has been refactored to put more of the common
              processing in the base class. When implementing a source plugin,
              implement performRewind() and getNextRow().

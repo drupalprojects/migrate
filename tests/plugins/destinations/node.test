@@ -207,7 +207,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
              ->execute()
              ->fetchField();
     if (!$this->assertEqual($count, 4, t('Now 4 wine nodes exist'))) {
-      $this->error(t('There are now !count nodes', array('!count' => count($rawnodes))));
+      $this->error(t('There are now !count nodes', array('!count' => $count)));
     }
     $nid = db_select('node', 'n')
              ->fields('n', array('nid'))
@@ -252,7 +252,7 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
              ->fields(array(
               'body' => 'Very berry',
               // Timestamp 1286008921
-              'last_changed' => strtotime('2010-10-02 04:42:01'),
+              'last_changed' => strtotime('2011-10-02 04:42:01'),
              ))
              ->condition('wineid', 1)
              ->execute();
@@ -291,7 +291,9 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
               ->condition('type', 'migrate_example_wine')
               ->execute()
               ->fetchCol();
-    $this->assertEqual(count($titles), 1, t('One node imported'));
+    if (!$this->assertEqual(count($titles), 1, t('One node imported'))) {
+        $this->error(t('Actual nodes imported: !count', array('!count' => count($titles))));
+    }
 
     // Test idlist (joined map table)
     $result = $migration->processRollback();
@@ -319,7 +321,9 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
               ->condition('type', 'migrate_example_wine')
               ->execute()
               ->fetchCol();
-    $this->assertEqual(count($titles), 1, t('One node imported'));
+    if (!$this->assertEqual(count($titles), 1, t('One node imported'))) {
+        $this->error(t('Actual nodes imported: !count', array('!count' => count($titles))));
+    }
 
     // Test idlist (unjoined map table)
     $result = $migration->processRollback();

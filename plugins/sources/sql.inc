@@ -229,14 +229,17 @@ class MigrateSourceSQL extends MigrateSource {
   }
 
   /**
-   * Implementation of Iterator::rewind() - called before beginning a foreach loop.
+   * Implementation of MigrateSource::performRewind().
+   *
+   * We could simply execute the query and be functionally correct, but
+   * we will take advantage of the PDO-based API to optimize the query up-front.
    */
   public function performRewind() {
     $this->result = NULL;
     $this->query = clone $this->originalQuery;
 
-    // Get the keys, for potential use in joining map/message table, or enforcing
-    // idlist
+    // Get the key values, for potential use in joining to the map table, or
+    // enforcing idlist.
     $keys = array();
     foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
       if (isset($field_schema['alias'])) {
@@ -247,36 +250,25 @@ class MigrateSourceSQL extends MigrateSource {
 
     // The rules for determining what conditions to add to the query are as
     // follows (applying first applicable rule)
-    // 1. If idlist is provided, then only process items in that list (AND key IN (idlist))
-    // 2. Otherwise, If there's no highwater mark, process items which are not in the map table, or
-    //    are marked needs_update=1 in the map table
-    //    a. mapJoinable: AND (key not in map OR map.needs_update=1)
-    //    b. !mapJoinable: Apply map logic in next()
-    // 3. If there is a highwater mark (and no idlist), process items above the highwater mark, plus any
-    //      items with needs_update=1
-    //    For now, we set mapJoinable=FALSE in this case, until we work out exactly
-    //    how to manipulate the query.
+    // 1. If idlist is provided, then only process items in that list (AND key
+    //    IN (idlist)). Only applicable with single-value keys.
     if ($this->idList) {
-      // Only supp for single-field key
       $this->query->condition($keys[0], $this->idList, 'IN');
-      $this->usingHighwater = FALSE;
-      // We won't join with the map, but we want to add its data to the row later
-      $this->mapJoinable = FALSE;
     }
     else {
-      $this->usingHighwater = isset($this->highwaterField['name']);
-      if ($this->usingHighwater) {
-        $this->mapJoinable = FALSE;
-      }
+      // 2. If the map is joinable, join it. We will want to accept all rows
+      //    which are either not in the map, or marked in the map as NEEDS_UPDATE.
+      //    Note that if highwater fields are in play, we want to accept all rows
+      //    above the highwater mark in addition to those selected by the map
+      //    conditions, so we need to OR them together (but AND with any existing
+      //    conditions in the query). So, ultimately the SQL condition will look
+      //    like (original conditions) AND (map IS NULL OR map needs update
+      //      OR above highwater).
+      $conditions = db_or();
+      $condition_added = FALSE;
       if ($this->mapJoinable) {
-        // Build the joins to the map and message tables. Because the source key
-        // could have multiple fields, we need to build things up.
-        // The logic is that we want to include all source rows which have no
-        // existing map or message table entries, or which have map table entry
-        // marked with needs_update=1. Except with highwater marks, where we don't care
-        // about the existence of map/message table entries, only needs_update.
-        $first = TRUE;
-        $map_join = $map_condition = '';
+        // Build the join to the map table. Because the source key could have
+        // multiple fields, we need to build things up.
         $count = 1;
 
         foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
@@ -284,36 +276,40 @@ class MigrateSourceSQL extends MigrateSource {
             $field_name = $field_schema['alias'] . '.' . $field_name;
           }
           $map_key = 'sourceid' . $count++;
-          if ($first) {
-            $first = FALSE;
+          if (!isset($map_join)) {
+            $map_join = '';
           }
           else {
             $map_join .= ' AND ';
-            if (!$this->usingHighwater) {
-              $map_condition .= ' OR ';
-            }
           }
           $map_join .= "$field_name = map.$map_key";
-          if (!$this->usingHighwater) {
-            $map_condition .= "map.$map_key IS NULL";
-          }
         }
         $this->query->leftJoin($this->activeMap->getMapTable(), 'map', $map_join);
-        $map_condition .= ' OR map.needs_update = 1';
-        $this->query->where($map_condition);
+        $conditions->isNull('map.sourceid1');
+        $conditions->condition('map.needs_update', MigrateMap::STATUS_NEEDS_UPDATE);
+        $condition_added = TRUE;
 
-        // And as long as we have the map table, get the destination ID, the
-        // import hook will need it to identify the existing destination object.
-        // Alias to reduce possible collisions.
+        // And as long as we have the map table, add its data to the row.
         $count = 1;
         foreach ($this->activeMap->getDestinationKey() as $field_name => $field_schema) {
           $map_key = 'destid' . $count++;
           $this->query->addField('map', $map_key, "migrate_map_$map_key");
         }
-        $this->query->addField('map', 'needs_update');
-        if ($this->activeMigration->getItemLimit()) {
-          $this->query->range(0, $this->activeMigration->getItemLimit());
+        $this->query->addField('map', 'needs_update', 'migrate_map_needs_update');
+      }
+      // 3. If we are using highwater marks, also include rows above the mark.
+      if (isset($this->highwaterField['name'])) {
+        if (isset($this->highwaterField['alias'])) {
+          $highwater = $this->highwaterField['alias'] . '.' . $this->highwaterField['name'];
         }
+        else {
+          $highwater = $this->highwaterField['name'];
+        }
+        $conditions->condition($highwater, $this->activeMigration->getHighwater(), '>');
+        $condition_added = TRUE;
+      }
+      if ($condition_added) {
+        $this->query->condition($conditions);
       }
     }
 

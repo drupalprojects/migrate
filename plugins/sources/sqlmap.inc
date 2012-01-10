@@ -20,6 +20,24 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
+   * Qualifying the map table name with the database name and any prefix makes
+   * cross-db joins possible. Note this will not work with prefixes - we will
+   * omit prepending the database name if we're in the default connection, just
+   * so we don't break simpletest.
+   *
+   * @return string
+   */
+  public function getQualifiedMapTable() {
+    if ($this->connection->getKey() != 'default') {
+      $options = $this->connection->getConnectionOptions();
+      return $options['database'] . '.' . $this->mapTable;
+    }
+    else {
+      return $this->mapTable;
+    }
+  }
+
+  /**
    * sourceKey and destinationKey arrays are keyed by the field names; values
    * are the Drupal schema definition for the field.
    *

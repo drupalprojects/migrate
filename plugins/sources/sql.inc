@@ -284,7 +284,8 @@ class MigrateSourceSQL extends MigrateSource {
           }
           $map_join .= "$field_name = map.$map_key";
         }
-        $this->query->leftJoin($this->activeMap->getMapTable(), 'map', $map_join);
+
+        $this->query->leftJoin($this->activeMap->getQualifiedMapTable(), 'map', $map_join);
         $conditions->isNull('map.sourceid1');
         $conditions->condition('map.needs_update', MigrateMap::STATUS_NEEDS_UPDATE);
         $condition_added = TRUE;

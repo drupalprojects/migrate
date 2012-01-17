@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1401810 - Extended MigrateSourceXML to accept multiple XML files.
 - #1403222 - Relaxed setting of bundle for node destinations.
 - #1364326 - Default --limit option to items.
 - #1337640 - Properly optimize the SQL source query for highwater marks.

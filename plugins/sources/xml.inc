@@ -17,9 +17,9 @@
  * example.
  */
 
-/*===========================================================================*/
-/*                              List Method                                  */
-/*===========================================================================*/
+/* =========================================================================== */
+/*                              List Method                                    */
+/* =========================================================================== */
 /**
  * Implementation of MigrateList, for retrieving a list of IDs to be migrated
  * from an XML document.
@@ -286,9 +286,9 @@ abstract class XMLMigration extends Migration {
   }
 }
 
-/*===========================================================================*/
-/*                           MultiItems Method                               */
-/*===========================================================================*/
+/* =========================================================================== */
+/*                            MultiItems Method                                */
+/* =========================================================================== */
 /**
  * Implementation of MigrateItems, for providing a list of IDs and for
  * retrieving a parsed XML document given an ID from this list.
@@ -523,7 +523,7 @@ class MigrateItemsXML extends MigrateItems {
    *
    * @return string
    */
-  protected function getItemID($itemXML){
+  protected function getItemID($itemXML) {
     return $this->getElementValue($itemXML, $this->itemIDXpath);
   }
 
@@ -532,7 +532,7 @@ class MigrateItemsXML extends MigrateItems {
    *
    * @return string
    */
-  protected function getElementValue($itemXML,$xpath){
+  protected function getElementValue($itemXML, $xpath) {
     $value = NULL;
     if ($itemXML) {
       $result = $itemXML->xpath($xpath);
@@ -631,7 +631,7 @@ class MigrateXMLReader implements Iterator {
   protected $currentPath = array();
 
   /**
-   * Query string used to retrieve the elements from the XML file. 
+   * Query string used to retrieve the elements from the XML file.
    *
    * @var string
    */
@@ -738,7 +738,17 @@ class MigrateXMLReader implements Iterator {
             // it into SimpleXML.
             // Despite appearances, this is almost twice as fast as
             // simplexml_load_string($this->readOuterXML());
-            $node = $this->reader->expand();
+            try {
+              $node = $this->reader->expand();
+            }
+            catch (Exception $e) {
+              foreach (libxml_get_errors() as $error) {
+                Migration::displayMessage(MigrateItemsXML::parseLibXMLError($error));
+              }
+              throw new MigrateException(t('Failed to load node from !url:',
+                array('!url' => $this->url)));
+              continue;
+            }
             $dom = new DOMDocument();
             $node = $dom->importNode($node, TRUE);
             $dom->appendChild($node);
@@ -798,6 +808,44 @@ class MigrateSourceXML extends MigrateSource {
   protected $reader;
 
   /**
+   * The source URLs to load XML from
+   *
+   * @var array
+   */
+  protected $sourceUrls = array();
+
+  /**
+   * Holds our current position within the $source_urls array
+   *
+   * @var int
+   */
+  protected $activeUrl = NULL;
+
+  /**
+   * Store the query string used to recognize elements being iterated
+   * so we can create reader objects on the fly.
+   *
+   * @var string
+   */
+  protected $elementQuery = '';
+
+  /**
+   * Store the query string used to retrieve the primary key value from each
+   * element so we can create reader objects on the fly.
+   *
+   * @var string
+   */
+  protected $idQuery = '';
+
+  /**
+   * Store the reader class used to query XML so we can create reader objects
+   * on the fly.
+   *
+   * @var string
+   */
+  protected $readerClass = '';
+
+  /**
    * List of available source fields.
    *
    * @var array
@@ -807,8 +855,8 @@ class MigrateSourceXML extends MigrateSource {
   /**
    * Source constructor.
    *
-   * @param string $url
-   *  URL of the XML source data.
+   * @param string or array $url
+   *  URL(s) of the XML source data.
    * @param string $element_query
    *  Query string used to recognize elements being iterated.
    * @param string $id_query
@@ -824,8 +872,8 @@ class MigrateSourceXML extends MigrateSource {
    *    defaults to MigrateXMLReader (any substitutions must be derived from
    *    MigrateXMLReader).
    */
-  public function __construct($url, $element_query, $id_query, array $fields = array(),
-       array $options = array()) {
+  public function __construct($urls, $element_query, $id_query, array $fields = array(),
+      array $options = array()) {
     parent::__construct($options);
     if (empty($options['reader_class'])) {
       $reader_class = 'MigrateXMLReader';
@@ -833,7 +881,16 @@ class MigrateSourceXML extends MigrateSource {
     else {
       $reader_class = $options['reader_class'];
     }
-    $this->reader = new $reader_class($url, $element_query, $id_query);
+
+    if (!is_array($urls)) {
+      $urls = array($urls);
+    }
+
+    $this->sourceUrls = $urls;
+    $this->activeUrl = NULL;
+    $this->elementQuery = $element_query;
+    $this->idQuery = $id_query;
+    $this->readerClass = $reader_class;
     $this->fields = $fields;
   }
 
@@ -843,9 +900,12 @@ class MigrateSourceXML extends MigrateSource {
    * @return string
    */
   public function __toString() {
-    return 'url = ' . $this->reader->url .
-           ' | item xpath = ' . $this->reader->elementQuery .
-           ' | item ID xpath = ' . $this->reader->idQuery;
+    // Clump the urls into a string
+    // This could cause a problem when using a lot of urls, may need to hash
+    $urls = implode(', ', $this->sourceUrls);
+    return 'urls = ' . $urls .
+           ' | item xpath = ' . $this->elementQuery .
+           ' | item ID xpath = ' . $this->idQuery;
   }
 
   /**
@@ -864,9 +924,13 @@ class MigrateSourceXML extends MigrateSource {
    */
   public function computeCount() {
     $count = 0;
-    foreach ($this->reader as $element) {
-      $count++;
+    foreach ($this->sourceUrls as $url) {
+      $reader = new $this->readerClass($url, $this->elementQuery, $this->idQuery);
+      foreach ($reader as $element) {
+        $count++;
+      }
     }
+
     return $count;
   }
 
@@ -877,26 +941,80 @@ class MigrateSourceXML extends MigrateSource {
     // Set the reader back to the beginning of the file (positioned to the
     // first matching element), then apply our logic to make sure we have the
     // first element fulfilling our logic (idlist/map/prepareRow()).
-    $this->reader->rewind();
+    $this->activeUrl = NULL;
+    $this->reader = NULL;
   }
 
   /**
    * Implementation of MigrationSource::getNextRow().
+   *
+   * @return stdClass
+   *  data for the next row from the XML source files
    */
   public function getNextRow() {
-    migrate_instrument_start('MigrateSourceXML next');
-    $sourceKey = $this->activeMap->getSourceKey();
-    $key_name = key($sourceKey);
+    migrate_instrument_start('MigrateSourceXML::next');
+
+    $source_key = $this->activeMap->getSourceKey();
+    $key_name = key($source_key);
     $row = NULL;
 
-    // We start out positioned on the next candidate - verify that we want
-    // to take this row, and if not loop till we find one.
-    for (; $this->reader->valid(); $this->reader->next()) {
+    // The reader is now lazy loaded, so it may not be defined yet, need to test if set
+    if (isset($this->reader)) {
+      // attempt to load the next row
+      $this->reader->next();
+    }
+
+    // Test the reader for a valid row
+    if (isset($this->reader) && $this->reader->valid()) {
       $row = new stdClass;
       $row->$key_name = $this->reader->key();
       $row->xml = $this->reader->current();
     }
+    else {
+      // The current source is at the end, try to load the next source
+      if ($this->getNextSource()) {
+        $row = new stdClass;
+        $row->$key_name = $this->reader->key();
+        $row->xml = $this->reader->current();
+      }
+    }
 
+    migrate_instrument_stop('MigrateSourceXML::next');
     return $row;
+  }
+
+  /**
+   * Advances the reader to the next source from source_urls
+   *
+   * @return bool
+   *  TRUE if a valid source was loaded
+   */
+  public function getNextSource() {
+    migrate_instrument_start('MigrateSourceXML::nextSource');
+
+    // Return value
+    $status = FALSE;
+
+    while ($this->activeUrl === NULL || (count($this->sourceUrls)-1) > $this->activeUrl) {
+      if (is_null($this->activeUrl)) {
+        $this->activeUrl = 0;
+      }
+      else {
+        // Increment the activeUrl so we try to load the next source
+        $this->activeUrl = $this->activeUrl + 1;
+      }
+      
+      $this->reader = new $this->readerClass($this->sourceUrls[$this->activeUrl], $this->elementQuery, $this->idQuery);
+      $this->reader->rewind();
+
+      if ($this->reader->valid()) {
+        // We have a valid source
+        $status = TRUE;
+        break;
+      }
+    }
+
+    migrate_instrument_stop('MigrateSourceXML::nextSource');
+    return $status;
   }
 }

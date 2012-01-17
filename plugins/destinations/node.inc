@@ -152,10 +152,15 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         $node->uid = $old_node->uid;
       }
     }
+    else if (!isset($node->type)) {
+      // Default the type to our designated destination bundle (by doing this
+      // conditionally, we permit some flexibility in terms of implementing
+      // migrations which can affect more than one type).
+      $node->type = $this->bundle;
+    }
 
     // Set some required properties.
-    // Set type before invoking prepare handlers - they may take type-dependent actions.
-    $node->type = $this->bundle;
+
     $type_info = node_get_types('type', $node->type);
     if (empty($node->nid)) {
       // Avoids notice in forum module and maybe more - http://drupal.org/node/839770 is similar.

@@ -309,7 +309,6 @@ abstract class MigrationBase {
     }
 
     // Record the memory limit in bytes
-    // @todo: Most of the rest of this could be static members
     $limit = trim(ini_get('memory_limit'));
     if ($limit == '-1') {
       $this->memoryLimit = PHP_INT_MAX;
@@ -334,6 +333,13 @@ abstract class MigrationBase {
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');
 
+    // Default the displayFunction outputFunction based on context
+    if (function_exists('drush_log')) {
+      self::$displayFunction = 'drush_log';
+    }
+    else {
+      self::$displayFunction = 'drupal_set_message';
+    }
     // Maintain deprecated version for now
     $this->outputFunction = self::$displayFunction;
 
@@ -347,19 +353,6 @@ abstract class MigrationBase {
 
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));
-  }
-
-  /**
-   * Initialize static members, before any class instances are created.
-   */
-  static public function staticInitialize() {
-    // Default the displayFunction outputFunction based on context
-    if (function_exists('drush_log')) {
-      self::$displayFunction = 'drush_log';
-    }
-    else {
-      self::$displayFunction = 'drupal_set_message';
-    }
   }
 
   /**
@@ -377,25 +370,15 @@ abstract class MigrationBase {
       $machine_name = self::machineFromClass($class_name);
     }
 
-    // See if this migration is already registered
-    $migration_row = db_select('migrate_status', 'ms')
-                     ->fields('ms', array('class_name', 'arguments'))
-                     ->condition('machine_name', $machine_name)
-                     ->execute()
-                     ->fetchObject();
-    if (!$migration_row) {
-      db_insert('migrate_status')
-        ->fields(array(
-          'machine_name' => $machine_name,
-          'class_name' => $class_name,
-          'arguments' => serialize($arguments),
+    // Register the migration if it's not already there; if it is,
+    // update the class and arguments in case they've changed.
+    db_merge('migrate_status')
+      ->key(array('machine_name' => $machine_name))
+      ->fields(array(
+                'class_name' => $class_name,
+                'arguments' => serialize($arguments)
         ))
-        ->execute();
-    }
-    else {
-      // TODO: What, if anything, should we do if the pre-existing class_name or
-      // arguments don't match?
-    }
+      ->execute();
   }
 
   /**
@@ -523,9 +506,7 @@ abstract class MigrationBase {
    *  (defaults to 'error').
    */
   static public function displayMessage($message, $level = 'error') {
-    if (isset(self::$displayFunction)) {
-      call_user_func(self::$displayFunction, $message, $level);
-    }
+    call_user_func(self::$displayFunction, $message, $level);
   }
 
   /**
@@ -1068,7 +1049,3 @@ abstract class MigrationBase {
     return $time;
   }
 }
-
-// Make sure static members (in particular, $displayFunction) get
-// initialized even if there are no class instances.
-MigrationBase::staticInitialize();

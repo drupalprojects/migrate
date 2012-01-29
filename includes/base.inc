@@ -377,22 +377,15 @@ abstract class MigrationBase {
       $machine_name = self::machineFromClass($class_name);
     }
 
-    // See if this migration is already registered
-    $migration_row = db_fetch_object(db_query(
-      "SELECT class_name, arguments
-       FROM {migrate_status}
-       WHERE machine_name = '%s'", $machine_name));
-
-    if (!$migration_row) {
-      db_query("INSERT INTO {migrate_status}
-                (machine_name, class_name, arguments)
-                VALUES('%s', '%s', '%s')",
-               $machine_name, $class_name, serialize($arguments));
-    }
-    else {
-      // TODO: What, if anything, should we do if the pre-existing class_name or
-      // arguments don't match?
-    }
+    // Register the migration if it's not already there; if it is,
+    // update the class and arguments in case they've changed.
+    db_merge('migrate_status')
+      ->key(array('machine_name' => $machine_name))
+      ->fields(array(
+                'class_name' => $class_name,
+                'arguments' => serialize($arguments)
+        ))
+      ->execute();
   }
 
   /**

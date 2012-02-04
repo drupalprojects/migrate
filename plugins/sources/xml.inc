@@ -679,6 +679,10 @@ class MigrateXMLReader implements Iterator {
     $this->url = $xml_url;
     $this->elementQuery = $element_query;
     $this->idQuery = $id_query;
+
+    // Suppress errors during parsing, so we can pick them up after
+    libxml_use_internal_errors(TRUE);
+
     // Parse the element query. First capture group is the element path, second
     // (if present) is the attribute.
     preg_match_all('|^/([^\[]+)(.*)$|', $element_query, $matches);
@@ -738,24 +742,27 @@ class MigrateXMLReader implements Iterator {
             // it into SimpleXML.
             // Despite appearances, this is almost twice as fast as
             // simplexml_load_string($this->readOuterXML());
-            try {
-              $node = $this->reader->expand();
+            $node = $this->reader->expand();
+            if ($node) {
+              $dom = new DOMDocument();
+              $node = $dom->importNode($node, TRUE);
+              $dom->appendChild($node);
+              $this->currentElement = simplexml_import_dom($node);
+              $idnode = $this->currentElement->xpath($this->idQuery);
+              $this->currentId = (string)reset($idnode);
+              break;
             }
-            catch (Exception $e) {
+            else {
               foreach (libxml_get_errors() as $error) {
-                Migration::displayMessage(MigrateItemsXML::parseLibXMLError($error));
+                $error_string = MigrateItemsXML::parseLibXMLError($error);
+                if ($migration = Migration::currentMigration()) {
+                  $migration->saveMessage($error_string);
+                }
+                else {
+                  Migration::displayMessage($error_string);
+                }
               }
-              throw new MigrateException(t('Failed to load node from !url:',
-                array('!url' => $this->url)));
-              continue;
             }
-            $dom = new DOMDocument();
-            $node = $dom->importNode($node, TRUE);
-            $dom->appendChild($node);
-            $this->currentElement = simplexml_import_dom($node);
-            $idnode = $this->currentElement->xpath($this->idQuery);
-            $this->currentId = (string)reset($idnode);
-            break;
           }
         }
       }

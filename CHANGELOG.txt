@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.3 RC1
+===============
 
 Features and enhancements
 - #1418126 - Use node_delete_multiple on migrate-wipe.
@@ -34,6 +34,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1422114 - ID list array must be imploded for queries.
 - #1372204 - Fix loss of pictures when updating users.
 - #1364034 - Add cache_key option to sources, for disambiguation.
 - #1354162 - Make sure messages are retrieved from the right connection.

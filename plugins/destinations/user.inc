@@ -56,6 +56,11 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     if (!empty($options['md5_passwords'])) {
       $this->md5Passwords = $options['md5_passwords'];
     }
+
+    // Reduce hash count so import runs in a reasonable time (use same value as
+    // the standard Drupal 6=>Drupal 7 upgrade path).
+    global $conf;
+    $conf['password_count_log2'] = 11;
   }
 
   /**

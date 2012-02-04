@@ -1055,10 +1055,9 @@ function drush_migrate_wipe() {
           ->condition('type', $types, 'IN')
           ->execute()
           ->fetchCol();
-  // TODO: Call node_delete_multiple in batches of 500 or so
-  migrate_instrument_start('node_delete');
-  foreach ($nids as $nid) {
-    node_delete($nid);
+  $chunks = array_chunk($nids, 50);
+  foreach ($chunks as $chunk) {
+    node_delete_multiple($chunk);
   }
   migrate_instrument_stop('node_delete');
 }

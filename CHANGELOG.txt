@@ -3,6 +3,8 @@ Next release
 ============
 
 Features and enhancements
+- #1418126 - Use node_delete_multiple on migrate-wipe.
+- #1424632 - Improve user migration performance by reducing hash count.
 - #1414616 - Automatically update migration arguments.
 - #1364326 - Default --limit option to items.
 - #1337640 - Properly optimize the SQL source query for highwater marks.

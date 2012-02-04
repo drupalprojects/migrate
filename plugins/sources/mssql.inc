@@ -156,7 +156,7 @@ class MigrateSourceMSSQL extends MigrateSource {
 
       // TODO: Sanitize. not critical as this is admin supplied data in drush.
       $this->query = str_replace(':criteria',
-        $keys[0] . ' IN (' . $this->idList . ')', $this->query);
+        $keys[0] . ' IN (' . implode(',', $this->idList) . ')', $this->query);
     }
     else {
       if (isset($this->highwaterField['name']) && $highwater = $this->activeMigration->getHighwater()) {

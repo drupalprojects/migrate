@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.3 RC1
+===============
 
 Features and enhancements
 - #1414616 - Automatically update migration arguments.
@@ -28,6 +28,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1422114 - ID list array must be imploded for queries.
 - #1300796 - Fixed cross-database joins to map tables.
 - #1389008 - Set key in DESTINATION case for MigrateDestinationTable.
 - #1386494 - Gracefully handle no-longer-valid classes.

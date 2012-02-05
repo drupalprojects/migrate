@@ -28,6 +28,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1416012 - Cleanly handle NULL source key values in saveIDMapping().
 - #1419086 - Better error handling in MigrateXMLReader::next().
 - #1422114 - ID list array must be imploded for queries.
 - #1300796 - Fixed cross-database joins to map tables.

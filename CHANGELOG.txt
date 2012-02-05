@@ -34,6 +34,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1416012 - Cleanly handle NULL source key values in saveIDMapping().
 - #1419086 - Better error handling in MigrateXMLReader::next().
 - #1422114 - ID list array must be imploded for queries.
 - #1372204 - Fix loss of pictures when updating users.

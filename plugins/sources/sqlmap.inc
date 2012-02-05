@@ -297,6 +297,14 @@ class MigrateSQLMap extends MigrateMap {
     // Construct the source key
     $keys = array();
     foreach ($this->sourceKeyMap as $field_name => $key_name) {
+      // A NULL key value will fail.
+      if (is_null($source_row->$field_name)) {
+        Migration::displayMessage(t(
+          'Could not save to map table due to NULL value for key field !field',
+          array('!field' => $field_name)));
+        migrate_instrument_stop('saveIDMapping');
+        return;
+      }
       $keys[$key_name] = $source_row->$field_name;
     }
 
@@ -345,7 +353,7 @@ class MigrateSQLMap extends MigrateMap {
     }
     else {
       // TODO: What else can we do?
-      print($message);
+      Migration::displayMessage($message);
     }
   }
 

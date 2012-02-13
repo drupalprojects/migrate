@@ -80,6 +80,9 @@ class BeerTermMigration extends BasicExampleMigration {
 
     // We are getting data from tables in the Drupal default database - first,
     // set up a query for this data.
+    // Note that by ordering on style_parent, we guarantee root terms are
+    // migrated first, so the parent_name mapping below will find that the
+    // parent exists.
     $query = db_select('migrate_example_beer_topic', 'met')
              ->fields('met', array('style', 'details', 'style_parent', 'region', 'hoppiness'))
              // This sort assures that parents are saved before children.

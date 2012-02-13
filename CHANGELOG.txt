@@ -3,6 +3,7 @@ Migrate 2.3 RC1
 ===============
 
 Features and enhancements
+- #1430528 - Document importance of migrating term parents first.
 - #1414616 - Automatically update migration arguments.
 - #1401810 - Extended MigrateSourceXML to accept multiple XML files.
 - #1403222 - Relaxed setting of bundle for node destinations.

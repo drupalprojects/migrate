@@ -314,18 +314,20 @@ abstract class MigrationBase {
       $this->memoryLimit = PHP_INT_MAX;
     }
     else {
-      $last = strtolower($limit[strlen($limit)-1]);
-      switch ($last) {
-        case 'g':
-          $limit *= 1024;
-        case 'm':
-          $limit *= 1024;
-        case 'k':
-          $limit *= 1024;
-          break;
-        default:
-          throw new Exception(t('Invalid PHP memory_limit !limit',
-            array('!limit' => $limit)));
+      if (!is_numeric($limit)) {
+        $last = strtolower($limit[strlen($limit)-1]);
+        switch ($last) {
+          case 'g':
+            $limit *= 1024;
+          case 'm':
+            $limit *= 1024;
+          case 'k':
+            $limit *= 1024;
+            break;
+          default:
+            throw new Exception(t('Invalid PHP memory_limit !limit',
+              array('!limit' => $limit)));
+        }
       }
       $this->memoryLimit = $limit;
     }

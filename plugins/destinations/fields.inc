@@ -104,7 +104,7 @@ abstract class MigrateSimpleFieldHandler extends MigrateFieldHandler {
    *   - 'value_key' string with the name of the key in the fields value array.
    *   - 'skip_empty' Boolean indicating that empty values should not be saved.
    */
-  public function __construct($options) {
+  public function __construct($options = array()) {
     if (isset($options['value_key'])) {
       $this->fieldValueKey = $options['value_key'];
     }

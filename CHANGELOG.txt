@@ -30,6 +30,7 @@ Features and enhancements
 - #1295040 - Support --update functionality in UI.
 
 Bug fixes
+- #1432802 - Default $options to prevent PHP 5.4 error.
 - #1416012 - Cleanly handle NULL source key values in saveIDMapping().
 - #1419086 - Better error handling in MigrateXMLReader::next().
 - #1422114 - ID list array must be imploded for queries.

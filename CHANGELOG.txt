@@ -3,6 +3,7 @@ Migrate 2.3 RC1
 ===============
 
 Features and enhancements
+- #1437076 - Make Migration class field mapping methods public.
 - #1430528 - Document importance of migrating term parents first.
 - #1418126 - Use node_delete_multiple on migrate-wipe.
 - #1424632 - Improve user migration performance by reducing hash count.

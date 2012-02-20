@@ -221,7 +221,7 @@ abstract class XMLMigration extends Migration {
    * @param string $sourceField
    *  Name of the source field (optional).
    */
-  protected function addFieldMapping($destination_field, $source_field = NULL) {
+  public function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
       self::displayMessage(

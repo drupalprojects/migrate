@@ -165,7 +165,7 @@ abstract class Migration extends MigrationBase {
    * @param string $sourceField
    *  Name of the source field (optional).
    */
-  protected function addFieldMapping($destination_field, $source_field = NULL) {
+  public function addFieldMapping($destination_field, $source_field = NULL) {
     // Warn of duplicate mappings
     if (!is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
       self::displayMessage(
@@ -191,7 +191,7 @@ abstract class Migration extends MigrationBase {
    * @param string $source_field
    *  Name of the source field.
    */
-  protected function removeFieldMapping($destination_field, $source_field = NULL) {
+  public function removeFieldMapping($destination_field, $source_field = NULL) {
     if (isset($destination_field)) {
       unset($this->fieldMappings[$destination_field]);
     }
@@ -211,7 +211,7 @@ abstract class Migration extends MigrationBase {
    * @param array $fields
    *  List of field names to map.
    */
-  protected function addSimpleMappings(array $fields) {
+  public function addSimpleMappings(array $fields) {
     foreach ($fields as $field) {
       $this->addFieldMapping($field, $field);
     }
@@ -227,7 +227,7 @@ abstract class Migration extends MigrationBase {
    * @param string $issue_group
    *  Issue group name to apply to the generated mappings (defaults to 'DNM').
    */
-  protected function addUnmigratedDestinations(array $fields, $issue_group = NULL) {
+  public function addUnmigratedDestinations(array $fields, $issue_group = NULL) {
     if (!$issue_group) {
       $issue_group = t('DNM');
     }
@@ -247,7 +247,7 @@ abstract class Migration extends MigrationBase {
    * @param string $issue_group
    *  Issue group name to apply to the generated mappings (defaults to 'DNM').
    */
-  protected function addUnmigratedSources(array $fields, $issue_group = NULL) {
+  public function addUnmigratedSources(array $fields, $issue_group = NULL) {
     if (!$issue_group) {
       $issue_group = t('DNM');
     }

@@ -35,6 +35,7 @@ Features and enhancements
 - #1254398 - Prevent accidental emailing during migration.
 
 Bug fixes
+- #1333656 - Remove content type/fields when uninstalling migrate_example_baseball.
 - #1416012 - Cleanly handle NULL source key values in saveIDMapping().
 - #1419086 - Better error handling in MigrateXMLReader::next().
 - #1422114 - ID list array must be imploded for queries.

@@ -238,8 +238,14 @@ function drush_migrate_get_options() {
 function drush_migrate_backend_invoke() {
   $args = drush_get_arguments();
   $options = drush_migrate_get_options();
-  // @todo: use drush_backend_invoke_args() as per http://drupal.org/node/658420.
-  return drush_backend_invoke(implode(' ', $args), $options);
+  if (intval(DRUSH_MAJOR_VERSION) < 4) {
+    // @todo: use drush_backend_invoke_args() as per http://drupal.org/node/658420.
+    return drush_backend_invoke(implode(' ', $args), $options);
+  }
+  else {
+    // $args[0] is the command name, $args[1] is the list of migrations.
+    return drush_invoke_process('@self', $args[0], array($args[1]), $options);
+  }
 }
 
 /**

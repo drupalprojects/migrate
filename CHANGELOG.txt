@@ -3,6 +3,7 @@ Migrate 2.3
 ===========
 
 Bug fixes
+- #1413350 - Support invoking subprocesses under Drush 5.
 - #1404732 - Properly call taxonomy_term handler fields() method.
 
 Migrate 2.3 RC1

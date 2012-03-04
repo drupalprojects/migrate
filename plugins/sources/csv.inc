@@ -181,7 +181,7 @@ class MigrateSourceCSV extends MigrateSource {
       foreach ($this->csvcolumns as $int => $values) {
         list($key, $description) = $values;
         // Copy value to more descriptive string based key and then unset original.
-        $row[$key] = $row[$int];
+        $row[$key] = isset($row[$int]) ? $row[$int] : NULL;
         unset($row[$int]);
       }
       return (object)$row;

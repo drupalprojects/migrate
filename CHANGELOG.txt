@@ -3,6 +3,7 @@ Migrate 2.3
 ===========
 
 Bug fixes
+- #1378114 - Handle case-sensitive term name variations properly.
 - #1450950 - Convert user datetimes values to timestamps.
 - #1437208 - Handle malformed CSV files quietly.
 - #1413350 - Support invoking subprocesses under Drush 5.

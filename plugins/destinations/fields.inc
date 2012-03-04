@@ -258,6 +258,8 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     if (empty($values[0])) {
       $values = array();
     }
+
+    $tids = array();
     if (isset($arguments['source_type']) && $arguments['source_type'] == 'tid') {
       // Nothing to do. We have tids already.
       $tids = $values;
@@ -274,35 +276,32 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       }
 
       // Cannot use taxonomy_term_load_multiple() since we have an array of names.
-      // It wants a singular value.
-      $tids = db_select('taxonomy_term_data', 'td')
+      // It wants a singular value. This query may return case-insensitive
+      // matches.
+      $existing_terms = db_select('taxonomy_term_data', 'td')
         ->fields('td', array('tid', 'name'))
         ->condition('td.name', $values, 'IN')
         ->condition('td.vid', $vid)
         ->execute()
         ->fetchAllKeyed(1, 0);
-      if (!empty($arguments['create_term'])) {
-        foreach ($values as $value) {
-          if (!isset($tids[$value])) {
-            $new_term = new stdClass();
-            $new_term->vid = $vid;
-            $new_term->name = $value;
-            taxonomy_term_save($new_term);
-            $tids[$value] = $new_term->tid;
-          }
+      foreach ($values as $value) {
+        if (isset($existing_terms[$value])) {
+          $tids[] = $existing_terms[$value];
+        }
+        elseif (!empty($arguments['create_term'])) {
+          $new_term = new stdClass();
+          $new_term->vid = $vid;
+          $new_term->name = $value;
+          taxonomy_term_save($new_term);
+          $tids[] = $new_term->tid;
         }
       }
     }
-    else {
-      $tids = array();
-    }
+
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
     $result = array();
-    $i = 0;
     foreach ($tids as $tid) {
-      $result[$language][$i] = array();
-      $result[$language][$i]['tid'] = $tid;
-      $i++;
+      $result[$language][] = array('tid' => $tid);
     }
     return $result;
   }

@@ -164,6 +164,17 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       $updating = FALSE;
     }
 
+    // If any datetime values were included, ensure that they're in timestamp format.
+    if (isset($account->created)) {
+      $account->created = MigrationBase::timestamp($account->created);
+    }
+    if (isset($account->access)) {
+      $account->access = MigrationBase::timestamp($account->access);
+    }
+    if (isset($account->login)) {
+      $account->login = MigrationBase::timestamp($account->login);
+    }
+
     migrate_instrument_start('user_save');
     $newaccount = user_save($old_account, (array)$account);
     migrate_instrument_stop('user_save');

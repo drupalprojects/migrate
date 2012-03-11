@@ -18,6 +18,8 @@ function migrate_drush_help($section) {
       return dt('Stop an active migration');
     case 'drush:migrate-reset-status':
       return dt('Reset a migration\'s status to idle');
+    case 'drush:migrate-deregister':
+      return dt('Remove all tracking of a migration');
     case 'drush:migrate-status':
       return dt('List all migrations with current status');
     case 'drush:migrate-fields-destination':
@@ -193,6 +195,18 @@ function migrate_drush_command() {
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mrs'),
+  );
+  $items['migrate-deregister'] = array(
+    'description' => 'Remove all tracking of a migration',
+    'options' => array('orphans' => 'Remove tracking for any migrations whose implementing class no longer exists'),
+    'arguments' => array(
+      'migration' => 'Name of migration to deregister',
+    ),
+    'examples' => array(
+      'migrate-deregister Article' => 'Deregister the Article migration',
+      'migrate-deregister --orphans' => 'Deregister any no-longer-implemented migrations',
+    ),
+    'drupal dependencies' => array('migrate'),
   );
   $items['migrate-wipe'] = array(
     'description' => 'Delete all nodes from specified content types.',
@@ -1018,11 +1032,8 @@ function drush_migrate_stop($args = NULL) {
 }
 
 /**
-// * Reset the status of a given content set.
-// *
-// * @param $content_set
-// *  The name of the Migration
-// */
+ * Reset the status of a given migration.
+ */
 function drush_migrate_reset_status($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);
@@ -1036,6 +1047,55 @@ function drush_migrate_reset_status($args = NULL) {
     drush_print($e->getMessage());
     exit;
   }
+}
+
+/**
+ * Deregister a given migration, or all orphaned migrations. Note that the
+ * migration might no longer "exist" (the class implementation might be gone),
+ * so we can't count on being able to instantiate it, or use migrate_migrations().
+ */
+function drush_migrate_deregister($args = NULL) {
+  try {
+    $orphans = drush_get_option('orphans');
+    if ($orphans) {
+      $migrations = array();
+      $result = db_select('migrate_status', 'ms')
+                    ->fields('ms', array('class_name', 'machine_name'))
+                    ->execute();
+      foreach ($result as $row) {
+        if (!class_exists($row->class_name)) {
+          $migrations[] = $row->machine_name;
+        }
+      }
+    }
+    else {
+      $migrations = explode(',', $args);
+    }
+    foreach ($migrations as $machine_name) {
+      drush_migrate_deregister_migration($machine_name);
+      drush_log(dt("Deregistered '!description' migration",
+        array('!description' => $machine_name)), 'success');
+    }
+  }
+  catch (MigrateException $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
+}
+
+/**
+ * Given a migration machine name, remove its tracking from the database.
+ *
+ * @param $machine_name
+ */
+function drush_migrate_deregister_migration($machine_name) {
+  // The class is gone, so we'll manually clear migrate_status, and make
+  // the default assumptions about the map/message tables.
+  dbtng_drop_table('migrate_map_' . $machine_name);
+  dbtng_drop_table('migrate_message_' . $machine_name);
+  db_delete('migrate_status')
+    ->condition('machine_name', $machine_name)
+    ->execute();
 }
 
 /**

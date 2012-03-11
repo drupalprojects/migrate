@@ -2,6 +2,9 @@
 Migrate 2.3
 ===========
 
+Features and enhancements
+- #1315910 - Added migrate-deregister drush command.
+
 Bug fixes
 - #1378114 - Handle case-sensitive term name variations properly.
 - #1450950 - Convert user datetimes values to timestamps.

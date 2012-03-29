@@ -183,6 +183,30 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->format = $this->textFormat;
       }
       $this->prepare($term, $row);
+      // See if the term, with the same parentage, already exists - if so,
+      // load it
+      $candidates = taxonomy_get_term_by_name(trim($term->name));
+      foreach ($candidates as $candidate) {
+        $parents = taxonomy_get_parents($candidate->tid);
+        // We need to set up $parents as a simple array of tids
+        if (empty($parents)) {
+          $parents = array(0);
+        }
+        else {
+          // Parents array is tid => term object, make into list of tids
+          $new_parents = array();
+          foreach ($parents as $parent) {
+            $new_parents[] = $parent->tid;
+          }
+          $parents = $new_parents;
+        }
+        if (in_array($term->parent, $parents)) {
+          // We've found a matching term, we'll use that
+          $candidate->parent = $term->parent;
+          $term = $candidate;
+          break;
+        }
+      }
     }
 
     // Trying to update an existing term

@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Bug fixes
+- #1308268 - Term migration should link to pre-existing terms.
+
 Migrate 2.3
 ===========
 

@@ -164,6 +164,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         }
         $term->vid = $vocab_map[$term->vocabulary_machine_name];
       }
+
       // Look up parent name if provided
       if (isset($term->parent_name) && trim($term->parent_name)) {
         // Look for the name in the same vocabulary.
@@ -171,7 +172,7 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $terms = taxonomy_term_load_multiple(array(),
           array('name' => trim($term->parent_name), 'vid' => $term->vid));
         $tids = array_keys($terms);
-        $term->parent = $tids[0];
+        $term->parent = array($tids[0]);
         unset($term->parent_name);
       }
       if (isset($term->parent) && is_array($term->parent['arguments'])) {
@@ -186,6 +187,30 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
         $term->format = $this->textFormat;
       }
       $this->prepare($term, $row);
+      // See if the term, with the same parentage, already exists - if so,
+      // load it
+      $candidates = taxonomy_term_load_multiple(array(),
+        array('name' => trim($term->name), 'vid' => $term->vid));
+      foreach ($candidates as $candidate) {
+        $parents = taxonomy_get_parents($candidate->tid);
+        // We need to set up $parents as a simple array of tids
+        if (empty($parents)) {
+          $parents = array(0);
+        }
+        else {
+          // Parents array is tid => term object, make into list of tids
+          $new_parents = array();
+          foreach ($parents as $parent) {
+            $new_parents[] = $parent->tid;
+          }
+          $parents = $new_parents;
+        }
+        if ($term->parent == $parents) {
+          // We've found a matching term, we'll use that
+          $term = $candidate;
+          break;
+        }
+      }
     }
 
     // Trying to update an existing term

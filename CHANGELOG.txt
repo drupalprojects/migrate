@@ -2,6 +2,9 @@
 Next release
 ============
 
+Features and enhancements
+- #1403044 - Added menu destination plugins.
+
 Bug fixes
 - #1308268 - Term migration should link to pre-existing terms.
 

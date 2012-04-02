@@ -153,7 +153,7 @@ function _migrate_ui_dashboard_form() {
   $build['operations']['options']['limit'] = array(
     '#tree' => TRUE,
     '#type' => 'fieldset',
-    '#attributes' => array('class' => array('container-inline')),
+    '#attributes' => array('class' => 'container-inline'),
     'value' => array(
       '#type' => 'textfield',
       '#title' => t('Limit to'),

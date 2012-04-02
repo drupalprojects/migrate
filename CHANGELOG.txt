@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1512020 - Fix CSS class on the limit field.
 - #1308268 - Term migration should link to pre-existing terms.
 
 Migrate 2.3

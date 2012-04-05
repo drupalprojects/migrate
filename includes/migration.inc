@@ -800,7 +800,6 @@ abstract class Migration extends MigrationBase {
    * a populated destination object.
    */
   protected function applyMappings() {
-    // Apply mappings.
     $this->destinationValues = new stdClass;
     foreach ($this->fieldMappings as $mapping) {
       $destination = $mapping->getDestinationField();
@@ -808,74 +807,91 @@ abstract class Migration extends MigrationBase {
       if ($destination) {
         $source = $mapping->getSourceField();
         $default = $mapping->getDefaultValue();
+
+        // When updating existing items, make sure we don't create a destination
+        // field that is not mapped to anything (a source field or a default value)
+        if (!$source && !$default) {
+          continue;
+        }
+
+        $destination_values = NULL;
+
         // If there's a source mapping, and a source value in the data row, copy
         // to the destination
-        if ($source && isset($this->sourceValues->$source)) {
-          $this->destinationValues->$destination = $this->sourceValues->$source;
+        if ($source && property_exists($this->sourceValues, $source)) {
+          $destination_values = $this->sourceValues->$source;
         }
         // Otherwise, apply the default value (if any)
         elseif (!is_null($default)) {
-          $this->destinationValues->$destination = $default;
+          $destination_values = $default;
         }
 
         // If there's a separator specified for this destination, then it
         // will be populated as an array exploded from the source value
         $separator = $mapping->getSeparator();
-        if ($separator && isset($this->destinationValues->$destination)) {
-          $this->destinationValues->$destination = explode($separator, $this->destinationValues->$destination);
+        if ($separator && isset($destination_values)) {
+          $destination_values = explode($separator, $destination_values);
         }
 
         // If a source migration is supplied, use the current value for this field
         // to look up a destination ID from the provided migration
         $source_migration = $mapping->getSourceMigration();
-        if ($source_migration && isset($this->destinationValues->$destination)) {
-          $this->destinationValues->$destination = $this->handleSourceMigration($source_migration, $this->destinationValues->$destination, $default, $this);
+        if ($source_migration && isset($destination_values)) {
+          $destination_values = $this->handleSourceMigration($source_migration, $destination_values, $default, $this);
         }
 
         // Call any designated callbacks
         $callbacks = $mapping->getCallbacks();
         foreach ($callbacks as $callback) {
-          if (property_exists($this->destinationValues, $destination)) {
-            $this->destinationValues->$destination = call_user_func($callback, $this->destinationValues->$destination);
+          if (isset($destination_values)) {
+            $destination_values = call_user_func($callback, $destination_values);
           }
         }
 
         // If specified, assure a unique value for this property.
         $dedupe = $mapping->getDedupe();
-        if ($dedupe && isset($this->destinationValues->$destination)) {
-          $this->destinationValues->$destination = $this->handleDedupe($dedupe, $this->destinationValues->$destination, $mapping);
+        if ($dedupe && isset($destination_values)) {
+          $destination_values = $this->handleDedupe($dedupe, $destination_values, $mapping);
         }
 
         // Assign any arguments
-        if (isset($this->destinationValues->$destination)) {
+        if (isset($destination_values)) {
           $arguments = $mapping->getArguments();
           if ($arguments) {
-            if (!is_array($this->destinationValues->$destination)) {
-              $this->destinationValues->$destination = array($this->destinationValues->$destination);
+            if (!is_array($destination_values)) {
+              $destination_values = array($destination_values);
             }
             // TODO: Stuffing arguments into the destination field is gross - can
             // we come up with a better way to communicate them to the field
             // handlers?
-            $this->destinationValues->{$destination}['arguments'] = array();
+            $destination_values['arguments'] = array();
             foreach ($arguments as $argname => $destarg) {
               if (is_array($destarg) && isset($destarg['source_field']) && property_exists($this->sourceValues, $destarg['source_field'])) {
-                $this->destinationValues->{$destination}['arguments'][$argname] = $this->sourceValues->$destarg['source_field'];
+                $destination_values['arguments'][$argname] = $this->sourceValues->$destarg['source_field'];
               }
               elseif (is_array($destarg) && isset($destarg['default_value'])) {
-                $this->destinationValues->{$destination}['arguments'][$argname] = $destarg['default_value'];
+                $destination_values['arguments'][$argname] = $destarg['default_value'];
               }
               else {
-                $this->destinationValues->{$destination}['arguments'][$argname] = $destarg;
+                $destination_values['arguments'][$argname] = $destarg;
               }
             }
           }
         }
 
-        // When we're updating existing nodes, if there is a source mapping but there
-        // was no value for this row, add a null destination value so it gets removed
-        // from the node
-        if ($this->systemOfRecord == Migration::DESTINATION && $source && !isset($this->destinationValues->$destination)) {
-          $this->destinationValues->$destination = NULL;
+        // Are we dealing with the primary value of the destination field, or a
+        // subfield?
+        $destination = explode(':', $destination);
+        $destination_field = $destination[0];
+        if (isset($destination[1])) {
+          $subfield = $destination[1];
+          if (!is_array($this->destinationValues->$destination_field)) {
+            $this->destinationValues->$destination_field = array($this->destinationValues->$destination_field);
+          }
+          $this->destinationValues->{$destination_field}['arguments'][$subfield] = $destination_values;
+        }
+        else {
+          $this->destinationValues->$destination_field = $destination_values;
         }
       }
     }

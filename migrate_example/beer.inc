@@ -319,25 +319,21 @@ class BeerNodeMigration extends BasicExampleMigration {
     $this->addFieldMapping('migrate_example_beer_styles', 'terms')
          ->separator(',');
 
-    // Drupal 7 fields can have attributes such as text formats, or excerpts
+    // Some fields may have subfields such as text formats or summaries
     // (equivalent to teasers in previous Drupal versions).
-    // The source_field argument specifies what field in the source query maps
-    // to the corresponding attribute (excerpt in this case)
-    $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
-    $this->addFieldMapping('body', 'body')
-         ->arguments($arguments);
-    // Since the excerpt is mapped via an argument, add a null mapping so it's
-    // not flagged as unmapped
-    $this->addFieldMapping(NULL, 'excerpt');
+    // These can be individually mapped as we see here.
+    $this->addFieldMapping('body', 'body');
+    $this->addFieldMapping('body:summary', 'excerpt');
 
     // Copy an image file, write DB record to files table, and save in Field storage.
-    // Note we specify the source query fields that will map to the file alt/title/description
-    // values.
-    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'),
-      'file_copy', FILE_EXISTS_RENAME, NULL, array('source_field' => 'image_alt'),
-      array('source_field' => 'image_title'), array('source_field' => 'image_description'));
+    // Note how we specify the source query fields that will map to the file
+    // alt/title/description values.
+    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'));
     $this->addFieldMapping('field_migrate_example_image', 'image')
          ->arguments($arguments);
+    $this->addFieldMapping('field_migrate_example_image:alt', 'image_alt');
+    $this->addFieldMapping('field_migrate_example_image:title', 'image_title');
+    $this->addFieldMapping('field_migrate_example_image:description', 'image_description');
 
     // No unmapped source fields
 

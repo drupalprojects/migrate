@@ -199,10 +199,24 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     foreach ($values as $value) {
       $item = array();
       if (isset($arguments['summary'])) {
-        $item['summary'] = $arguments['summary'];
+        if (is_array($arguments['summary'])) {
+          $item['summary'] = $arguments['summary'][$delta];
+        }
+        else {
+          $item['summary'] = $arguments['summary'];
+        }
       }
-      $format = isset($arguments['format']) ?
-        $arguments['format'] : $destination->getTextFormat();
+      if (isset($arguments['format'])) {
+        if (is_array($arguments['format'])) {
+          $format = $arguments['format'][$delta];
+        }
+        else {
+          $format = $arguments['format'];
+        }
+      }
+      else {
+        $format = $destination->getTextFormat();
+      }
       $item['format'] = $item['value_format'] = $format;
       // Make sure the value will fit
       if ($max_length) {

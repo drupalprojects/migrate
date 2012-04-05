@@ -398,10 +398,8 @@ class WineProducerMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('migrate_example_wine_regions', 'region')
          ->sourceMigration('WineRegion')
          ->arguments(array('source_type' => 'tid'));
-    $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
-    $this->addFieldMapping('body', 'body')
-         ->arguments($arguments);
-    $this->addFieldMapping(NULL, 'excerpt');
+    $this->addFieldMapping('body', 'body');
+    $this->addFieldMapping('body:summary', 'excerpt');
     $this->addFieldMapping('sticky')
          ->defaultValue(0);
 
@@ -740,11 +738,9 @@ class WineWineMigration extends AdvancedExampleMigration {
     // callbacks, and they can either be straight functions or class methods. In
     // this case, our custom method prepends 'review: ' to the body, and then we
     // call a standard Drupal function to uppercase the whole body.
-    $arguments = MigrateTextFieldHandler::arguments(array('source_field' => 'excerpt'));
     $this->addFieldMapping('body', 'body')
-         ->arguments($arguments)
          ->callbacks(array($this, 'addTitlePrefix'), 'drupal_strtoupper');
-    $this->addFieldMapping(NULL, 'excerpt');
+    $this->addFieldMapping('body:summary', 'excerpt');
     // We will get the image data from a related table in prepareRow()
     $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
     $this->addFieldMapping('field_migrate_example_image', 'images')

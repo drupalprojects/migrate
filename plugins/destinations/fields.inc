@@ -138,6 +138,17 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('text', 'text_long', 'text_with_summary'));
   }
 
+  /**
+   * Build an arguments array for text fields.
+   *
+   * @param string $summary
+   *  N/A in Drupal 6.
+   * @param string $format
+   *  Text format to apply.
+   * @param string $language
+   *  N/A in Drupal 6.
+   * @return array
+   */
   static function arguments($summary = NULL, $format = NULL, $language = NULL) {
     $arguments = array();
     if (!is_null($summary)) {
@@ -169,11 +180,17 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     $delta = 0;
     foreach ($values as $value) {
       $item = array();
-      if (isset($arguments['summary'])) {
-        $item['summary'] = $arguments['summary'];
+      if (isset($arguments['format'])) {
+        if (is_array($arguments['format'])) {
+          $format = $arguments['format'][$delta];
+        }
+        else {
+          $format = $arguments['format'];
+        }
       }
-      $format = isset($arguments['format']) ?
-        $arguments['format'] : $destination->getTextFormat();
+      else {
+        $format = $destination->getTextFormat();
+      }
       $item['format'] = $item['value_format'] = $format;
       // Make sure the value will fit
       if ($max_length) {

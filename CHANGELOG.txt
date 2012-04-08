@@ -6,6 +6,7 @@ Features and enhancements
 - #1403044 - Added menu destination plugins.
 
 Bug fixes
+- #1518008 - Upgrade uses obsolete db_column_exists API.
 - #1308268 - Term migration should link to pre-existing terms.
 
 Migrate 2.3

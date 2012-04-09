@@ -169,7 +169,7 @@ abstract class MigrationBase {
    * @var string
    */
   protected static $displayFunction;
-  public function setDisplayFunction($display_function) {
+  public static function setDisplayFunction($display_function) {
     self::$displayFunction = $display_function;
   }
 

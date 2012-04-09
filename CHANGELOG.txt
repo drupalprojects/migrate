@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1480762 - Fix cross-database joins to map table.
 - #1520688 - setDisplayFunction needs to be static.
 - #1512020 - Fix CSS class on the limit field.
 - #1308268 - Term migration should link to pre-existing terms.

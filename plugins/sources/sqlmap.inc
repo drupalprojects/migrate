@@ -20,20 +20,23 @@ class MigrateSQLMap extends MigrateMap {
   }
 
   /**
-   * Qualifying the map table name with the database name and any prefix makes
-   * cross-db joins possible. Note this will not work with prefixes - we will
-   * omit prepending the database name if we're in the default connection, just
-   * so we don't break simpletest.
+   * Qualifying the map table name with the database name makes cross-db joins
+   * possible. Note that, because prefixes are applied after we do this (i.e.,
+   * it will prefix the string we return), we do not qualify the table if it has
+   * a prefix. This will work fine when the source data is in the default
+   * (prefixed) database (in particular, for simpletest), but not if the primary
+   * query is in an external database.
    *
    * @return string
    */
   public function getQualifiedMapTable() {
-    if ($this->connection->getKey() != 'default') {
-      $options = $this->connection->getConnectionOptions();
-      return $options['database'] . '.' . $this->mapTable;
+    $options = $this->connection->getConnectionOptions();
+    $prefix = $this->connection->tablePrefix($this->mapTable);
+    if ($prefix) {
+      return $this->mapTable;
     }
     else {
-      return $this->mapTable;
+      return $options['database'] . '.' . $this->mapTable;
     }
   }
 

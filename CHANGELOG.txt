@@ -6,7 +6,8 @@ Features and enhancements
 - #1403044 - Added menu destination plugins.
 
 Bug fixes
-- #1518064 - Updrade needs to check field existence.
+- #1520688 - setDisplayFunction needs to be static.
+- #1518064 - Upgrade needs to check field existence.
 - #1518008 - Upgrade uses obsolete db_column_exists API.
 - #1308268 - Term migration should link to pre-existing terms.
 

@@ -163,12 +163,12 @@ class BeerUserMigration extends BasicExampleMigration {
     parent::__construct();
     $this->description = t('Beer Drinkers of the world');
     $this->map = new MigrateSQLMap($this->machineName,
-        array('aid' => array(
-                'type' => 'int',
-                'not null' => TRUE,
-                'description' => 'Account ID.'
-                )
-             ),
+      array('aid' => array(
+              'type' => 'int',
+              'not null' => TRUE,
+              'description' => 'Account ID.'
+              )
+           ),
         MigrateDestinationUser::getKeySchema()
     );
     $query = db_select('migrate_example_beer_account', 'mea')

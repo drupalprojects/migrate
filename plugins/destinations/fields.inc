@@ -17,6 +17,21 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
       foreach ($content_info['content types'][$bundle]['fields'] as $machine_name => $instance) {
         $fields[$machine_name] = t('Node:') . ' ' . $instance['widget']['label'] .
           ' (' . $instance['type'] . ')';
+
+        // Look for subfields
+        $class_list = _migrate_class_list('MigrateFieldHandler');
+        $disabled = unserialize(variable_get('migrate_disabled_handlers', serialize(array())));
+        foreach ($class_list as $class_name => $handler) {
+          if (!in_array($class_name, $disabled) && $handler->handlesType($type)
+              && method_exists($handler, 'fields')) {
+            migrate_instrument_start($class_name . '->fields');
+            $subfields = call_user_func(array($handler, 'fields'), $type);
+            migrate_instrument_stop($class_name . '->fields');
+            foreach ($subfields as $subfield_name => $subfield_label) {
+              $fields[$machine_name . ':' . $subfield_name] = $subfield_label;
+            }
+          }
+        }
       }
     }
     return $fields;
@@ -27,7 +42,6 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
     // Look for Field API fields attached to this destination and handle appropriately
     $migration = Migration::currentMigration();
     $destination = $migration->getDestination();
-    $entity_type = $destination->getEntityType();
     $bundle = $destination->getBundle();
     $info = content_types($bundle);
     $instances = $info['fields'];

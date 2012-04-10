@@ -285,18 +285,19 @@ class MigrateSourceSQL extends MigrateSource {
           $map_join .= "$field_name = map.$map_key";
         }
 
-        $this->query->leftJoin($this->activeMap->getQualifiedMapTable(), 'map', $map_join);
-        $conditions->isNull('map.sourceid1');
-        $conditions->condition('map.needs_update', MigrateMap::STATUS_NEEDS_UPDATE);
+        $alias = $this->query->leftJoin($this->activeMap->getQualifiedMapTable(),
+                                        'map', $map_join);
+        $conditions->isNull($alias . '.sourceid1');
+        $conditions->condition($alias . '.needs_update', MigrateMap::STATUS_NEEDS_UPDATE);
         $condition_added = TRUE;
 
         // And as long as we have the map table, add its data to the row.
         $count = 1;
         foreach ($this->activeMap->getDestinationKey() as $field_name => $field_schema) {
           $map_key = 'destid' . $count++;
-          $this->query->addField('map', $map_key, "migrate_map_$map_key");
+          $this->query->addField($alias, $map_key, "migrate_map_$map_key");
         }
-        $this->query->addField('map', 'needs_update', 'migrate_map_needs_update');
+        $this->query->addField($alias, 'needs_update', 'migrate_map_needs_update');
       }
       // 3. If we are using highwater marks, also include rows above the mark.
       if (isset($this->highwaterField['name'])) {

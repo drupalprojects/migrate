@@ -57,7 +57,6 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields = array();
     // First the core (node table) properties
     $fields['nid'] = t('Node: Existing node ID');
-    $fields['is_new'] = t('Node: Indicates a new node with the specified nid should be created');
     $fields['uid'] = t('Node: Authored by (uid)');
     $fields['revision_uid'] = t('Node: Modified (uid)');
     $fields['created'] = t('Node: Created timestamp');
@@ -69,6 +68,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     $fields['log'] = t('Node: Revision Log message');
     $fields['language'] = t('Node: Language (fr, en, ...)');
     $fields['tnid'] = t('Node: The translation set id for this node');
+    $fields['is_new'] = t('Option: Indicates a new node with the specified nid should be created');
 
     $node_type = node_type_load($this->bundle);
     if ($node_type->has_title) {

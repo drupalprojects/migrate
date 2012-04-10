@@ -15,9 +15,25 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
     $field_instance_info = field_info_instances($entity_type, $bundle);
     foreach ($field_instance_info as $machine_name => $instance) {
       $field_info = field_info_field($machine_name);
+      $type = $field_info['type'];
 
       $fields[$machine_name] = t('Field:') . ' ' . $instance['label'] .
         ' (' . $field_info['type'] . ')';
+
+      // Look for subfields
+      $class_list = _migrate_class_list('MigrateFieldHandler');
+      $disabled = unserialize(variable_get('migrate_disabled_handlers', serialize(array())));
+      foreach ($class_list as $class_name => $handler) {
+        if (!in_array($class_name, $disabled) && $handler->handlesType($type)
+            && method_exists($handler, 'fields')) {
+          migrate_instrument_start($class_name . '->fields');
+          $subfields = call_user_func(array($handler, 'fields'), $type);
+          migrate_instrument_stop($class_name . '->fields');
+          foreach ($subfields as $subfield_name => $subfield_label) {
+            $fields[$machine_name . ':' . $subfield_name] = $subfield_label;
+          }
+        }
+      }
     }
 
     return $fields;
@@ -44,7 +60,6 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
     }
     migrate_instrument_stop('MigrateDestinationEntity->prepareFields');
   }
-
 
   public function complete($entity, stdClass $row) {
     migrate_instrument_start('MigrateDestinationEntity->completeFields');
@@ -179,6 +194,18 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     return $arguments;
   }
 
+  public function fields($type) {
+    $fields = array();
+    if ($type == 'text_with_summary') {
+      $fields['summary'] = t('Subfield: Summary of field contents');
+    }
+    $fields += array(
+      'format' => t('Subfield: Text format for the field'),
+      'language' => t('Subfield: Language for the field'),
+    );
+    return $fields;
+  }
+
   public function prepare($entity, array $field_info, array $instance, array $values) {
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
@@ -260,8 +287,14 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     $this->registerTypes(array('taxonomy_term_reference'));
   }
 
+  public function fields($type) {
+    return array(
+      'source_type' => t('Option: Set to \'tid\' when the value is a source ID'),
+      'create_term' => t('Option: Set to TRUE to create referenced terms when necessary')
+    );
+  }
+
   public function prepare($entity, array $field_info, array $instance, array $values) {
-    $migration = Migration::currentMigration();
     if (isset($values['arguments'])) {
       $arguments = $values['arguments'];
       unset($values['arguments']);
@@ -324,6 +357,21 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
 class MigrateFileFieldHandler extends MigrateFieldHandler {
   public function __construct() {
     $this->registerTypes(array('file', 'image'));
+  }
+
+  public function fields($type) {
+    $fields = array(
+      'source_path' => t('Subfield: Path to source file.'),
+      'language' => t('Subfield: Language of the text (defaults to destination language)'),
+      'alt' => t('Subfield: String to be used as the alt value'),
+      'title' => t('Subfield: String to be used as the title value'),
+      'description' => t('Subfield: String to be used as the description value'),
+      'display' => t('Subfield: String to be used as the display value'),
+      'file_function' => t('Option: file_fast, file_move, file_copy, file_link, file_fid, or file_blob.'),
+      'file_replace' => t('Option: Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.'),
+      'preserve_files' => t('Option: Boolean indicating whether files should be preserved or deleted on rollback'),
+    );
+    return $fields;
   }
 
   /**
@@ -700,6 +748,8 @@ class MigrateFileFieldHandler extends MigrateFieldHandler {
    *   String to be used as the display value for all file fields, or
    *   array('source_field' => 'source_field_name') to obtain the display value from
    *   the query field named source_field_name.
+   * @param preserve_files
+   *   Boolean indicating whether files should be preserved or deleted on rollback.
    */
  static function arguments($source_path = NULL, $file_function = 'file_copy',
       $file_replace = FILE_EXISTS_RENAME, $language = NULL, $alt = NULL, $title = NULL,

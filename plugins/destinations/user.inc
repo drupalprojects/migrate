@@ -74,7 +74,6 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields = array();
     // First the core (users table) properties
     $fields['uid'] = t('User: Existing user ID');
-    $fields['is_new'] = t('User: Indicates a new user with the specified uid should be created');
     $fields['name'] = t('User: Username');
     $fields['pass'] = t('User: Password (plain text)');
     $fields['mail'] = t('User: Email address');
@@ -90,6 +89,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields['language'] = t('User: Language');
     $fields['picture'] = t('User: Picture');
     $fields['init'] = t('User: Init');
+    $fields['is_new'] = t('Option: Indicates a new user with the specified uid should be created');
 
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);

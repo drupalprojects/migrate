@@ -6,6 +6,7 @@ Features and enhancements
 - #1403044 - Added menu destination plugins.
 
 Bug fixes
+- #1518076 - UI side of subfield handling.
 - #1480762 - Fix cross-database joins to map table.
 - #1520688 - setDisplayFunction needs to be static.
 - #1518064 - Upgrade needs to check field existence.

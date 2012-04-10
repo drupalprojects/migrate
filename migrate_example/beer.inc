@@ -164,11 +164,11 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->description = t('Beer Drinkers of the world');
     $this->map = new MigrateSQLMap($this->machineName,
         array('aid' => array(
-                'type' => 'int',
-                'not null' => TRUE,
-                'description' => 'Account ID.'
-                )
-             ),
+              'type' => 'int',
+              'not null' => TRUE,
+              'description' => 'Account ID.'
+              )
+        ),
         MigrateDestinationUser::getKeySchema()
     );
     $query = db_select('migrate_example_beer_account', 'mea')
@@ -223,7 +223,7 @@ class BeerUserMigration extends BasicExampleMigration {
     // This is a shortcut you can use to mark several destination fields as DNM
     // at once
     $this->addUnmigratedDestinations(array('theme', 'signature', 'access', 'login',
-      'timezone', 'language', 'picture', 'is_new'));
+      'timezone', 'language', 'picture', 'is_new', 'signature_format', 'init'));
 
     // Oops, we made a typo - this should have been 'init'! If you have
     // migrate_ui enabled, look at the BeerUser info page - you'll see that it
@@ -338,8 +338,14 @@ class BeerNodeMigration extends BasicExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('name', 'created', 'changed', 'status',
-      'promote', 'revision', 'language'));
+    $this->addUnmigratedDestinations(array('created', 'changed', 'status',
+      'promote', 'revision', 'language', 'revision_uid', 'log', 'tnid',
+      'body:format', 'body:language', 'migrate_example_beer_styles:source_type',
+      'migrate_example_beer_styles:create_term', 'field_migrate_example_image:source_path',
+      'field_migrate_example_image:language', 'field_migrate_example_image:display',
+      'field_migrate_example_image:file_function', 'field_migrate_example_image:file_replace',
+      'field_migrate_example_image:preserve_files', 'field_migrate_example_country:format',
+      'field_migrate_example_country:language', 'comment'));
   }
 }
 
@@ -382,7 +388,7 @@ class BeerCommentMigration extends BasicExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('user_name', 'user_email', 'hostname',
-      'created', 'changed', 'thread', 'homepage', 'language'));
+    $this->addUnmigratedDestinations(array('hostname', 'created', 'changed',
+      'thread', 'homepage', 'language', 'comment_body:format', 'comment_body:language'));
   }
 }

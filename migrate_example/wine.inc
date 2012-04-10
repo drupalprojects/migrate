@@ -180,7 +180,7 @@ class WineFileCopyMigration extends AdvancedExampleMigration {
     // Just map the incoming URL to the destination's 'uri'
     $this->addFieldMapping('uri', 'url');
     $this->addUnmigratedDestinations(array('fid', 'uid', 'filename', 'status',
-      'filemime', 'timestamp'));
+      'filemime', 'timestamp', 'contents'));
   }
 }
 
@@ -220,10 +220,10 @@ class WineFileBlobMigration extends AdvancedExampleMigration {
          ->defaultValue('druplicon.png');
     $this->addFieldMapping('contents', 'imageblob')
          ->description('An image blob in the DB');
-    $this->addFieldMapping('timestamp', 'CREATED');
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('fid', 'uri', 'filemime', 'status'));
+    $this->addUnmigratedDestinations(array('fid', 'uri', 'filemime', 'status',
+                                     'timestamp'));
   }
 }
 
@@ -407,7 +407,9 @@ class WineProducerMigration extends AdvancedExampleMigration {
 
     // Unmapped destination fields
     $this->addUnmigratedDestinations(array('is_new', 'name', 'created', 'changed',
-      'status', 'promote', 'revision', 'language'));
+      'status', 'promote', 'revision', 'language', 'revision_uid', 'log', 'tnid',
+      'body:format', 'body:language', 'migrate_example_wine_regions:source_type',
+      'migrate_example_wine_regions:create_term', 'comment'));
   }
 }
 
@@ -486,6 +488,12 @@ class WineProducerXMLMigration extends XMLMigration {
          ->xpath('/producer/region');
     $this->addFieldMapping('body', 'description')
          ->xpath('/producer/description');
+
+    $this->addUnmigratedDestinations(array('revision_uid', 'created', 'changed',
+      'status', 'promote', 'sticky', 'revision', 'log', 'language', 'tnid',
+      'is_new', 'body:summary', 'body:format', 'body:language',
+      'migrate_example_wine_regions:source_type', 'migrate_example_wine_regions:create_term',
+      'comment'));
   }
 }
 
@@ -571,6 +579,12 @@ class WineProducerMultiXMLMigration extends XMLMigration {
          ->xpath('region');
     $this->addFieldMapping('body', 'description')
          ->xpath('description');
+
+    $this->addUnmigratedDestinations(array('revision_uid', 'created', 'changed',
+      'status', 'promote', 'sticky', 'revision', 'log', 'language', 'tnid',
+      'is_new', 'body:summary', 'body:format', 'body:language',
+      'migrate_example_wine_regions:source_type', 'migrate_example_wine_regions:create_term',
+      'comment'));
   }
 }
 
@@ -640,6 +654,12 @@ class WineProducerXMLPullMigration extends XMLMigration {
          ->xpath('region');
     $this->addFieldMapping('body', 'description')
          ->xpath('description');
+
+    $this->addUnmigratedDestinations(array('revision_uid', 'created', 'changed',
+      'status', 'promote', 'sticky', 'revision', 'log', 'language', 'tnid',
+      'is_new', 'body:summary', 'body:format', 'body:language',
+      'migrate_example_wine_regions:source_type', 'migrate_example_wine_regions:create_term',
+      'comment'));
   }
 }
 
@@ -754,8 +774,17 @@ class WineWineMigration extends AdvancedExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('is_new', 'status', 'promote',
-      'revision', 'language'));
+    $this->addUnmigratedDestinations(array('revision_uid', 'status', 'promote',
+      'revision', 'log', 'language', 'tnid', 'is_new', 'body:format',
+      'body:language', 'migrate_example_wine_regions:source_type',
+      'migrate_example_wine_regions:create_term', 'comment',
+      'migrate_example_wine_varieties:source_type', 'migrate_example_wine_varieties:create_term',
+      'migrate_example_wine_best_with:source_type', 'migrate_example_wine_best_with:create_term',
+      'field_migrate_example_image:source_path', 'field_migrate_example_image:language',
+      'field_migrate_example_image:alt', 'field_migrate_example_image:title',
+      'field_migrate_example_image:description', 'field_migrate_example_image:display',
+      'field_migrate_example_image:file_function', 'field_migrate_example_image:file_replace',
+      'field_migrate_example_image:preserve_files'));
   }
 
   protected function addTitlePrefix($source_title) {
@@ -844,7 +873,8 @@ class WineCommentMigration extends AdvancedExampleMigration {
     // No unmapped source fields
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('thread', 'language'));
+    $this->addUnmigratedDestinations(array('thread', 'language',
+      'comment_body:format', 'comment_body:language'));
   }
 }
 
@@ -970,8 +1000,17 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('sticky');
     $this->addFieldMapping('created');
     $this->addFieldMapping('changed');
-    $this->addUnmigratedDestinations(array('is_new', 'status', 'promote',
-      'revision', 'language'));
+    $this->addUnmigratedDestinations(array('revision_uid', 'status', 'promote',
+      'revision', 'log', 'language', 'tnid', 'is_new', 'body:format',
+      'body:language', 'migrate_example_wine_regions:source_type',
+      'migrate_example_wine_regions:create_term', 'comment',
+      'migrate_example_wine_varieties:source_type', 'migrate_example_wine_varieties:create_term',
+      'migrate_example_wine_best_with:source_type', 'migrate_example_wine_best_with:create_term',
+      'field_migrate_example_image:source_path', 'field_migrate_example_image:language',
+      'field_migrate_example_image:alt', 'field_migrate_example_image:title',
+      'field_migrate_example_image:description', 'field_migrate_example_image:display',
+      'field_migrate_example_image:file_function', 'field_migrate_example_image:file_replace',
+      'field_migrate_example_image:preserve_files'));
   }
 }
 

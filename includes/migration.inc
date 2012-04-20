@@ -810,7 +810,7 @@ abstract class Migration extends MigrationBase {
 
         // When updating existing items, make sure we don't create a destination
         // field that is not mapped to anything (a source field or a default value)
-        if (!$source && !$default) {
+        if (!$source && !isset($default)) {
           continue;
         }
 

@@ -2,7 +2,15 @@
 Next release
 ============
 
+IMPORTANT: The file migration support (both MigrateDestinationFile and
+the file field handler) has been completely refactored for this release - if you
+are importing files as part of your migration, you MUST change your migrations
+to properly use the new implementation. See http://drupal.org/node/1540106 for
+details on how to use the new handlers and destination.
+
 Features and enhancements
+- #1240928 - File handling completely refactored - see note above.
+- #1279778 - Improved method for mapping options and subfields.
 - #1403044 - Added menu destination plugins.
 
 Bug fixes

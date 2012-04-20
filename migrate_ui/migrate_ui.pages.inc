@@ -552,7 +552,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     $destKey = $destination->getKeySchema();
     $header = array(t('Machine name'), t('Description'));
     $rows = array();
-    foreach ($destination->fields() as $machine_name => $description) {
+    foreach ($destination->fields($migration) as $machine_name => $description) {
       $classes = array();
       if (isset($destKey[$machine_name])) {
         // Identify primary key
@@ -618,7 +618,7 @@ function migrate_migration_info($form, $form_state, $migration) {
     // First group the mappings
     $descriptions = array();
     $source_fields = $source->fields();
-    $destination_fields = $destination->fields();
+    $destination_fields = $destination->fields($migration);
 
     foreach ($field_mappings as $mapping) {
       // Validate source and destination fields actually exist

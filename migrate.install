@@ -343,3 +343,12 @@ function migrate_update_7008() {
 
   return $ret;
 }
+
+/**
+ * Warn that there have been incompatible changes to file handling.
+ */
+function migrate_update_7201() {
+  return t('File field and destination handling has been completely refactored
+    - if you are migrating files, you will need to change your migration
+    implementation to reflect these changes.');
+}

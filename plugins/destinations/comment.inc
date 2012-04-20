@@ -56,11 +56,13 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
    * Returns a list of fields available to be mapped for comments attached to
    * a particular bundle (node type)
    *
+   * @param Migration $migration
+   *  Optionally, the migration containing this destination.
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
+  public function fields($migration = NULL) {
     $fields = array();
     // First the core (comment table) properties
     $fields['cid'] = t('Comment: Existing comment ID');
@@ -79,8 +81,8 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     $fields['language'] = t('Comment: Language');
 
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);
-    $fields += migrate_handler_invoke_all('Comment', 'fields', $this->entityType, $this->bundle);
+    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle, $migration);
+    $fields += migrate_handler_invoke_all('Comment', 'fields', $this->entityType, $this->bundle, $migration);
 
     return $fields;
   }

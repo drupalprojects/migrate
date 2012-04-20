@@ -33,11 +33,13 @@ class MigrateDestinationMenu extends MigrateDestination {
   /**
    * Returns a list of fields available to be mapped for menus.
    *
+   * @param Migration $migration
+   *  Optionally, the migration containing this destination.
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
+  public function fields($migration = NULL) {
     $fields = array(
       'menu_name' => t('The menu name. Primary key.'),
       'title' => t('The human-readable name of the menu.'),

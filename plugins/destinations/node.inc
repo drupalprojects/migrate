@@ -49,11 +49,13 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   /**
    * Returns a list of fields available to be mapped for the node type (bundle)
    *
+   * @param Migration $migration
+   *  Optionally, the migration containing this destination.
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
+  public function fields($migration = NULL) {
     $fields = array();
     // First the core (node table) properties
     $fields['nid'] = t('Node: Existing node ID');
@@ -76,8 +78,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     }
 
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);
-    $fields += migrate_handler_invoke_all('Node', 'fields', $this->entityType, $this->bundle);
+    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle, $migration);
+    $fields += migrate_handler_invoke_all('Node', 'fields', $this->entityType, $this->bundle, $migration);
 
     return $fields;
   }
@@ -193,6 +195,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
     // Invoke migration prepare handlers
     $this->prepare($node, $row);
+
     if (!isset($node->revision)) {
       $node->revision = 0; // Saves disk space and writes. Can be overridden.
     }

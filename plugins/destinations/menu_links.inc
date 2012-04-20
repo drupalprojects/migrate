@@ -31,11 +31,13 @@ class MigrateDestinationMenuLinks extends MigrateDestination {
   /**
    * Returns a list of fields available to be mapped for menu links.
    *
+   * @param Migration $migration
+   *  Optionally, the migration containing this destination.
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
+  public function fields($migration = NULL) {
     $fields = array(
       'menu_name' => t('The menu name. All links with the same menu name (such as \'navigation\') are part of the same menu.'),
       'mlid' => t('The menu link ID (mlid) is the integer primary key.'),

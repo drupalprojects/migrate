@@ -74,8 +74,7 @@ class MigrateListFiles extends MigrateList {
     if (isset($files)) {
       return $this->getIDsFromFiles($files);
     }
-    $migration = Migration::currentMigration();
-    $migration->showMessage(t('Loading of !listuri failed:', array('!listuri' => $this->listUri)));
+    Migration::displayMessage(t('Loading of !listuri failed:', array('!listuri' => $this->listUri)));
     return NULL;
   }
 

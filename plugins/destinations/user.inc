@@ -66,11 +66,13 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
   /**
    * Returns a list of fields available to be mapped for users
    *
+   * @param Migration $migration
+   *  Optionally, the migration containing this destination.
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
+  public function fields($migration = NULL) {
     $fields = array();
     // First the core (users table) properties
     $fields['uid'] = t('User: Existing user ID');
@@ -92,8 +94,8 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     $fields['is_new'] = t('Option: Indicates a new user with the specified uid should be created');
 
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle);
-    $fields += migrate_handler_invoke_all('User', 'fields', $this->entityType, $this->bundle);
+    $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle, $migration);
+    $fields += migrate_handler_invoke_all('User', 'fields', $this->entityType, $this->bundle, $migration);
 
     return $fields;
   }

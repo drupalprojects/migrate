@@ -353,7 +353,7 @@ function drush_migrate_fields_destination($args = NULL) {
       $destination = $migration->getDestination();
       if (method_exists($destination, 'fields')) {
         $table = array();
-        foreach ($destination->fields() as $machine_name => $description) {
+        foreach ($destination->fields($migration) as $machine_name => $description) {
           $table[] = array($description, $machine_name);
         }
         drush_print_table($table);
@@ -409,7 +409,7 @@ function drush_migrate_mappings($args = NULL) {
         $destination = $migration->getDestination();
         $dest_descriptions = array();
         if (method_exists($destination, 'fields')) {
-          foreach ($destination->fields() as $machine_name => $description) {
+          foreach ($destination->fields($migration) as $machine_name => $description) {
             $dest_descriptions[$machine_name] = $description;
           }
         }
@@ -552,7 +552,7 @@ function drush_migrate_audit($args = NULL) {
         $destination_fields = array();
       }
       else {
-        $destination_fields = $destination->fields();
+        $destination_fields = $destination->fields($migration);
       }
 
       if (!method_exists($migration, 'getFieldMappings')) {

@@ -326,26 +326,27 @@ class BeerNodeMigration extends BasicExampleMigration {
     $this->addFieldMapping('body:summary', 'excerpt');
 
     // Copy an image file, write DB record to files table, and save in Field storage.
-    // Note how we specify the source query fields that will map to the file
-    // alt/title/description values.
-    $arguments = MigrateFileFieldHandler::arguments(drupal_get_path('module', 'migrate_example'));
-    $this->addFieldMapping('field_migrate_example_image', 'image')
-         ->arguments($arguments);
+    // We map the filename (relative to the source_dir below) to the field itself.
+    $this->addFieldMapping('field_migrate_example_image', 'image');
+    // Here we specify the directory containing the source files.
+    $this->addFieldMapping('field_migrate_example_image:source_dir')
+         ->defaultValue(drupal_get_path('module', 'migrate_example'));
+    // And we map the alt and title values in the database to those on the image.
     $this->addFieldMapping('field_migrate_example_image:alt', 'image_alt');
     $this->addFieldMapping('field_migrate_example_image:title', 'image_title');
-    $this->addFieldMapping('field_migrate_example_image:description', 'image_description');
 
-    // No unmapped source fields
+    // No description for images, only alt and title
+    $this->addUnmigratedSources(array('image_description'));
 
     // Unmapped destination fields
     $this->addUnmigratedDestinations(array('created', 'changed', 'status',
       'promote', 'revision', 'language', 'revision_uid', 'log', 'tnid',
       'body:format', 'body:language', 'migrate_example_beer_styles:source_type',
-      'migrate_example_beer_styles:create_term', 'field_migrate_example_image:source_path',
-      'field_migrate_example_image:language', 'field_migrate_example_image:display',
-      'field_migrate_example_image:file_function', 'field_migrate_example_image:file_replace',
+      'migrate_example_beer_styles:create_term', 'field_migrate_example_image:destination_dir',
+      'field_migrate_example_image:language', 'field_migrate_example_image:file_replace',
       'field_migrate_example_image:preserve_files', 'field_migrate_example_country:format',
-      'field_migrate_example_country:language', 'comment'));
+      'field_migrate_example_country:language', 'comment',
+      'field_migrate_example_image:file_class', 'field_migrate_example_image:destination_file'));
   }
 }
 

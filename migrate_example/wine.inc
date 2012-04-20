@@ -173,14 +173,14 @@ class WineFileCopyMigration extends AdvancedExampleMigration {
              ->isNull('wineid');
     $this->source = new MigrateSourceSQL($query);
 
-    // TIP: Set copy_file to copy the file from its source (which could be a
-    // remote server, i.e. the uri is of the form http://example.com/images/foo.jpg).
-    $this->destination = new MigrateDestinationFile(array('copy_file' => TRUE));
+    $this->destination = new MigrateDestinationFile();
 
-    // Just map the incoming URL to the destination's 'uri'
-    $this->addFieldMapping('uri', 'url');
-    $this->addUnmigratedDestinations(array('fid', 'uid', 'filename', 'status',
-      'filemime', 'timestamp', 'contents'));
+    // In the simplest case, just map the incoming URL to 'value'.
+    $this->addFieldMapping('value', 'url');
+
+    $this->addUnmigratedDestinations(array('fid', 'uid', 'timestamp',
+      'destination_dir', 'destination_file', 'source_dir', 'preserve_files',
+      'file_replace'));
   }
 }
 
@@ -207,23 +207,24 @@ class WineFileBlobMigration extends AdvancedExampleMigration {
              ->fields('wf', array('imageid', 'imageblob'));
     $this->source = new MigrateSourceSQL($query);
 
-    $options = array(
-      'copy_blob' => TRUE,
-      'copy_destination' => 'public://', // This is the default. Specified for completeness.
-    );
-    $this->destination = new MigrateDestinationFile($options);
+    // Note that the WineFileCopyMigration example let the second argument,
+    // the file_class, to default to MigrateFileUri, indicating that the
+    // 'value' we're passing was a URI. In this case, we're passing a blob, so
+    // tell the destination to expect it.
+    $this->destination = new MigrateDestinationFile('file', 'MigrateFileBlob');
 
     // Basic fields
     $this->addFieldMapping('uid')
          ->defaultValue(1);
-    $this->addFieldMapping('filename')
+    // The destination filename must be specified for blobs
+    $this->addFieldMapping('destination_file')
          ->defaultValue('druplicon.png');
-    $this->addFieldMapping('contents', 'imageblob')
+    $this->addFieldMapping('value', 'imageblob')
          ->description('An image blob in the DB');
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('fid', 'uri', 'filemime', 'status',
-                                     'timestamp'));
+    $this->addUnmigratedDestinations(array('fid', 'timestamp',
+      'destination_dir', 'file_replace', 'preserve_files'));
   }
 }
 
@@ -706,7 +707,9 @@ class WineWineMigration extends AdvancedExampleMigration {
       'wineid' => t('Wine ID in the old system'),
       'name' => t('The name of the wine'),
       'best_vintages' => t('What years were best for this wine?'),
-      'images' => t('Images attached to this wine; populated in prepareRow()'),
+      'url' => t('Image URLs attached to this wine; populated in prepareRow()'),
+      'image_alt' => t('Image alt text attached to this wine; populated in prepareRow()'),
+      'image_title' => t('Image titles attached to this wine; populated in prepareRow()'),
     );
 
     // TIP: By default, each time a migration is run, any previously unimported source items
@@ -761,10 +764,17 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('body', 'body')
          ->callbacks(array($this, 'addTitlePrefix'), 'drupal_strtoupper');
     $this->addFieldMapping('body:summary', 'excerpt');
+
     // We will get the image data from a related table in prepareRow()
-    $arguments = MigrateFileFieldHandler::arguments(NULL, 'file_copy', FILE_EXISTS_REPLACE);
-    $this->addFieldMapping('field_migrate_example_image', 'images')
-         ->arguments($arguments);
+    $this->addFieldMapping('field_migrate_example_image', 'url');
+    // Indicate that we want each file to maintain its name, replacing any
+    // previous file of the same name (as opposed to being renamed to avoid
+    // collisions, which is the default).
+    $this->addFieldMapping('field_migrate_example_image:file_replace')
+         ->defaultValue(FILE_EXISTS_REPLACE);
+    $this->addFieldMapping('field_migrate_example_image:alt', 'image_alt');
+    $this->addFieldMapping('field_migrate_example_image:title', 'image_title');
+
     $this->addFieldMapping('sticky')
          ->defaultValue(0);
     // These are already UNIX timestamps, so just pass through
@@ -780,11 +790,10 @@ class WineWineMigration extends AdvancedExampleMigration {
       'migrate_example_wine_regions:create_term', 'comment',
       'migrate_example_wine_varieties:source_type', 'migrate_example_wine_varieties:create_term',
       'migrate_example_wine_best_with:source_type', 'migrate_example_wine_best_with:create_term',
-      'field_migrate_example_image:source_path', 'field_migrate_example_image:language',
-      'field_migrate_example_image:alt', 'field_migrate_example_image:title',
-      'field_migrate_example_image:description', 'field_migrate_example_image:display',
-      'field_migrate_example_image:file_function', 'field_migrate_example_image:file_replace',
-      'field_migrate_example_image:preserve_files'));
+      'field_migrate_example_image:language', 'field_migrate_example_image:preserve_files',
+      'field_migrate_example_image:source_dir', 'field_migrate_example_image:destination_dir',
+      'field_migrate_example_image:destination_file', 'field_migrate_example_image:file_class',
+    ));
   }
 
   protected function addTitlePrefix($source_title) {
@@ -806,21 +815,16 @@ class WineWineMigration extends AdvancedExampleMigration {
       $current_row->best_vintages[] = $row->vintage;
     }
 
-    // An advanced feature of the file field handler is that in addition to the
-    // path to the image itself, we can add image properties like ALT text,
-    // encapsulating them as JSON
+    // We can have multiple files per node, so we pull them here along with
+    // their related data (alt/title).
     $result = db_select('migrate_example_wine_files', 'f')
               ->fields('f', array('url', 'image_alt', 'image_title'))
               ->condition('wineid', $source_id)
               ->execute();
-    $current_row->images = array();
     foreach ($result as $row) {
-      $image_data = array(
-        'path' => $row->url,
-        'alt' => $row->image_alt,
-        'title' => $row->image_title,
-      );
-      $current_row->images[] = drupal_json_encode($image_data);
+      $current_row->url[] = $row->url;
+      $current_row->image_alt[] = $row->image_alt;
+      $current_row->image_title[] = $row->image_title;
     }
 
     // We could also have used this function to decide to skip a row, in cases
@@ -1000,17 +1004,17 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
     $this->addFieldMapping('sticky');
     $this->addFieldMapping('created');
     $this->addFieldMapping('changed');
-    $this->addUnmigratedDestinations(array('revision_uid', 'status', 'promote',
-      'revision', 'log', 'language', 'tnid', 'is_new', 'body:format',
+    $this->addUnmigratedDestinations(array('title', 'revision_uid', 'status', 'promote',
+      'revision', 'log', 'language', 'tnid', 'is_new', 'body:format', 'body:summary',
       'body:language', 'migrate_example_wine_regions:source_type',
       'migrate_example_wine_regions:create_term', 'comment',
       'migrate_example_wine_varieties:source_type', 'migrate_example_wine_varieties:create_term',
       'migrate_example_wine_best_with:source_type', 'migrate_example_wine_best_with:create_term',
-      'field_migrate_example_image:source_path', 'field_migrate_example_image:language',
+      'field_migrate_example_image:language', 'field_migrate_example_image:destination_dir',
       'field_migrate_example_image:alt', 'field_migrate_example_image:title',
-      'field_migrate_example_image:description', 'field_migrate_example_image:display',
-      'field_migrate_example_image:file_function', 'field_migrate_example_image:file_replace',
-      'field_migrate_example_image:preserve_files'));
+      'field_migrate_example_image:file_class', 'field_migrate_example_image:file_replace',
+      'field_migrate_example_image:preserve_files', 'field_migrate_example_image:destination_file',
+      'field_migrate_example_image:source_dir', 'field_migrate_example_top_vintag'));
   }
 }
 

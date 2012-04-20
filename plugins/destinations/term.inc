@@ -48,11 +48,13 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   /**
    * Returns a list of fields available to be mapped for this vocabulary (bundle)
    *
+   * @param Migration $migration
+   *  Optionally, the migration containing this destination.
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
    */
-  public function fields() {
+  public function fields($migration = NULL) {
     $fields = array();
     // First the core (taxonomy_term_data table) properties
     $fields['tid'] = t('Term: Existing term ID');
@@ -65,8 +67,8 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $fields['parent'] = t('Term: Parent (by Drupal term ID)');
 
     // Then add in anything provided by handlers
-    $fields += migrate_handler_invoke_all('entity', 'fields', $this->entityType, $this->bundle);
-    $fields += migrate_handler_invoke_all('taxonomy_term', 'fields', $this->entityType, $this->bundle);
+    $fields += migrate_handler_invoke_all('entity', 'fields', $this->entityType, $this->bundle, $migration);
+    $fields += migrate_handler_invoke_all('taxonomy_term', 'fields', $this->entityType, $this->bundle, $migration);
 
     return $fields;
   }

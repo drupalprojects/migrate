@@ -282,9 +282,21 @@ function drush_migrate_status($name = NULL) {
       $migrations = migrate_migrations();
     }
 
-    $table[] = array(dt('Name'), dt('Total'), dt('Imported'), dt('Unimported'),
-      dt('Status'), dt('Last imported'));
+    $groups = MigrateGroup::groups();
+    $table = array();
+    foreach ($groups as $group) {
+      $group_members_count = 0;
     foreach ($migrations as $migration) {
+        if ($migration->getGroup() != $group) {
+          // This migration is not from this group.
+          continue;
+        }
+        ++$group_members_count;
+        if ($group_members_count == 1) {
+          // An empty line and the headers.
+          $table[] = array('');
+          $table[] = array(dt('Group: !name', array('!name' => $group->getName())), dt('Total'), dt('Imported'), dt('Unimported'), dt('Status'), dt('Last imported'));
+        }
       $has_counts = TRUE;
       if (method_exists($migration, 'sourceCount')) {
         $total = $migration->sourceCount($refresh);
@@ -332,10 +344,10 @@ function drush_migrate_status($name = NULL) {
           $status = dt('Unknown');
           break;
       }
-      $table[] = array($migration->getMachineName(), $total, $imported, $unimported, $status,
-        $migration->getLastImported());
+        $table[] = array($migration->getMachineName(), $total, $imported, $unimported, $status, $migration->getLastImported());
     }
-    drush_print_table($table, TRUE);
+    }
+    drush_print_table($table);
     }
   catch (MigrateException $e) {
     drush_print($e->getMessage());

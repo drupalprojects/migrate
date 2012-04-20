@@ -12,6 +12,7 @@ Features and enhancements
 - #1240928 - File handling completely refactored - see note above.
 - #1279778 - Improved method for mapping options and subfields.
 - #1403044 - Added menu destination plugins.
+- #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
 - #1537352 - Check limits and status before next().

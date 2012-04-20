@@ -514,16 +514,6 @@ abstract class Migration extends MigrationBase {
     $return = MigrationBase::RESULT_COMPLETED;
 
     foreach ($this->source as $data_row) {
-      if ($this->timeOptionExceeded()) {
-        break;
-      }
-      if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
-        break;
-      }
-      if ($this->itemOptionExceeded()) {
-        break;
-      }
-
       $this->currentSourceKey = $this->source->getCurrentKey();
 
       // Wipe old messages
@@ -571,6 +561,16 @@ abstract class Migration extends MigrationBase {
       // TODO: Should be done in MigrateDestinationEntity
       if (!empty($this->destination->entityType)) {
         entity_get_controller($this->destination->entityType)->resetCache();
+      }
+
+      if ($this->timeOptionExceeded()) {
+        break;
+      }
+      if (($return = $this->checkStatus()) != MigrationBase::RESULT_COMPLETED) {
+        break;
+      }
+      if ($this->itemOptionExceeded()) {
+        break;
       }
     }
 

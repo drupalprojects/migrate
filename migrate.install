@@ -350,5 +350,7 @@ function migrate_update_7008() {
 function migrate_update_7201() {
   return t('File field and destination handling has been completely refactored
     - if you are migrating files, you will need to change your migration
-    implementation to reflect these changes.');
+    implementation to reflect these changes. Please see
+    <a href="@doc">Handling files in Drupal 7</a> for more information',
+    array('@doc' => 'http://drupal.org/node/1540106'));
 }

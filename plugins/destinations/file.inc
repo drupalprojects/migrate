@@ -547,7 +547,7 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
     // file_save() unconditionally sets timestamp - if we have an explicit
     // value we want, we need to set it manually after file_save.
     if (isset($file->timestamp)) {
-      $timestamp = $file->timestamp;
+      $timestamp = MigrationBase::timestamp($file->timestamp);
     }
 
     $file_class = $this->fileClass;

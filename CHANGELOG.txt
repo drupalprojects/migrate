@@ -14,6 +14,7 @@ Features and enhancements
 - #1403044 - Added menu destination plugins.
 
 Bug fixes
+- #1537352 - Check limits and status before next().
 - #1540120 - Zero not working as defaultValue.
 - #1508654 - MigrateSourceQL needs to respect join aliases.
 - #1518076 - UI side of subfield handling.

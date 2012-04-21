@@ -162,7 +162,6 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
         'language' => $this->language,
         'node_type' => $this->bundle,
         'subject' => '',
-        'comment' => '',
         'status' => COMMENT_PUBLISHED,
         'uid' => 0,
         'cid' => 0,

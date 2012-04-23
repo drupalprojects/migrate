@@ -15,6 +15,7 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1408248 - Handle errors in complete() cleanly.
 - #1541882 - Make sure displayFunction is set before calling it.
 - #1529362 - Make proper check if previously imported.
 - #1537076 - Apply languages to each value in a multi-value field.

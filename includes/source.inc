@@ -284,7 +284,7 @@ abstract class MigrateSource implements Iterator {
       }
       // 2. If the row is not in the map (we have never tried to import it before),
       //    we always want to try it.
-      elseif (!isset($row->migrate_map_destid1)) {
+      elseif (!isset($row->migrate_map_sourceid1)) {
         // Fall through
       }
       // 3. If the row is marked as needing update, pass it.

@@ -181,7 +181,13 @@ abstract class MigrateSimpleFieldHandler extends MigrateFieldHandler {
     // Setup the Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
-      $return[$language][$delta][$this->fieldValueKey] = $value;
+      if (is_array($language)) {
+        $current_language = $language[$delta];
+      }
+      else {
+        $current_language = $language;
+      }
+      $return[$current_language][$delta][$this->fieldValueKey] = $value;
       $delta++;
     }
     return isset($return) ? $return : NULL;
@@ -276,7 +282,13 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
         $item['value'] = $value;
       }
 
-      $return[$language][$delta] = $item;
+      if (is_array($language)) {
+        $current_language = $language[$delta];
+      }
+      else {
+        $current_language = $language;
+      }
+      $return[$current_language][$delta] = $item;
       $delta++;
     }
 
@@ -360,8 +372,16 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
 
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
     $result = array();
+    $delta = 0;
     foreach ($tids as $tid) {
-      $result[$language][] = array('tid' => $tid);
+      if (is_array($language)) {
+        $current_language = $language[$delta];
+      }
+      else {
+        $current_language = $language;
+      }
+      $result[$current_language][] = array('tid' => $tid);
+      $delta++;
     }
     return $result;
   }

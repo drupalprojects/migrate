@@ -15,6 +15,7 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1542922 - Fix XML parsing bug.
 - #1538508 - Fix notice when mapping parent_name.
 - #1537352 - Check limits and status before next().
 - #1540120 - Zero not working as defaultValue.

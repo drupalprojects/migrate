@@ -767,8 +767,12 @@ class MigrateXMLReader implements Iterator {
         }
       }
       elseif ($this->reader->nodeType == XMLREADER::END_ELEMENT) {
-        // Trim currentPath as we exit each element
-        unset($this->currentPath[$this->reader->depth]);
+        // Remove this element and any deeper ones from the current path
+        foreach ($this->currentPath as $depth => $name) {
+          if ($depth >= $this->reader->depth) {
+            unset($this->currentPath[$depth]);
+          }
+        }
       }
     }
     migrate_instrument_stop('MigrateXMLReader::next');

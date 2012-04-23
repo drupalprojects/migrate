@@ -358,6 +358,19 @@ abstract class MigrationBase {
   }
 
   /**
+   * Initialize static members, before any class instances are created.
+   */
+  static public function staticInitialize() {
+    // Default the displayFunction outputFunction based on context
+    if (function_exists('drush_log')) {
+      self::$displayFunction = 'drush_log';
+    }
+    else {
+      self::$displayFunction = 'drupal_set_message';
+    }
+  }
+
+  /**
    * Register a new migration process in the migrate_status table. This will
    * generally be used in two contexts - by the class detection code for
    * static (one instance per class) migrations, and by the module implementing
@@ -1051,3 +1064,7 @@ abstract class MigrationBase {
     return $time;
   }
 }
+
+// Make sure static members (in particular, $displayFunction) get
+// initialized even if there are no class instances.
+MigrationBase::staticInitialize();

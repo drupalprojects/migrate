@@ -187,7 +187,7 @@ abstract class MigrateSimpleFieldHandler extends MigrateFieldHandler {
       else {
         $current_language = $language;
       }
-      $return[$current_language][$delta][$this->fieldValueKey] = $value;
+      $return[$current_language][] = array($this->fieldValueKey => $value);
       $delta++;
     }
     return isset($return) ? $return : NULL;
@@ -288,7 +288,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
       else {
         $current_language = $language;
       }
-      $return[$current_language][$delta] = $item;
+      $return[$current_language][] = $item;
       $delta++;
     }
 

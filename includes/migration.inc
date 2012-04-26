@@ -513,7 +513,16 @@ abstract class Migration extends MigrationBase {
   protected function import() {
     $return = MigrationBase::RESULT_COMPLETED;
 
-    foreach ($this->source as $data_row) {
+    try {
+      $this->source->rewind();
+    }
+    catch (Exception $e) {
+      self::displayMessage(t('Migration failed with source plugin exception: !e',
+                             array('!e' => $e->getMessage())));
+      return MigrationBase::RESULT_FAILED;
+    }
+    while ($this->source->valid()) {
+      $data_row = $this->source->current();
       $this->currentSourceKey = $this->source->getCurrentKey();
 
       // Wipe old messages
@@ -571,6 +580,14 @@ abstract class Migration extends MigrationBase {
       }
       if ($this->itemOptionExceeded()) {
         break;
+      }
+      try {
+        $this->source->next();
+      }
+      catch (Exception $e) {
+        self::displayMessage(t('Migration failed with source plugin exception: !e',
+                               array('!e' => $e->getMessage())));
+        return MigrationBase::RESULT_FAILED;
       }
     }
 

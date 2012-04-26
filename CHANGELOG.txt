@@ -6,6 +6,7 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1538046 - Give highwater marks a chance at preparation before using them.
 - #1408248 - Handle errors in complete() cleanly.
 - #1529362 - Make proper check if previously imported.
 - #1542922 - Fix XML parsing bug.

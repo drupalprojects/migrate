@@ -659,6 +659,14 @@ class MigrateXMLReader implements Iterator {
   protected $currentId = NULL;
 
   /**
+   * When matching element names, whether to compare to the namespace-prefixed
+   * name, or the local name.
+   *
+   * @var bool
+   */
+  protected $prefixedName = FALSE;
+
+  /**
    * Prepares our extensions to the XMLReader object.
    *
    * @param $xml_url
@@ -694,6 +702,12 @@ class MigrateXMLReader implements Iterator {
       preg_match_all('|^\[@([^=]+)=[\'"](.*)[\'"]\]$|', $attribute_query, $matches);
       $this->attributeName = $matches[1][0];
       $this->attributeValue = $matches[2][0];
+    }
+
+    // If the element path contains any colons, it must be specifying namespaces,
+    // so we need to compare using the prefixed element name in next().
+    if (strpos($element_path, ':')) {
+      $this->prefixedName = TRUE;
     }
   }
 
@@ -731,7 +745,12 @@ class MigrateXMLReader implements Iterator {
     // matching the input query string (represented in $this->elementsToMatch).
     while ($this->reader->read()) {
       if ($this->reader->nodeType == XMLREADER::ELEMENT) {
-        $this->currentPath[$this->reader->depth] = $this->reader->localName;
+        if ($this->prefixedName) {
+          $this->currentPath[$this->reader->depth] = $this->reader->name;
+        }
+        else {
+          $this->currentPath[$this->reader->depth] = $this->reader->localName;
+        }
         if ($this->currentPath == $this->elementsToMatch) {
           // We're positioned to the right element path - if filtering on an
           // attribute, check that as well before accepting this element.

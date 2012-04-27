@@ -749,7 +749,13 @@ class MigrateXMLReader implements Iterator {
               $dom->appendChild($node);
               $this->currentElement = simplexml_import_dom($node);
               $idnode = $this->currentElement->xpath($this->idQuery);
-              $this->currentId = (string)reset($idnode);
+              if (is_array($idnode)) {
+                $this->currentId = (string)reset($idnode);
+              }
+              else {
+                throw new Exception(t('Failure retrieving ID, xpath: !xpath',
+                  array('!xpath' => $this->idQuery)));
+              }
               break;
             }
             else {

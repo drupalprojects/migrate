@@ -292,6 +292,11 @@ class MigrateSourceSQL extends MigrateSource {
 
         // And as long as we have the map table, add its data to the row.
         $count = 1;
+        foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
+          $map_key = 'sourceid' . $count++;
+          $this->query->addField($alias, $map_key, "migrate_map_$map_key");
+        }
+        $count = 1;
         foreach ($this->activeMap->getDestinationKey() as $field_name => $field_schema) {
           $map_key = 'destid' . $count++;
           $this->query->addField($alias, $map_key, "migrate_map_$map_key");

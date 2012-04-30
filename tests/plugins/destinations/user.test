@@ -154,5 +154,38 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
               ->execute()
               ->fetchField();
     $this->assertEqual($count, 0, t('Messages cleared'));
+
+    // Test deduping
+    // First, do the original import
+    $migration = Migration::getInstance('BeerUser');
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('User import returned RESULT_COMPLETED'));
+    $accounts = db_select('users', 'u')
+                ->fields('u', array('mail', 'name'))
+                ->execute()
+                ->fetchAllKeyed();
+    if (!$this->assertEqual($accounts['alice@example.com'], 'alice', t('alice found'))) {
+      $this->error(t('Expected alice, found !name', array('!name' => $accounts['alice@example.com'])));
+    }
+    if (!$this->assertEqual($accounts['alice2@example.com'], 'alice_2', t('alice_2 found'))) {
+      $this->error(t('Expected alice_2, found !name', array('!name' => $accounts['alice2@example.com'])));
+    }
+
+    // Then, update in place and make sure the usernames did not change
+    $migration->prepareUpdate();
+    $result = $migration->processImport();
+    $this->assertEqual($result, Migration::RESULT_COMPLETED,
+      t('User import returned RESULT_COMPLETED'));
+    $accounts = db_select('users', 'u')
+                ->fields('u', array('mail', 'name'))
+                ->execute()
+                ->fetchAllKeyed();
+    if (!$this->assertEqual($accounts['alice@example.com'], 'alice', t('alice found'))) {
+      $this->error(t('Expected alice, found !name', array('!name' => $accounts['alice@example.com'])));
+    }
+    if (!$this->assertEqual($accounts['alice2@example.com'], 'alice_2', t('alice_2 found'))) {
+      $this->error(t('Expected alice_2, found !name', array('!name' => $accounts['alice2@example.com'])));
+    }
   }
 }

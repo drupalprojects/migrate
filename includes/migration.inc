@@ -868,7 +868,7 @@ abstract class Migration extends MigrationBase {
         // If specified, assure a unique value for this property.
         $dedupe = $mapping->getDedupe();
         if ($dedupe && isset($destination_values)) {
-          $destination_values = $this->handleDedupe($dedupe, $destination_values, $mapping);
+          $destination_values = $this->handleDedupe($dedupe, $destination_values);
         }
 
         // Assign any arguments
@@ -1018,9 +1018,37 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Assign a non-existing value for current mapping.
+   * For fields which require uniqueness, assign a new unique value if necessary.
+   *
+   * @param array $dedupe
+   *  An array with two keys, 'table' the name of the Drupal table and 'column'
+   *  the column within that table where uniqueness must be maintained.
+   * @param $original
+   *  The value coming in, which must be checked for uniqueness.
+   * @return string
+   *  The value to use - either the original, or a variation created by appending
+   *  a sequence number.
    */
-  protected function handleDedupe($dedupe, $original, $mapping) {
+  protected function handleDedupe($dedupe, $original) {
+    // If we're remigrating a previously-existing value, simply running through
+    // our normal process will re-dedupe it - we must be sure to preserve the
+    // previously-written value. Note that this means that you cannot migrate
+    // changes to this field - the originally-migrated value will always
+    // remain, because we can't tell what the original was.
+    if (isset($this->sourceValues->migrate_map_destid1)) {
+      $key_field = key($this->destination->getKeySchema());
+      $existing_value = db_select($dedupe['table'], 't')
+                        ->fields('t', array($dedupe['column']))
+                        ->range(0, 1)
+                        ->condition($key_field, $this->sourceValues->migrate_map_destid1)
+                        ->execute()
+                        ->fetchField();
+      // Note that if, for some reason, we don't find a value, fall through
+      // to the normal deduping process
+      if ($existing_value) {
+        return $existing_value;
+      }
+    }
     $i = 1;
     $candidate = $original;
     while ($candidate_found = db_select($dedupe['table'], 't')

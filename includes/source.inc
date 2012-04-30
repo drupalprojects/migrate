@@ -306,7 +306,8 @@ abstract class MigrateSource implements Iterator {
         // Call prepareRow() here, in case the highwaterField needs preparation
         if ($this->prepareRow($row) !== FALSE) {
           if ($row->{$this->highwaterField['name']} > $this->activeMigration->getHighwater()) {
-            // Fall through
+            $this->currentRow = $row;
+            break;
           }
           else {
             // Skip

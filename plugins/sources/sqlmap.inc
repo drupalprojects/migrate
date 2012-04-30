@@ -182,11 +182,8 @@ class MigrateSQLMap extends MigrateMap {
    */
   public function getRowBySource(array $source_id) {
     migrate_instrument_start('mapRowBySource');
-    $fields = $this->destinationKeyMap;
-    $fields[] = 'needs_update';
-    $fields[] = 'last_imported';
     $query = $this->connection->select($this->mapTable, 'map')
-              ->fields('map', $fields);
+              ->fields('map');
     foreach ($this->sourceKeyMap as $key_name) {
       $query = $query->condition("map.$key_name", array_shift($source_id), '=');
     }
@@ -202,11 +199,8 @@ class MigrateSQLMap extends MigrateMap {
    */
   public function getRowByDestination(array $destination_id) {
     migrate_instrument_start('mapRowByDestination');
-    $fields = $this->sourceKeyMap;
-    $fields[] = 'needs_update';
-    $fields[] = 'last_imported';
     $query = $this->connection->select($this->mapTable, 'map')
-              ->fields('map', $fields);
+              ->fields('map');
     foreach ($this->destinationKeyMap as $key_name) {
       $query = $query->condition("map.$key_name", array_shift($destination_id), '=');
     }

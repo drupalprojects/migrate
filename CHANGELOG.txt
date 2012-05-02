@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1328408 - Support --group on drush migrate-status.
 - #1402822 - Cleaner handling of exceptions from source plugins.
 - #1350284 - Visually group migrations by group in drush.
 

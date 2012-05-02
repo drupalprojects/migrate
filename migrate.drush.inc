@@ -52,6 +52,7 @@ function migrate_drush_command() {
     'description' => 'List all migrations with current status.',
     'options' => array(
       'refresh' => 'Recognize new migrations and update counts',
+      'group' => 'Name of the migration group to list',
     ),
     'arguments' => array(
       'migration' => 'Restrict to a single migration. Optional',
@@ -268,6 +269,7 @@ function drush_migrate_backend_invoke() {
 function drush_migrate_status($name = NULL) {
   try {
     $refresh = drush_get_option('refresh');
+    $group_option = drupal_strtolower(drush_get_option('group'));
 
     // Validate input and load Migration(s).
     if ($name) {
@@ -285,8 +287,11 @@ function drush_migrate_status($name = NULL) {
     $groups = MigrateGroup::groups();
     $table = array();
     foreach ($groups as $group) {
+      if ($group_option && drupal_strtolower($group->getName()) != $group_option) {
+        continue;
+      }
       $group_members_count = 0;
-    foreach ($migrations as $migration) {
+      foreach ($migrations as $migration) {
         if ($migration->getGroup() != $group) {
           // This migration is not from this group.
           continue;
@@ -297,58 +302,58 @@ function drush_migrate_status($name = NULL) {
           $table[] = array('');
           $table[] = array(dt('Group: !name', array('!name' => $group->getName())), dt('Total'), dt('Imported'), dt('Unimported'), dt('Status'), dt('Last imported'));
         }
-      $has_counts = TRUE;
-      if (method_exists($migration, 'sourceCount')) {
-        $total = $migration->sourceCount($refresh);
-        if ($total < 0) {
+        $has_counts = TRUE;
+        if (method_exists($migration, 'sourceCount')) {
+          $total = $migration->sourceCount($refresh);
+          if ($total < 0) {
+            $has_counts = FALSE;
+            $total = dt('N/A');
+          }
+        }
+        else {
           $has_counts = FALSE;
           $total = dt('N/A');
         }
-      }
-      else {
-        $has_counts = FALSE;
-        $total = dt('N/A');
-      }
-      if (method_exists($migration, 'importedCount')) {
-        $imported = $migration->importedCount();
-        $processed = $migration->processedCount();
-      }
-      else {
-        $has_counts = FALSE;
-        $imported = dt('N/A');
-      }
-      if ($has_counts) {
-        $unimported = $total - $processed;
-      }
-      else {
-        $unimported = dt('N/A');
-      }
-      $status = $migration->getStatus();
-      switch ($status) {
-        case MigrationBase::STATUS_IDLE:
-          $status = dt('Idle');
-          break;
-        case MigrationBase::STATUS_IMPORTING:
-          $status = dt('Importing');
-          break;
-        case MigrationBase::STATUS_ROLLING_BACK:
-          $status = dt('Rolling back');
-          break;
-        case MigrationBase::STATUS_STOPPING:
-          $status = dt('Stopping');
-          break;
-        case MigrationBase::STATUS_DISABLED:
-          $status = dt('Disabled');
-          break;
-        default:
-          $status = dt('Unknown');
-          break;
-      }
+        if (method_exists($migration, 'importedCount')) {
+          $imported = $migration->importedCount();
+          $processed = $migration->processedCount();
+        }
+        else {
+          $has_counts = FALSE;
+          $imported = dt('N/A');
+        }
+        if ($has_counts) {
+          $unimported = $total - $processed;
+        }
+        else {
+          $unimported = dt('N/A');
+        }
+        $status = $migration->getStatus();
+        switch ($status) {
+          case MigrationBase::STATUS_IDLE:
+            $status = dt('Idle');
+            break;
+          case MigrationBase::STATUS_IMPORTING:
+            $status = dt('Importing');
+            break;
+          case MigrationBase::STATUS_ROLLING_BACK:
+            $status = dt('Rolling back');
+            break;
+          case MigrationBase::STATUS_STOPPING:
+            $status = dt('Stopping');
+            break;
+          case MigrationBase::STATUS_DISABLED:
+            $status = dt('Disabled');
+            break;
+          default:
+            $status = dt('Unknown');
+            break;
+        }
         $table[] = array($migration->getMachineName(), $total, $imported, $unimported, $status, $migration->getLastImported());
-    }
+      }
     }
     drush_print_table($table);
-    }
+  }
   catch (MigrateException $e) {
     drush_print($e->getMessage());
     exit;

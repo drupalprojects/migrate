@@ -9,6 +9,7 @@ to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
 
 Features and enhancements
+- #1299646 - Enforce dependencies on rollback.
 - #1328408 - Support --group on drush migrate-status.
 - #1402822 - Cleaner handling of exceptions from source plugins.
 - #1240928 - File handling completely refactored - see note above.

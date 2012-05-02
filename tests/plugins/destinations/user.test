@@ -144,7 +144,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     }
 
     // Test rollback
-    $result = $migration->processRollback();
+    $result = $migration->processRollback(array('force' => TRUE));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('User rollback returned RESULT_COMPLETED'));
     $count = db_select('users', 'u')

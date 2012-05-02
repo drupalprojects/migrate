@@ -715,13 +715,24 @@ abstract class MigrationBase {
 
   /**
    * Reports whether all (hard) dependencies have completed migration
-   * TODO: Support rollback (reverse dependencies)
    */
-  protected function dependenciesComplete() {
-    foreach ($this->dependencies as $dependency) {
-      $migration = MigrationBase::getInstance($dependency);
-      if (!$migration->isComplete()) {
-        return FALSE;
+  protected function dependenciesComplete($rollback = FALSE) {
+    if ($rollback) {
+      foreach (migrate_migrations() as $migration) {
+        $dependencies = $migration->getHardDependencies();
+        if (array_search($this->machineName, $dependencies) !== FALSE) {
+          if (method_exists($migration, 'importedCount') && $migration->importedCount() > 0) {
+            return FALSE;
+          }
+        }
+      }
+    }
+    else {
+      foreach ($this->dependencies as $dependency) {
+        $migration = MigrationBase::getInstance($dependency);
+        if (!$migration->isComplete()) {
+          return FALSE;
+        }
       }
     }
     return TRUE;
@@ -871,12 +882,11 @@ abstract class MigrationBase {
       $return = MigrationBase::RESULT_COMPLETED;
       if (method_exists($this, 'rollback')) {
         $this->options = $options;
-        // TODO: Validate dependencies (migrations depending on us have no imported rows)
-    /*    if (!isset($options['force'])) {
-          if (!$this->dependenciesComplete()) {
-            return Migration::RESULT_SKIPPED;
+        if (!isset($options['force'])) {
+          if (!$this->dependenciesComplete(TRUE)) {
+            return MigrationBase::RESULT_SKIPPED;
           }
-        }*/
+        }
         $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
         try {
           $return = $this->rollback();

@@ -104,7 +104,7 @@ class MigrateCommentUnitTest extends DrupalWebTestCase {
     $this->assertEqual($comment->pid, $comments['im parent']->cid, t('Parent matches'));
 
     // Test rollback
-    $result = $migration->processRollback();
+    $result = $migration->processRollback(array('force' => TRUE));
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Comment rollback returned RESULT_COMPLETED'));
     $count = db_select('comments', 'c')

@@ -28,6 +28,7 @@ files[] = plugins/destinations/fields.inc
 files[] = plugins/destinations/profile.inc
 files[] = plugins/destinations/table.inc
 files[] = plugins/destinations/table_copy.inc
+files[] = plugins/destinations/statistics.inc
 files[] = plugins/sources/csv.inc
 files[] = plugins/sources/files.inc
 files[] = plugins/sources/json.inc

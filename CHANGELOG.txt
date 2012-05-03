@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #722686  - Support for node statistics.
 - #1299646 - Enforce dependencies on rollback.
 - #1328408 - Support --group on drush migrate-status.
 - #1402822 - Cleaner handling of exceptions from source plugins.

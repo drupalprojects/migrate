@@ -619,7 +619,14 @@ abstract class Migration extends MigrationBase {
    *  Pass TRUE to refresh the cached count.
    */
   public function sourceCount($refresh = FALSE) {
-    return $this->source->count($refresh);
+    try {
+      $count = $this->source->count($refresh);
+    }
+    catch (Exception $e) {
+      $count = t('N/A');
+      self::displayMessage($e->getMessage());
+    }
+    return $count;
   }
 
   /**
@@ -628,7 +635,14 @@ abstract class Migration extends MigrationBase {
    *  Number of processed records.
    */
   public function processedCount() {
-    return $this->map->processedCount();
+    try {
+      $count = $this->map->processedCount();
+    }
+    catch (Exception $e) {
+      $count = t('N/A');
+      self::displayMessage($e->getMessage());
+    }
+    return $count;
   }
 
   /**
@@ -637,7 +651,14 @@ abstract class Migration extends MigrationBase {
    *  Number of imported records.
    */
   public function importedCount() {
-    return $this->map->importedCount();
+    try {
+      $count = $this->map->importedCount();
+    }
+    catch (Exception $e) {
+      $count = t('N/A');
+      self::displayMessage($e->getMessage());
+    }
+    return $count;
   }
 
   /**
@@ -645,7 +666,14 @@ abstract class Migration extends MigrationBase {
    * @return int
    */
   public function updateCount() {
-    return $this->map->updateCount();
+    try {
+      $count = $this->map->updateCount();
+    }
+    catch (Exception $e) {
+      $count = t('N/A');
+      self::displayMessage($e->getMessage());
+    }
+    return $count;
   }
 
   /**

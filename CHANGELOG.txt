@@ -20,6 +20,7 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1205278 - Don't multiply-increment usage counts when preserving files.
 - #1438282 - Handle errors thrown when getting counts.
 - #1358318 - Fix dedupe() overdeduping on --update.
 - #1538046 - Give highwater marks a chance at preparation before using them.
@@ -31,7 +32,7 @@ Bug fixes
 - #1538508 - Fix notice when mapping parent_name.
 - #1537352 - Check limits and status before next().
 - #1540120 - Zero not working as defaultValue.
-- #1508654 - MigrateSourceQL needs to respect join aliases.
+- #1508654 - MigrateSourceSQL needs to respect join aliases.
 - #1518076 - UI side of subfield handling.
 - #1480762 - Fix cross-database joins to map table.
 - #1520688 - setDisplayFunction needs to be static.

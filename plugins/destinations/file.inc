@@ -261,7 +261,18 @@ abstract class MigrateFile implements MigrateFileInterface {
     // Prevent deletion of the file on rollback if requested.
     if (is_object($file)) {
       if (!empty($this->preserveFiles)) {
-        file_usage_add($file, 'migrate', 'file', $file->fid);
+        // We do this directly instead of calling file_usage_add, to force the
+        // count to 1 - otherwise, updates will increment the counter and the file
+        // will never be deletable
+        db_merge('file_usage')
+          ->key(array(
+            'fid' => $file->fid,
+            'module' => 'migrate',
+            'type' => 'file',
+            'id' => $file->fid,
+          ))
+          ->fields(array('count' => 1))
+          ->execute();
       }
       return $file;
     }

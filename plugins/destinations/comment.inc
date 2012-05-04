@@ -57,20 +57,34 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
   public function fields() {
     $fields = array();
     // First the core (comment table) properties
-    $fields['cid'] = t('Comment: Existing comment ID');
-    $fields['pid'] = t('Comment: Parent (by Drupal ID)');
-    $fields['nid'] = t('Comment: Node (by Drupal ID)');
-    $fields['uid'] = t('Comment: User (by Drupal ID)');
-    $fields['subject'] = t('Comment: Subject');
-    $fields['comment'] = t('Comment: Body');
-    $fields['hostname'] = t('Comment: Hostname/IP address');
-    $fields['timestamp'] = t('Comment: Modified timestamp');
-    $fields['status'] = t('Comment: Status');
-    $fields['thread'] = t('Comment: Thread');   // ???
-    $fields['name'] = t('Comment: User name (not username)');
-    $fields['mail'] = t('Comment: Email address');
-    $fields['homepage'] = t('Comment: Homepage');
-    $fields['language'] = t('Comment: Language');
+    $fields['cid'] = t('Comment: <a href="@doc">Existing comment ID</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#cid'));
+    $fields['nid'] = t('Comment: <a href="@doc">Node (by Drupal ID)</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#nid'));
+    $fields['uid'] = t('Comment: <a href="@doc">User (by Drupal ID)</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#uid'));
+    $fields['pid'] = t('Comment: <a href="@doc">Parent (by Drupal ID)</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#pid'));
+    $fields['subject'] = t('Comment: <a href="@doc">Subject</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#subject'));
+    $fields['comment'] = t('Comment: <a href="@doc">Body</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#comment'));
+    $fields['timestamp'] = t('Comment: <a href="@doc">Modified timestamp</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#changed'));
+    $fields['status'] = t('Comment: <a href="@doc">Status</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#status'));
+    $fields['hostname'] = t('Comment: <a href="@doc">Hostname/IP address</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#hostname'));
+    $fields['name'] = t('Comment: <a href="@doc">User name (not username)</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#name'));
+    $fields['mail'] = t('Comment: <a href="@doc">Email address</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#mail'));
+    $fields['homepage'] = t('Comment: <a href="@doc">Homepage</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#homepage'));
+    $fields['language'] = t('Comment: <a href="@doc">Language</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#language'));
+    $fields['thread'] = t('Comment: <a href="@doc">Thread</a>',
+                array('@doc' => 'http://drupal.org/node/1349714#thread'));
 
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Comment', 'fields', $this->entityType, $this->bundle);

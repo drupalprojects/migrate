@@ -11,6 +11,11 @@ class MigratePathNodeHandler extends MigrateDestinationHandler {
   }
 
   public function fields() {
-    return array('path' => t('Node: Path alias'));
+    if (module_exists('path')) {
+      return array('path' => t('Node: Path alias'));
+    }
+    else {
+      return array();
+    }
   }
 }

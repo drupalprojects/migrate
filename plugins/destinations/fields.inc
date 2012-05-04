@@ -22,10 +22,10 @@ class MigrateFieldsNodeHandler extends MigrateDestinationHandler {
         $class_list = _migrate_class_list('MigrateFieldHandler');
         $disabled = unserialize(variable_get('migrate_disabled_handlers', serialize(array())));
         foreach ($class_list as $class_name => $handler) {
-          if (!in_array($class_name, $disabled) && $handler->handlesType($type)
+          if (!in_array($class_name, $disabled) && $handler->handlesType($instance['type'])
               && method_exists($handler, 'fields')) {
             migrate_instrument_start($class_name . '->fields');
-            $subfields = call_user_func(array($handler, 'fields'), $type);
+            $subfields = call_user_func(array($handler, 'fields'), $instance['type']);
             migrate_instrument_stop($class_name . '->fields');
             foreach ($subfields as $subfield_name => $subfield_label) {
               $fields[$machine_name . ':' . $subfield_name] = $subfield_label;

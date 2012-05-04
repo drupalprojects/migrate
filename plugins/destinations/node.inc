@@ -56,25 +56,36 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
   public function fields() {
     $fields = array();
     // First the core (node table) properties
-    $fields['nid'] = t('Node: Existing node ID');
-    $fields['uid'] = t('Node: Authored by (uid)');
-    $fields['revision_uid'] = t('Node: Modified (uid)');
-    $fields['created'] = t('Node: Created timestamp');
-    $fields['changed'] = t('Node: Modified timestamp');
-    $fields['body'] = t('Node: Body');
-    $fields['teaser'] = t('Node: Teaser');
-    $fields['status'] = t('Node: Published');
-    $fields['promote'] = t('Node: Promoted to front page');
-    $fields['sticky'] = t('Node: Sticky at top of lists');
-    $fields['revision'] = t('Node: Create new revision');
-    $fields['log'] = t('Node: Revision Log message');
-    $fields['language'] = t('Node: Language (fr, en, ...)');
-    $fields['tnid'] = t('Node: The translation set id for this node');
-
+    $fields['nid'] = t('Node: <a href="@doc">Existing node ID</a>',
+                array('@doc' => 'http://drupal.org/node/1349696#nid'));
     $node_type = node_type_load($this->bundle);
     if ($node_type->has_title) {
-      $fields['title'] = t('Node:') . ' ' . $node_type->title_label;
+      $fields['title'] = t('Node: <a href="@doc">',
+                           array('@doc' => 'http://drupal.org/node/1349696#title'))
+                         . $node_type->title_label . '</a>';
     }
+    $fields['uid'] = t('Node: <a href="@doc">Authored by (uid)</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#uid'));
+    $fields['created'] = t('Node: <a href="@doc">Created timestamp</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#created'));
+    $fields['changed'] = t('Node: <a href="@doc">Modified timestamp</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#changed'));
+    $fields['status'] = t('Node: <a href="@doc">Published</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#status'));
+    $fields['promote'] = t('Node: <a href="@doc">Promoted to front page</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#promote'));
+    $fields['sticky'] = t('Node: <a href="@doc">Sticky at top of lists</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#sticky'));
+    $fields['revision'] = t('Node: <a href="@doc">Create new revision</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#revision'));
+    $fields['log'] = t('Node: <a href="@doc">Revision Log message</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#log'));
+    $fields['language'] = t('Node: <a href="@doc">Language (fr, en, ...)</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#language'));
+    $fields['tnid'] = t('Node: <a href="@doc">The translation set id for this node</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#tnid'));
+    $fields['revision_uid'] = t('Node: <a href="@doc">Modified (uid)</a>',
+                    array('@doc' => 'http://drupal.org/node/1349696#revision_uid'));
 
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Node', 'fields', $this->entityType, $this->bundle);

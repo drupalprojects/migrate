@@ -258,12 +258,10 @@ class MigrateSQLMap extends MigrateMap {
    *
    * @param array $source_id
    *  Array of source key values.
-   * @param Migration $destination_migration
-   *  Unused and deprecated. To be removed at next API update.
    * @return array
    *  Array of destination key values, or NULL on failure.
    */
-  public function lookupDestinationID(array $source_id, Migration $destination_migration = NULL) {
+  public function lookupDestinationID(array $source_id) {
     migrate_instrument_start('lookupDestinationID');
     $query = $this->connection->select($this->mapTable, 'map')
               ->fields('map', $this->destinationKeyMap);

@@ -162,18 +162,6 @@ abstract class MigrationBase {
    * Name of a function for displaying feedback. It must take the message to display
    * as its first argument, and a (string) message type as its second argument
    * (see drush_log()).
-   * Deprecated in favor of the static displayFunction - remove in next API release.
-   * @var string
-   */
-  protected $outputFunction;
-  public function setOutputFunction($output_function) {
-    $this->outputFunction = $output_function;
-  }
-
-  /**
-   * Name of a function for displaying feedback. It must take the message to display
-   * as its first argument, and a (string) message type as its second argument
-   * (see drush_log()).
    * @var string
    */
   protected static $displayFunction;
@@ -344,9 +332,6 @@ abstract class MigrationBase {
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');
 
-    // Maintain deprecated version for now
-    $this->outputFunction = self::$displayFunction;
-
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));
   }
@@ -488,20 +473,6 @@ abstract class MigrationBase {
     }
 
     self::displayMessage($message, $level);
-  }
-
-  /**
-   * Output the given message appropriately (drush_print/drupal_set_message/etc.)
-   * Deprecated in favor of static displayMessage(), remove in next API update.
-   *
-   * @param string $message
-   *  The message to output.
-   * @param int $level
-   *  Optional message severity as understood by drupal_set_message and drush_log
-   *  (defaults to 'error').
-   */
-  public function showMessage($message, $level = 'error') {
-    call_user_func(self::$displayFunction, $message, $level);
   }
 
   /**

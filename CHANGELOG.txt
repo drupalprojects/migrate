@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1459888 - Removed deprecated source count(), showMessage(), setOutputFunction().
 - #1528916 - Link field descriptions to drupal.org documentation.
 - #722686  - Support for node statistics.
 - #1299646 - Enforce dependencies on rollback.

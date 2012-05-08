@@ -20,6 +20,7 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1561448 - Proper handling of is_new for users.
 - #1205278 - Don't multiply-increment usage counts when preserving files; remove
              file_usages on uninstall.
 - #1438282 - Handle errors thrown when getting counts.

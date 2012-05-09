@@ -154,18 +154,6 @@ abstract class MigrationBase {
    * Name of a function for displaying feedback. It must take the message to display
    * as its first argument, and a (string) message type as its second argument
    * (see drush_log()).
-   * Deprecated in favor of the static displayFunction - remove in next API release.
-   * @var string
-   */
-  protected $outputFunction;
-  public function setOutputFunction($output_function) {
-    $this->outputFunction = $output_function;
-  }
-
-  /**
-   * Name of a function for displaying feedback. It must take the message to display
-   * as its first argument, and a (string) message type as its second argument
-   * (see drush_log()).
    * @var string
    */
   protected static $displayFunction;
@@ -335,15 +323,13 @@ abstract class MigrationBase {
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');
 
-    // Default the displayFunction outputFunction based on context
+    // Default the displayFunction based on context
     if (function_exists('drush_log')) {
       self::$displayFunction = 'drush_log';
     }
     else {
       self::$displayFunction = 'drupal_set_message';
     }
-    // Maintain deprecated version for now
-    $this->outputFunction = self::$displayFunction;
 
     // Prevent any emails from being sent out on migration
     global $conf;
@@ -495,20 +481,6 @@ abstract class MigrationBase {
     }
 
     self::displayMessage($message, $level);
-  }
-
-  /**
-   * Output the given message appropriately (drush_print/drupal_set_message/etc.)
-   * Deprecated in favor of static displayMessage(), remove in next API update.
-   *
-   * @param string $message
-   *  The message to output.
-   * @param int $level
-   *  Optional message severity as understood by drupal_set_message and drush_log
-   *  (defaults to 'error').
-   */
-  public function showMessage($message, $level = 'error') {
-    call_user_func(self::$displayFunction, $message, $level);
   }
 
   /**
@@ -720,13 +692,24 @@ abstract class MigrationBase {
 
   /**
    * Reports whether all (hard) dependencies have completed migration
-   * TODO: Support rollback (reverse dependencies)
    */
-  protected function dependenciesComplete() {
-    foreach ($this->dependencies as $dependency) {
-      $migration = MigrationBase::getInstance($dependency);
-      if (!$migration->isComplete()) {
-        return FALSE;
+  protected function dependenciesComplete($rollback = FALSE) {
+    if ($rollback) {
+      foreach (migrate_migrations() as $migration) {
+        $dependencies = $migration->getHardDependencies();
+        if (array_search($this->machineName, $dependencies) !== FALSE) {
+          if (method_exists($migration, 'importedCount') && $migration->importedCount() > 0) {
+            return FALSE;
+          }
+        }
+      }
+    }
+    else {
+      foreach ($this->dependencies as $dependency) {
+        $migration = MigrationBase::getInstance($dependency);
+        if (!$migration->isComplete()) {
+          return FALSE;
+        }
       }
     }
     return TRUE;
@@ -876,12 +859,11 @@ abstract class MigrationBase {
       $return = MigrationBase::RESULT_COMPLETED;
       if (method_exists($this, 'rollback')) {
         $this->options = $options;
-        // TODO: Validate dependencies (migrations depending on us have no imported rows)
-    /*    if (!isset($options['force'])) {
-          if (!$this->dependenciesComplete()) {
-            return Migration::RESULT_SKIPPED;
+        if (!isset($options['force'])) {
+          if (!$this->dependenciesComplete(TRUE)) {
+            return MigrationBase::RESULT_SKIPPED;
           }
-        }*/
+        }
         $this->beginProcess(MigrationBase::STATUS_ROLLING_BACK);
         try {
           $return = $this->rollback();

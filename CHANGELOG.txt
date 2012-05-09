@@ -9,6 +9,10 @@ to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
 
 Features and enhancements
+- #1459888 - Removed deprecated source count(), showMessage(), setOutputFunction().
+- #1528916 - Link field descriptions to drupal.org documentation.
+- #722686  - Support for node statistics.
+- #1299646 - Enforce dependencies on rollback.
 - #1328408 - Support --group on drush migrate-status.
 - #1402822 - Cleaner handling of exceptions from source plugins.
 - #1240928 - File handling completely refactored - see note above.
@@ -17,6 +21,11 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1569612 - skip_empty should only skip NULL values.
+- #1561448 - Proper handling of is_new for users.
+- #1205278 - Don't multiply-increment usage counts when preserving files; remove
+             file_usages on uninstall.
+- #1438282 - Handle errors thrown when getting counts.
 - #1358318 - Fix dedupe() overdeduping on --update.
 - #1538046 - Give highwater marks a chance at preparation before using them.
 - #1408248 - Handle errors in complete() cleanly.
@@ -27,7 +36,7 @@ Bug fixes
 - #1538508 - Fix notice when mapping parent_name.
 - #1537352 - Check limits and status before next().
 - #1540120 - Zero not working as defaultValue.
-- #1508654 - MigrateSourceQL needs to respect join aliases.
+- #1508654 - MigrateSourceSQL needs to respect join aliases.
 - #1518076 - UI side of subfield handling.
 - #1480762 - Fix cross-database joins to map table.
 - #1520688 - setDisplayFunction needs to be static.

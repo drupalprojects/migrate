@@ -720,6 +720,11 @@ function drush_migrate_rollback($args = NULL) {
       elseif ($return == MigrationBase::RESULT_STOPPED) {
         break;
       }
+      elseif ($return == MigrationBase::RESULT_SKIPPED) {
+        drush_log(dt("Skipping migration !name due to unfulfilled dependencies, use the --force option to run it anyway.",
+          array('!name' => $migration->getMachineName())),
+          'warning');
+      }
     }
   }
   catch (MigrateException $e) {

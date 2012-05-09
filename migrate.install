@@ -130,6 +130,13 @@ function migrate_uninstall() {
   foreach (db_find_tables('migrate_message_%') as $tablename) {
     db_drop_table($tablename);
   }
+
+  // Remove any file_usage entries we've written
+  if (db_table_exists('file_usage')) {
+    db_delete('file_usage')
+      ->condition('module', 'migrate')
+      ->execute();
+  }
 }
 
 /**

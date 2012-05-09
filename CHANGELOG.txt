@@ -12,6 +12,7 @@ Features and enhancements
 - #1350284 - Visually group migrations by group in drush.
 
 Bug fixes
+- #1569612 - skip_empty should only skip NULL values.
 - #1438282 - Handle errors thrown when getting counts.
 - #1358318 - Fix dedupe() overdeduping on --update.
 - #1538046 - Give highwater marks a chance at preparation before using them.

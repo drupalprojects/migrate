@@ -395,7 +395,11 @@ function migrate_ui_messages($migration) {
   drupal_add_css(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css');
   $build = $rows = array();
 
-  $header = array(t('Source ID'), t('Level'), t('Message'));
+  $header = array(
+    array('data' => t('Source ID'), 'field' => 'sourceid1', 'sort' => 'asc'),
+    array('data' => t('Level'), 'field' => 'level'),
+    array('data' => t('Message'), 'field' => 'message'),
+  );
 
   if (is_string($migration)) {
     $migration = migration_load($migration);
@@ -405,6 +409,8 @@ function migrate_ui_messages($migration) {
   $messages = $migration->getMap()->getConnection()
               ->select($migration->getMap()->getMessageTable(), 'msg')
               ->extend('PagerDefault')
+              ->extend('TableSort')
+              ->orderByHeader($header)
               ->limit(500)
               ->fields('msg')
               ->execute();

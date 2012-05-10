@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Bug fixes
+- #1570536 - Undefined property in term.inc.
+
 Migrate 2.4 Beta 1
 ==================
 

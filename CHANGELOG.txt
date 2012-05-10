@@ -9,6 +9,7 @@ to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
 
 Features and enhancements
+- #1428166 - Make message columns sortable.
 - #1459888 - Removed deprecated source count(), showMessage(), setOutputFunction().
 - #1528916 - Link field descriptions to drupal.org documentation.
 - #722686  - Support for node statistics.

@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.4 Beta 1
+==================
 
 IMPORTANT: The file migration support (both MigrateDestinationFile and
 the file field handler) has been completely refactored for this release - if you

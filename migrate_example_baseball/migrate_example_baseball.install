@@ -9,7 +9,9 @@ function migrate_example_baseball_enable() {
   $path = dirname(__FILE__) . '/data';
   for ($i=0; $i<=9; $i++) {
     $file = 'GL200' . $i . '.TXT';
-    Migration::registerMigration('GameBaseball', strtolower(pathinfo($file, PATHINFO_FILENAME)), array('source_file' => $path . '/' . $file));
+    Migration::registerMigration('GameBaseball',
+      drupal_strtolower(pathinfo($file, PATHINFO_FILENAME)),
+      array('source_file' => $path . '/' . $file));
   }
 }
 

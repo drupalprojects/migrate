@@ -116,7 +116,7 @@ function migrate_schema_log() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  * Drop map/message tables, in case implementing classes did not.
  */
 function migrate_uninstall() {
@@ -237,7 +237,7 @@ function migrate_update_7004() {
  */
 function migrate_update_7005() {
   $ret = array();
-  if(!db_table_exists('migrate_log')) {
+  if (!db_table_exists('migrate_log')) {
     $ret[] = t('Create migrate_log table');
     db_create_table('migrate_log', migrate_schema_log());
     $ret[] = t('Remove historic columns from migrate_status table');
@@ -332,7 +332,7 @@ function migrate_update_7008() {
         $keys = array();
         $index = 1;
         foreach ($row as $field => $value) {
-          if (substr($field, 0, 8) == 'sourceid') {
+          if (drupal_substr($field, 0, 8) == 'sourceid') {
             $keys['sourceid' . $index++] = $value;
           }
         }

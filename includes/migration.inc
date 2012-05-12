@@ -290,7 +290,7 @@ abstract class Migration extends MigrationBase {
       if ($this->feedback_unit == 'item') {
         $this->feedback_unit = 'items';
       }
-      else if ($this->feedback_unit == 'second') {
+      elseif ($this->feedback_unit == 'second') {
         $this->feedback_unit = 'seconds';
       }
     }
@@ -517,8 +517,9 @@ abstract class Migration extends MigrationBase {
       $this->source->rewind();
     }
     catch (Exception $e) {
-      self::displayMessage(t('Migration failed with source plugin exception: !e',
-                             array('!e' => $e->getMessage())));
+      self::displayMessage(
+        t('Migration failed with source plugin exception: !e',
+          array('!e' => $e->getMessage())));
       return MigrationBase::RESULT_FAILED;
     }
     while ($this->source->valid()) {
@@ -585,8 +586,9 @@ abstract class Migration extends MigrationBase {
         $this->source->next();
       }
       catch (Exception $e) {
-        self::displayMessage(t('Migration failed with source plugin exception: !e',
-                               array('!e' => $e->getMessage())));
+        self::displayMessage(
+          t('Migration failed with source plugin exception: !e',
+            array('!e' => $e->getMessage())));
         return MigrationBase::RESULT_FAILED;
       }
     }
@@ -608,7 +610,7 @@ abstract class Migration extends MigrationBase {
   public function prepareRow($row) {
     return TRUE;
   }
-  
+
   ////////////////////////////////////////////////////////////////////
   // Utility methods
 
@@ -1092,9 +1094,9 @@ abstract class Migration extends MigrationBase {
     }
     if ($i > 1) {
       $message = t('Replacing !column !original with !candidate',
-                 array('!column' => $dedupe['column'],
-                       '!original' => $original,
-                       '!candidate' => $candidate));
+                   array('!column' => $dedupe['column'],
+                         '!original' => $original,
+                         '!candidate' => $candidate));
       $migration = Migration::currentMigration();
       $migration->saveMessage($message, Migration::MESSAGE_INFORMATIONAL);
     }

@@ -240,7 +240,7 @@ abstract class MigrateSource implements Iterator {
     migrate_instrument_stop(get_class($this) . ' performRewind');
     $this->next();
   }
-  
+
   /**
    * Implementation of Iterator::next() - subclasses of MigrateSource should
    * implement getNextRow() to retrieve the next valid source rocord to process.

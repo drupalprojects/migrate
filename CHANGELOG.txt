@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1574502 - Coder review, remove dead code.
 - #1570536 - Undefined property in term.inc.
 
 Migrate 2.4 Beta 1

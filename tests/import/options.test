@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Tests for import options.
+ */
+
+/**
  * Test node migration.
  */
 class MigrateImportOptionsTest extends DrupalWebTestCase {

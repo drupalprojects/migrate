@@ -213,7 +213,7 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     $arguments = array();
     if (!is_null($summary)) {
       $arguments['summary'] = $summary;
-   }
+    }
     if (!is_null($format)) {
       $arguments['format'] = $format;
     }
@@ -464,7 +464,7 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
     if ($migration->getOption('file_function')) {
       $file_class = $migration->getOption('file_function');
     }
-    else if (!empty($arguments['file_class'])) {
+    elseif (!empty($arguments['file_class'])) {
       $file_class = $arguments['file_class'];
     }
     else {

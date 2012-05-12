@@ -1,8 +1,9 @@
 <?php
+
 /**
-* @file
-* Support for node_counter statistics in core Drupal nodes
-*/
+ * @file
+ * Support for node_counter statistics in core Drupal nodes.
+ */
 
 class MigrateStatisticsEntityHandler extends MigrateDestinationHandler {
   public function __construct() {

@@ -95,7 +95,7 @@ class MigrateSourceSQL extends MigrateSource {
    *  Options applied to this source.
    */
   public function __construct(SelectQueryInterface $query, array $fields = array(),
-       SelectQueryInterface $count_query = NULL, array $options = array()) {
+      SelectQueryInterface $count_query = NULL, array $options = array()) {
     parent::__construct($options);
     $this->originalQuery = $query;
     $this->query = clone $query;
@@ -179,7 +179,8 @@ class MigrateSourceSQL extends MigrateSource {
       if (is_array($row)) {
         foreach ($row as $field_name => $field_value) {
           // Lower case, because Drupal forces lowercase on fetch
-          $fields[drupal_strtolower($field_name)] = t('Example Content: ') . $field_value;
+          $fields[drupal_strtolower($field_name)] = t('Example Content: !value',
+            array('!value' => $field_value));
         }
       }
     }

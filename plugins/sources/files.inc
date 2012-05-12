@@ -146,7 +146,7 @@ class MigrateItemFile extends MigrateItem {
       $return->filedata = $data;
       return $return;
     }
-    else if ($data === TRUE) {
+    elseif ($data === TRUE) {
       $return = new stdClass;
       return $return;
     }

@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Tests for the taxonomy term destination plugin.
+ */
+
+/**
  * Test taxonomy migration.
  */
 class MigrateTaxonomyUnitTest extends DrupalWebTestCase {

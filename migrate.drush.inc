@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_drush_help().
+ * Implements hook_drush_help().
  */
 function migrate_drush_help($section) {
   switch ($section) {
@@ -36,7 +36,7 @@ function migrate_drush_help($section) {
 }
 
 /**
- * Implementation of hook_drush_command().
+ * Implements hook_drush_command().
  */
 function migrate_drush_command() {
   $migration_options = array(
@@ -451,7 +451,7 @@ function drush_migrate_mappings($args = NULL) {
           if ($lowergroup == dt('done')) {
             $done[$group][] = $mapping;
           }
-          else if ($lowergroup == dt('dnm') || $lowergroup == dt('do not migrate')) {
+          elseif ($lowergroup == dt('dnm') || $lowergroup == dt('do not migrate')) {
             $dnm[$group][] = $mapping;
           }
           else {
@@ -480,7 +480,7 @@ function drush_migrate_mappings($args = NULL) {
             $table[] = array(' ');
           }
           // Attempt to highlight the group header a bit so it stands out
-          $group_header = '--- ' . strtoupper($group) . ' ---';
+          $group_header = '--- ' . drupal_strtoupper($group) . ' ---';
           $table[] = array($group_header);
           foreach ($mappings as $mapping) {
             if (is_array($mapping->getDefaultValue())) {
@@ -667,10 +667,10 @@ function drush_migrate_rollback($args = NULL) {
       if (!$options['limit']['unit']) {
         $options['limit']['unit'] = 'items';
       }
-      else if ($options['limit']['unit'] != 'seconds' &&
-               $options['limit']['unit'] != 'second' &&
-               $options['limit']['unit'] != 'items' &&
-               $options['limit']['unit'] != 'item') {
+      elseif ($options['limit']['unit'] != 'seconds' &&
+              $options['limit']['unit'] != 'second' &&
+              $options['limit']['unit'] != 'items' &&
+              $options['limit']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;
@@ -747,7 +747,7 @@ function drush_migrate_get_migrations($args) {
     $seen = $start === TRUE ? TRUE : FALSE;
 
     foreach ($migration_objects as $name => $migration) {
-      if (!$seen && (strtolower($start) . 'migration' == strtolower($name))) {
+      if (!$seen && (drupal_strtolower($start) . 'migration' == drupal_strtolower($name))) {
         // We found our starting migration. $seen is always TRUE now.
         $seen = TRUE;
       }
@@ -757,9 +757,11 @@ function drush_migrate_get_migrations($args) {
       }
     }
   }
-  else if ($group = drush_get_option('group')) {
+  elseif ($group = drush_get_option('group')) {
     foreach ($migration_objects as $name => $migration) {
-      if (strtolower($group) != strtolower($migration->getGroup()->getName()) || !$migration->getEnabled()) {
+      if (drupal_strtolower($group) !=
+          drupal_strtolower($migration->getGroup()->getName()) ||
+            !$migration->getEnabled()) {
         unset($migration_objects[$name]);
       }
     }
@@ -769,7 +771,7 @@ function drush_migrate_get_migrations($args) {
     foreach (explode(',', $args) as $name) {
       $found = FALSE;
       foreach ($migration_objects as $machine_name => $migration) {
-        if (strtolower($name) == strtolower($machine_name)) {
+        if (drupal_strtolower($name) == drupal_strtolower($machine_name)) {
           if ($migration->getEnabled()) {
             $named_migrations[$name] = $migration;
             $found = TRUE;
@@ -835,7 +837,7 @@ function drush_migrate_validate_common($args) {
       return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
     }
   }
-  else if (drush_get_option('group')) {
+  elseif (drush_get_option('group')) {
     if (!empty($args) || drush_get_option('all')) {
       return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
     }
@@ -916,10 +918,10 @@ function drush_migrate_import($args = NULL) {
       if (!$options['limit']['unit']) {
         $options['limit']['unit'] = 'items';
       }
-      else if ($options['limit']['unit'] != 'seconds' &&
-               $options['limit']['unit'] != 'second' &&
-               $options['limit']['unit'] != 'items' &&
-               $options['limit']['unit'] != 'item') {
+      elseif ($options['limit']['unit'] != 'seconds' &&
+              $options['limit']['unit'] != 'second' &&
+              $options['limit']['unit'] != 'items' &&
+              $options['limit']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;

@@ -1039,7 +1039,7 @@ class MigrateSourceXML extends MigrateSource {
         // Increment the activeUrl so we try to load the next source
         $this->activeUrl = $this->activeUrl + 1;
       }
-      
+
       $this->reader = new $this->readerClass($this->sourceUrls[$this->activeUrl], $this->elementQuery, $this->idQuery);
       $this->reader->rewind();
 

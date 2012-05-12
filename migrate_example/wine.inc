@@ -185,8 +185,9 @@ class WineFileCopyMigration extends AdvancedExampleMigration {
 }
 
 /**
- * Migration class to test importing from a BLOB column into a file entity. Typically,
- * one would use this OR import into a File Field (@see MigrateExampleOracleNode).
+ * Migration class to test importing from a BLOB column into a file entity.
+ * Typically, one would use this OR import into a File Field.
+ * @see MigrateExampleOracleNode()
  */
 class WineFileBlobMigration extends AdvancedExampleMigration {
   public function __construct() {
@@ -797,7 +798,7 @@ class WineWineMigration extends AdvancedExampleMigration {
   }
 
   protected function addTitlePrefix($source_title) {
-    return t('review: ') . $source_title;
+    return t('review: !title', array('!title' => $source_title));
   }
 
   // TIP: Implement a prepareRow() method to manipulate the source row between

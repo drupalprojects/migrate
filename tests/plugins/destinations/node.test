@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Tests for the node destination plugin.
+ */
+
+/**
  * Test node migration.
  */
 class MigrateNodeUnitTest extends DrupalWebTestCase {
@@ -202,13 +207,13 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $query->execute();
 
     db_update('migrate_example_wine')
-             ->fields(array(
-              'body' => 'Not so much berry character',
-              // Timestamp 1285058521
-              'last_changed' => strtotime('2010-10-21 04:42:01'),
-             ))
-             ->condition('wineid', 2)
-             ->execute();
+      ->fields(array(
+       'body' => 'Not so much berry character',
+       // Timestamp 1285058521
+       'last_changed' => strtotime('2010-10-21 04:42:01'),
+      ))
+      ->condition('wineid', 2)
+      ->execute();
 
     $migration = Migration::getInstance('WineWine');
     $result = $migration->processImport();
@@ -249,14 +254,14 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     $migration->getSource()->setMapJoinable(FALSE);
     $result = $migration->processImport(array('limit' =>
       array('value' => 2, 'unit' => 'items')));
-    $query = db_update('migrate_example_wine')
-             ->fields(array(
-              'body' => 'Very berry',
-              // Timestamp 1286008921
-              'last_changed' => strtotime('2010-10-02 04:42:01'),
-             ))
-             ->condition('wineid', 1)
-             ->execute();
+    db_update('migrate_example_wine')
+      ->fields(array(
+        'body' => 'Very berry',
+        // Timestamp 1286008921
+        'last_changed' => strtotime('2010-10-02 04:42:01'),
+      ))
+      ->condition('wineid', 1)
+      ->execute();
     $result = $migration->processImport();
     $this->assertEqual($result, Migration::RESULT_COMPLETED,
       t('Wine node import returned RESULT_COMPLETED'));

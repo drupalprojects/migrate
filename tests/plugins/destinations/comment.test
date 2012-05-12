@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Tests for the comment destination plugin.
+ */
+
+/**
  * Test comment migration.
  */
 class MigrateCommentUnitTest extends DrupalWebTestCase {

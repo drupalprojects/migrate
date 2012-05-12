@@ -140,10 +140,10 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       }
       // Get the existing vid, tnid so updates don't generate notices
       $values = db_select('node', 'n')
-                   ->fields('n', array('vid', 'tnid'))
-                   ->condition('nid', $node->nid)
-                   ->execute()
-                   ->fetchAssoc();
+                ->fields('n', array('vid', 'tnid'))
+                ->condition('nid', $node->nid)
+                ->execute()
+                ->fetchAssoc();
       $node->vid = $values['vid'];
       if (empty($row->tnid)) {
         $node->tnid = $values['tnid'];
@@ -167,7 +167,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         $node->uid = $old_node->uid;
       }
     }
-    else if (!isset($node->type)) {
+    elseif (!isset($node->type)) {
       // Default the type to our designated destination bundle (by doing this
       // conditionally, we permit some flexibility in terms of implementing
       // migrations which can affect more than one type).
@@ -260,7 +260,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
 
       // Potentially fix uid and timestamp in node_revisions.
       $query = db_update('node_revision')
-                 ->condition('vid', $node->vid);
+               ->condition('vid', $node->vid);
       if (isset($changed)) {
         $fields['timestamp'] = $changed;
       }

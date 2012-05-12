@@ -5,4 +5,3 @@ package = "Development"
 core = 7.x
 dependencies[] = migrate
 files[] = migrate_ui.module
-;files[] = migrate_ui.pages.inc

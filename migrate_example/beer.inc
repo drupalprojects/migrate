@@ -161,6 +161,17 @@ class BeerTermMigration extends BasicExampleMigration {
          ->issueGroup(t('DNM'));
     $this->addFieldMapping('parent')
          ->issueGroup(t('DNM'));
+
+    // We conditionally DNM these fields, so your field mappings will be clean
+    // whether or not you have path and or pathauto enabled
+    if (module_exists('path')) {
+      $this->addFieldMapping('path')
+           ->issueGroup(t('DNM'));
+      if (module_exists('pathauto')) {
+        $this->addFieldMapping('pathauto')
+             ->issueGroup(t('DNM'));
+      }
+    }
   }
 }
 
@@ -245,7 +256,7 @@ class BeerUserMigration extends BasicExampleMigration {
     // This is a shortcut you can use to mark several destination fields as DNM
     // at once
     $this->addUnmigratedDestinations(array('theme', 'signature', 'access', 'login',
-      'timezone', 'language', 'picture', 'is_new', 'signature_format', 'init'));
+      'timezone', 'language', 'picture', 'is_new', 'signature_format'));
 
     // Oops, we made a typo - this should have been 'init'! If you have
     // migrate_ui enabled, look at the BeerUser info page - you'll see that it
@@ -254,6 +265,15 @@ class BeerUserMigration extends BasicExampleMigration {
     // where it highlights "init" as unmapped.
     $this->addFieldMapping('int')
          ->issueGroup(t('DNM'));
+
+    if (module_exists('path')) {
+      $this->addFieldMapping('path')
+           ->issueGroup(t('DNM'));
+      if (module_exists('pathauto')) {
+        $this->addFieldMapping('pathauto')
+             ->issueGroup(t('DNM'));
+      }
+    }
   }
 }
 
@@ -374,6 +394,18 @@ class BeerNodeMigration extends BasicExampleMigration {
       'field_migrate_example_image:preserve_files', 'field_migrate_example_country:format',
       'field_migrate_example_country:language', 'comment',
       'field_migrate_example_image:file_class', 'field_migrate_example_image:destination_file'));
+
+    if (module_exists('path')) {
+      $this->addFieldMapping('path')
+           ->issueGroup(t('DNM'));
+      if (module_exists('pathauto')) {
+        $this->addFieldMapping('pathauto')
+             ->issueGroup(t('DNM'));
+      }
+    }
+    if (module_exists('statistics')) {
+      $this->addUnmigratedDestinations(array('totalcount', 'daycount', 'timestamp'));
+    }
   }
 }
 
@@ -423,5 +455,10 @@ class BeerCommentMigration extends BasicExampleMigration {
     // Unmapped destination fields
     $this->addUnmigratedDestinations(array('hostname', 'created', 'changed',
       'thread', 'homepage', 'language', 'comment_body:format', 'comment_body:language'));
+
+    if (module_exists('path')) {
+      $this->addFieldMapping('path')
+           ->issueGroup(t('DNM'));
+    }
   }
 }

@@ -252,7 +252,8 @@ class WineUserMigration extends AdvancedExampleMigration {
     // Unmapped source fields
 
     // Unmapped destination fields
-    $this->addUnmigratedDestinations(array('theme', 'timezone', 'language', 'picture'));
+    $this->addUnmigratedDestinations(array('theme', 'timezone', 'language',
+      'picture', 'role_names'));
   }
 }
 

@@ -348,7 +348,7 @@ class WineUserMigration extends AdvancedExampleMigration {
 
     // Unmapped destination fields
     $this->addUnmigratedDestinations(array('theme', 'timezone', 'language',
-      'is_new', 'field_migrate_example_favbeers'));
+      'is_new', 'field_migrate_example_favbeers', 'role_names'));
   }
 
   public function prepare(stdClass $account, stdClass $row) {

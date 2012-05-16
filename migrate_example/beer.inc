@@ -256,7 +256,7 @@ class BeerUserMigration extends BasicExampleMigration {
     // This is a shortcut you can use to mark several destination fields as DNM
     // at once
     $this->addUnmigratedDestinations(array('theme', 'signature', 'access', 'login',
-      'timezone', 'language', 'picture', 'is_new', 'signature_format'));
+      'timezone', 'language', 'picture', 'is_new', 'signature_format', 'role_names'));
 
     // Oops, we made a typo - this should have been 'init'! If you have
     // migrate_ui enabled, look at the BeerUser info page - you'll see that it

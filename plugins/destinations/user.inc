@@ -93,6 +93,8 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
                 array('@doc' => 'http://drupal.org/node/1349632#login'));
     $fields['roles'] = t('User: <a href="@doc">Role IDs</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#roles'));
+    $fields['role_names'] = t('User: <a href="@doc">Role Names</a>',
+                array('@doc' => 'http://drupal.org/node/1349632#role_names'));
     $fields['picture'] = t('User: <a href="@doc">Picture</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#picture'));
     $fields['signature'] = t('User: <a href="@doc">Signature</a>',
@@ -170,6 +172,17 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
 
     // Roles must be arrays keyed by the role id, which isn't how the data
     // naturally comes in. Fix them up.
+
+    // First, if names instead of IDs are presented, translate them
+    if (!empty($account->role_names)) {
+      $role_names = is_array($account->role_names) ? $account->role_names : array($account->role_names);
+      foreach ($role_names as $role_name) {
+        $role = user_role_load_by_name($role_name);
+        if ($role) {
+          $account->roles[] = $role->rid;
+        }
+      }
+    }
     if (!empty($account->roles)) {
       if (!is_array($account->roles)) {
         $account->roles = array($account->roles);

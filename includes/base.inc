@@ -864,7 +864,8 @@ abstract class MigrationBase {
       $return = MigrationBase::RESULT_COMPLETED;
       if (method_exists($this, 'import')) {
         $this->options = $options;
-        if (!isset($options['force'])) {
+
+        if (!isset($options['force']) || !$options['force']) {
           if (!$this->dependenciesComplete()) {
             return MigrationBase::RESULT_SKIPPED;
           }

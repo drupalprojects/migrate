@@ -138,39 +138,8 @@ function migrate_ui_dashboard_form($form, &$form_state) {
   $build['operations'] = array(
     '#type' => 'fieldset',
     '#title' => t('Operations'),
-    '#attributes' => array('class' => array('container-inline')),
   );
-  $build['operations']['options'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Options'),
-//    '#attributes' => array('class' => array('container-inline')),
-  );
-  $build['operations']['options']['update'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Update'),
-    '#description' => t('Check this box to update all previously-migrated content
-      in addition to importing new content. Leave unchecked to only import
-      new content'),
-  );
-  $build['operations']['options']['limit'] = array(
-    '#tree' => TRUE,
-    '#type' => 'fieldset',
-    '#attributes' => array('class' => array('container-inline')),
-    'value' => array(
-      '#type' => 'textfield',
-      '#title' => t('Limit to:'),
-      '#size' => 10,
-    ),
-    'unit' => array(
-      '#type' => 'select',
-      '#options' => array(
-        'items' => t('items'),
-        'seconds' => t('seconds'),
-      ),
-      '#description' => t('Set a limit of how many items to process for
-        each migration, or how long each should run.'),
-    ),
-  );
+
   $options = array(
     'import' => t('Import'),
     'rollback' => t('Rollback'),
@@ -210,6 +179,46 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     '#postfix' => '</p>',
   );
 
+  $build['operations']['options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Options'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $build['operations']['options']['update'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Update'),
+    '#description' => t('Check this box to update all previously-migrated content
+      in addition to importing new content. Leave unchecked to only import
+      new content'),
+  );
+  $build['operations']['options']['force'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Ignore dependencies'),
+    '#description' => t('Check this box to ignore dependencies when running imports
+      - all migrations will run whether or not their dependent migrations have
+      completed.'),
+  );
+  $build['operations']['options']['limit'] = array(
+    '#tree' => TRUE,
+    '#type' => 'fieldset',
+    '#attributes' => array('class' => array('container-inline')),
+    'value' => array(
+      '#type' => 'textfield',
+      '#title' => t('Limit to:'),
+      '#size' => 10,
+    ),
+    'unit' => array(
+      '#type' => 'select',
+      '#options' => array(
+        'items' => t('items'),
+        'seconds' => t('seconds'),
+      ),
+      '#description' => t('Set a limit of how many items to process for
+        each migration, or how long each should run.'),
+    ),
+  );
+
   return $build;
 }
 
@@ -230,6 +239,7 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
   $operation = $form_state['values']['operation'];
   $limit = $form_state['values']['limit'];
   $update = $form_state['values']['update'];
+  $force = $form_state['values']['force'];
   $machine_names = array_filter($form_state['values']['dashboard']);
   $operations = array();
 
@@ -252,7 +262,7 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
       if ($update && method_exists($migration, 'prepareUpdate')) {
         $migration->prepareUpdate();
       }
-      $operations[] = array('migrate_ui_batch', array($operation, $machine_name, $limit));
+      $operations[] = array('migrate_ui_batch', array($operation, $machine_name, $limit, $force));
     }
   }
 
@@ -283,7 +293,7 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
  * @param $context
  *  Batch API context structure
  */
-function migrate_ui_batch($operation, $machine_name, $limit, &$context) {
+function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$context) {
   // If we got a stop message, skip everything else
   if (isset($context['results']['stopped'])) {
     $context['finished'] = 1;
@@ -300,10 +310,10 @@ function migrate_ui_batch($operation, $machine_name, $limit, &$context) {
   // Perform the requested operation
   switch ($operation) {
     case 'import':
-      $result = $migration->processImport(array('limit' => $limit));
+      $result = $migration->processImport(array('limit' => $limit, 'force' => $force));
       break;
     case 'rollback':
-      $result = $migration->processRollback(array('limit' => $limit));
+      $result = $migration->processRollback(array('limit' => $limit, 'force' => $force));
       break;
     case 'stop':
       $migration->stopProcess();

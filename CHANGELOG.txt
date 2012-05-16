@@ -2,6 +2,9 @@
 Next release
 ============
 
+Features and enhancements
+- #653636 - Add migrate-messages command to dump message table.
+
 Bug fixes
 - #1570536 - Undefined property in term.inc.
 

@@ -28,6 +28,8 @@ function migrate_drush_help($section) {
       return dt('List the fields available for mapping from a source');
     case 'drush:migrate-mappings':
       return dt('View information on all field mappings in a migration');
+    case 'drush:migrate-messages':
+      return dt('View any messages associated with a migration');
     case 'drush:migrate-audit':
       return dt('View information on problems in a migration');
     case 'drush:migrate-wipe':
@@ -111,6 +113,20 @@ function migrate_drush_command() {
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mm'),
+  );
+  $items['migrate-messages'] = array(
+    'description' => 'View any messages associated with a migration.',
+    'options' => array(
+      'csv' => 'Export messages as a CSV',
+    ),
+    'arguments' => array(
+      'migration' => 'Name of the migration',
+    ),
+    'examples' => array(
+      'migrate-messages MyNode' => 'Show all messages for the MyNode migration',
+    ),
+    'drupal dependencies' => array('migrate'),
+    'aliases' => array('mmsg'),
   );
   $items['migrate-audit'] = array(
     'description' => 'View information on problems in a migration.',
@@ -521,6 +537,54 @@ function drush_migrate_mappings($args = NULL) {
         else {
           drush_print_table($table, TRUE);
         }
+      }
+    }
+  }
+  catch (MigrateException $e) {
+    drush_print($e->getMessage());
+    exit;
+  }
+}
+
+/**
+ * Display messages for a migration.
+ */
+function drush_migrate_messages($migration_name) {
+  try {
+    $migration = MigrationBase::getInstance($migration_name);
+    if (is_a($migration, 'Migration')) {
+      $map = $migration->getMap();
+      $message_table = $map->getMessageTable();
+      $result = db_select($message_table, 'msg', array('fetch' => PDO::FETCH_ASSOC))
+                ->fields('msg')
+                ->execute();
+      $first = TRUE;
+      $table = array();
+      foreach ($result as $row) {
+        unset($row['msgid']);
+        unset($row['level']);
+        if ($first) {
+          $table[] = array_keys($row);
+          $first = FALSE;
+        }
+        $table[] = $row;
+      }
+    }
+    if (empty($table)) {
+      drush_log(dt('No messages for this migration'), 'status');
+    }
+    else {
+      if (drush_get_option('csv')) {
+        foreach ($table as $row) {
+          fputcsv(STDOUT, $row);
+        }
+      }
+      else {
+        $widths = array();
+        foreach ($table[0] as $header) {
+          $widths[] = strlen($header) + 1;
+        }
+        drush_print_table($table, TRUE, $widths);
       }
     }
   }

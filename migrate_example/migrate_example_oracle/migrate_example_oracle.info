@@ -8,6 +8,6 @@ features[node][] = "migrate_example_oracle"
 files[] = migrate_example_oracle.migrate.inc
 
 name = "Migrate example - Oracle"
-package = "Features"
+package = "Migrate Examples"
 project = "migrate_example_oracle"
 version = "7.x-2.2-dev"

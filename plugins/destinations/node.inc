@@ -143,6 +143,10 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
                    ->condition('nid', $node->nid)
                    ->execute()
                    ->fetchField();
+      if (!$node->vid) {
+        throw new MigrateException(t("Incoming node ID !nid no longer exists",
+                    array('!nid' => $node->nid)));
+      }
     }
 
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
@@ -150,6 +154,10 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination nid provided'));
       }
       $old_node = node_load($node->nid);
+      if (empty($old_node)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but node !nid does not exist',
+                                   array('!nid' => $node->nid)));
+      }
       if (!isset($node->created)) {
         $node->created = $old_node->created;
       }

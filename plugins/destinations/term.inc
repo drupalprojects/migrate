@@ -127,6 +127,10 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       $rawterm = $term;
       $this->prepare($term, $row);
       $old_term = taxonomy_term_load($term->tid);
+      if (empty($old_term)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but term !tid does not exist',
+          array('!tid' => $term->tid)));
+      }
       foreach ($rawterm as $field => $value) {
         $old_term->$field = $term->$field;
       }

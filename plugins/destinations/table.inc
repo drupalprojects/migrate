@@ -126,7 +126,9 @@ class MigrateDestinationTable extends MigrateDestination {
         $select->condition($key, $entity->{$key});
       }
       $old_entity = $select->execute()->fetchObject();
-
+      if (empty($old_entity)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but the destination entity does not exist'));
+      }
       foreach ($entity as $field => $value) {
         $old_entity->$field = $entity->$field;
       }

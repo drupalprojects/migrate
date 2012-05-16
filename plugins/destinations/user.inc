@@ -165,6 +165,10 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination uid provided'));
       }
       $old_account = user_load($account->uid, TRUE);
+      if (empty($old_account)) {
+        throw new MigrateException(t('System-of-record is DESTINATION, but user !uid does not exist',
+          array('!uid' => $account->uid)));
+      }
     }
     else {
       $old_account = $account;

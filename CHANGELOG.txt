@@ -7,6 +7,7 @@ Features and enhancements
 - #653636 - Add migrate-messages command to dump message table.
 
 Bug fixes
+- #919108 - Cleaner error-handling when updating destinations that don't exist.
 - #1574502 - Coder review, remove dead code.
 - #1570536 - Undefined property in term.inc.
 

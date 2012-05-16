@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1189328 - UI option to ignore dependencies.
 - #1016452 - Support migrating user role assignments by name.
 - #653636 - Add migrate-messages command to dump message table.
 

@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.4 Release Candidate 1
+===============================
 
 Features and enhancements
 - #1587842 - Remove sample CSV files from migrate project.

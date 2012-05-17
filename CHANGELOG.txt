@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1587842 - Remove sample CSV files from migrate project.
 - #1152878 - drush migrate-analyze command, for source data analysis.
 - #1587566 - Support escape option for CSV sources on PHP 5.3.
 - #1189328 - UI option to ignore dependencies.

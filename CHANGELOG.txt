@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.4 Release Candidate 1
+===============================
 
 Features and enhancements
 - #1152878 - drush migrate-analyze command, for source data analysis.

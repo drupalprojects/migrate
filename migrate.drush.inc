@@ -28,6 +28,8 @@ function migrate_drush_help($section) {
       return dt('List the fields available for mapping from a source');
     case 'drush:migrate-mappings':
       return dt('View information on all field mappings in a migration');
+    case 'drush:migrate-analyze':
+      return dt('Analyze the source fields for a migration');
     case 'drush:migrate-messages':
       return dt('View any messages associated with a migration');
     case 'drush:migrate-audit':
@@ -127,6 +129,21 @@ function migrate_drush_command() {
     ),
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mmsg'),
+  );
+  $items['migrate-analyze'] = array(
+    'description' => 'Analyze the source fields for a migration.',
+    'options' => array(
+      'all' => $migration_options['all'],
+      'group' => $migration_options['group'],
+    ),
+    'arguments' => array(
+      'migration' => 'Name of the migration',
+    ),
+    'examples' => array(
+      'migrate-analyze MyNode' => 'Report on field values for the MyNode migration',
+    ),
+    'drupal dependencies' => array('migrate'),
+    'aliases' => array('maz'),
   );
   $items['migrate-audit'] = array(
     'description' => 'View information on problems in a migration.',
@@ -595,6 +612,80 @@ function drush_migrate_messages($migration_name) {
 }
 
 /**
+ * Analyze the source fields for any passed migrations.
+ */
+function drush_migrate_analyze($args = NULL) {
+  $migrations = drush_migrate_get_migrations($args);
+  foreach ($migrations as $name => $migration) {
+    // "Migrations" derived from MigrationBase won't have an analyze method.
+    if (method_exists($migration, 'analyze')) {
+      drush_print("\n" . dt('Analyzing @migration', array('@migration' => $name)) . "\n");
+      $analysis = $migration->analyze();
+      if (!empty($analysis)) {
+        foreach ($analysis as $field_name => $details) {
+          if (!empty($details['description'])) {
+            drush_print(dt('@name (@description):', array('@name' => $field_name,
+              '@description' => $details['description'])));
+          }
+          else {
+            drush_print(dt('@name:', array('@name' => $field_name)));
+          }
+          // Special handling in degenerate cases
+          if (count($details['distinct_values']) == 1) {
+            $value = trim(reset(array_keys($details['distinct_values'])));
+            if ($value === '') {
+              drush_print('  ' . dt('The field is always empty'));
+            }
+            else {
+              drush_print('  ' . dt('Only one value present: @value',
+                array('@value' => $value)));
+            }
+          }
+          else {
+            if ($details['is_numeric']) {
+              drush_print('  ' . dt('Numeric field with a range of @min to @max',
+                array('@min' => $details['min_numeric'], '@max' => $details['max_numeric'])));
+            }
+            else {
+              drush_print('  ' . dt('String field with a length ranging from @min to @max',
+                array('@min' => $details['min_strlen'], '@max' => $details['max_strlen'])));
+            }
+            $values = array();
+            $header = NULL;
+            // If the max of 10 tracked distinct values was reached, we assume
+            // there are many values and treat them as samples. Under 10 this
+            // may be an enumerated field, show all values with their counts.
+            if (count($details['distinct_values']) < 10) {
+              drush_print('  ' . dt('Distinct values:'));
+              $header = array('', dt('Value'), dt('Count'));
+              $values[] = $header;
+            }
+            else {
+              drush_print('  ' . dt('Sample values:'));
+            }
+            ksort($details['distinct_values']);
+            foreach ($details['distinct_values'] as $value => $count) {
+              // Truncate long strings
+              $value = substr($value, 0, 60);
+              if (strlen($value) == 60) {
+                $value .= dt('...');
+              }
+              $row = array('    ', $value);
+              if (count($details['distinct_values']) < 10) {
+                $row[] = $count;
+              }
+              $values[] = $row;
+            }
+            // No header for sample values.
+            drush_print_table($values, !is_null($header));
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * Display field mappings for a migration.
  */
 function drush_migrate_audit($args = NULL) {
@@ -867,6 +958,11 @@ function drush_migrate_fields_source_validate($args = NULL) {
 
 // Implement drush_hook_COMMAND_validate().
 function drush_migrate_mappings_validate($args = NULL) {
+  return drush_migrate_validate_common($args);
+}
+
+// Implement drush_hook_COMMAND_validate().
+function drush_migrate_analyze_validate($args = NULL) {
   return drush_migrate_validate_common($args);
 }
 

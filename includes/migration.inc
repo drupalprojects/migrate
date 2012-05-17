@@ -599,6 +599,114 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Perform an analysis operation - report on field values in the source.
+   *
+   * @return array
+   *  Array of analysis details - each element is keyed by field name and
+   *  contains an array describing the field values.
+   */
+  public function analyze() {
+    // The source needs this to find the map table.
+    self::$currentMigration = $this;
+    try {
+      $this->source->rewind();
+    }
+    catch (Exception $e) {
+      self::displayMessage(
+        t('Migration analysis failed with source plugin exception: !e',
+          array('!e' => $e->getMessage())));
+      self::$currentMigration = NULL;
+      return array();
+    }
+    // Get the documented fields first
+    $source_fields = $this->source->fields();
+    $analysis = array();
+    $field_init = array(
+      'is_numeric' => TRUE,
+      'min_numeric' => NULL,
+      'max_numeric' => NULL,
+      'min_strlen' => 0,
+      'max_strlen' => 0,
+      'distinct_values' => array(),
+    );
+    foreach ($source_fields as $field_name => $description) {
+      // Ignore fields from the map table
+      if (substr($field_name, 0, strlen('migrate_map_')) == 'migrate_map_') {
+        continue;
+      }
+      $analysis[$field_name] = $field_init +
+        array('description' => $description);
+    }
+    // For each data row...
+    while ($this->source->valid()) {
+      $row = $this->source->current();
+      // For each field in this row...
+      foreach ($row as $field_name => $field_value) {
+        // Ignore fields from the map table
+        if (substr($field_name, 0, strlen('migrate_map_')) == 'migrate_map_') {
+          continue;
+        }
+        // If this is an undocumented field, initialize it
+        if (!isset($analysis[$field_name])) {
+          $analysis[$field_name] = $field_init +
+            array('description' => '');
+        }
+        // Ignore leading/trailing spaces in determing numerics
+        $trimmed_value = trim($field_value);
+        if (is_numeric($trimmed_value)) {
+          $trimmed_value = floatval($trimmed_value);
+          // First numeric value, initialize the min/max
+          if (is_null($analysis[$field_name]['min_numeric'])) {
+            $analysis[$field_name]['min_numeric'] = $trimmed_value;
+            $analysis[$field_name]['max_numeric'] = $trimmed_value;
+          }
+          else {
+            $analysis[$field_name]['min_numeric'] = min($trimmed_value,
+              $analysis[$field_name]['min_numeric']);
+            $analysis[$field_name]['max_numeric'] = max($trimmed_value,
+              $analysis[$field_name]['max_numeric']);
+          }
+        }
+        elseif ($trimmed_value !== '') {
+          // Empty strings are !is_numeric(), but treat as empty rather than
+          // assuming we don't have a numeric field
+          $analysis[$field_name]['is_numeric'] = FALSE;
+        }
+        $strlen = strlen($field_value);
+        // First string value, initialize both min and max
+        if ($analysis[$field_name]['max_strlen'] == 0) {
+          $analysis[$field_name]['min_strlen'] = $strlen;
+          $analysis[$field_name]['max_strlen'] = $strlen;
+        }
+        else {
+          $analysis[$field_name]['min_strlen'] = min($strlen,
+            $analysis[$field_name]['min_strlen']);
+          $analysis[$field_name]['max_strlen'] = max($strlen,
+            $analysis[$field_name]['max_strlen']);
+        }
+        // Track up to 10 distinct values
+        if (count($analysis[$field_name]['distinct_values']) <= 10) {
+          $analysis[$field_name]['distinct_values'][$trimmed_value]++;
+        }
+      }
+
+      try {
+        $this->source->next();
+      }
+      catch (Exception $e) {
+        self::displayMessage(
+          t('Migration analysis failed with source plugin exception: !e. Partial results follow:',
+            array('!e' => $e->getMessage())));
+        self::$currentMigration = NULL;
+        return $analysis;
+      }
+    }
+
+    self::$currentMigration = NULL;
+    return $analysis;
+  }
+
+  /**
    * Default implementation of prepareRow(). This method is called from the source
    * plugin upon first pulling the raw data from the source.
    *

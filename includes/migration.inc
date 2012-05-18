@@ -657,9 +657,9 @@ abstract class Migration extends MigrationBase {
         }
         // It might be an array of values, check each value
         if (!is_array($raw_value)) {
-          $value_list = array($raw_value);
+          $raw_value = array($raw_value);
         }
-        foreach ($value_list as $field_value) {
+        foreach ($raw_value as $field_value) {
           // If this is an undocumented field, initialize it
           if (!isset($analysis[$field_name])) {
             $analysis[$field_name] = $field_init +

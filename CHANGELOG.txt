@@ -2,6 +2,12 @@
 Migrate 2.4 Release Candidate 1
 ===============================
 
+IMPORTANT: The file migration support (both MigrateDestinationFile and
+the file field handler) has been completely refactored since Migrate 2.3 - if you
+are importing files as part of your migration, you MUST change your migrations
+to properly use the new implementation. See http://drupal.org/node/1540106 for
+details on how to use the new handlers and destination.
+
 Features and enhancements
 - #1587842 - Remove sample CSV files from migrate project.
 - #1152878 - drush migrate-analyze command, for source data analysis.
@@ -17,12 +23,6 @@ Bug fixes
 
 Migrate 2.4 Beta 1
 ==================
-
-IMPORTANT: The file migration support (both MigrateDestinationFile and
-the file field handler) has been completely refactored for this release - if you
-are importing files as part of your migration, you MUST change your migrations
-to properly use the new implementation. See http://drupal.org/node/1540106 for
-details on how to use the new handlers and destination.
 
 Features and enhancements
 - #1428166 - Make message columns sortable.

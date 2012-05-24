@@ -1,12 +1,18 @@
 
-Migrate 2.4 Release Candidate 1
-===============================
+Migrate 2.4
+===========
 
 IMPORTANT: The file migration support (both MigrateDestinationFile and
 the file field handler) has been completely refactored since Migrate 2.3 - if you
 are importing files as part of your migration, you MUST change your migrations
 to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
+
+Bug fixes
+- #1595166 - Support multiple source keys in MigrateList.
+
+Migrate 2.4 Release Candidate 1
+===============================
 
 Features and enhancements
 - #1587842 - Remove sample CSV files from migrate project.

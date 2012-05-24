@@ -40,8 +40,12 @@ function migrate_migrations() {
     if (class_exists($row->class_name)) {
       $reflect = new ReflectionClass($row->class_name);
       if (!$reflect->isAbstract() && $reflect->isSubclassOf('MigrationBase')) {
+        $arguments = unserialize($row->arguments);
+        if (!$arguments || !is_array($arguments)) {
+          $arguments = array();
+        }
         $migration = MigrationBase::getInstance($row->machine_name,
-          $row->class_name, unserialize($row->arguments));
+          $row->class_name, $arguments);
         $dependencies = $migration->getDependencies();
         if (count($dependencies) > 0) {
           // Set classes with dependencies aside for reordering

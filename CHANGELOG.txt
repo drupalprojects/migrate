@@ -1,4 +1,10 @@
 
+Migrate 2.4
+===========
+
+Bug fixes
+- #1595166 - Support multiple source keys in MigrateList.
+
 Migrate 2.4 Release Candidate 1
 ===============================
 

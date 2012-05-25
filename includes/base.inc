@@ -323,14 +323,6 @@ abstract class MigrationBase {
     // Record the time limit
     $this->timeLimit = ini_get('max_execution_time');
 
-    // Default the displayFunction based on context
-    if (function_exists('drush_log')) {
-      self::$displayFunction = 'drush_log';
-    }
-    else {
-      self::$displayFunction = 'drupal_set_message';
-    }
-
     // Prevent any emails from being sent out on migration
     global $conf;
     if (!empty($conf['mail_system'])) {

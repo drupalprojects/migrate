@@ -9,6 +9,7 @@ to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
 
 Bug fixes
+- #1600912 - Base constructor was undermining UI override of displayFunction.
 - #1595056 - Handle empty arguments from migrate_status table.
 - #1595166 - Support multiple source keys in MigrateList.
 

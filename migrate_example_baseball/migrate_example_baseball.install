@@ -24,6 +24,7 @@ function migrate_example_baseball_enable() {
 function migrate_example_baseball_get_files($path) {
   // Don't replace old upper-case names
   if (!file_exists("$path/GL2000.TXT") && !file_exists("$path/gl2000.txt")) {
+    file_prepare_directory($path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     $result = copy('http://www.retrosheet.org/gamelogs/gl2000_09.zip',
                    $path . '/gl2000_09.zip');
     if ($result) {

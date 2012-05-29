@@ -362,9 +362,6 @@ class MigrateFileUri extends MigrateFile {
       $this->sourcePath = $value;
     }
 
-    // Encode percent signs
-    $this->sourcePath = str_replace('%', '%25', $this->sourcePath);
-
     if (empty($this->destinationFile)) {
       $this->destinationFile = basename($this->sourcePath);
     }

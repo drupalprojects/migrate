@@ -12,6 +12,7 @@ Features and enhancements
 - #1606586 - Add activeUrl public method to MigrateSourceXML.
 
 Bug fixes
+- #1614318 - MigrateFileUri failed to pass file object through.
 - #1601974 - Remove percent sign fix-up, leave to particular application.
 - #1600912 - Base constructor was undermining UI override of displayFunction.
 - #1595056 - Handle empty arguments from migrate_status table.

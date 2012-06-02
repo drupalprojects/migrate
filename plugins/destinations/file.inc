@@ -102,7 +102,7 @@ abstract class MigrateFile implements MigrateFileInterface {
   protected $preserveFiles = FALSE;
 
   /**
-   * An option file object to use as a default starting point for building the
+   * An optional file object to use as a default starting point for building the
    * file entity.
    *
    * @var stdClass
@@ -302,8 +302,8 @@ class MigrateFileUri extends MigrateFile {
    */
   protected $sourcePath = '';
 
-  public function __construct($arguments = array()) {
-    parent::__construct($arguments);
+  public function __construct($arguments = array(), $default_file = NULL) {
+    parent::__construct($arguments, $default_file);
     if (isset($arguments['source_dir'])) {
       $this->sourceDir = rtrim($arguments['source_dir'], "/\\");
     }

@@ -956,6 +956,17 @@ class MigrateSourceXML extends MigrateSource {
   }
 
   /**
+   * Returns the active Url.
+   *
+   * @return string
+   */
+  public function activeUrl() {
+    if ($this->activeUrl) {
+      return $this->sourceUrls[$this->activeUrl];
+    }
+  }
+
+  /**
    * Return a count of all available source records.
    */
   public function computeCount() {

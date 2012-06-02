@@ -8,6 +8,9 @@ are importing files as part of your migration, you MUST change your migrations
 to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
 
+Features and enhancements
+- #1606586 - Add activeUrl public method to MigrateSourceXML.
+
 Bug fixes
 - #1601974 - Remove percent sign fix-up, leave to particular application.
 - #1600912 - Base constructor was undermining UI override of displayFunction.

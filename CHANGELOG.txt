@@ -2,6 +2,9 @@
 Migrate 2.4
 ===========
 
+Features and enhancements
+- #1606586 - Add activeUrl public method to MigrateSourceXML.
+
 Bug fixes
 - #1595056 - Handle empty arguments from migrate_status table.
 - #1595166 - Support multiple source keys in MigrateList.

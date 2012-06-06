@@ -1,4 +1,10 @@
 
+Next release
+============
+
+Bug fixes
+- #1615682 - Fix to CSV record counting.
+
 Migrate 2.4
 ===========
 

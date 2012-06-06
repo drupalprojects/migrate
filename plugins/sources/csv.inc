@@ -131,16 +131,16 @@ class MigrateSourceCSV extends MigrateSource {
     // the number of CSV records (one record will span multiple lines). We need
     // to scan with fgetcsv to get the true count.
     if (!empty($this->options['embedded_newlines'])) {
-      $result = fopen($this->file, 'r');
+      $this->csvHandle = fopen($this->file, 'r');
       // Skip all but the last header
       for ($i = 0; $i < $this->headerRows; $i++) {
-        fgets($result);
+        fgets($this->csvHandle);
       }
       $count = 0;
       while ($this->getNextLine()) {
         $count++;
       }
-      fclose($result);
+      fclose($this->csvHandle);
     }
     else {
       // TODO. If this takes too much time/memory, use exec('wc -l')

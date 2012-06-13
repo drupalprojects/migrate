@@ -171,8 +171,10 @@ abstract class MigrateFile implements MigrateFileInterface {
     if (!isset($file->status)) {
       $file->status = FILE_STATUS_PERMANENT;
     }
-    // If we are replacing an existing file re-use its database record.
-    if ($this->fileReplace == FILE_EXISTS_REPLACE) {
+    // If we are replacing or reusing an existing filesystem entry,
+    // also re-use its database record.
+    if ($this->fileReplace == FILE_EXISTS_REPLACE ||
+        $this->fileReplace == self::FILE_EXISTS_REUSE) {
       $existing_files = file_load_multiple(array(), array('uri' => $destination));
       if (count($existing_files)) {
         $existing = reset($existing_files);

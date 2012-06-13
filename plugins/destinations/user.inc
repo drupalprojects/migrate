@@ -199,6 +199,8 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
     }
     else {
       $updating = FALSE;
+      // Prepare object for a new user to be passed in user_save.
+      $old_account->uid = NULL;
     }
 
     // If any datetime values were included, ensure that they're in timestamp format.

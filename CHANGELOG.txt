@@ -2,6 +2,8 @@
 Next release
 ============
 
+Features and enhancements
+- #1621906 - Support DESTINATION system-of-records for menu links.
 Bug fixes
 - #1618466 - Fix picture notice when updating users.
 - #1615682 - Fix to CSV record counting.

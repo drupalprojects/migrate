@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1618466 - Fix picture notice when updating users.
 - #1615682 - Fix to CSV record counting.
 
 Migrate 2.4

@@ -208,7 +208,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
 
     // While user_save is happy to see a fid in $account->picture on insert,
     // when updating an existing account it wants a file object.
-    if ($updating && ($fid = $account->picture)) {
+    if ($updating && isset($account->picture) && ($fid = $account->picture)) {
       $account->picture = file_load($fid);
     }
 

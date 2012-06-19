@@ -85,7 +85,7 @@ class MigrateSourceCSV extends MigrateSource {
         $this->csvcolumns[] = array($header, $header);
       }
       fclose($this->csvHandle);
-      unset($this->csvHandle);
+      $this->csvHandle = NULL;
     }
     else {
       $this->csvcolumns = $csvcolumns;
@@ -141,6 +141,7 @@ class MigrateSourceCSV extends MigrateSource {
         $count++;
       }
       fclose($this->csvHandle);
+      $this->csvHandle = NULL;
     }
     else {
       // TODO. If this takes too much time/memory, use exec('wc -l')
@@ -159,6 +160,7 @@ class MigrateSourceCSV extends MigrateSource {
     // Close any previously-opened handle
     if (!is_null($this->csvHandle)) {
       fclose($this->csvHandle);
+      $this->csvHandle = NULL;
     }
     // Load up the first row, skipping the header(s) if necessary
     $this->csvHandle = fopen($this->file, 'r');

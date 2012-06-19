@@ -3,6 +3,7 @@ Next release
 ============
 
 Bug fixes
+- #1635184 - Properly NULL csvHandle when closing.
 - #1611842 - Fix uid notice on user import.
 - #1615682 - Fix to CSV record counting.
 

@@ -6,41 +6,7 @@
  */
 
 /**
- * Implementation of hook_drush_help().
- */
-function migrate_drush_help($section) {
-  switch ($section) {
-    case 'drush:migrate-rollback':
-      return dt('Rollback the destination objects from a given migration');
-    case 'drush:migrate-import':
-      return dt('Perform a given migration');
-    case 'drush:migrate-stop':
-      return dt('Stop an active migration');
-    case 'drush:migrate-reset-status':
-      return dt('Reset a migration\'s status to idle');
-    case 'drush:migrate-deregister':
-      return dt('Remove all tracking of a migration');
-    case 'drush:migrate-status':
-      return dt('List all migrations with current status');
-    case 'drush:migrate-fields-destination':
-      return dt('List the fields available for mapping to a destination');
-    case 'drush:migrate-fields-source':
-      return dt('List the fields available for mapping from a source');
-    case 'drush:migrate-mappings':
-      return dt('View information on all field mappings in a migration');
-    case 'drush:migrate-analyze':
-      return dt('Analyze the source fields for a migration');
-    case 'drush:migrate-messages':
-      return dt('View any messages associated with a migration');
-    case 'drush:migrate-audit':
-      return dt('View information on problems in a migration');
-    case 'drush:migrate-wipe':
-      return dt('Delete all nodes from specified content types.');
-  }
-}
-
-/**
- * Implementation of hook_drush_command().
+ * Implements hook_drush_command().
  */
 function migrate_drush_command() {
   $migration_options = array(
@@ -258,14 +224,14 @@ function migrate_drush_command() {
 
 /**
  * Get the value of all migrate related options. Used when spawning a subshell.
- * Don't pass along stop, update, and rollback options.
+ * Don't pass along all, stop, update, and rollback options.
  *
  * @return
  *   An array of command specific options and their values.
  */
 function drush_migrate_get_options() {
   $options = array();
-  $blacklist = array('stop', 'rollback', 'update');
+  $blacklist = array('stop', 'rollback', 'update', 'all');
   $command = drush_parse_command();
   foreach ($command['options'] as $key => $value) {
     // Strip leading --
@@ -283,7 +249,7 @@ function drush_migrate_get_options() {
 /*
  * Spawn a subshell which runs the same command we are currently running.
  */
-function drush_migrate_backend_invoke() {
+function drush_migrate_invoke_process($migrations = '') {
   $args = drush_get_arguments();
   $options = drush_migrate_get_options();
   if (intval(DRUSH_MAJOR_VERSION) < 4) {
@@ -292,7 +258,14 @@ function drush_migrate_backend_invoke() {
   }
   else {
     // $args[0] is the command name, $args[1] is the list of migrations.
-    return drush_invoke_process('@self', $args[0], array($args[1]), $options);
+    if (empty($migrations)) {
+      $command_args = array($args[1]);
+    }
+    else {
+      $command_args = array($migrations);
+    }
+    $return = drush_invoke_process('@self', $args[0], $command_args, $options);
+    return $return;
   }
 }
 
@@ -320,11 +293,11 @@ function drush_migrate_status($name = NULL) {
     $groups = MigrateGroup::groups();
     $table = array();
     foreach ($groups as $group) {
+      if ($group_option && drupal_strtolower($group->getName()) != $group_option) {
+        continue;
+      }
       $group_members_count = 0;
       foreach ($migrations as $migration) {
-        if ($group_option && drupal_strtolower($group->getName()) != $group_option) {
-          continue;
-        }
         if ($migration->getGroup() != $group) {
           // This migration is not from this group.
           continue;
@@ -403,7 +376,7 @@ function drush_migrate_fields_destination($args = NULL) {
       $destination = $migration->getDestination();
       if (method_exists($destination, 'fields')) {
         $table = array();
-        foreach ($destination->fields() as $machine_name => $description) {
+        foreach ($destination->fields($migration) as $machine_name => $description) {
           $table[] = array($description, $machine_name);
         }
         drush_print_table($table);
@@ -459,7 +432,7 @@ function drush_migrate_mappings($args = NULL) {
         $destination = $migration->getDestination();
         $dest_descriptions = array();
         if (method_exists($destination, 'fields')) {
-          foreach ($destination->fields() as $machine_name => $description) {
+          foreach ($destination->fields($migration) as $machine_name => $description) {
             $dest_descriptions[$machine_name] = $description;
           }
         }
@@ -484,7 +457,7 @@ function drush_migrate_mappings($args = NULL) {
           if ($lowergroup == dt('done')) {
             $done[$group][] = $mapping;
           }
-          else if ($lowergroup == dt('dnm') || $lowergroup == dt('do not migrate')) {
+          elseif ($lowergroup == dt('dnm') || $lowergroup == dt('do not migrate')) {
             $dnm[$group][] = $mapping;
           }
           else {
@@ -513,7 +486,7 @@ function drush_migrate_mappings($args = NULL) {
             $table[] = array(' ');
           }
           // Attempt to highlight the group header a bit so it stands out
-          $group_header = '--- ' . strtoupper($group) . ' ---';
+          $group_header = '--- ' . drupal_strtoupper($group) . ' ---';
           $table[] = array($group_header);
           foreach ($mappings as $mapping) {
             if (is_array($mapping->getDefaultValue())) {
@@ -804,10 +777,10 @@ function drush_migrate_rollback($args = NULL) {
       if (!$options['limit']['unit']) {
         $options['limit']['unit'] = 'items';
       }
-      else if ($options['limit']['unit'] != 'seconds' &&
-               $options['limit']['unit'] != 'second' &&
-               $options['limit']['unit'] != 'items' &&
-               $options['limit']['unit'] != 'item') {
+      elseif ($options['limit']['unit'] != 'seconds' &&
+              $options['limit']['unit'] != 'second' &&
+              $options['limit']['unit'] != 'items' &&
+              $options['limit']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;
@@ -851,7 +824,7 @@ function drush_migrate_rollback($args = NULL) {
       // If it couldn't finish (presumably because it was appraoching memory_limit),
       // continue in a subprocess
       if ($return == MigrationBase::RESULT_INCOMPLETE) {
-        drush_migrate_backend_invoke();
+        drush_migrate_invoke_process();
       }
       // If stopped, don't process any further
       elseif ($return == MigrationBase::RESULT_STOPPED) {
@@ -884,7 +857,7 @@ function drush_migrate_get_migrations($args) {
     $seen = $start === TRUE ? TRUE : FALSE;
 
     foreach ($migration_objects as $name => $migration) {
-      if (!$seen && (strtolower($start) . 'migration' == strtolower($name))) {
+      if (!$seen && (drupal_strtolower($start) . 'migration' == drupal_strtolower($name))) {
         // We found our starting migration. $seen is always TRUE now.
         $seen = TRUE;
       }
@@ -894,9 +867,11 @@ function drush_migrate_get_migrations($args) {
       }
     }
   }
-  else if ($group = drush_get_option('group')) {
+  elseif ($group = drush_get_option('group')) {
     foreach ($migration_objects as $name => $migration) {
-      if (strtolower($group) != strtolower($migration->getGroup()->getName()) || !$migration->getEnabled()) {
+      if (drupal_strtolower($group) !=
+          drupal_strtolower($migration->getGroup()->getName()) ||
+            !$migration->getEnabled()) {
         unset($migration_objects[$name]);
       }
     }
@@ -906,7 +881,7 @@ function drush_migrate_get_migrations($args) {
     foreach (explode(',', $args) as $name) {
       $found = FALSE;
       foreach ($migration_objects as $machine_name => $migration) {
-        if (strtolower($name) == strtolower($machine_name)) {
+        if (drupal_strtolower($name) == drupal_strtolower($machine_name)) {
           if ($migration->getEnabled()) {
             $named_migrations[$name] = $migration;
             $found = TRUE;
@@ -982,7 +957,7 @@ function drush_migrate_validate_common($args) {
       return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
     }
   }
-  else if (drush_get_option('group')) {
+  elseif (drush_get_option('group')) {
     if (!empty($args) || drush_get_option('all')) {
       return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
     }
@@ -1044,7 +1019,6 @@ function drush_migrate_pre_migrate_import($args = NULL) {
 function drush_migrate_import($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);
-
     $options = array();
     if ($idlist = drush_get_option('idlist', FALSE)) {
       $options['idlist'] = $idlist;
@@ -1063,10 +1037,10 @@ function drush_migrate_import($args = NULL) {
       if (!$options['limit']['unit']) {
         $options['limit']['unit'] = 'items';
       }
-      else if ($options['limit']['unit'] != 'seconds' &&
-               $options['limit']['unit'] != 'second' &&
-               $options['limit']['unit'] != 'items' &&
-               $options['limit']['unit'] != 'item') {
+      elseif ($options['limit']['unit'] != 'seconds' &&
+              $options['limit']['unit'] != 'second' &&
+              $options['limit']['unit'] != 'items' &&
+              $options['limit']['unit'] != 'item') {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;
@@ -1119,11 +1093,10 @@ function drush_migrate_import($args = NULL) {
       // The goal here is to do one migration in the parent process and then
       // spawn subshells as needed when memory is depleted. We show feedback
       // after each subshell depletes itself. Best we can do in PHP.
-      $i = 0;
-      if ($i == 0 && !drush_get_context('DRUSH_BACKEND')) {
+      if (!drush_get_context('DRUSH_BACKEND')) {
         // Our first pass and in the parent process. Run a migration right here.
-        $return = $migration->processImport($options);
-        if ($return == MigrationBase::RESULT_SKIPPED) {
+        $status = $migration->processImport($options);
+        if ($status == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt("Skipping migration !name due to unfulfilled dependencies:\n  !depends\nUse the --force option to run it anyway.",
             array(
               '!name' => $machine_name,
@@ -1131,19 +1104,21 @@ function drush_migrate_import($args = NULL) {
             )),
             'warning');
         }
-        elseif ($return == MigrationBase::RESULT_STOPPED) {
+        elseif ($status == MigrationBase::RESULT_STOPPED) {
           break;
         }
-        $i++;
-      }
+        elseif ($status == MigrationBase::RESULT_INCOMPLETE) {
+          $stop = TRUE;
+        }
 
-      if (!drush_get_context('DRUSH_BACKEND')) {
         // Subsequent run in the parent process. Spawn subshells ad infinitum.
-        while ($return == MigrationBase::RESULT_INCOMPLETE) {
-          $return = drush_migrate_backend_invoke();
+        $migration_string = implode(',', array_keys($migrations));
+        while ($status == MigrationBase::RESULT_INCOMPLETE) {
+          $return = drush_migrate_invoke_process($migration_string);
           // 'object' holds the return code we care about.
-          $return = $return['object'];
-          if ($return == MigrationBase::RESULT_SKIPPED) {
+          $status = $return['object']['status'];
+          $migration_string = $return['object']['migrations'];
+          if ($status == MigrationBase::RESULT_SKIPPED) {
             drush_log(dt("Skipping migration !name due to unfulfilled dependencies:\n  !depends\nUse the --force option to run it anyway.",
               array(
                 '!name' => $machine_name,
@@ -1151,17 +1126,16 @@ function drush_migrate_import($args = NULL) {
               )),
               'warning');
           }
-          elseif ($return == MigrationBase::RESULT_STOPPED) {
+          elseif ($status == MigrationBase::RESULT_STOPPED) {
             $stop = TRUE;
             break;
           }
-          $i++;
         }
       }
       else {
         // I'm in a subshell. Import then set return value so parent process can respawn or move on.
-        $return = $migration->processImport($options);
-        if ($return == MigrationBase::RESULT_SKIPPED) {
+        $status = $migration->processImport($options);
+        if ($status == MigrationBase::RESULT_SKIPPED) {
           drush_log(dt("Skipping migration !name due to unfulfilled dependencies:\n  !depends\n",
             array(
               '!name' => $machine_name,
@@ -1169,14 +1143,17 @@ function drush_migrate_import($args = NULL) {
             )),
             'warning');
         }
-        drush_backend_set_result($return);
+        elseif ($status == MigrationBase::RESULT_INCOMPLETE) {
+          $stop = TRUE;
+        }
+        drush_backend_set_result(array('status' => $status,
+          'migrations' => implode(',', array_keys($migrations))));
       }
-      if ($i > 1) {
-        drush_log(dt('Completed import of !name in !i passes.', array('!name' => $machine_name, '!i' => $i)), 'debug');
-      }
+
       if ($stop) {
         break;
       }
+      unset($migrations[$machine_name]);
     }
   }
   catch (MigrateException $e) {

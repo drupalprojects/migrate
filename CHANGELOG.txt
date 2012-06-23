@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1637292 - Support case-sensitive matching on term reference fields.
 - #1647594 - Add information message on unmatched terms.
 - #1621906 - Support DESTINATION system-of-records for menu links.
 

@@ -325,7 +325,8 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
   public function fields($type) {
     return array(
       'source_type' => t('Option: Set to \'tid\' when the value is a source ID'),
-      'create_term' => t('Option: Set to TRUE to create referenced terms when necessary')
+      'create_term' => t('Option: Set to TRUE to create referenced terms when necessary'),
+      'ignore_case' => t('Option: Set to TRUE to ignore case differences between source data and existing term names'),
     );
   }
 
@@ -366,6 +367,12 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
         ->condition('td.vid', $vid)
         ->execute()
         ->fetchAllKeyed(1, 0);
+      // If we're ignoring case, change both the matched term name keys and the
+      // source values to lowercase.
+      if (isset($arguments['ignore_case']) && $arguments['ignore_case'] == 'tid') {
+        $existing_terms = array_change_key_case($existing_terms);
+        $values = array_map('strtolower', $values);
+      }
       foreach ($values as $value) {
         if (isset($existing_terms[$value])) {
           $tids[] = $existing_terms[$value];

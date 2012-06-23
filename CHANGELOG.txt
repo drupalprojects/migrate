@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1647594 - Add information message on unmatched terms.
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes

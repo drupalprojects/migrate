@@ -377,6 +377,13 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
           taxonomy_term_save($new_term);
           $tids[] = $new_term->tid;
         }
+        else {
+          // No term is found for the source value and none is set to be
+          // created: warn that data has not been imported.
+          $migration = Migration::currentMigration();
+          $migration->saveMessage(t("No matching taxonomy term found for source value '@value'.",
+            array('@value' => $value)), MigrationBase::MESSAGE_INFORMATIONAL);
+        }
       }
     }
 

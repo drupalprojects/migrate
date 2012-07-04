@@ -2,6 +2,9 @@
 Next release
 ============
 
+Features and enhancements
+- #1621608 - Support for splitting files on import.
+
 Bug fixes
 - #1619822 - Cleanup drush subprocess handling.
 - #1635184 - Properly NULL csvHandle when closing.

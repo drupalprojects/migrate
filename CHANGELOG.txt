@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1672572 - Stifle mapping override messages.
 - #1621608 - Support for splitting files on import.
 
 Bug fixes

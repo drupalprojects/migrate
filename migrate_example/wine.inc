@@ -678,6 +678,10 @@ class WineWineMigration extends AdvancedExampleMigration {
     // An advanced feature of the file field handler is that in addition to the
     // path to the image itself, we can add image properties like ALT text,
     // encapsulating them as JSON
+/*
+     * This is disabled - see http://drupal.org/node/1679798. To demonstrate
+     * remote file migration, edit the migrate_example_wine_files table and enter
+     * the URLs of known remote image files, then enable this code.
     $result = db_select('migrate_example_wine_files', 'f')
               ->fields('f', array('url', 'image_alt', 'image_title'))
               ->condition('wineid', $source_id)
@@ -691,7 +695,7 @@ class WineWineMigration extends AdvancedExampleMigration {
       );
       $current_row->images[] = drupal_to_js($image_data);
     }
-
+*/
     // We could also have used this function to decide to skip a row, in cases
     // where that couldn't easy be done through the original query. Simply
     // return FALSE in such cases.

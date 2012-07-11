@@ -875,6 +875,10 @@ class WineWineMigration extends AdvancedExampleMigration {
 
     // We can have multiple files per node, so we pull them here along with
     // their related data (alt/title).
+/*
+ * This is disabled - see http://drupal.org/node/1679798. To demonstrate
+ * remote file migration, edit the migrate_example_wine_files table and enter
+ * the URLs of known remote image files, then enable this code.
     $result = db_select('migrate_example_wine_files', 'f')
               ->fields('f', array('url', 'image_alt', 'image_title'))
               ->condition('wineid', $source_id)
@@ -884,7 +888,7 @@ class WineWineMigration extends AdvancedExampleMigration {
       $current_row->image_alt[] = $row->image_alt;
       $current_row->image_title[] = $row->image_title;
     }
-
+*/
     // We could also have used this function to decide to skip a row, in cases
     // where that couldn't easily be done through the original query. Simply
     // return FALSE in such cases.

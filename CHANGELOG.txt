@@ -10,6 +10,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1679798 - Remove remote file import, for reliability of simpletests.
 - #1619822 - Cleanup drush subprocess handling.
 - #1635184 - Properly NULL csvHandle when closing.
 - #1630544 - Fix FILE_EXISTS_REUSE to actually reuse existing file entities.

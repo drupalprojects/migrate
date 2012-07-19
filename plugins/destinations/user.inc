@@ -300,8 +300,10 @@ class MigrateDestinationRole extends MigrateDestinationTable {
    */
   public function import(stdClass $entity, stdClass $row) {
     $migration = Migration::currentMigration();
+    $updating = FALSE;
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
+      $updating = TRUE;
       if (isset($entity->rid)) {
         if ($entity->rid != $row->migrate_map_destid1) {
           throw new MigrateException(t("Incoming id !id and map destination id !destid don't match",
@@ -314,6 +316,7 @@ class MigrateDestinationRole extends MigrateDestinationTable {
     }
 
     if ($migration->getSystemOfRecord() == Migration::DESTINATION) {
+      $updating = TRUE;
       if (!isset($entity->rid)) {
         throw new MigrateException(t('System-of-record is DESTINATION, but no destination id provided'));
       }
@@ -332,6 +335,12 @@ class MigrateDestinationRole extends MigrateDestinationTable {
 
     if (!empty($entity->rid)) {
       $id = array($entity->rid);
+      if ($updating) {
+        $this->numUpdated++;
+      }
+      else {
+        $this->numCreated++;
+      }
     }
     else {
       $id = FALSE;

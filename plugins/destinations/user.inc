@@ -109,6 +109,8 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
                 array('@doc' => 'http://drupal.org/node/1349632#theme'));
     $fields['init'] = t('User: <a href="@doc">Init</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#init'));
+    $fields['data'] = t('User: <a href="@doc">Data</a>',
+                array('@doc' => 'http://drupal.org/node/1349632#init'));
     $fields['is_new'] = t('Option: <a href="@doc">Indicates a new user with the specified uid should be created</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#is_new'));
 

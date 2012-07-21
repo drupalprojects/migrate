@@ -348,13 +348,14 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       $tids = $values;
     }
     elseif ($values) {
+      $names = taxonomy_vocabulary_get_names();
+
       // Get the vocabulary for this term
       if (isset($field_info['settings']['allowed_values'][0]['vid'])) {
         $vid = $field_info['settings']['allowed_values'][0]['vid'];
       }
       else {
         $vocab_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
-        $names = taxonomy_vocabulary_get_names();
         $vid = $names[$vocab_name]->vid;
       }
 
@@ -388,8 +389,10 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
           // No term is found for the source value and none is set to be
           // created: warn that data has not been imported.
           $migration = Migration::currentMigration();
-          $migration->saveMessage(t("No matching taxonomy term found for source value '@value'.",
-            array('@value' => $value)), MigrationBase::MESSAGE_INFORMATIONAL);
+          $migration->saveMessage(t("No matching taxonomy term found for source value '@value' in vocabulary %vocab.", array(
+            '@value' => $value,
+            '%vocab' => $names[$vocab_name]->name,
+          )), MigrationBase::MESSAGE_INFORMATIONAL);
         }
       }
     }

@@ -7,6 +7,7 @@ Features and enhancements
 - #1621608 - Support for splitting files on import.
 
 Bug fixes
+- #1693492 - Map table query not using right connection.
 - #1679798 - Remove remote file import, for reliability of simpletests.
 - #1619822 - Cleanup drush subprocess handling.
 - #1635184 - Properly NULL csvHandle when closing.

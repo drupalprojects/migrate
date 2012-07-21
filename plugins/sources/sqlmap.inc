@@ -219,7 +219,7 @@ class MigrateSQLMap extends MigrateMap {
    */
   public function getRowsNeedingUpdate($count) {
     $rows = array();
-    $result = db_select($this->mapTable, 'map')
+    $result = $this->connection->select($this->mapTable, 'map')
                       ->fields('map')
                       ->condition('needs_update', MigrateMap::STATUS_NEEDS_UPDATE)
                       ->range(0, $count)

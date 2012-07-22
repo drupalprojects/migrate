@@ -339,7 +339,7 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
               $context['finished'] = ($processed-$to_update)/$total;
               break;
             case 'rollback':
-              $context['finished'] = ($total-$processed)/$total;
+              $context['finished'] = ($total - $migration->importedCount())/$total;
               break;
           }
         }

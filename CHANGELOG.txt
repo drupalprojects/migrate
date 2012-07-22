@@ -34,6 +34,7 @@ Features and enhancements
 - #1606586 - Add activeUrl public method to MigrateSourceXML.
 
 Bug fixes
+- #1680878 - Fix rollback through UI.
 - #1693492 - Map table query not using right connection.
 - #1614318 - MigrateFileUri failed to pass file object through.
 - #1601974 - Remove percent sign fix-up, leave to particular application.

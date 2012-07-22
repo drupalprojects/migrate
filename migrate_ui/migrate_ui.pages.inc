@@ -247,11 +247,11 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
   if (in_array($operation, array('rollback', 'rollback_and_import'))) {
     $machine_names = array_reverse($machine_names);
     foreach ($machine_names as $machine_name) {
-      $operations[] = array('migrate_ui_batch', array('rollback', $machine_name, $limit));
+      $operations[] = array('migrate_ui_batch', array('rollback', $machine_name, $limit, $force));
     }
     // Reset order of machines names in preparation for final operation.
     $machine_names = array_reverse($machine_names);
-    $operation = $operation == 'rollback_and_import' ? 'import' : NULL;
+    $operation = ($operation == 'rollback_and_import') ? 'import' : NULL;
   }
 
   // Perform non-rollback operation, if one exists.
@@ -339,7 +339,7 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
               $context['finished'] = ($processed-$to_update)/$total;
               break;
             case 'rollback':
-              $context['finished'] = ($total-$processed)/$total;
+              $context['finished'] = ($total - $migration->importedCount())/$total;
               break;
           }
         }

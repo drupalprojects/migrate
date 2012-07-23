@@ -174,8 +174,9 @@ abstract class Migration extends MigrationBase {
     if ($warn_on_override && !is_null($destination_field) &&
         isset($this->fieldMappings[$destination_field])) {
       self::displayMessage(
-        t('!name addFieldMapping: !dest was previously mapped, overridden',
-          array('!name' => $this->machineName, '!dest' => $destination_field)),
+        t('!name addFieldMapping: !dest was previously mapped from !source, overridden',
+          array('!name' => $this->machineName, '!dest' => $destination_field,
+                '!source' => $this->fieldMappings[$destination_field]->getSourceField())),
         'warning');
     }
     $mapping = new MigrateFieldMapping($destination_field, $source_field);

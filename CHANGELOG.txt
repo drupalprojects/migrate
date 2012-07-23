@@ -30,6 +30,7 @@ to properly use the new implementation. See http://drupal.org/node/1540106 for
 details on how to use the new handlers and destination.
 
 Features and enhancements
+- #1685122 - Add previous source field name to notice.
 - #1692912 - Add vocabulary name to notice.
 - #1606586 - Add activeUrl public method to MigrateSourceXML.
 

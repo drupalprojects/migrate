@@ -726,6 +726,8 @@ class WineWineMigration extends AdvancedExampleMigration {
     $this->dependencies = array('WineVariety', 'WineRegion',
       'WineBestWith', 'WineUser', 'WineProducer');
 
+    // You can add a 'track_last_imported' option to the map, to record the
+    // timestamp of when each item was last imported in the map table.
     $this->map = new MigrateSQLMap($this->machineName,
       array(
         'wineid' => array(
@@ -736,7 +738,9 @@ class WineWineMigration extends AdvancedExampleMigration {
           'alias' => 'w',
         )
       ),
-      MigrateDestinationNode::getKeySchema()
+      MigrateDestinationNode::getKeySchema(),
+      'default',
+      array('track_last_imported' => TRUE)
     );
 
     $query = db_select('migrate_example_wine', 'w')

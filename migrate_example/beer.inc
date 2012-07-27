@@ -256,7 +256,8 @@ class BeerUserMigration extends BasicExampleMigration {
     // This is a shortcut you can use to mark several destination fields as DNM
     // at once
     $this->addUnmigratedDestinations(array('theme', 'signature', 'access', 'login',
-      'timezone', 'language', 'picture', 'is_new', 'signature_format', 'role_names'));
+      'timezone', 'language', 'picture', 'is_new', 'signature_format', 'role_names',
+      'init', 'data'));
 
     // Oops, we made a typo - this should have been 'init'! If you have
     // migrate_ui enabled, look at the BeerUser info page - you'll see that it
@@ -266,13 +267,9 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->addFieldMapping('int')
          ->issueGroup(t('DNM'));
 
-    if (module_exists('path')) {
-      $this->addFieldMapping('path')
+    if (module_exists('pathauto')) {
+      $this->addFieldMapping('pathauto')
            ->issueGroup(t('DNM'));
-      if (module_exists('pathauto')) {
-        $this->addFieldMapping('pathauto')
-             ->issueGroup(t('DNM'));
-      }
     }
   }
 }
@@ -455,10 +452,5 @@ class BeerCommentMigration extends BasicExampleMigration {
     // Unmapped destination fields
     $this->addUnmigratedDestinations(array('hostname', 'created', 'changed',
       'thread', 'homepage', 'language', 'comment_body:format', 'comment_body:language'));
-
-    if (module_exists('path')) {
-      $this->addFieldMapping('path')
-           ->issueGroup(t('DNM'));
-    }
   }
 }

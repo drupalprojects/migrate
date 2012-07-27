@@ -10,12 +10,11 @@ class MigratePathNodeHandler extends MigrateDestinationHandler {
     $this->registerTypes(array('node'));
   }
 
-  public function fields() {
-    if (module_exists('path')) {
-      return array('path' => t('Node: Path alias'));
+  public function fields($entity_type, $bundle) {
+    switch ($entity_type) {
+      case 'node':
+        return array('path' => t('Node: Path alias'));
     }
-    else {
-      return array();
-    }
+    return array();
   }
 }

@@ -563,7 +563,7 @@ class WineWineMigration extends AdvancedExampleMigration {
       'default',
       array('track_last_imported' => TRUE)
     );
- 
+
     $query = db_select('migrate_example_wine', 'w')
              ->fields('w', array('wineid', 'name', 'body', 'excerpt', 'accountid',
               'posted', 'last_changed', 'variety', 'region', 'rating',

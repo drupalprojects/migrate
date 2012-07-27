@@ -325,3 +325,28 @@ function migrate_update_6021() {
 
   return $ret;
 }
+
+/**
+ * Add rollback_action field to all map tables
+ */
+function migrate_update_6201() {
+  $ret = array();
+  foreach (migrate_migrations() as $migration) {
+    if (is_a($migration, 'Migration')) {
+      $tablename = $migration->getMap()->getMapTable();
+      if (!db_column_exists($tablename, 'rollback_action')) {
+        db_add_field($ret, $tablename, 'rollback_action', array(
+            'type' => 'int',
+            'size' => 'tiny',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+            'default' => 0,
+            'description' => 'Flag indicating what to do for this item on rollback',
+          )
+        );
+      }
+    }
+  }
+  $ret[] = t('Added rollback_action column to all map tables');
+  return $ret;
+}

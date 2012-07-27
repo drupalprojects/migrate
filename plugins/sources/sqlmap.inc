@@ -70,7 +70,10 @@ class MigrateSQLMap extends MigrateMap {
   protected $ensured;
 
   public function __construct($machine_name, array $source_key,
-      array $destination_key, $connection_key = 'default') {
+      array $destination_key, $connection_key = 'default', $options = array()) {
+    if (isset($options['track_last_imported'])) {
+      $this->trackLastImported = TRUE;
+    }
     // Default generated table names, limited to 63 characters
     $this->mapTable = 'migrate_map_' . drupal_strtolower($machine_name);
     $this->mapTable = substr($this->mapTable, 0, 63);

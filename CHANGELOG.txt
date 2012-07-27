@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1703050 - Add track_last_imported option for maps.
 - #1690092 - Protect migrations, or specific rows, from rollback.
 - #1685122 - Add previous source field name to notice.
 - #1672572 - Stifle mapping override messages.

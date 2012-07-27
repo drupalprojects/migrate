@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1690092 - Protect migrations, or specific rows, from rollback.
 - #1672572 - Stifle mapping override messages.
 - #1621608 - Support for splitting files on import.
 - #1637292 - Support case-sensitive matching on term reference fields.

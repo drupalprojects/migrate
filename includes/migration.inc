@@ -69,6 +69,21 @@ abstract class Migration extends MigrationBase {
   public $needsUpdate = MigrateMap::STATUS_IMPORTED;
 
   /**
+   * The default rollback action for this migration. Can be overridden on
+   * a per-row basis by setting $row->rollbackAction in prepareRow().
+   *
+   * @var int
+   */
+  protected $defaultRollbackAction = MigrateMap::ROLLBACK_DELETE;
+
+  /**
+   * The rollback action to be saved for the current row.
+   *
+   * @var int
+   */
+  public $rollbackAction;
+
+  /**
    * Simple mappings between destination fields (keys) and source fields (values).
    *
    * @var array
@@ -398,7 +413,10 @@ abstract class Migration extends MigrationBase {
         // Note that bulk rollback is only supported for single-column keys
         $sourceids[] = $this->currentSourceKey;
         if (!empty($destination_key->destid1)) {
-          $destids[] = $destination_key->destid1;
+          $map_row = $this->map->getRowByDestination((array)$destination_key);
+          if ($map_row['rollback_action'] == MigrateMap::ROLLBACK_DELETE) {
+            $destids[] = $destination_key->destid1;
+          }
         }
 
         $batch_count++;
@@ -479,9 +497,12 @@ abstract class Migration extends MigrationBase {
               }
             }
             if (!$skip) {
-              migrate_instrument_start('destination rollback');
-              $this->destination->rollback((array)$destination_key);
-              migrate_instrument_stop('destination rollback');
+              $map_row = $this->map->getRowByDestination((array)$destination_key);
+              if ($map_row['rollback_action'] == MigrateMap::ROLLBACK_DELETE) {
+                migrate_instrument_start('destination rollback');
+                $this->destination->rollback((array)$destination_key);
+                migrate_instrument_stop('destination rollback');
+              }
             }
           }
 
@@ -543,24 +564,28 @@ abstract class Migration extends MigrationBase {
         $ids = $this->destination->import($this->destinationValues, $this->sourceValues);
         migrate_instrument_stop('destination import');
         if ($ids) {
-          $this->map->saveIDMapping($this->sourceValues, $ids, $this->needsUpdate);
+          $this->map->saveIDMapping($this->sourceValues, $ids, $this->needsUpdate,
+                                    $this->rollbackAction);
           $this->successes_since_feedback++;
           $this->total_successes++;
         }
         else {
-          $this->map->saveIDMapping($this->sourceValues, array(), MigrateMap::STATUS_FAILED);
+          $this->map->saveIDMapping($this->sourceValues, array(),
+            MigrateMap::STATUS_FAILED, $this->rollbackAction);
           $message = t('New object was not saved, no error provided');
           $this->saveMessage($message);
           self::displayMessage($message);
         }
       }
       catch (MigrateException $e) {
-        $this->map->saveIDMapping($this->sourceValues, array(), MigrateMap::STATUS_FAILED);
+        $this->map->saveIDMapping($this->sourceValues, array(),
+          MigrateMap::STATUS_FAILED, $this->rollbackAction);
         $this->saveMessage($e->getMessage(), $e->getLevel());
         self::displayMessage($e->getMessage());
       }
       catch (Exception $e) {
-        $this->map->saveIDMapping($this->sourceValues, array(), MigrateMap::STATUS_FAILED);
+        $this->map->saveIDMapping($this->sourceValues, array(),
+          MigrateMap::STATUS_FAILED, $this->rollbackAction);
         $this->handleException($e);
       }
       $this->total_processed++;
@@ -737,6 +762,7 @@ abstract class Migration extends MigrationBase {
    *  TRUE to process this row, FALSE to have the source skip it.
    */
   public function prepareRow($row) {
+    $this->rollbackAction = $this->defaultRollbackAction;
     return TRUE;
   }
 
@@ -1246,7 +1272,8 @@ abstract class Migration extends MigrationBase {
         foreach ($map_source_key as $key => $definition) {
           $data_row->$key = $source_key[$i++];
         }
-        $this->map->saveIDMapping($data_row, $destids, MigrateMap::STATUS_NEEDS_UPDATE);
+        $this->map->saveIDMapping($data_row, $destids,
+          MigrateMap::STATUS_NEEDS_UPDATE, $this->defaultRollbackAction);
       }
     }
     else {

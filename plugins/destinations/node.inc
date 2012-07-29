@@ -64,6 +64,8 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
                            array('@doc' => 'http://drupal.org/node/1349696#title'))
                          . $node_type->title_label . '</a>';
     }
+    $fields['body'] = t('Node: Body');
+    $fields['teaser'] = t('Node: Teaser');
     $fields['uid'] = t('Node: <a href="@doc">Authored by (uid)</a>',
                     array('@doc' => 'http://drupal.org/node/1349696#uid'));
     $fields['created'] = t('Node: <a href="@doc">Created timestamp</a>',

@@ -751,6 +751,26 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
+   * Default implementation of prepareRow. This method is called from the source
+   * plugin immediately after retrieving the raw data from the source - by
+   * default, it simply assigns the key values based on the field names passed
+   * to MigrateSQLMap(). Override this if you need to generate your own key
+   * (e.g., the source doesn't have a natural unique key).
+   *
+   * @param array $source_key
+   * @param object $row
+   *
+   * @return array
+   */
+  public function prepareKey($source_key, $row) {
+    $key = array();
+    foreach ($source_key as $field_name => $field_schema) {
+      $key[$field_name] = $row->$field_name;
+    }
+    return $key;
+  }
+
+  /**
    * Default implementation of prepareRow(). This method is called from the source
    * plugin upon first pulling the raw data from the source.
    *

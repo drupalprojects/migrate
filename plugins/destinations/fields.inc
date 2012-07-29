@@ -499,13 +499,24 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
     // Note that what $value represents depends on the file class -
     // MigrateFileUri expects a filespec/URI, MigrateFileFid expects a file ID,
     // etc.
-    foreach ($values as $value) {
+    foreach ($values as $delta => $value) {
       if ($value) {
+        // Handle potentially multiple arguments
+        $instance_arguments = array();
+        foreach ($arguments as $key => $argument) {
+          // For a scalar argument, pass it directly
+          if (!is_array($argument)) {
+            $instance_arguments[$key] = $argument;
+          }
+          else {
+            $instance_arguments[$key] = $argument[$delta];
+          }
+        }
         // If the parent entity doesn't have an explicit uid, give ownership
         // to the anonymous account
         $owner = isset($entity->uid) ? $entity->uid : 0;
         // Call the MigrateFileInterface implementation to do the real work
-        $source = new $file_class($arguments);
+        $source = new $file_class($instance_arguments);
         $file = $source->processFile($value, $owner);
 
         // Assuming we got back a valid file ID, build the proper field
@@ -513,7 +524,7 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
         // MigrateFile class has saved a message indicating why.
         if ($file) {
           $field_array = array('fid' => $file->fid);
-          $return[$language][] = $this->buildFieldArray($field_array, $arguments, $delta);
+          $return[$language][] = $this->buildFieldArray($field_array, $instance_arguments, $delta);
         }
       }
       $delta++;

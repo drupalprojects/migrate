@@ -388,8 +388,7 @@ class BeerNodeMigration extends BasicExampleMigration {
       'body:format', 'body:language', 'migrate_example_beer_styles:source_type',
       'migrate_example_beer_styles:create_term', 'field_migrate_example_image:destination_dir',
       'field_migrate_example_image:language', 'field_migrate_example_image:file_replace',
-      'field_migrate_example_image:preserve_files', 'field_migrate_example_country:format',
-      'field_migrate_example_country:language', 'comment',
+      'field_migrate_example_image:preserve_files', 'field_migrate_example_country:language', 'comment',
       'field_migrate_example_image:file_class', 'field_migrate_example_image:destination_file'));
 
     if (module_exists('path')) {

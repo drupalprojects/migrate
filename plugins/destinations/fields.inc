@@ -240,10 +240,10 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
     if ($type == 'text_with_summary') {
       $fields['summary'] = t('Subfield: Summary of field contents');
     }
-    $fields += array(
-      'format' => t('Subfield: Text format for the field'),
-      'language' => t('Subfield: Language for the field'),
-    );
+    if ($instance['settings']['text_processing']) {
+      $fields['format'] = t('Subfield: Text format for the field');
+    }
+    $fields['language'] = t('Subfield: Language for the field');
     return $fields;
   }
 

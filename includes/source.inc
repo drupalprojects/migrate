@@ -252,9 +252,8 @@ abstract class MigrateSource implements Iterator {
     while ($row = $this->getNextRow()) {
       migrate_instrument_stop(get_class($this) . ' getNextRow');
       // Populate the source key for this row
-      foreach ($this->activeMap->getSourceKey() as $field_name => $field_schema) {
-        $this->currentKey[$field_name] = $row->$field_name;
-      }
+      $this->currentKey = $this->activeMigration->prepareKey(
+        $this->activeMap->getSourceKey(), $row);
 
       // Pick up the existing map row, if any, unless getNextRow() did it.
       if (!$this->mapRowAdded) {

@@ -363,6 +363,11 @@ abstract class MigrationBase {
       $machine_name = self::machineFromClass($class_name);
     }
 
+    if (!preg_match('|^[a-z0-9_]+$|i', $machine_name)) {
+      throw new Exception(t('!name is not a valid Migration machine name. Use only alphanumeric or underscore characters.',
+                          array('!name' => $machine_name)));
+    }
+
     // Register the migration if it's not already there; if it is,
     // update the class and arguments in case they've changed.
     db_merge('migrate_status')

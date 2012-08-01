@@ -568,7 +568,13 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
    *  Directory relative to the Drupal public files directory.
    */
   protected function destinationDir($field_info, $instance) {
-    $destination_dir = file_field_widget_uri($field_info, $instance);
+    // Only apply for file/image types
+    if (isset($instance['settings']['file_directory'])) {
+      $destination_dir = file_field_widget_uri($field_info, $instance);
+    }
+    else {
+      $destination_dir = 'public://';
+    }
     return $destination_dir;
   }
 

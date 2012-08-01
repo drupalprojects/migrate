@@ -348,7 +348,10 @@ class MigrateFileUri extends MigrateFile {
    *  TRUE if the copy succeeded, FALSE otherwise.
    */
   protected function copyFile($destination) {
-    // Perform the copy operation.
+    // Perform the copy operation, with a cleaned-up path.
+    $basename = basename($this->sourcePath);
+    $prefix = substr($this->sourcePath, 0, strlen($this->sourcePath) - strlen($basename));
+    $this->sourcePath = $prefix . rawurlencode($basename);
     if (!@copy($this->sourcePath, $destination)) {
       throw new MigrateException(t('The specified file %file could not be copied to ' .
         '%destination.',

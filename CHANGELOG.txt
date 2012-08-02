@@ -12,6 +12,7 @@ Features and enhancements
 - #1621608 - Support for splitting files on import.
 
 Bug fixes
+- #1708296 - Handle timestamps before 1902.
 - #1700678 - Only show path as a destination where applicable.
 - #1680878 - Fix rollback through UI.
 - #1693492 - Map table query not using right connection.

@@ -1009,7 +1009,8 @@ abstract class MigrationBase {
       return $value;
     }
 
-    $time = strtotime($value);
+    $date = new DateTime($value);
+    $time = $date->format('U');
     if ($time == FALSE) {
       // Handles form YYYY-MM-DD HH:MM:SS.garbage
       if (drupal_strlen($value) > 19) {

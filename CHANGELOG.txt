@@ -17,6 +17,7 @@ Features and enhancements
 
 Bug fixes
 - #1712434 - Highwater fails when highwater field values == 0.
+- #1708296 - Handle timestamps before 1902.
 - #1637444 - Don't offer format subfield for plain text fields.
 - #1700678 - Only show path as a destination where applicable.
 - #1693304 - Role import results not reported.

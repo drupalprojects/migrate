@@ -304,7 +304,8 @@ class MigrateSourceSQL extends MigrateSource {
         $this->query->addField($alias, 'needs_update', 'migrate_map_needs_update');
       }
       // 3. If we are using highwater marks, also include rows above the mark.
-      if (isset($this->highwaterField['name'])) {
+      //    But, include all rows if the highwater mark is not set.
+      if (isset($this->highwaterField['name']) && $this->activeMigration->getHighwater() !== '') {
         if (isset($this->highwaterField['alias'])) {
           $highwater = $this->highwaterField['alias'] . '.' . $this->highwaterField['name'];
         }

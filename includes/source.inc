@@ -299,8 +299,14 @@ abstract class MigrateSource implements Iterator {
         $this->currentRow = NULL;
         continue;
       }
-      // 5. So, we are using highwater marks. Take the row if its highwater field
-      //    value is greater than the saved marked, otherwise skip it.
+      // 5. The initial highwater mark, before anything is migrated, is ''. We
+      //    want to make sure we don't mistakenly skip rows with a highwater
+      //    field value of 0, so explicitly handle '' here.
+      elseif ($this->activeMigration->getHighwater() === '') {
+        // Fall through
+      }
+      // 6. So, we are using highwater marks. Take the row if its highwater field
+      //    value is greater than the saved mark, otherwise skip it.
       else {
         // Call prepareRow() here, in case the highwaterField needs preparation
         if ($this->prepareRow($row) !== FALSE) {

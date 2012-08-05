@@ -15,6 +15,8 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
       switch ($entity_type) {
         case 'node':
           return array('path' => t('Node: Path alias'));
+        case 'user':
+          return array('path' => t('User: Path alias'));
         case 'taxonomy_term':
           return array('path' => t('Term: Path alias'));
       }

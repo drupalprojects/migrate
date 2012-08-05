@@ -267,9 +267,13 @@ class BeerUserMigration extends BasicExampleMigration {
     $this->addFieldMapping('int')
          ->issueGroup(t('DNM'));
 
-    if (module_exists('pathauto')) {
-      $this->addFieldMapping('pathauto')
+    if (module_exists('path')) {
+      $this->addFieldMapping('path')
            ->issueGroup(t('DNM'));
+      if (module_exists('pathauto')) {
+        $this->addFieldMapping('pathauto')
+             ->issueGroup(t('DNM'));
+      }
     }
   }
 }

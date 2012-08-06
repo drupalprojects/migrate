@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1714378 - Support migration of user aliases.
 - #1670410 - Sanity-check migration machine names.
 - #1637458 - Pass field instance rather than just field name to field() methods.
 - #1688312 - Allow any file field argument to have per-instance values.
@@ -16,6 +17,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1715190 - Comment deletion performance improvements.
 - #1712434 - Highwater fails when highwater field values == 0.
 - #1708296 - Handle timestamps before 1902.
 - #1637444 - Don't offer format subfield for plain text fields.

@@ -235,7 +235,40 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     return $return;
   }
 
+  /**
+   * Implements MigrateDestination::preImport().
+   */
   public function preImport() {
+    $this->disableStatistics();
+  }
+
+  /**
+   * Implements MigrateDestination::postImport().
+   */
+  public function postImport() {
+    $this->enableStatistics();
+  }
+
+  /**
+   * Implements MigrateDestination::preRollback().
+   */
+  public function preRollback() {
+    $this->disableStatistics();
+  }
+
+  /**
+   * Implements MigrateDestination::postRollback().
+   */
+  public function postRollback() {
+    $this->enableStatistics();
+  }
+
+  /**
+   * Updating node statistics on every comment imported or rolled back is
+   * expensive. We disable node statistics while performing imports and rollbacks,
+   * then re-enable and compute them in bulk when done.
+   */
+  protected function disableStatistics() {
     // If maintaining node statistics is enabled, temporarily disable it
     $this->maintainNodeStatistics =
       variable_get('comment_maintain_node_statistics', TRUE);
@@ -244,7 +277,11 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     }
   }
 
-  public function postImport() {
+  /**
+   * Re-enable and recompute node statistics after an import or rollback
+   * operation.
+   */
+  protected function enableStatistics() {
     // If originally enabled, re-enable and rebuild the stats
     if ($this->maintainNodeStatistics) {
       $GLOBALS['conf']['comment_maintain_node_statistics'] = TRUE;

@@ -187,7 +187,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
     // Set some required properties.
 
     if ($migration->getSystemOfRecord() == Migration::SOURCE) {
-      if (!isset($node->language)) {
+      if (empty($node->language)) {
         $node->language = $this->language;
       }
 

@@ -16,6 +16,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1763932 - Empty path aliases generated for users.
 - #1717284 - Make sure nodes with unspecified languages end up language-neutral.
 - #1712434 - Highwater fails when highwater field values == 0.
 - #1708296 - Handle timestamps before 1902.

@@ -247,7 +247,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       // Unlike nodes and taxonomy terms, core does not automatically save an
       // alias in a user entity, we must do it ourselves.
       if (module_exists('path')) {
-        if (isset($account->path['alias'])) {
+        if (!empty($account->path['alias'])) {
           $path = array(
             'source' => 'user/' . $account->uid,
             'alias' => $account->path['alias'],

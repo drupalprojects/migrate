@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1701096 - CSV source now returns csvrownum as a (pseudo-)field.
 - #1670410 - Sanity-check migration machine names.
 - #1637458 - Pass field instance rather than just field name to field() methods.
 - #1688312 - Allow any file field argument to have per-instance values.

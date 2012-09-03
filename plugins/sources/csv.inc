@@ -41,6 +41,13 @@ class MigrateSourceCSV extends MigrateSource {
   protected $headerRows = 0;
 
   /**
+   * The current row/line number in the CSV file.
+   *
+   * @var integer
+   */
+  protected $rowNumber;
+
+  /**
    * Simple initialization.
    *
    * @param string $path
@@ -167,6 +174,7 @@ class MigrateSourceCSV extends MigrateSource {
     for ($i = 0; $i < $this->headerRows; $i++) {
       $this->getNextLine();
     }
+    $this->rowNumber = 1;
   }
 
   /**
@@ -205,6 +213,7 @@ class MigrateSourceCSV extends MigrateSource {
         $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'],
         $this->fgetcsv['escape']);
     }
+    $row->csvrownum = $this->rowNumber++;
     return $row;
   }
 }

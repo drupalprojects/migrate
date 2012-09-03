@@ -166,9 +166,7 @@ class MigrateSourceSQL extends MigrateSource {
     if ($queryFields) {
       // Not much we can do in terms of describing the fields without manual intervention
       foreach ($queryFields as $field_name => $field_info) {
-        // Lower case, because Drupal forces lowercase on fetch
-        $fields[drupal_strtolower($field_name)] = drupal_strtolower(
-          $field_info['table'] . '.' . $field_info['field']);
+        $fields[$field_name] = $field_info['table'] . '.' . $field_info['field'];
       }
     }
     else {
@@ -178,9 +176,7 @@ class MigrateSourceSQL extends MigrateSource {
       $row = $result->fetchAssoc();
       if (is_array($row)) {
         foreach ($row as $field_name => $field_value) {
-          // Lower case, because Drupal forces lowercase on fetch
-          $fields[drupal_strtolower($field_name)] = t('Example Content: !value',
-            array('!value' => $field_value));
+          $fields[$field_name] = t('Example Content: !value', array('!value' => $field_value));
         }
       }
     }
@@ -201,15 +197,13 @@ class MigrateSourceSQL extends MigrateSource {
                 ORDER BY ordinal_position';
         $result = dbtng_query($sql, array(':database' => $database, ':table' => $table));
         foreach ($result as $row) {
-          $fields[drupal_strtolower($row->column_name)] = drupal_strtolower(
-            $table . '.' . $row->column_name);
+          $fields[$row->column_name] = $table . '.' . $row->column_name;
         }
       }
     }*/
     $expressionFields = $this->query->getExpressions();
     foreach ($expressionFields as $field_name => $field_info) {
-      // Lower case, because Drupal forces lowercase on fetch
-      $fields[drupal_strtolower($field_name)] = drupal_strtolower($field_info['alias']);
+      $fields[$field_name] = $field_info['alias'];
     }
 
     // Any caller-specified fields with the same names as extracted fields will

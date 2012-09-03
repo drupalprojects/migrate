@@ -408,6 +408,8 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
           $new_term->name = $value;
           taxonomy_term_save($new_term);
           $tids[] = $new_term->tid;
+          // Add newly created term to existing array.
+          $existing_terms[$value] = $new_term->tid;
         }
         else {
           // No term is found for the source value and none is set to be

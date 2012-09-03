@@ -16,6 +16,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1730256 - Avoid duplicate terms when source has multiples.
 - #1757600 - Remove forced-lowercasing of field names.
 - #1763932 - Empty path aliases generated for users.
 - #1717284 - Make sure nodes with unspecified languages end up language-neutral.

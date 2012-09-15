@@ -278,8 +278,11 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
         if (is_array($arguments['format'])) {
           $format = $arguments['format'][$delta];
         }
-        else {
+        elseif (!empty($instance['settings']['text_processing'])) {
           $format = $arguments['format'];
+        }
+        else {
+          $format = NULL;
         }
       }
       else {

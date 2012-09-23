@@ -721,6 +721,10 @@ class MigrateNodeReferenceFieldHandler extends MigrateSimpleFieldHandler {
     ));
     $this->registerTypes(array('node_reference'));
   }
+
+  protected function notNull($value) {
+    return !is_null($value) && $value !== FALSE;
+  }
 }
 
 class MigrateUserReferenceFieldHandler extends MigrateSimpleFieldHandler {
@@ -730,5 +734,9 @@ class MigrateUserReferenceFieldHandler extends MigrateSimpleFieldHandler {
       'skip_empty' => TRUE,
     ));
     $this->registerTypes(array('user_reference'));
+  }
+
+  protected function notNull($value) {
+    return !is_null($value) && $value !== FALSE;
   }
 }

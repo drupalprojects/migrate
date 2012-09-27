@@ -1108,13 +1108,26 @@ abstract class Migration extends MigrationBase {
         $destination_field = $destination[0];
         if (isset($destination[1])) {
           $subfield = $destination[1];
-          if (!is_array($this->destinationValues->$destination_field)) {
+          // We're processing the subfield before the primary value, initialize it
+          if (!property_exists($this->destinationValues, $destination_field)) {
+            $this->destinationValues->$destination_field = array();
+          }
+          // We have a value, and need to convert to an array so we can add
+          // arguments.
+          elseif (!is_array($this->destinationValues->$destination_field)) {
             $this->destinationValues->$destination_field = array($this->destinationValues->$destination_field);
           }
+          // Add the subfield value to the arguments array.
           $this->destinationValues->{$destination_field}['arguments'][$subfield] = $destination_values;
         }
-        else {
+        // Just the primary value, the first time through for this field, simply
+        // set it.
+        elseif (!property_exists($this->destinationValues, $destination_field)) {
           $this->destinationValues->$destination_field = $destination_values;
+        }
+        // We've seen a subfield, so add as an array value.
+        else {
+          $this->destinationValues->{$destination_field}[] = $destination_values;
         }
       }
     }

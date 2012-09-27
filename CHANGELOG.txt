@@ -3,6 +3,7 @@ Next release
 ============
 
 Features and enhancements
+- #1789346 - Add MigrateSourceJSON to handle big JSON files.
 - #1701096 - CSV source now returns csvrownum as a (pseudo-)field.
 - #1670410 - Sanity-check migration machine names.
 - #1637458 - Pass field instance rather than just field name to field() methods.
@@ -17,9 +18,6 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
-- #1794470 - Allow subfields to be mapped before the primary field.
-- #1665332 - Handle empty node and user references cleanly.
-- #1788014 - Make sure updates work with FILE_EXISTS_REUSE.
 - #1781362 - Add new warn_on_override argument to XMLMigration::addFieldMapping.
 - #1783774 - Properly handle text fields without text processing.
 - #1730256 - Avoid duplicate terms when source has multiples.

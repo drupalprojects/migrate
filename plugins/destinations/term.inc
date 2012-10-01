@@ -219,8 +219,12 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
           $parents = $new_parents;
         }
         if ($term->parent == $parents) {
-          // We've found a matching term, we'll use that
-          $term = $candidate;
+          // We've found a matching term, we'll use the fields from that term.
+          foreach ($candidate as $field => $value) {
+            if (!isset($term->$field)) {
+              $term->$field = $candidate->$field;
+            }
+          }
           break;
         }
       }

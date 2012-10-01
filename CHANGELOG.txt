@@ -17,6 +17,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1760550 - Keep term migration from overwriting existing terms.
 - #1794470 - Allow subfields to be mapped before the primary field.
 - #1665332 - Handle empty node and user references cleanly.
 - #1788014 - Make sure updates work with FILE_EXISTS_REUSE.

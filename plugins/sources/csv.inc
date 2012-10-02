@@ -193,6 +193,7 @@ class MigrateSourceCSV extends MigrateSource {
         $row[$key] = isset($row[$int]) ? $row[$int] : NULL;
         unset($row[$int]);
       }
+      $row['csvrownum'] = $this->rowNumber++;
       return (object)$row;
     }
     else {
@@ -213,7 +214,6 @@ class MigrateSourceCSV extends MigrateSource {
         $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'],
         $this->fgetcsv['escape']);
     }
-    $row->csvrownum = $this->rowNumber++;
     return $row;
   }
 }

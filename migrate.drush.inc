@@ -1019,6 +1019,7 @@ function drush_migrate_pre_migrate_import($args = NULL) {
     drush_invoke('migrate-stop', $args);
   }
   if (drush_get_option('rollback')) {
+    drush_unset_option('rollback');
     drush_invoke('migrate-rollback', $args);
   }
 }

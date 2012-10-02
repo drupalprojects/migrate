@@ -18,6 +18,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1800148 - --rollback option on migrate-import broken.
 - #1793736 - Properly set csvrownum.
 - #1798202 - Prevent division by zero on fast migrations.
 - #1760550 - Keep term migration from overwriting existing terms.

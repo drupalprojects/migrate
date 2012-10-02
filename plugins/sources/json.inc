@@ -251,7 +251,8 @@ class MigrateJSONReader implements Iterator {
    *
    * Populates currentElement (the object being retrieved) and currentId (that
    * object's unique identifier) from the specified JSON file. Sets both to
-   * NULL at end-of-file.
+   * NULL at end-of-file. Handles properly-formed JSON, as well as some improper
+   * coding (specifically that generated in Ning exports).
    *
    * @return void
    */
@@ -271,8 +272,12 @@ class MigrateJSONReader implements Iterator {
 
       // We're expecting an array of characters, so the first character should be [.
       $char = $this->getNonBlank();
+      // Ning exports are wrapped in bogus (), so skip a leading (
+      if ($char == '(') {
+        $char = $this->getNonBlank();
+      }
       if ($char != '[') {
-        Migration::displayMessage(t('!url is not a JSON file containing an array of objets',
+        Migration::displayMessage(t('!url is not a JSON file containing an array of objects',
                                   array('!url' => $this->url)));
         return;
       }
@@ -287,8 +292,12 @@ class MigrateJSONReader implements Iterator {
     if ($c == ',') {
       $c = $this->getNonBlank();
     }
+    // Ning sometimes emits a ] where there should be a comma.
     elseif ($c == ']') {
-      $c = NULL;
+      $c = $this->getNonBlank();
+      if ($c != '{') {
+        $c = NULL;
+      }
     }
     // We expect to be at the first character of an object now.
     if ($c == '{') {

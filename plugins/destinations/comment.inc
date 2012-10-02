@@ -305,7 +305,7 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
       // Insert records into the node_comment_statistics for nodes that are missing.
       $query = db_select('node', 'n');
       $query->leftJoin('node_comment_statistics', 'ncs', 'ncs.nid = n.nid');
-      $query->addField('n', 'changed', 'last_comment_timestamp');
+      $query->addField('n', 'created', 'last_comment_timestamp');
       $query->addField('n', 'uid', 'last_comment_uid');
       $query->addField('n', 'nid');
       $query->addExpression('0', 'comment_count');

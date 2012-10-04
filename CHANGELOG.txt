@@ -3,8 +3,6 @@ Next release
 ============
 
 Features and enhancements
-- #1789346 - Add MigrateSourceJSON to handle big JSON files.
-- #1701096 - CSV source now returns csvrownum as a (pseudo-)field.
 - #1670410 - Sanity-check migration machine names.
 - #1637458 - Pass field instance rather than just field name to field() methods.
 - #1688312 - Allow any file field argument to have per-instance values.
@@ -18,18 +16,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
-- #1799854 - Comment statistics should use created instead of changed.
-- #1800148 - --rollback option on migrate-import broken.
-- #1793736 - Properly set csvrownum.
-- #1798202 - Prevent division by zero on fast migrations.
-- #1760550 - Keep term migration from overwriting existing terms.
-- #1794470 - Allow subfields to be mapped before the primary field.
-- #1665332 - Handle empty node and user references cleanly.
-- #1788014 - Make sure updates work with FILE_EXISTS_REUSE.
-- #1781362 - Add new warn_on_override argument to XMLMigration::addFieldMapping.
-- #1783774 - Properly handle text fields without text processing.
-- #1730256 - Avoid duplicate terms when source has multiples.
-- #1757600 - Remove forced-lowercasing of field names.
+- #1780850 - By default, urlencode all path components in MigrateFileUri;
 - #1763932 - Empty path aliases generated for users.
 - #1717284 - Make sure nodes with unspecified languages end up language-neutral.
 - #1712434 - Highwater fails when highwater field values == 0.

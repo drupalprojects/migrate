@@ -245,7 +245,10 @@ abstract class MigrateFile extends MigrateFileBase {
       // See if we this file already (we'll reuse a file entity if it exists).
       if (file_exists($destination)) {
         $file = $this->createFileEntity($destination, $owner);
-        $file = file_save($file);
+        // File entity didn't already exist, create it
+        if (empty($file->fid)) {
+          $file = file_save($file);
+        }
         $this->markForPreservation($file->fid);
         return $file;
       }
@@ -346,9 +349,7 @@ class MigrateFileUri extends MigrateFile {
    */
   protected function copyFile($destination) {
     // Perform the copy operation, with a cleaned-up path.
-    $basename = basename($this->sourcePath);
-    $prefix = substr($this->sourcePath, 0, strlen($this->sourcePath) - strlen($basename));
-    $this->sourcePath = $prefix . rawurlencode($basename);
+    $this->sourcePath = self::urlencode($this->sourcePath);
     if (!@copy($this->sourcePath, $destination)) {
       throw new MigrateException(t('The specified file %file could not be copied to ' .
         '%destination.',
@@ -357,6 +358,33 @@ class MigrateFileUri extends MigrateFile {
     else {
       return TRUE;
     }
+  }
+
+  /**
+   * Urlencode all the components of a filename
+   * @param $filename
+   *
+   * @return string
+   */
+  static public function urlencode($filename) {
+    // Pull out any ://, so the colon doesn't get encoded
+    $split = explode('://', $filename);
+    if (count($split) == 2) {
+      $scheme = $split[0];
+      $filename = $split[1];
+    }
+    else {
+      $scheme = '';
+    }
+    $components = explode('/', $filename);
+    foreach ($components as $key => $component) {
+      $components[$key] = rawurlencode($component);
+    }
+    $filename = implode('/', $components);
+    if ($scheme) {
+      $filename = $scheme . '://' . $filename;
+    }
+    return $filename;
   }
 
   /**

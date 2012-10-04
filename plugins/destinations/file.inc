@@ -361,28 +361,23 @@ class MigrateFileUri extends MigrateFile {
   }
 
   /**
-   * Urlencode all the components of a filename
+   * Urlencode all the components of a remote filename.
+   *
    * @param $filename
    *
    * @return string
    */
   static public function urlencode($filename) {
-    // Pull out any ://, so the colon doesn't get encoded
+    // Only apply to a full URL (and then, don't encode the colon).
     $split = explode('://', $filename);
     if (count($split) == 2) {
       $scheme = $split[0];
       $filename = $split[1];
-    }
-    else {
-      $scheme = '';
-    }
-    $components = explode('/', $filename);
-    foreach ($components as $key => $component) {
-      $components[$key] = rawurlencode($component);
-    }
-    $filename = implode('/', $components);
-    if ($scheme) {
-      $filename = $scheme . '://' . $filename;
+      $components = explode('/', $filename);
+      foreach ($components as $key => $component) {
+        $components[$key] = rawurlencode($component);
+      }
+      $filename = $scheme . '://' . implode('/', $components);
     }
     return $filename;
   }

@@ -1,0 +1,35 @@
+<?php
+/**
+ * @file
+ * Install/update function for migrate_ui.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function migrate_ui_install() {
+  migrate_ui_set_weight();
+}
+
+/**
+ * Make sure we have a higher weight than node.
+ */
+function migrate_ui_update_7201() {
+  migrate_ui_set_weight();
+}
+
+/**
+ * Sets the weight of migrate_ui higher than node, so Import links come after
+ * "Add content" at admin/content.
+ */
+function migrate_ui_set_weight() {
+  $node_weight = db_select('system', 's')
+                 ->fields('s', array('weight'))
+                 ->condition('name', 'node')
+                 ->execute()
+                 ->fetchField();
+  db_update('system')
+    ->fields(array('weight' => $node_weight + 1))
+    ->condition('name', 'migrate_ui')
+    ->execute();
+}

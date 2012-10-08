@@ -1159,7 +1159,11 @@ abstract class Migration extends MigrationBase {
     // We want to treat source keys consistently as an array of arrays (each
     // representing one key).
     if (is_array($source_keys)) {
-      if (is_array(reset($source_keys))) {
+      if (empty($source_keys)) {
+        // Empty value should return empty results.
+        return array();
+      }
+      elseif (is_array(reset($source_keys))) {
         // Already an array of key arrays, fall through
       }
       else {

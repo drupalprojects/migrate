@@ -1161,7 +1161,7 @@ abstract class Migration extends MigrationBase {
     if (is_array($source_keys)) {
       if (empty($source_keys)) {
         // Empty value should return empty results.
-        return array();
+        return NULL;
       }
       elseif (is_array(reset($source_keys))) {
         // Already an array of key arrays, fall through
@@ -1236,7 +1236,8 @@ abstract class Migration extends MigrationBase {
       return $results;
     }
     else {
-      return reset($results);
+      $value = reset($results);
+      return empty($value) ? NULL : $value;
     }
   }
 

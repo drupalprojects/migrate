@@ -4,4 +4,5 @@ package = "Development"
 ;configure = admin/config/development/migrate
 core = 7.x
 dependencies[] = migrate
-files[] = migrate_ui.module
+files[] = migrate_ui.wizard.inc
+

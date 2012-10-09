@@ -124,10 +124,14 @@ function migrate_migrations() {
 }
 
 /**
- * On cache clear, scan the Drupal code registry for any new migration classes
+ * On request, scan the Drupal code registry for any new migration classes
  * for us to register in migrate_status.
  */
-function migrate_flush_caches() {
+function migrate_autoregister() {
+  // Make sure the registry is up-to-date on all available classes.
+  require_once 'includes/registry.inc';
+  _registry_update();
+
   // Get list of modules implementing Migrate API
   $modules = array_keys(migrate_get_module_apis(TRUE));
 
@@ -393,7 +397,8 @@ function migrate_get_module_apis($reset = FALSE) {
       $info = $function();
       if (isset($info['api']) && $info['api'] == MIGRATE_API_VERSION) {
         $cache[$module] = $info;
-        if (is_array($info['migrations'])) {
+        // Register any migrations defined via the hook.
+        if (isset($info['migrations']) && is_array($info['migrations'])) {
           foreach ($info['migrations'] as $machine_name => $arguments) {
             MigrationBase::registerMigration($arguments['class_name'],
               $machine_name, $arguments);

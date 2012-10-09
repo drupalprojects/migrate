@@ -16,6 +16,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1807522 - Handle ignored map rows in handleSourceMigration().
 - #1803648, #1805184 - Handle empty values in handleSourceMigration().
 - #1780850 - By default, urlencode all path components in MigrateFileUri;
 - #1763932 - Empty path aliases generated for users.

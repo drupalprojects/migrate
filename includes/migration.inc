@@ -1203,7 +1203,9 @@ abstract class Migration extends MigrationBase {
       foreach ($source_migrations as $source_migration) {
         // Break out of the loop as soon as a destination ID is found.
         if ($destids = $source_migration->getMap()->lookupDestinationID($source_key)) {
-          break;
+          if (!empty($destids['destid1'])) {
+            break;
+          }
         }
       }
       // If no destination ID was found, give each source migration a chance to

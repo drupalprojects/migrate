@@ -368,6 +368,12 @@ abstract class MigrationBase {
                           array('!name' => $machine_name)));
     }
 
+    // Making sure the machine name is in the arguments array helps with
+    // chicken-and-egg problems in determining the machine name.
+    if (!isset($arguments['machine_name'])) {
+      $arguments['machine_name'] = $machine_name;
+    }
+
     // Register the migration if it's not already there; if it is,
     // update the class and arguments in case they've changed.
     db_merge('migrate_status')

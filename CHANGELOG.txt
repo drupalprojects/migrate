@@ -12,6 +12,7 @@ Features and enhancements
 - #1621608 - Support for splitting files on import.
 
 Bug fixes
+- #1785996 - Consider vocabulary when matching imported terms.
 - #1781362 - Add new warn_on_override argument to XMLMigration::addFieldMapping.
 - #1712434 - Highwater fails when highwater field values == 0.
 - #1708296 - Handle timestamps before 1902.

@@ -198,6 +198,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       // load it
       $candidates = taxonomy_get_term_by_name(trim($term->name));
       foreach ($candidates as $candidate) {
+        if ($candidate->vid != $term->vid) {
+          continue;
+        }
         $parents = taxonomy_get_parents($candidate->tid);
         // We need to set up $parents as a simple array of tids
         if (empty($parents)) {

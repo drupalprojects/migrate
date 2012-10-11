@@ -151,7 +151,7 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
                     array('!nid' => $node->nid)));
       }
       $node->vid = $values['vid'];
-      if (empty($row->tnid)) {
+      if (empty($node->tnid)) {
         $node->tnid = $values['tnid'];
       }
     }

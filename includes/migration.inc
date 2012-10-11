@@ -1212,6 +1212,14 @@ abstract class Migration extends MigrationBase {
       // create a stub.
       if (!$destids) {
         foreach ($source_migrations as $source_migration) {
+          // Is this a self reference?
+          if ($source_migration->machineName == $this->machineName) {
+            if (!array_diff($source_key, $this->currentSourceKey)) {
+              $destids = array();
+              $this->needsUpdate = TRUE;
+              break;
+            }
+          }
           // Break out of the loop if a stub was successfully created.
           if ($destids = $source_migration->createStubWrapper($source_key, $migration)) {
             break;

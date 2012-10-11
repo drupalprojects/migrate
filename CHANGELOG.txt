@@ -25,6 +25,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1659150 - Change 'ok' message types to 'status'.
 - #1690080 - Deal with self-references in handleSourceMigration().
 - #1797644 - Remove bogus assignment on term update.
 - #1807522 - Handle ignored map rows in handleSourceMigration().

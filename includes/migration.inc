@@ -927,7 +927,7 @@ abstract class Migration extends MigrationBase {
           break;
         case Migration::RESULT_INCOMPLETE:
           $basetext = "Processed !numitems (!created created, !updated updated, !failed failed, !ignored ignored) in !time sec (!perminute/min) - continuing with '!name'";
-          $type = 'ok';
+          $type = 'status';
           break;
         case Migration::RESULT_STOPPED:
           $basetext = "Processed !numitems (!created created, !updated updated, !failed failed, !ignored ignored) in !time sec (!perminute/min) - stopped '!name'";
@@ -947,7 +947,7 @@ abstract class Migration extends MigrationBase {
           break;
         case Migration::RESULT_INCOMPLETE:
           $basetext = "Rolled back !numitems in !time sec (!perminute/min) - continuing with '!name'";
-          $type = 'ok';
+          $type = 'status';
           break;
         case Migration::RESULT_STOPPED:
           $basetext = "Rolled back !numitems in !time sec (!perminute/min) - stopped '!name'";

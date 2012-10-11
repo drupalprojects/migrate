@@ -151,7 +151,7 @@ class MigrateItemJSON extends MigrateItem {
    * @param mixed $id
    */
   protected function constructItemUrl($id) {
-    return str_replace(':id', $id, $this->itemUrl);
+    return preg_replace(array_fill(0, count($id), '/:id/'), $id, $this->itemUrl, 1);
   }
 
   /**

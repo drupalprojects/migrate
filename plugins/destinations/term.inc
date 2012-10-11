@@ -126,7 +126,6 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
     $migration = Migration::currentMigration();
     // Updating previously-migrated content?
     if (isset($row->migrate_map_destid1)) {
-      $term->tid = $row->migrate_map_destid1;
       if (isset($term->tid)) {
         if ($term->tid != $row->migrate_map_destid1) {
           throw new MigrateException(t("Incoming tid !tid and map destination nid !destid1 don't match",

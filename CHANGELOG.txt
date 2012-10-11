@@ -5,7 +5,7 @@ Next release
 IMPORTANT: Automatic registration of new migration classes is no longer done on
 a cache clear - you must explicitly request it with a "drush mar" (drush
 migrate-auto-register) command, or by clicking the "Register migration changes"
-button ad admin/content/migrate/configure.
+button at admin/content/migrate/configure.
 
 Features and enhancements
 - #1778952 - Enable registration of dynamic migrations via hook_migrate_api().

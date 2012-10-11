@@ -120,8 +120,6 @@ abstract class Migration extends MigrationBase {
     return $this->highwaterField;
   }
 
-  protected $currentSourceKey;
-
   /**
    * The object currently being constructed
    * @var stdClass
@@ -133,6 +131,14 @@ abstract class Migration extends MigrationBase {
    * @var stdClass
    */
   protected $sourceValues;
+
+  /**
+   * Queue up messages that can't be safely saved (in particular, if they're
+   * generated in prepareRow().
+   *
+   * @var array
+   */
+  protected $queuedMessages = array();
 
   /**
    * General initialization of a Migration object.
@@ -403,15 +409,15 @@ abstract class Migration extends MigrationBase {
           break;
         }
 
-        $this->currentSourceKey = $this->map->getCurrentKey();
+        $current_source_key = $this->map->getCurrentKey();
 
         // If there's an idlist, skip anything not in the list
-        if ($idlist && !isset($idlist[$this->currentSourceKey['sourceid1']])) {
+        if ($idlist && !isset($idlist[$current_source_key['sourceid1']])) {
           continue;
         }
 
         // Note that bulk rollback is only supported for single-column keys
-        $sourceids[] = $this->currentSourceKey;
+        $sourceids[] = $current_source_key;
         if (!empty($destination_key->destid1)) {
           $map_row = $this->map->getRowByDestination((array)$destination_key);
           if ($map_row['rollback_action'] == MigrateMap::ROLLBACK_DELETE) {
@@ -478,10 +484,10 @@ abstract class Migration extends MigrationBase {
         if ($this->itemOptionExceeded()) {
           break;
         }
-        $this->currentSourceKey = $this->map->getCurrentKey();
+        $current_source_key = $this->map->getCurrentKey();
 
         // If there's an idlist, skip anything not in the list
-        if ($idlist && !isset($idlist[$this->currentSourceKey['sourceid1']])) {
+        if ($idlist && !isset($idlist[$current_source_key['sourceid1']])) {
           continue;
         }
 
@@ -507,7 +513,7 @@ abstract class Migration extends MigrationBase {
           }
 
           migrate_instrument_start('rollback map/message update');
-          $this->map->delete($this->currentSourceKey);
+          $this->map->delete($current_source_key);
           migrate_instrument_stop('rollback map/message update');
           $this->total_successes++;
           $this->successes_since_feedback++;
@@ -551,10 +557,10 @@ abstract class Migration extends MigrationBase {
     }
     while ($this->source->valid()) {
       $data_row = $this->source->current();
-      $this->currentSourceKey = $this->source->getCurrentKey();
 
-      // Wipe old messages
-      $this->map->delete($this->currentSourceKey, TRUE);
+      // Wipe old messages, and save any new messages.
+      $this->map->delete($this->currentSourceKey(), TRUE);
+      $this->saveQueuedMessages();
 
       $this->sourceValues = $data_row;
       $this->applyMappings();
@@ -674,7 +680,6 @@ abstract class Migration extends MigrationBase {
       // Cheat for XML migrations, which don't pick up the source values
       // until applyMappings() applies the xpath()
       if (is_a($this, 'XMLMigration')) {
-        $this->currentSourceKey = $this->source->getCurrentKey();
         $this->sourceValues = $row;
         $this->applyMappings();
         $row = $this->sourceValues;
@@ -750,6 +755,15 @@ abstract class Migration extends MigrationBase {
 
     self::$currentMigration = NULL;
     return $analysis;
+  }
+
+  /**
+   * Fetch the key array for the current source record.
+   *
+   * @return array
+   */
+  protected function currentSourceKey() {
+    return $this->source->getCurrentKey();
   }
 
   /**
@@ -1214,9 +1228,9 @@ abstract class Migration extends MigrationBase {
         foreach ($source_migrations as $source_migration) {
           // Is this a self reference?
           if ($source_migration->machineName == $this->machineName) {
-            if (!array_diff($source_key, $this->currentSourceKey)) {
+            if (!array_diff($source_key, $this->currentSourceKey())) {
               $destids = array();
-              $this->needsUpdate = TRUE;
+              $this->needsUpdate = MigrateMap::STATUS_NEEDS_UPDATE;
               break;
             }
           }
@@ -1332,7 +1346,7 @@ abstract class Migration extends MigrationBase {
   }
 
   /**
-   * Pass messages through to the map class
+   * Pass messages through to the map class.
    *
    * @param string $message
    *  The message to record.
@@ -1340,7 +1354,29 @@ abstract class Migration extends MigrationBase {
    *  Optional message severity (defaults to MESSAGE_ERROR).
    */
   public function saveMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
-    $this->map->saveMessage($this->currentSourceKey, $message, $level);
+    $this->map->saveMessage($this->currentSourceKey(), $message, $level);
+  }
+
+  /**
+   * Queue messages to be later saved through the map class.
+   *
+   * @param string $message
+   *  The message to record.
+   * @param int $level
+   *  Optional message severity (defaults to MESSAGE_ERROR).
+   */
+  public function queueMessage($message, $level = MigrationBase::MESSAGE_ERROR) {
+    $this->queuedMessages[] = array('message' => $message, 'level' => $level);
+  }
+
+  /**
+   * Save any messages we've queued up to the message table.
+   */
+  protected function saveQueuedMessages() {
+    foreach ($this->queuedMessages as $queued_message) {
+      $this->saveMessage($queued_message['message'], $queued_message['level']);
+    }
+    $this->queuedMessages = array();
   }
 
   /**
@@ -1348,7 +1384,7 @@ abstract class Migration extends MigrationBase {
    */
   public function setUpdate(array $source_key = NULL) {
     if (!$source_key) {
-      $source_key = $this->currentSourceKey;
+      $source_key = $this->currentSourceKey();
     }
     $this->map->setUpdate($source_key);
   }

@@ -11,6 +11,7 @@ Features and enhancements
 - #1778952 - Enable registration of dynamic migrations via hook_migrate_api().
              Add explicit auto-registration of non-dynamic migrations, remove
              performing registration on cache clear.
+- #1799964 - Add reference query getter to MigrateSourceSQL.
 - #1670410 - Sanity-check migration machine names.
 - #1637458 - Pass field instance rather than just field name to field() methods.
 - #1688312 - Allow any file field argument to have per-instance values.
@@ -24,6 +25,7 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1797644 - Remove bogus assignment on term update.
 - #1807522 - Handle ignored map rows in handleSourceMigration().
 - #1803648, #1805184 - Handle empty values in handleSourceMigration().
 - #1780850 - By default, urlencode all path components in MigrateFileUri;

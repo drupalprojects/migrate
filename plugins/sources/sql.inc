@@ -17,6 +17,17 @@ class MigrateSourceSQL extends MigrateSource {
   protected $originalQuery, $query, $countQuery;
 
   /**
+   * Return a reference to the base query, in particular so Migration classes
+   * can add conditions/joins/etc to the query for a source defined in a
+   * base class.
+   *
+   * @return SelectQueryInterface
+   */
+  public function &query() {
+    return $this->originalQuery();
+  }
+
+  /**
    * The result object from executing the query - traversed to process the
    * incoming data.
    *

@@ -16,6 +16,7 @@ class MigrateImportOptionsTest extends DrupalWebTestCase {
     parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
           'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
           'migrate', 'migrate_extras', 'migrate_example');
+    migrate_autoregister();
   }
 
   function testItemLimitOption() {

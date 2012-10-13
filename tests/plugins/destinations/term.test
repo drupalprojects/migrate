@@ -17,6 +17,7 @@ class MigrateTaxonomyUnitTest extends DrupalWebTestCase {
       'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
       'migrate', 'migrate_extras', 'migrate_example');
     drupal_flush_all_caches();
+    migrate_autoregister();
   }
 
   function testTermImport() {

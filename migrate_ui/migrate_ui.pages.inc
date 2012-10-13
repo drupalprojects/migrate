@@ -258,24 +258,37 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
   if ($operation) {
     foreach ($machine_names as $machine_name) {
       $migration = Migration::getInstance($machine_name);
-      // Update (if necessary) once, before starting
-      if ($update && method_exists($migration, 'prepareUpdate')) {
-        $migration->prepareUpdate();
+      switch ($operation) {
+        case 'import':
+          // Update (if necessary) once, before starting
+          if ($update && method_exists($migration, 'prepareUpdate')) {
+            $migration->prepareUpdate();
+          }
+          $operations[] = array('migrate_ui_batch', array($operation, $machine_name, $limit, $force));
+          break;
+        case 'stop':
+          $migration->stopProcess();
+          break;
+        case 'reset':
+          $migration->resetStatus();
+          break;
       }
-      $operations[] = array('migrate_ui_batch', array($operation, $machine_name, $limit, $force));
     }
   }
 
-  $batch = array(
-    'operations' => $operations,
-    'title' => t('Migration processing'),
-    'file' => drupal_get_path('module', 'migrate_ui') . '/migrate_ui.pages.inc',
-    'init_message' => t('Starting migration process'),
-    'progress_message' => t(''),
-    'error_message' => t('An error occurred. Some or all of the migrate processing has failed.'),
-    'finished' => 'migrate_ui_batch_finish',
-  );
-  batch_set($batch);
+  // Only rollback and import operations will need to go through Batch API.
+  if (count($operations) > 0) {
+    $batch = array(
+      'operations' => $operations,
+      'title' => t('Migration processing'),
+      'file' => drupal_get_path('module', 'migrate_ui') . '/migrate_ui.pages.inc',
+      'init_message' => t('Starting migration process'),
+      'progress_message' => t(''),
+      'error_message' => t('An error occurred. Some or all of the migrate processing has failed.'),
+      'finished' => 'migrate_ui_batch_finish',
+    );
+    batch_set($batch);
+  }
 }
 
 /**
@@ -314,14 +327,6 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
       break;
     case 'rollback':
       $result = $migration->processRollback(array('limit' => $limit, 'force' => $force));
-      break;
-    case 'stop':
-      $migration->stopProcess();
-      $result = Migration::RESULT_COMPLETED;
-      break;
-    case 'reset':
-      $migration->resetStatus();
-      $result = Migration::RESULT_COMPLETED;
       break;
   }
 
@@ -732,15 +737,32 @@ function migrate_ui_configure() {
  */
 function _migrate_ui_configure_form() {
   $build = array();
-  $build['description'] = array(
-    '#prefix' => '<div>',
-    '#value' => t('In some cases, such as when a handler for a contributed module is
-      implemented in both migrate_extras and the module itself, you may need to disable
-      a particular handler. In this case, you may uncheck the undesired handler below.'),
-    '#suffix' => '</div>',
+
+  $build['registration'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Migration registration'),
+    '#description' => t('If you have made changes to your migration implementation
+      such as adding or removing migration classes, to have those changes
+      registered click this button.'),
   );
 
-  $build['destination'] = array(
+  $build['registration']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Register migration changes'),
+    '#submit' => array('migrate_ui_configure_register_submit'),
+  );
+
+  $build['handlers'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Handler configuration'),
+    '#description' => t('In some cases, such as when a handler for a contributed module is
+          implemented in both migrate_extras and the module itself, you may need to disable
+          a particular handler. In this case, you may uncheck the undesired handler below.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $build['handlers']['destination'] = array(
     '#type' => 'fieldset',
     '#title' => t('Destination handlers'),
     '#collapsible' => TRUE,
@@ -770,7 +792,7 @@ function _migrate_ui_configure_form() {
     $default_values[$class_name] = !in_array($class_name, $disabled);
     $rows[$class_name] = $row;
   }
-  $build['destination']['destination_handlers'] = array(
+  $build['handlers']['destination']['destination_handlers'] = array(
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $rows,
@@ -778,7 +800,7 @@ function _migrate_ui_configure_form() {
     '#empty' => t('No destination handlers found'),
   );
 
-  $build['field'] = array(
+  $build['handlers']['field'] = array(
     '#type' => 'fieldset',
     '#title' => t('Field handlers'),
     '#collapsible' => TRUE,
@@ -807,7 +829,7 @@ function _migrate_ui_configure_form() {
     $default_values[$class_name] = !in_array($class_name, $disabled);
     $rows[$class_name] = $row;
   }
-  $build['field']['field_handlers'] = array(
+  $build['handlers']['field']['field_handlers'] = array(
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $rows,
@@ -815,7 +837,7 @@ function _migrate_ui_configure_form() {
     '#empty' => t('No field handlers found'),
   );
 
-  $build['submit'] = array(
+  $build['handlers']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save handler statuses'),
     '#submit' => array('migrate_ui_configure_submit'),
@@ -825,7 +847,7 @@ function _migrate_ui_configure_form() {
 }
 
 /**
- * Submit callback for the dashboard form.
+ * Submit callback for the configuration form handler fieldset.
  */
 function migrate_ui_configure_submit($form, &$form_state) {
   $disabled = array();
@@ -847,4 +869,12 @@ function migrate_ui_configure_submit($form, &$form_state) {
   else {
     drupal_set_message(t('No handler classes are currently disabled.'));
   }
+}
+
+/**
+ * Submit callback for the configuration form registration fieldset.
+ */
+function migrate_ui_configure_register_submit($form, &$form_state) {
+  migrate_autoregister();
+  $form_state['redirect'] = 'admin/content/migrate';
 }

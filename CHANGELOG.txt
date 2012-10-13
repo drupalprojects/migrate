@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.5 Release Candidate 1
+===============================
 
 IMPORTANT: Automatic registration of new migration classes is no longer done on
 a cache clear - you must explicitly request it with a "drush mar" (drush

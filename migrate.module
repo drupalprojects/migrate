@@ -30,6 +30,10 @@ function migrate_migrations() {
     return $migrations;
   }
 
+  // Get list of modules implementing Migrate API - mainly, we're looking to
+  // make sure any dynamic migrations defined in hook_migrate_api() get registered.
+  $module_info = migrate_get_module_apis(TRUE);
+
   $dependent_migrations = array();
   $required_migrations = array();
 
@@ -380,6 +384,12 @@ function migrate_get_module_apis($reset = FALSE) {
       $info = $function();
       if (isset($info['api']) && $info['api'] == MIGRATE_API_VERSION) {
         $cache[$module] = $info;
+        if (is_array($info['migrations'])) {
+          foreach ($info['migrations'] as $machine_name => $arguments) {
+            MigrationBase::registerMigration($arguments['class_name'],
+              $machine_name, $arguments);
+          }
+        }
       }
       else {
         drupal_set_message(t('%function supports Migrate API version %modversion,

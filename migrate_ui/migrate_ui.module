@@ -68,13 +68,13 @@ function migrate_ui_menu() {
 
   // Add menu items for each implemented import wizard.
   $wizards = migrate_ui_wizards();
-  foreach ($wizards as $machine_name => $wizard) {
-    $items["admin/content/migrate/import/$machine_name"] = array(
+  foreach ($wizards as $wizard_class => $wizard) {
+    $items["admin/content/migrate/import/$wizard_class"] = array(
       'type' => MENU_LOCAL_TASK,
       'title' => 'Import from @source_title',
-      'title arguments' => array('@source_title' => $wizard['source_title']),
+      'title arguments' => array('@source_title' => $wizard->getSourceName()),
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('migrate_ui_wizard', $machine_name),
+      'page arguments' => array('migrate_ui_wizard', $wizard_class),
       'access arguments' => array(MIGRATE_ACCESS_BASIC),
       'file' => 'migrate_ui.wizard.inc',
     );
@@ -89,8 +89,8 @@ function migrate_ui_menu() {
 function migrate_ui_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   // Add action links to our import wizards on 'admin/content' page.
   if ($root_path == 'admin/content') {
-    foreach (migrate_ui_wizards() as $machine_name => $wizard) {
-      $item = menu_get_item("admin/content/migrate/import/$machine_name");
+    foreach (migrate_ui_wizards() as $wizard_class => $wizard) {
+      $item = menu_get_item("admin/content/migrate/import/$wizard_class");
       if ($item['access']) {
         $data['actions']['output'][] = array(
           '#theme' => 'menu_local_action',
@@ -141,8 +141,8 @@ function migrate_ui_wizards() {
   $migrate_implementors = module_invoke_all('migrate_api');
   $wizards = array();
   foreach ($migrate_implementors['wizard_classes'] as $wizard_class) {
-    $wizard_info = $wizard_class::wizardConfiguration();
-    $wizards[$wizard_class] = $wizard_info;
+    $wizard_class = strtolower($wizard_class);
+    $wizards[$wizard_class] = new $wizard_class;
   }
   return $wizards;
 }

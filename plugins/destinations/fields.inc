@@ -524,7 +524,7 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
     }
 
     $return = array();
-    $delta = 0;
+
     // Note that what $value represents depends on the file class -
     // MigrateFileUri expects a filespec/URI, MigrateFileFid expects a file ID,
     // etc.
@@ -538,7 +538,15 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
             $instance_arguments[$key] = $argument;
           }
           else {
-            $instance_arguments[$key] = $argument[$delta];
+            if (isset($argument[$delta])) {
+              $instance_arguments[$key] = $argument[$delta];
+            }
+            else {
+              $migration->saveMessage(
+        				t('No data for subfield %key at row %delta for field %field',
+                  array('%key' => $key, '%delta' => $delta, '%field' => $field_info['field_name'])),
+                Migration::MESSAGE_WARNING);
+            }
           }
         }
         // If the parent entity doesn't have an explicit uid, give ownership
@@ -556,7 +564,6 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
           $return[$language][] = $this->buildFieldArray($field_array, $instance_arguments, $delta);
         }
       }
-      $delta++;
     }
 
     return $return;

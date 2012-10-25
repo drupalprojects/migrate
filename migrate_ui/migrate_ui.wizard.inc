@@ -14,141 +14,112 @@
  *
  * The third handler, the finish button handler, is the default form _submit
  * handler used to process the information.
+ *
+ * @param string $class_name
+ *  Name of the MigrateUIWizard clsas for this wizard.
  */
-function migrate_ui_wizard($form, &$form_state, $machine_name = '') {
-  // Initialize the step information our first time in.
+function migrate_ui_wizard($form, &$form_state, $class_name = '') {
+  // Rather than track state in $form_state, we simply keep our wizard
+  // instance there, and it encapsulates all the state. We just need
+  // to create the instance the first time in, and it will be serialized
+  // between steps.
   if (empty($form_state['wizard'])) {
-    $wizard = new $machine_name();
+    $wizard = new $class_name();
     $form_state['wizard'] = $wizard;
   }
-  else {
-    $wizard = $form_state['wizard'];
-  }
 
-  $form = $wizard->form();
+  // Fetch the form for the wizard's current step.
+  $form = $form_state['wizard']->form();
 
   return $form;
 }
 
 /**
- * Submit handler for the "previous" button.
- * - Stores away $form_state['values']
- * - Decrements the step counter
- * - Replaces $form_state['values'] with the values from the previous state.
- * - Forces form rebuild.
+ * Submit handler for the "previous" button. Moves the wizard back to the
+ * previous step, and retrieves the values that were submitted on that step.
  */
 function migrate_ui_wizard_previous_submit($form, &$form_state) {
-  $wizard = $form_state['wizard'];
-  $wizard->previousStep();
-  $form_state['values'] = $wizard->currentStep->getFormValues();
-  $form_state['rebuild'] = TRUE;
+  $form_state['wizard']->gotoPreviousStep($form_state);
 }
 
 /**
- * Validate handler for the 'next' button.
- * - Saves away $form_state['values']
- * - Increments the step count.
- * - Replace $form_state['values'] from the last time we were at this page
- *   or with array() if we haven't been here before.
- * - Force form rebuild.
- *
- * @param array $form
- * @param array $form_state
+ * Validate handler for the 'next' button. Dispatches to the wizard's current
+ * step for validation.
  */
 function migrate_ui_wizard_next_validate($form, &$form_state) {
-  $wizard = $form_state['wizard'];
-  $wizard->formValidate($form_state);
+  $form_state['wizard']->formValidate($form_state);
 }
 
 /**
- * Submit handler for the 'next' button.
- * - Saves away $form_state['values']
- * - Increments the step count.
- * - Replace $form_state['values'] from the last time we were at this page
- *   or with array() if we haven't been here before.
- * - Force form rebuild.
- *
- * @param array $form
- * @param array $form_state
+ * Submit handler for the 'next' button. Saves the form values for the step
+ * we're leaving, so Previous can pick them up, and moves the wizard to the
+ * next step.
  */
 function migrate_ui_wizard_next_submit($form, &$form_state) {
-  $wizard = $form_state['wizard'];
-  $wizard->currentStep->setFormValues($form_state['values']);
-  $wizard->nextStep();
-  if ($wizard->currentStep) {
-    $form_state['rebuild'] = TRUE;  // Force rebuild with next step.
-  }
+  $form_state['wizard']->gotoNextStep($form_state);
 }
 
 /**
- * Wizard form submit handler.
- *
- * @param array $form
- * @param array $form_state
+ * Submit handler for the Finish button. Register the migrations that were
+ * (implicitly) defined along the way and redirect to the Migrate dashboard.
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
-  drupal_set_message("We're just a POC for now - something will actually happen later.");
-
-  $form_state['redirect'] = 'admin/content/migrate';
-  return;
-  foreach ($form_state['storage']['migrations'] as $machine_name => $info) {
-    MigrationBase::registerMigration($info['class_name'], $machine_name, $info['arguments']);
-  }
-  try {
-    $site = migrate_drupal_site($form_state['storage']['endpoint'], $form_state['storage']['http_options']['headers']['Cookie']);
-  }
-  catch (Exception $e) {
-    drupal_set_message($e->getMessage());
-    return;
-  }
-  return;
-  // Register a Term migration for each vocabulary mapping
-  $vocabs = $form_state['storage']['vocabs'];
-  foreach ($vocabs as $source_vid => $bundle) {
-    $arguments = array('endpoint' => $form_state['storage']['endpoint'],
-      'source_vid' => $source_vid, 'bundle' => $bundle);
-    Migration::registerMigration('DrupalTerm', "DrupalTerm$source_vid", $arguments);
-  }
-  return;
-  foreach ($form_state['values']['vocab'] as $source_vid => $dest_vid) {
-    // New vocabulary requested, retrieve data on old one
-    if ($dest_vid == 0) {
-      $url = $form_state['storage']['endpoint'] . '/taxonomy_vocabulary/' . $source_vid;
-      $response = drupal_http_request($url, $form_state['storage']['http_options']);
-      if ($response->code == '200') {
-        $vocab = json_decode($response->data);
-        // Lack of a machine_name indicates a D6 source, generate the machine_name
-        if (!isset($vocab->machine_name)) {
-          $name = drupal_strtolower($vocab->name);
-          $vocab->machine_name = preg_replace('/[^a-z0-9]+/', '_', $name);
-        }
-        unset($vocab->vid);
-        if (taxonomy_vocabulary_save($vocab)) {
-          $form_state['storage']['vocabs'][$source_vid] = $vocab->machine_name;
-          drupal_set_message(t('New vocabulary !name created', array('!name' => $vocab->name)));
-        }
-        else {
-          form_set_error('vocab][' . $source_vid, t('Failed to create vocabulary !name',
-            array('!name' => $vocab->name)));
-        }
-      }
-      else {
-        form_set_error('description', t('Could not connect to !url', array('!url' => $url)));
-      }
-    }
-    elseif ($dest_vid != -1) {
-      $vocab = taxonomy_vocabulary_load($dest_vid);
-      $form_state['storage']['vocabs'][$source_vid] = $vocab->machine_name;
-    }
-  }
+  $form_state['wizard']->formFinish($form_state);
 }
 
+/**
+ * The base class for migration wizards. Extend this class to implement a
+ * wizard UI for importing into Drupal from a given source format (Drupal,
+ * WordPress, etc.).
+ */
 abstract class MigrateUIWizard {
-  public $firstStep = NULL;
-  public $lastStep = NULL;
-  public $currentStep = NULL;
+  /**
+   * We maintain a doubly-linked list of wizard steps, both to support
+   * previous/next, and to easily insert steps dynamically.
+   *
+   * The first step of the wizard, which has no predecessor. Will generally be
+   * an overview/introductory page.
+   *
+   * @var MigrateUIStep
+   */
+  protected $firstStep;
+
+  /**
+   * The last step of the wizard, which has no successor. Will generally be a
+   * review page.
+   *
+   * @var MigrateUIStep
+   */
+  protected $lastStep;
+
+  /**
+   * The current step of the wizard (the one being shown in the UI, and the one
+   * whose button is being clicked on).
+   *
+   * @var MigrateUIStep
+   */
+  protected $currentStep;
+
+  /**
+   * The step number, used in the page title.
+   *
+   * @var int
+   */
   protected $stepNumber = 1;
+
+  /**
+   * The group name to assign to any Migration instances created.
+   *
+   * @var string
+   */
   protected $groupName = 'default';
+
+  /**
+   * Array of Migration argument arrays, keyed by machine name. On Finish, used
+   * to register Migrations.
+   *
+   * @var array
+   */
   protected $migrations = array();
 
   /**
@@ -159,32 +130,44 @@ abstract class MigrateUIWizard {
    */
   abstract public function getSourceName();
 
-
-  /**
-   * Returns a translatable description of what this particular import module
-   * does, requirements, etc., to be inserted into the initial (overview) form
-   * of the wizard.
-   *
-   * @return string
-   */
-  abstract public function overviewDescription();
-
   public function __construct() {
-    $this->addStep(t('Overview'), 'overviewForm');
+
   }
 
-  protected function addStep($name, $form, MigrateUIStep $after = NULL) {
-    $new_step = new MigrateUIStep($name, $form);
-    if (is_null($after)) {
-      $after = $this->lastStep;
-    }
-    if (is_null($after)) {
+  /**
+   * Add a step to the wizard.
+   *
+   * @param string $name
+   *  Translatable name for the step, to be used in the page title.
+   * @param string $form_method
+   *  MigrateUIWizard method returning the form array for the step.
+   * @param MigrateUIStep $after
+   *  Optional step after which to insert the new step. If omitted, add it at
+   *  the end.
+   * @param mixed $context
+   *  Optional data to be used by this step's form.
+   *
+   * @return MigrateUIStep
+   */
+  protected function addStep($name, $form_method, MigrateUIStep $after = NULL, $context = NULL) {
+    $new_step = new MigrateUIStep($name, $form_method, $context);
+    // There were no steps, so this is the only one.
+    if (is_null($this->firstStep)) {
       $this->firstStep = $this->lastStep = $this->currentStep = $new_step;
     }
     else {
+      // If no insertion point is specified, append to the end.
+      if (is_null($after)) {
+        $after = $this->lastStep;
+      }
+      // Do the insert, rewriting the links appropriately.
       $new_step->nextStep = $after->nextStep;
+
       if (is_null($new_step->nextStep)) {
         $this->lastStep = $new_step;
+      }
+      else {
+        $new_step->nextStep->previousStep = $new_step;
       }
       $new_step->previousStep = $after;
       $after->nextStep = $new_step;
@@ -192,27 +175,45 @@ abstract class MigrateUIWizard {
     return $new_step;
   }
 
-  public function nextStep() {
+  /**
+   * Move the wizard to the next step in line (if any), first squirreling away
+   * the current step's form values.
+   */
+  public function gotoNextStep(&$form_state) {
     if ($this->currentStep && $this->currentStep->nextStep) {
+      $this->currentStep->setFormValues($form_state['values']);
+      $form_state['rebuild'] = TRUE;
       $this->currentStep = $this->currentStep->nextStep;
       $this->stepNumber++;
     }
   }
 
-  public function previousStep() {
+  /**
+   * Move the wizard to the previous step in line (if any), restoring its
+   * form values.
+   */
+  public function gotoPreviousStep(&$form_state) {
     if ($this->currentStep && $this->currentStep->previousStep) {
       $this->currentStep = $this->currentStep->previousStep;
       $this->stepNumber--;
+      $form_state['values'] = $this->currentStep->getFormValues();
+      $form_state['rebuild'] = TRUE;
     }
   }
 
+  /**
+   * Build the form for the current step.
+   *
+   * @return array
+   */
   public function form() {
     drupal_set_title(t('Import from @source_title, step @step: @step_name',
-      array('@source_title' => $this->getSourceName(), '@step' => $this->stepNumber,
-        '@step_name' => $this->currentStep->getName())));
+      array('@source_title' => $this->getSourceName(),
+            '@step' => $this->stepNumber,
+            '@step_name' => $this->currentStep->getName())));
 
-    $form_function = $this->currentStep->getForm();
-    $form = $this->{$form_function}();
+    $form_method = $this->currentStep->getFormMethod();
+    $form = $this->{$form_method}();
 
     $form['actions'] = array('#type' => 'actions');
 
@@ -250,69 +251,91 @@ abstract class MigrateUIWizard {
     return $form;
   }
 
+  /**
+   * Call the validation function for the current form (which has the same
+   * name of the form function with 'Validate' appended).
+   *
+   * @param array $form_state
+   */
   public function formValidate(&$form_state) {
-    $validate_function = $this->currentStep->getFormValidate();
-    $this->{$validate_function}($form_state);
-  }
-
-  protected function overviewForm() {
-    $form['overview'] = array(
-      '#prefix' => '<p>',
-      '#markup' => $this->overviewDescription(),
-      '#suffix' => '</p>',
-    );
-    $form['description'] = array(
-      '#prefix' => '<p>',
-      '#markup' => t('You will be led through a series of steps, allowing you to ' .
-        'customize what will be imported into Drupal and how it will be mapped. ' .
-        'At the end of this process, a set of import steps (called <em>Migrations</em>) '.
-        'are generated and you will be left at the Migrate dashboard, from which ' .
-        'you can perform the imports, monitor their progress, roll them back, etc.'),
-      '#suffix' => '</p>',
-    );
-
-    $form['group_name'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Unique name'),
-      '#description' => t('Provide a unique alphanumeric name for this import. It ' .
-        'will be used to prefix and group the generated migrations.'),
-      '#size' => 16,
-      '#maxlength' => 16,
-      '#required' => TRUE,
-      '#default_value' => $this->groupName,
-    );
-    return $form;
+    $validate_method = $this->currentStep->getFormMethod() . 'Validate';
+    $this->{$validate_method}($form_state);
   }
 
   /**
-  * Make sure the prefix is alphanumeric and unique.
-  *
-  * @param array $form_state
-  */
-  protected function overviewFormValidate(&$form_state) {
-    $this->groupName = trim($form_state['values']['group_name']);
-    if (!preg_match('|^[[:alnum:]]+$|', $this->groupName)) {
-      form_set_error('group_name',
-        t('The unique name for your import, %name, must be alphanumeric.',
-          array('%name' => $this->groupName)));
+   * Take the information we've accumulated throughout the wizard, and create
+   * the Migrations to perform the import.
+   *
+   * @param array $form_state
+   */
+  public function formFinish(&$form_state) {
+    drupal_set_message("We're just a POC for now - something will actually happen later.");
+
+    $form_state['redirect'] = 'admin/content/migrate';
+    return;
+    foreach ($form_state['storage']['migrations'] as $machine_name => $info) {
+      MigrationBase::registerMigration($info['class_name'], $machine_name, $info['arguments']);
     }
-    $lower_group_name = drupal_strtolower($this->groupName);
-    $migrations = migrate_migrations();
-    foreach ($migrations as $migration) {
-      $group = drupal_strtolower($migration->getGroup()->getName());
-      if ($lower_group_name == $group) {
-        form_set_error('group_name',
-          t('The name for your import, %name, must be unique. There is already a ' .
-            'migration group with that name.',
-            array('%name' => $this->groupName)));
-        break;
+    try {
+      $site = migrate_drupal_site($form_state['storage']['endpoint'], $form_state['storage']['http_options']['headers']['Cookie']);
+    }
+    catch (Exception $e) {
+      drupal_set_message($e->getMessage());
+      return;
+    }
+
+    // Register a Term migration for each vocabulary mapping
+    $vocabs = $form_state['storage']['vocabs'];
+    foreach ($vocabs as $source_vid => $bundle) {
+      $arguments = array('endpoint' => $form_state['storage']['endpoint'],
+        'source_vid' => $source_vid, 'bundle' => $bundle);
+      Migration::registerMigration('DrupalTerm', "DrupalTerm$source_vid", $arguments);
+    }
+
+    foreach ($form_state['values']['vocab'] as $source_vid => $dest_vid) {
+      // New vocabulary requested, retrieve data on old one
+      if ($dest_vid == 0) {
+        $url = $form_state['storage']['endpoint'] . '/taxonomy_vocabulary/' . $source_vid;
+        $response = drupal_http_request($url, $form_state['storage']['http_options']);
+        if ($response->code == '200') {
+          $vocab = json_decode($response->data);
+          // Lack of a machine_name indicates a D6 source, generate the machine_name
+          if (!isset($vocab->machine_name)) {
+            $name = drupal_strtolower($vocab->name);
+            $vocab->machine_name = preg_replace('/[^a-z0-9]+/', '_', $name);
+          }
+          unset($vocab->vid);
+          if (taxonomy_vocabulary_save($vocab)) {
+            $form_state['storage']['vocabs'][$source_vid] = $vocab->machine_name;
+            drupal_set_message(t('New vocabulary %name created', array('%name' => $vocab->name)));
+          }
+          else {
+            form_set_error('vocab][' . $source_vid, t('Failed to create vocabulary %name',
+              array('%name' => $vocab->name)));
+          }
+        }
+        else {
+          form_set_error('description', t('Could not connect to %url', array('%url' => $url)));
+        }
+      }
+      elseif ($dest_vid != -1) {
+        $vocab = taxonomy_vocabulary_load($dest_vid);
+        $form_state['storage']['vocabs'][$source_vid] = $vocab->machine_name;
       }
     }
   }
 
-  abstract protected function sourceDataForm();
-  abstract protected function sourceDataFormValidate(&$form_state);
-
+  /**
+   * Record all the information necessary to register a migration when this is
+   * all over.
+   *
+   * @param string $machine_name
+   *  Machine name for the migration class.
+   * @param string $class_name
+   *  Name of the Migration class to instantiate.
+   * @param array $arguments
+   *  Further information configuring the migration.
+   */
   protected function addMigration($machine_name, $class_name, $arguments) {
     $arguments += array(
       'group' => $this->groupName,
@@ -323,22 +346,40 @@ abstract class MigrateUIWizard {
       'arguments' => $arguments,
     );
   }
-
-
 }
 
+/**
+ * Class representing one step of a wizard.
+ */
 class MigrateUIStep {
+  /**
+   * A translatable string briefly describing this step, to be used in the page
+   * title for the step form.
+   *
+   * @var string
+   */
   protected $name;
   public function getName() {
     return $this->name;
   }
-  protected $form;
-  public function getForm() {
-    return $this->form;
+
+  /**
+   * The name of the MigrateUIWizard method returning the form array for this
+   * step.
+   *
+   * @var string
+   */
+  protected $form_method;
+  public function getFormMethod() {
+    return $this->form_method;
   }
-  public function getFormValidate() {
-    return $this->form . 'Validate';
-  }
+
+  /**
+   * The form values ($form_state['values']) submitted for this step, saved in
+   * case we need to restore them on a Previous action.
+   *
+   * @var array
+   */
   protected $formValues;
   public function getFormValues() {
     return $this->formValues;
@@ -346,19 +387,35 @@ class MigrateUIStep {
   public function setFormValues($form_values) {
     $this->formValues = $form_values;
   }
-  protected $data;
-  public function getData() {
-    return $this->data;
-  }
-  public function setData($data) {
-    $this->data = $data;
+
+  /**
+   * Any contextual data needed by the form for this step. For example, a
+   * field mapping form would need to know the source and destination content
+   * types so it can determine what fields to expose.
+   *
+   * @var mixed
+   */
+  protected $context;
+  public function getContext() {
+    return $this->context;
   }
 
-  public $nextStep = NULL;
-  public $previousStep = NULL;
+  /**
+   * The step object is a node in a doubly-linked list - it links to its
+   * predecessor and successor steps.
+   *
+   * @var MigrateUIStep
+   */
+  public $nextStep;
 
-  public function __construct($name, $form) {
+  /**
+   * @var MigrateUIStep
+   */
+  public $previousStep;
+
+  public function __construct($name, $form_method, $context = NULL) {
     $this->name = $name;
-    $this->form = $form;
+    $this->form_method = $form_method;
+    $this->context = $context;
   }
 }

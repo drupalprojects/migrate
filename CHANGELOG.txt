@@ -11,6 +11,11 @@ with a "drush mar" (drush migrate-auto-register) command, or by clicking the
 "Register" button at admin/content/migrate/registration.
 
 Features and enhancements
+- #1824024 - Destination and field handlers may now be registered through
+             hook_migrate_api(). Automatic registration of all migration and
+             handler classes may be disabled at admin/content/migrate/registration.
+             The handler configuration formerly at admin/content/migrate/configure
+             is now at admin/content/migrate/handlers.
 - #1778952 - Update examples to emphasize explicit registration via
              hook_migrate_api().
 

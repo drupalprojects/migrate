@@ -16,8 +16,10 @@ class MigrateNodeUnitTest extends DrupalWebTestCase {
     parent::setUp('autoload', 'dbtng', 'taxonomy', 'content', 'text', 'number',
       'date_api', 'date_timezone', 'date', 'filefield', 'imagefield',
       'migrate', 'migrate_extras', 'migrate_example');
-    drupal_flush_all_caches();
-    migrate_autoregister();
+
+    // Make sure the migrations are registered.
+    migrate_get_module_apis();
+
     // Create and login user
     $migrate_user = $this->drupalCreateUser(array('access content',
       'administer nodes', 'create page content', 'delete any page content'));

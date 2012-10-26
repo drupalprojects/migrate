@@ -34,7 +34,6 @@ function migrate_example_install() {
   );
   $example_format = (object) $example_format;
   filter_format_save($example_format);
-  migrate_autoregister();
 }
 
 function migrate_example_uninstall() {

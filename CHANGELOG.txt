@@ -3,12 +3,17 @@ Migrate 2.5
 ===========
 
 IMPORTANT: Automatic registration of new migration classes is no longer done on
-a cache clear - you must explicitly request it with a "drush mar" (drush
-migrate-auto-register) command, or by clicking the "Register migration changes"
-button at admin/content/migrate/configure.
+a cache clear. Depending on automatic registration is now deprecated, and you
+are encouraged to implement your migrations as DynamicMigration and explicitly
+register them via hook_migrate_api() or MigrationBase::registerMigration().
+If your migrations are not explicitly registered, you must request auto-registration
+with a "drush mar" (drush migrate-auto-register) command, or by clicking the
+"Register migration changes" button at admin/content/migrate/configure.
 
 Features and enhancements
 - #1816652 - Provide useful warning when file subfield arrays don't line up.
+- #1778952 - Update examples to emphasize explicit registration via
+             hook_migrate_api().
 
 Migrate 2.5 Release Candidate 1
 ===============================

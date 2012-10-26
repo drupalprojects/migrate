@@ -33,7 +33,7 @@
  * define an abstract intermediate class derived from Migration, then derive your
  * individual migrations from that, to share settings, utility functions, etc.
  */
-abstract class BasicExampleMigration extends Migration {
+abstract class BasicExampleMigration extends DynamicMigration {
   public function __construct() {
     // Always call the parent constructor first for basic setup
     parent::__construct();

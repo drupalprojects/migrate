@@ -13,7 +13,7 @@
 /**
  * Abstract intermediate class holding common settings.
  */
-abstract class AdvancedExampleMigration extends Migration {
+abstract class AdvancedExampleMigration extends DynamicMigration {
   public $basicFormat;
 
   public function __construct() {

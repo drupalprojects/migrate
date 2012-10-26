@@ -39,11 +39,20 @@ function migrate_ui_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
-  $items['admin/content/migrate/configure'] = array(
-    'title' => 'Configure',
+  $items['admin/content/migrate/registration'] = array(
+    'title' => 'Registration',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Configure class registration',
+    'page callback' => 'migrate_ui_registration',
+    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'file' => 'migrate_ui.pages.inc',
+    'weight' => 5,
+  );
+  $items['admin/content/migrate/handlers'] = array(
+    'title' => 'Handlers',
     'type' => MENU_LOCAL_TASK,
     'description' => 'Configure migration handlers',
-    'page callback' => 'migrate_ui_configure',
+    'page callback' => 'migrate_ui_handlers',
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui.pages.inc',
     'weight' => 10,

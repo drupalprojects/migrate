@@ -718,39 +718,99 @@ function migrate_migration_info($form, $form_state, $migration) {
 /**
  * Menu callback
  */
-function migrate_ui_configure() {
-  drupal_set_title(t('Migrate configuration'));
-  return drupal_get_form('migrate_ui_configure_form');
+function migrate_ui_registration() {
+  drupal_set_title(t('Migration class registration'));
+  return drupal_get_form('migrate_ui_registration_form');
 }
 
 /**
  * Form for reviewing migrations.
  */
-function migrate_ui_configure_form($form, &$form_state) {
+function migrate_ui_registration_form($form, &$form_state) {
   $build = array();
 
+
+  if (variable_get('migrate_disable_autoregistration', FALSE)) {
+    $description = t('You currently have automatic class registration turned off.
+      This means that any Migration classes, destination handler classes, or
+      field handlers must be explicitly registered, either through hook_migrate_api()
+      or by calling MigrationBase::registerMigration(). You may enable automatic
+      class registration by clicking this button - however, it\'s important to
+      note that in some environments registration may fail with errors like
+      "<em>Class \'views_handler_field\' not found</em>".');
+    $button_label = t('Enable automatic registration');
+  }
+  else {
+    $description = t('You currently have automatic class registration turned on.
+      This means that any Migration classes, destination handler classes, or
+      field handlers not explicitly registered, either through hook_migrate_api()
+      or by calling MigrationBase::registerMigration(), can be registered by
+      clicking the <strong>Register</strong> button below. It\'s important to
+      note that in some environments registration may fail with errors like
+      "<em>Class \'views_handler_field\' not found</em>" - in those cases, you
+      can click the <strong>Disable automatic registration</strong> button below,
+      but you must be sure that your classes are explicitly registered.');
+    $button_label = t('Disable automatic registration');
+  }
   $build['registration'] = array(
     '#type' => 'fieldset',
     '#title' => t('Migration registration'),
-    '#description' => t('If you have made changes to your migration implementation
-      such as adding or removing migration classes, to have those changes
-      registered click this button.'),
+    '#description' => $description,
   );
 
-  $build['registration']['submit'] = array(
+  $build['registration']['auto_register'] = array(
     '#type' => 'submit',
-    '#value' => t('Register migration changes'),
-    '#submit' => array('migrate_ui_configure_register_submit'),
+    '#value' => $button_label,
+    '#submit' => array('migrate_ui_configure_register_auto_register'),
   );
+
+  if (!variable_get('migrate_disable_autoregistration', FALSE)) {
+    $build['registration']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Register'),
+      '#submit' => array('migrate_ui_configure_register_submit'),
+    );
+  }
+
+  return $build;
+}
+
+/**
+ * Submit callback for the configuration form registration fieldset.
+ */
+function migrate_ui_configure_register_submit($form, &$form_state) {
+  migrate_autoregister();
+  $form_state['redirect'] = 'admin/content/migrate';
+}
+
+/**
+ * Submit callback for the configuration form auto-registration changes.
+ */
+function migrate_ui_configure_register_auto_register($form, &$form_state) {
+  variable_set('migrate_disable_autoregistration',
+    !variable_get('migrate_disable_autoregistration', FALSE));
+}
+
+/**
+ * Menu callback
+ */
+function migrate_ui_handlers() {
+  drupal_set_title(t('Migrate handler configuration'));
+  return drupal_get_form('migrate_ui_handlers_form');
+}
+
+/**
+ * Form for reviewing migrations.
+ */
+function migrate_ui_handlers_form($form, &$form_state) {
+  $build = array();
 
   $build['handlers'] = array(
     '#type' => 'fieldset',
     '#title' => t('Handler configuration'),
-    '#description' => t('In some cases, such as when a handler for a contributed module is
+    '#description' => t('In some cases, such as when a field handler for a contributed module is
           implemented in both migrate_extras and the module itself, you may need to disable
           a particular handler. In this case, you may uncheck the undesired handler below.'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
   );
 
   $build['handlers']['destination'] = array(
@@ -831,7 +891,7 @@ function migrate_ui_configure_form($form, &$form_state) {
   $build['handlers']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save handler statuses'),
-    '#submit' => array('migrate_ui_configure_submit'),
+    '#submit' => array('migrate_ui_handlers_submit'),
   );
 
   return $build;
@@ -840,7 +900,7 @@ function migrate_ui_configure_form($form, &$form_state) {
 /**
  * Submit callback for the configuration form handler fieldset.
  */
-function migrate_ui_configure_submit($form, &$form_state) {
+function migrate_ui_handlers_submit($form, &$form_state) {
   $disabled = array();
   foreach ($form_state['values']['destination_handlers'] as $class => $value) {
     if (!$value) {
@@ -860,12 +920,4 @@ function migrate_ui_configure_submit($form, &$form_state) {
   else {
     drupal_set_message(t('No handler classes are currently disabled.'));
   }
-}
-
-/**
- * Submit callback for the configuration form registration fieldset.
- */
-function migrate_ui_configure_register_submit($form, &$form_state) {
-  migrate_autoregister();
-  $form_state['redirect'] = 'admin/content/migrate';
 }

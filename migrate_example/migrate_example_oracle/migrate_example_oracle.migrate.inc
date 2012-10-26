@@ -77,3 +77,16 @@ class MigrateExampleOracle extends Migration {
       'revision', 'language', 'sticky', 'revision_uid', 'path'));
   }
 }
+
+/*
+ * Implementation of hook_migrate_api().
+ */
+function migrate_example_oracle_migrate_api() {
+  $api = array(
+    'api' => 2,
+    'migrations' => array(
+      'MigrateExampleOracle' => array('class_name' => 'MigrateExampleOracleNode'),
+    )
+  );
+  return $api;
+}

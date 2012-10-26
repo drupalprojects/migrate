@@ -21,6 +21,9 @@ Features and enhancements
 - #1819730 - Make migration of files in a field context non-fatal.
 - #1816652 - Provide useful warning when file subfield arrays don't line up.
 
+Bug fixes
+- #1824118 - Make --force work for rollbacks.
+
 Migrate 2.5 Release Candidate 1
 ===============================
 

@@ -792,6 +792,9 @@ function drush_migrate_rollback($args = NULL) {
     if ($idlist = drush_get_option('idlist', FALSE)) {
       $options['idlist'] = $idlist;
     }
+    if (drush_get_option('force', FALSE) == 1) {
+      $options['force'] = TRUE;
+    }
     $limit = drush_get_option('limit');
     if ($limit) {
       $parts = explode(' ', $limit);

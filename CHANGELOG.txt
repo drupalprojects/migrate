@@ -19,6 +19,9 @@ Features and enhancements
 - #1778952 - Update examples to emphasize explicit registration via
              hook_migrate_api().
 
+Bug fixes
+- #1824118 - Make --force work for rollbacks.
+
 Migrate 2.5 Release Candidate 1
 ===============================
 

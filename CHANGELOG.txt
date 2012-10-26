@@ -18,6 +18,7 @@ Features and enhancements
              is now at admin/content/migrate/handlers.
 - #1778952 - Update examples to emphasize explicit registration via
              hook_migrate_api().
+- #1819730 - Make migration of files in a field context non-fatal.
 - #1816652 - Provide useful warning when file subfield arrays don't line up.
 
 Migrate 2.5 Release Candidate 1

@@ -29,7 +29,7 @@ function migrate_ui_wizard($form, &$form_state, $class_name = '') {
   }
 
   // Fetch the form for the wizard's current step.
-  $form = $form_state['wizard']->form();
+  $form = $form_state['wizard']->form($form_state);
 
   return $form;
 }
@@ -206,14 +206,14 @@ abstract class MigrateUIWizard {
    *
    * @return array
    */
-  public function form() {
+  public function form(&$form_state) {
     drupal_set_title(t('Import from @source_title, step @step: @step_name',
       array('@source_title' => $this->getSourceName(),
             '@step' => $this->stepNumber,
             '@step_name' => $this->currentStep->getName())));
 
     $form_method = $this->currentStep->getFormMethod();
-    $form = $this->{$form_method}();
+    $form = $this->{$form_method}($form_state);
 
     $form['actions'] = array('#type' => 'actions');
 
@@ -269,60 +269,10 @@ abstract class MigrateUIWizard {
    * @param array $form_state
    */
   public function formFinish(&$form_state) {
-    drupal_set_message("We're just a POC for now - something will actually happen later.");
-
-    $form_state['redirect'] = 'admin/content/migrate';
-    return;
-    foreach ($form_state['storage']['migrations'] as $machine_name => $info) {
+    foreach ($this->migrations as $machine_name => $info) {
       MigrationBase::registerMigration($info['class_name'], $machine_name, $info['arguments']);
     }
-    try {
-      $site = migrate_drupal_site($form_state['storage']['endpoint'], $form_state['storage']['http_options']['headers']['Cookie']);
-    }
-    catch (Exception $e) {
-      drupal_set_message($e->getMessage());
-      return;
-    }
-
-    // Register a Term migration for each vocabulary mapping
-    $vocabs = $form_state['storage']['vocabs'];
-    foreach ($vocabs as $source_vid => $bundle) {
-      $arguments = array('endpoint' => $form_state['storage']['endpoint'],
-        'source_vid' => $source_vid, 'bundle' => $bundle);
-      Migration::registerMigration('DrupalTerm', "DrupalTerm$source_vid", $arguments);
-    }
-
-    foreach ($form_state['values']['vocab'] as $source_vid => $dest_vid) {
-      // New vocabulary requested, retrieve data on old one
-      if ($dest_vid == 0) {
-        $url = $form_state['storage']['endpoint'] . '/taxonomy_vocabulary/' . $source_vid;
-        $response = drupal_http_request($url, $form_state['storage']['http_options']);
-        if ($response->code == '200') {
-          $vocab = json_decode($response->data);
-          // Lack of a machine_name indicates a D6 source, generate the machine_name
-          if (!isset($vocab->machine_name)) {
-            $name = drupal_strtolower($vocab->name);
-            $vocab->machine_name = preg_replace('/[^a-z0-9]+/', '_', $name);
-          }
-          unset($vocab->vid);
-          if (taxonomy_vocabulary_save($vocab)) {
-            $form_state['storage']['vocabs'][$source_vid] = $vocab->machine_name;
-            drupal_set_message(t('New vocabulary %name created', array('%name' => $vocab->name)));
-          }
-          else {
-            form_set_error('vocab][' . $source_vid, t('Failed to create vocabulary %name',
-              array('%name' => $vocab->name)));
-          }
-        }
-        else {
-          form_set_error('description', t('Could not connect to %url', array('%url' => $url)));
-        }
-      }
-      elseif ($dest_vid != -1) {
-        $vocab = taxonomy_vocabulary_load($dest_vid);
-        $form_state['storage']['vocabs'][$source_vid] = $vocab->machine_name;
-      }
-    }
+    $form_state['redirect'] = 'admin/content/migrate';
   }
 
   /**

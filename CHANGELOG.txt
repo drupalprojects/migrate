@@ -1,6 +1,6 @@
 
-Migrate 2.5 Release Candidate 2
-===============================
+Migrate 2.5
+===========
 
 IMPORTANT: Automatic registration of new migration classes is no longer done on
 a cache clear. Depending on automatic registration is now deprecated, and you
@@ -9,6 +9,12 @@ register them via hook_migrate_api() or MigrationBase::registerMigration().
 If your migrations are not explicitly registered, you must request auto-registration
 with a "drush mar" (drush migrate-auto-register) command, or by clicking the
 "Register" button at admin/content/migrate/registration.
+
+Bug fixes
+- #1827052 - Properly check for bad XML.
+
+Migrate 2.5 Release Candidate 2
+===============================
 
 Features and enhancements
 - #1824024 - Destination and field handlers may now be registered through

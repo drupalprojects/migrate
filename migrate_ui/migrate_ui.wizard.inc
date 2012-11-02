@@ -37,6 +37,8 @@ function migrate_ui_wizard($form, &$form_state, $class_name = '') {
 /**
  * Submit handler for the "previous" button. Moves the wizard back to the
  * previous step, and retrieves the values that were submitted on that step.
+ *
+ * @todo: Can we remove steps that were dynamically added?
  */
 function migrate_ui_wizard_previous_submit($form, &$form_state) {
   $form_state['wizard']->gotoPreviousStep($form_state);
@@ -287,6 +289,12 @@ abstract class MigrateUIWizard {
    *  Further information configuring the migration.
    */
   protected function addMigration($machine_name, $class_name, $arguments) {
+    $machine_name = $this->groupName . $machine_name;
+    if (isset($arguments['dependencies'])) {
+      foreach ($arguments['dependencies'] as $index => $dependency) {
+        $arguments['dependencies'][$index] = $this->groupName . $dependency;
+      }
+    }
     $arguments += array(
       'group' => $this->groupName,
       'machine_name' => $machine_name,

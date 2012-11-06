@@ -40,9 +40,29 @@ function migrate_ui_dashboard_form($form, &$form_state) {
   }
 
   $migrations = migrate_migrations();
+  $last_group = '';
 
   $rows = array();
   foreach ($migrations as $migration) {
+    $current_group = $migration->getGroup()->getName();
+    if ($current_group != $last_group) {
+      if ($last_group != '') {
+        $build[$last_group]['dashboard'] = array(
+          '#type' => 'tableselect',
+          '#header' => $header,
+          '#options' => $rows,
+          '#empty' => t('No migrations'),
+        );
+        $rows = array();
+      }
+      $build[$current_group] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#title' => $current_group,
+      );
+      $last_group = $current_group;
+    }
     $row = array();
     $has_counts = TRUE;
     if (method_exists($migration, 'sourceCount')) {
@@ -133,7 +153,7 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     $rows[$machine_name] = $row;
   }
 
-  $build['dashboard'] = array(
+  $build[$last_group]['dashboard'] = array(
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $rows,

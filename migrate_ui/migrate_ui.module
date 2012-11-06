@@ -1,6 +1,7 @@
 <?php
 
 define('MIGRATE_ACCESS_BASIC', 'migration information');
+define('MIGRATE_ACCESS_ADVANCED', 'advanced migration information');
 
 function migrate_ui_help($path, $arg) {
   switch ($path) {
@@ -15,7 +16,10 @@ function migrate_ui_help($path, $arg) {
 function migrate_ui_permission() {
   return array(
     MIGRATE_ACCESS_BASIC => array(
-      'title' => t('Basic access to migration information'),
+      'title' => t('Access to basic migration information'),
+    ),
+    MIGRATE_ACCESS_ADVANCED => array(
+      'title' => t('Access to advanced migration information'),
     ),
   );
 }
@@ -44,7 +48,7 @@ function migrate_ui_menu() {
     'type' => MENU_LOCAL_TASK,
     'description' => 'Configure class registration',
     'page callback' => 'migrate_ui_registration',
-    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_ui.pages.inc',
     'weight' => 5,
   );
@@ -53,7 +57,7 @@ function migrate_ui_menu() {
     'type' => MENU_LOCAL_TASK,
     'description' => 'Configure migration handlers',
     'page callback' => 'migrate_ui_handlers',
-    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_ui.pages.inc',
     'weight' => 100,
   );
@@ -63,7 +67,7 @@ function migrate_ui_menu() {
     'description' => 'View messages from a migration',
     'page callback' => 'migrate_ui_messages',
     'page arguments' => array(4),
-    'access arguments' => array(MIGRATE_ACCESS_BASIC),
+    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_ui.pages.inc',
   );
   $items['admin/content/migrate/%_migrate_ui'] = array(

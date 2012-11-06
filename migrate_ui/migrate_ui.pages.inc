@@ -27,13 +27,17 @@ function migrate_ui_dashboard_form($form, &$form_state) {
   $header = array(
     'status' => array('data' => t('Status')),
     'machinename' => array('data' => t('Migration')),
-    'importrows' => array('data' => t('Total rows')),
+    'importrows' => array('data' => t('Items')),
     'imported' => array('data' => t('Imported')),
-    'unimported' => array('data' => t('Unimported')),
-    'messages' => array('data' => t('Messages')),
-    'lastthroughput' => array('data' => t('Throughput')),
-    'lastimported' => array('data' => t('Last imported')),
   );
+  if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+    $header += array(
+      'unimported' => array('data' => t('Unimported')),
+      'messages' => array('data' => t('Messages')),
+      'lastthroughput' => array('data' => t('Throughput')),
+      'lastimported' => array('data' => t('Last imported')),
+    );
+  }
 
   $migrations = migrate_migrations();
 
@@ -94,36 +98,38 @@ function migrate_ui_dashboard_form($form, &$form_state) {
       l($machine_name, 'admin/content/migrate/' . $machine_name);
     $row['importrows'] = $total;
     $row['imported'] = $imported;
-    $row['unimported'] = $unimported;
+    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+      $row['unimported'] = $unimported;
 
-    if (is_subclass_of($migration, 'Migration')) {
-      $num_messages = $migration->messageCount();
-      $row['messages'] = $num_messages ? l($num_messages, 'admin/content/migrate/messages/' . $machine_name) : 0;
-    }
-    else {
-      $row['messages'] = t('N/A');
-    }
-    if (method_exists($migration, 'getLastThroughput')) {
-      $rate = $migration->getLastThroughput();
-      if ($rate == '') {
-        $row['lastthroughput'] = t('Unknown');
-      }
-      elseif ($status == MigrationBase::STATUS_IDLE) {
-        $row['lastthroughput'] = t('!rate/min', array('!rate' => $rate));
+      if (is_subclass_of($migration, 'Migration')) {
+        $num_messages = $migration->messageCount();
+        $row['messages'] = $num_messages ? l($num_messages, 'admin/content/migrate/messages/' . $machine_name) : 0;
       }
       else {
-        if ($rate > 0) {
-          $row['lastthroughput'] = t('!rate/min, !time remaining', array('!rate' => $rate, '!time' => format_interval((60*$unimported) / $rate)));
+        $row['messages'] = t('N/A');
+      }
+      if (method_exists($migration, 'getLastThroughput')) {
+        $rate = $migration->getLastThroughput();
+        if ($rate == '') {
+          $row['lastthroughput'] = t('Unknown');
+        }
+        elseif ($status == MigrationBase::STATUS_IDLE) {
+          $row['lastthroughput'] = t('!rate/min', array('!rate' => $rate));
         }
         else {
-          $row['lastthroughput'] = t('!rate/min, unknown time remaining', array('!rate' => $rate));
+          if ($rate > 0) {
+            $row['lastthroughput'] = t('!rate/min, !time remaining', array('!rate' => $rate, '!time' => format_interval((60*$unimported) / $rate)));
+          }
+          else {
+            $row['lastthroughput'] = t('!rate/min, unknown time remaining', array('!rate' => $rate));
+          }
         }
       }
+      else {
+        $row['lastthroughput'] = t('N/A');
+      }
+      $row['lastimported'] = $migration->getLastImported();
     }
-    else {
-      $row['lastthroughput'] = t('N/A');
-    }
-    $row['lastimported'] = $migration->getLastImported();
     $rows[$machine_name] = $row;
   }
 
@@ -179,45 +185,47 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     '#postfix' => '</p>',
   );
 
-  $build['operations']['options'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Options'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $build['operations']['options']['update'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Update'),
-    '#description' => t('Check this box to update all previously-migrated content
-      in addition to importing new content. Leave unchecked to only import
-      new content'),
-  );
-  $build['operations']['options']['force'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Ignore dependencies'),
-    '#description' => t('Check this box to ignore dependencies when running imports
-      - all migrations will run whether or not their dependent migrations have
-      completed.'),
-  );
-  $build['operations']['options']['limit'] = array(
-    '#tree' => TRUE,
-    '#type' => 'fieldset',
-    '#attributes' => array('class' => array('container-inline')),
-    'value' => array(
-      '#type' => 'textfield',
-      '#title' => t('Limit to:'),
-      '#size' => 10,
-    ),
-    'unit' => array(
-      '#type' => 'select',
-      '#options' => array(
-        'items' => t('items'),
-        'seconds' => t('seconds'),
+  if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+    $build['operations']['options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Options'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $build['operations']['options']['update'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Update'),
+      '#description' => t('Check this box to update all previously-migrated content
+        in addition to importing new content. Leave unchecked to only import
+        new content'),
+    );
+    $build['operations']['options']['force'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Ignore dependencies'),
+      '#description' => t('Check this box to ignore dependencies when running imports
+        - all migrations will run whether or not their dependent migrations have
+        completed.'),
+    );
+    $build['operations']['options']['limit'] = array(
+      '#tree' => TRUE,
+      '#type' => 'fieldset',
+      '#attributes' => array('class' => array('container-inline')),
+      'value' => array(
+        '#type' => 'textfield',
+        '#title' => t('Limit to:'),
+        '#size' => 10,
       ),
-      '#description' => t('Set a limit of how many items to process for
-        each migration, or how long each should run.'),
-    ),
-  );
+      'unit' => array(
+        '#type' => 'select',
+        '#options' => array(
+          'items' => t('items'),
+          'seconds' => t('seconds'),
+        ),
+        '#description' => t('Set a limit of how many items to process for
+          each migration, or how long each should run.'),
+      ),
+    );
+  }
 
   return $build;
 }

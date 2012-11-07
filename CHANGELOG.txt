@@ -1,4 +1,16 @@
 
+Next release
+============
+Migration developers will need to add the "advanced migration information" to
+their accounts to continue seeing all the info in the UI they're used to.
+
+Features and enhancements
+- #1826112 - A new API has been added to support external modules in developing
+             easy-to-use wizard-based UIs. This is a work-in-progress at the
+             moment - use at your own risk.
+- #1350284 - Group migrations in the UI according to their specified group.
+- #1833380 - Add new permission to provide basic/advanced UIs.
+
 Migrate 2.5
 ===========
 

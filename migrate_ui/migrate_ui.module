@@ -153,9 +153,11 @@ function _migrate_ui_title($migration) {
 function migrate_ui_wizards() {
   $migrate_implementors = module_invoke_all('migrate_api');
   $wizards = array();
-  foreach ($migrate_implementors['wizard classes'] as $wizard_class) {
-    $wizard_class = strtolower($wizard_class);
-    $wizards[$wizard_class] = new $wizard_class;
+  if (isset($migrate_implementors['wizard classes'])) {
+    foreach ($migrate_implementors['wizard classes'] as $wizard_class) {
+      $wizard_class = strtolower($wizard_class);
+      $wizards[$wizard_class] = new $wizard_class;
+    }
   }
   return $wizards;
 }

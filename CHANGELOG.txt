@@ -1,8 +1,9 @@
 
 Next release
 ============
-Migration developers will need to add the "advanced migration information" to
-their accounts to continue seeing all the info in the UI they're used to.
+Migration developers will need to add the "advanced migration information"
+permission to their accounts to continue seeing all the info in the UI they're
+used to.
 
 Features and enhancements
 - #1826112 - A new API has been added to support external modules in developing

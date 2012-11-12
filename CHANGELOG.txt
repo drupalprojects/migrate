@@ -12,6 +12,9 @@ Features and enhancements
 - #1350284 - Group migrations in the UI according to their specified group.
 - #1833380 - Add new permission to provide basic/advanced UIs.
 
+Bug fixes
+- #1836426 - Proper check on activeUrl for multiple XML files.
+
 Migrate 2.5
 ===========
 

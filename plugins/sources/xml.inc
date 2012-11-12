@@ -965,7 +965,7 @@ class MigrateSourceXML extends MigrateSource {
    * @return string
    */
   public function activeUrl() {
-    if ($this->activeUrl) {
+    if (!is_null($this->activeUrl)) {
       return $this->sourceUrls[$this->activeUrl];
     }
   }

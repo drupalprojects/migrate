@@ -13,6 +13,7 @@ Features and enhancements
 - #1833380 - Add new permission to provide basic/advanced UIs.
 
 Bug fixes
+- #1794236 - Namespace detail pages within menu system.
 - #1836426 - Proper check on activeUrl for multiple XML files.
 
 Migrate 2.5

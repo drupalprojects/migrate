@@ -70,11 +70,11 @@ function migrate_ui_menu() {
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_ui.pages.inc',
   );
-  $items['admin/content/migrate/%_migrate_ui'] = array(
+  $items['admin/content/migrate/details/%_migrate_ui'] = array(
     'title callback' => '_migrate_ui_title',
-    'title arguments' => array(3),
+    'title arguments' => array(4),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('migrate_migration_info', 3),
+    'page arguments' => array('migrate_migration_info', 4),
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'file' => 'migrate_ui.pages.inc',
   );

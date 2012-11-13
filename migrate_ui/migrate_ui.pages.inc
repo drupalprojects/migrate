@@ -115,7 +115,7 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
     $row['machinename'] =
-      l($machine_name, 'admin/content/migrate/' . $machine_name);
+      l($machine_name, 'admin/content/migrate/details/' . $machine_name);
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {

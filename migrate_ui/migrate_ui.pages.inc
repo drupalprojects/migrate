@@ -47,7 +47,7 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     $current_group = $migration->getGroup()->getName();
     if ($current_group != $last_group) {
       if ($last_group != '') {
-        $build[$last_group]['dashboard'] = array(
+        $build['dashboard'][$last_group]['migrations'] = array(
           '#type' => 'tableselect',
           '#header' => $header,
           '#options' => $rows,
@@ -55,11 +55,12 @@ function migrate_ui_dashboard_form($form, &$form_state) {
         );
         $rows = array();
       }
-      $build[$current_group] = array(
+      $build['dashboard'][$current_group] = array(
         '#type' => 'fieldset',
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
-        '#title' => $current_group,
+        '#tree' => TRUE,
+        '#title' => $migration->getGroup()->getTitle(),
       );
       $last_group = $current_group;
     }
@@ -153,10 +154,11 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     $rows[$machine_name] = $row;
   }
 
-  $build[$last_group]['dashboard'] = array(
+  $build['dashboard'][$last_group]['migrations'] = array(
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $rows,
+    '#tree' => TRUE,
     '#empty' => t('No migrations'),
   );
 
@@ -254,8 +256,19 @@ function migrate_ui_dashboard_form($form, &$form_state) {
  * Validate callback for the dashboard form.
  */
 function migrate_ui_dashboard_validate($form, &$form_state) {
-  // Error if there are no items to select.
-  if (!is_array($form_state['values']['dashboard']) || !count(array_filter($form_state['values']['dashboard']))) {
+  dpr('validate:');
+
+    // Error if there are no items to select.
+  $found = FALSE;
+  foreach ($form_state['values'] as $group => $values) {
+    if (isset($values['migrations'])) {
+      if (!is_array($values['migrations']) || !count(array_filter($values['migrations']))) {
+        $found = TRUE;
+        break;
+      }
+    }
+  }
+  if (!$found) {
     form_set_error('', t('No items selected.'));
   }
 }
@@ -268,7 +281,12 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
   $limit = $form_state['values']['limit'];
   $update = $form_state['values']['update'];
   $force = $form_state['values']['force'];
-  $machine_names = array_filter($form_state['values']['dashboard']);
+  $machine_names = array();
+  foreach ($form_state['values'] as $group => $values) {
+    if (isset($values['migrations']) && is_array($values['migrations'])) {
+      $machine_names += array_filter($values['migrations']);
+    }
+  }
   $operations = array();
 
   // Rollback in reverse order.
@@ -554,6 +572,12 @@ function migrate_migration_info($form, $form_state, $migration) {
       '#type' => 'item',
     );
   }
+
+  $form['overview']['group'] = array(
+    '#title' => t('Group:'),
+    '#markup' => $migration->getGroup()->getTitle(),
+    '#type' => 'item',
+  );
 
   if ($has_mappings) {
     switch ($migration->getSystemOfRecord()) {

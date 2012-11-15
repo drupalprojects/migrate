@@ -65,26 +65,7 @@ function migrate_example_wine_uninstall() {
 }
 
 function migrate_example_wine_disable() {
-  MigrationBase::deregisterMigration('WinePrep');
-  Migration::deregisterMigration('WineFileCopy');
-  Migration::deregisterMigration('WineFileBlob');
-  Migration::deregisterMigration('WineRegion');
-  Migration::deregisterMigration('WineUser');
-  Migration::deregisterMigration('WineVariety');
-  Migration::deregisterMigration('WineBestWith');
-  Migration::deregisterMigration('WineProducer');
-  Migration::deregisterMigration('WineProducerXML');
-  Migration::deregisterMigration('WineProducerXMLPull');
-  Migration::deregisterMigration('WineProducerMultiXML');
-  Migration::deregisterMigration('WineWine');
-  Migration::deregisterMigration('WineComment');
-  MigrationBase::deregisterMigration('WineFinish');
-  Migration::deregisterMigration('WineUpdates');
-  Migration::deregisterMigration('WineUserUpdates');
-  Migration::deregisterMigration('WineVarietyUpdates');
-  Migration::deregisterMigration('WineCommentUpdates');
-  Migration::deregisterMigration('WineRole');
-  Migration::deregisterMigration('WineTable');
+  MigrateGroup::deregister('wine');
 }
 
 function migrate_example_wine_schema_wine() {

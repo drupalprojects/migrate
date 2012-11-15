@@ -198,13 +198,17 @@ function migrate_drush_command() {
   );
   $items['migrate-deregister'] = array(
     'description' => 'Remove all tracking of a migration',
-    'options' => array('orphans' => 'Remove tracking for any migrations whose implementing class no longer exists'),
+    'options' => array(
+      'orphans' => 'Remove tracking for any migrations whose implementing class no longer exists',
+      'group' => 'Remove tracking of a migration group, and any migrations assigned to it',
+    ),
     'arguments' => array(
       'migration' => 'Name of migration to deregister',
     ),
     'examples' => array(
       'migrate-deregister Article' => 'Deregister the Article migration',
       'migrate-deregister --orphans' => 'Deregister any no-longer-implemented migrations',
+      'migrate-deregister --group=myblog' => 'Deregister the myblog group and all migrations within it',
     ),
     'drupal dependencies' => array('migrate'),
   );
@@ -1231,31 +1235,40 @@ function drush_migrate_reset_status($args = NULL) {
 }
 
 /**
- * Deregister a given migration, or all orphaned migrations. Note that the
- * migration might no longer "exist" (the class implementation might be gone),
- * so we can't count on being able to instantiate it, or use migrate_migrations().
+ * Deregister a given migration, migration group, or all orphaned migrations.
+ * Note that the migration might no longer "exist" (the class implementation
+ * might be gone), so we can't count on being able to instantiate it, or use
+ * migrate_migrations().
  */
 function drush_migrate_deregister($args = NULL) {
   try {
     $orphans = drush_get_option('orphans');
-    if ($orphans) {
-      $migrations = array();
-      $result = db_select('migrate_status', 'ms')
-                    ->fields('ms', array('class_name', 'machine_name'))
-                    ->execute();
-      foreach ($result as $row) {
-        if (!class_exists($row->class_name)) {
-          $migrations[] = $row->machine_name;
-        }
-      }
+    $group = drush_get_option('group');
+    if ($group) {
+      MigrateGroup::deregister($group);
+      drush_log(dt("Deregistered group '!description' and all its migrations",
+        array('!description' => $group)), 'success');
     }
     else {
-      $migrations = explode(',', $args);
-    }
-    foreach ($migrations as $machine_name) {
-      drush_migrate_deregister_migration($machine_name);
-      drush_log(dt("Deregistered '!description' migration",
-        array('!description' => $machine_name)), 'success');
+      if ($orphans) {
+        $migrations = array();
+        $result = db_select('migrate_status', 'ms')
+                      ->fields('ms', array('class_name', 'machine_name'))
+                      ->execute();
+        foreach ($result as $row) {
+          if (!class_exists($row->class_name)) {
+            $migrations[] = $row->machine_name;
+          }
+        }
+      }
+      else {
+        $migrations = explode(',', $args);
+      }
+      foreach ($migrations as $machine_name) {
+        drush_migrate_deregister_migration($machine_name);
+        drush_log(dt("Deregistered '!description' migration",
+          array('!description' => $machine_name)), 'success');
+      }
     }
   }
   catch (MigrateException $e) {

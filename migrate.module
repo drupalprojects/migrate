@@ -405,11 +405,20 @@ function migrate_get_module_apis($reset = FALSE) {
       $info = $function();
       if (isset($info['api']) && $info['api'] == MIGRATE_API_VERSION) {
         $cache[$module] = $info;
+        // Register any groups defined via the hook.
+        if (isset($info['groups']) && is_array($info['groups'])) {
+          foreach ($info['groups'] as $name => $arguments) {
+            $title = $arguments['title'];
+            unset($arguments['title']);
+            MigrateGroup::register($name, $title, $arguments);
+          }
+        }
         // Register any migrations defined via the hook.
         if (isset($info['migrations']) && is_array($info['migrations'])) {
           foreach ($info['migrations'] as $machine_name => $arguments) {
-            MigrationBase::registerMigration($arguments['class_name'],
-              $machine_name, $arguments);
+            $class_name = $arguments['class_name'];
+            unset($arguments['class_name']);
+            MigrationBase::registerMigration($class_name, $machine_name, $arguments);
           }
         }
       }

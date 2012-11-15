@@ -117,6 +117,20 @@ abstract class MigrateUIWizard {
   protected $groupName = 'default';
 
   /**
+   * The user-visible title of the group.
+   *
+   * @var string
+   */
+  protected $groupTitle = 'default';
+
+  /**
+   * Any arguments that apply to all migrations in the group.
+   *
+   * @var array
+   */
+  protected $groupArguments = array();
+
+  /**
    * Array of Migration argument arrays, keyed by machine name. On Finish, used
    * to register Migrations.
    *
@@ -271,8 +285,11 @@ abstract class MigrateUIWizard {
    * @param array $form_state
    */
   public function formFinish(&$form_state) {
+    MigrateGroup::register($this->groupName, $this->groupTitle, $this->groupArguments);
+    $info['arguments']['group_name'] = $this->groupName;
     foreach ($this->migrations as $machine_name => $info) {
-      MigrationBase::registerMigration($info['class_name'], $machine_name, $info['arguments']);
+      MigrationBase::registerMigration($info['class_name'], $machine_name,
+        $info['arguments'], $this->groupName);
     }
     $form_state['redirect'] = 'admin/content/migrate';
   }
@@ -296,7 +313,7 @@ abstract class MigrateUIWizard {
       }
     }
     $arguments += array(
-      'group' => $this->groupName,
+      'group_name' => $this->groupName,
       'machine_name' => $machine_name,
     );
     $this->migrations[$machine_name] = array(

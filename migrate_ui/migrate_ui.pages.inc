@@ -256,8 +256,6 @@ function migrate_ui_dashboard_form($form, &$form_state) {
  * Validate callback for the dashboard form.
  */
 function migrate_ui_dashboard_validate($form, &$form_state) {
-  dpr('validate:');
-
     // Error if there are no items to select.
   $found = FALSE;
   foreach ($form_state['values'] as $group => $values) {

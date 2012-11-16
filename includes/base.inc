@@ -288,13 +288,15 @@ abstract class MigrationBase {
    */
   public function __construct($group = NULL) {
     $this->machineName = $this->generateMachineName();
-
     if (empty($group)) {
       $group_name = db_select('migrate_status', 'ms')
                     ->fields('ms', array('group_name'))
                     ->condition('machine_name', $this->machineName)
                     ->execute()
                     ->fetchField();
+      if (empty($group_name)) {
+        $group_name = 'default';
+      }
       $this->group = MigrateGroup::getInstance($group_name);
     }
     else {

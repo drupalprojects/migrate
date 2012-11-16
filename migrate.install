@@ -426,28 +426,38 @@ function migrate_update_7203() {
   if (!db_table_exists('migrate_group')) {
     $ret[] = t('Create migrate_group table');
     db_create_table('migrate_group', migrate_schema_group());
+  }
+  if (!db_field_exists('migrate_status', 'group_name')) {
     $ret[] = t('Add group relationship to migrate_status table');
-    if (!db_field_exists('migrate_status', 'group_name')) {
-      db_add_field('migrate_status', 'group_name', array(
-            'type' => 'varchar',
-            'length' => 255,
-            'not null' => TRUE,
-            'default' => 'default',
-            'description' => 'Name of group containing migration',
-          )
-      );
-      // Populate each migration's group_name field
-      $groups = array();
-      foreach (migrate_migrations() as $machine_name => $migration) {
-        $group_name = $migration->getGroup()->getName();
-        $groups[$group_name] = $group_name;
-        db_update('migrate_status')
-          ->fields(array('group_name' => $group_name))
-          ->condition('machine_name', $machine_name)
-          ->execute();
+    db_add_field('migrate_status', 'group_name', array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => 'default',
+          'description' => 'Name of group containing migration',
+        )
+    );
+    // Populate each migration's group_name field
+    $groups = array();
+    foreach (migrate_migrations() as $machine_name => $migration) {
+      $group_name = $migration->getGroup()->getName();
+      if (empty($group_name)) {
+        $group_name = 'default';
       }
-      // Populate the migrate_group table
-      foreach ($groups as $group_name) {
+      $groups[$group_name] = $group_name;
+      db_update('migrate_status')
+        ->fields(array('group_name' => $group_name))
+        ->condition('machine_name', $machine_name)
+        ->execute();
+    }
+    // Populate the migrate_group table
+    foreach ($groups as $group_name) {
+      $title = db_select('migrate_group', 'mg')
+               ->fields('mg', array('title'))
+               ->condition('name', $group_name)
+               ->execute()
+               ->fetchField();
+      if (!$title) {
         db_insert('migrate_group')
           ->fields(array(
               'name' => $group_name,

@@ -17,7 +17,16 @@ abstract class AdvancedExampleMigration extends DynamicMigration {
   public $basicFormat;
 
   public function __construct() {
-    parent::__construct();
+    // TIP: Migrations can be organized into groups. In this case, all the migrations
+    // derived from AdvancedExampleMigration will be part of the 'wine' group.
+    // This enables us to easily run just the wine example migrations:
+    //  drush migrate-import --group=wine
+    // The second argument to MigrateGroup::getInstance is an array of groups
+    // which should come before this when viewing migration statuses, or running
+    // migration operations using --all. Since the beer migrations in this module
+    // did not specify a group, it is in the 'default' group, so this constructor
+    // indicates that the wine migrations come after the beer migrations.
+    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
 
     $this->team = array(
       new MigrateTeamMember('Jack Kramer', 'jkramer@example.com', t('Taster')),

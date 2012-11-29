@@ -1,29 +1,4 @@
 
-Next release
-============
-
-IMPORTANT: The -dev releases between Migrate 2.5 and Migrate 2.6 will be less
-stable than we've typically maintained in the past. In particular, as far as
-database updates are concerned, the goal is to have a clean upgrade from 2.5 to
-2.6 - intermediate updates are not supported and can't be expected to work
-cleanly. Backup your database before upgrading to a -dev release.
-
-Migration developers will need to add the "advanced migration information"
-permission to their accounts to continue seeing all the info in the UI they're
-used to.
-
-Features and enhancements
-- #1826112 - A new API has been added to support external modules in developing
-             easy-to-use wizard-based UIs. This is a work-in-progress at the
-             moment - use at your own risk.
-- #1839644 - Groups have been extended to record titles and arguments in the db.
-- #1350284 - Group migrations in the UI according to their specified group.
-- #1833380 - Add new permission to provide basic/advanced UIs.
-
-Bug fixes
-- #1794236 - Namespace detail pages within menu system.
-- #1836426 - Proper check on activeUrl for multiple XML files.
-
 Migrate 2.5
 ===========
 

@@ -174,6 +174,7 @@ function migrate_ui_dashboard_form($form, &$form_state) {
     'rollback_and_import' => t('Rollback and import'),
     'stop' => t('Stop'),
     'reset' => t('Reset'),
+    'deregister' => t('Deregister'),
   );
   $build['operations']['operation'] = array(
     '#type' => 'select',
@@ -202,6 +203,8 @@ function migrate_ui_dashboard_form($form, &$form_state) {
          <li>Reset - Sometimes a migration process may fail to stop cleanly, and be
              left stuck in an Importing or Rolling Back status. Choose Reset to clear
              the status and permit other operations to proceed.</li>
+         <li>Deregister - Removes all tracking information for a migration, while
+             preserving any content that has already been imported.</li>
        </ul>'
     ),
     '#postfix' => '</p>',
@@ -315,6 +318,9 @@ function migrate_ui_dashboard_submit($form, &$form_state) {
           break;
         case 'reset':
           $migration->resetStatus();
+          break;
+        case 'deregister':
+          migrate_ui_deregister_migration($machine_name);
           break;
       }
     }

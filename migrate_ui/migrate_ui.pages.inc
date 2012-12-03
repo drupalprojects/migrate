@@ -822,6 +822,34 @@ function migrate_ui_registration_form($form, &$form_state) {
     );
   }
 
+  $migrations = array();
+  $result = db_select('migrate_status', 'ms')
+                ->fields('ms', array('class_name', 'machine_name'))
+                ->execute();
+  $migration_list = '';
+  foreach ($result as $row) {
+    if (!class_exists($row->class_name)) {
+      $migrations[] = $row->machine_name;
+      $migration_list .= '<li>' . t('!migration (class !class)',
+        array('!migration' => $row->machine_name, '!class' => $row->class_name)) . "</li>\n";
+    }
+  }
+
+  if (!empty($migrations)) {
+    $description = t('No class currently exists for the following migrations: <ul>!list</ul>',
+      array('!list' => $migration_list));
+    $build['deregistration'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Orphaned migrations'),
+      '#description' => $description,
+    );
+    $build['deregistration']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Deregister orphans'),
+      '#submit' => array('migrate_ui_configure_deregister_submit'),
+    );
+  }
+
   return $build;
 }
 
@@ -831,6 +859,38 @@ function migrate_ui_registration_form($form, &$form_state) {
 function migrate_ui_configure_register_submit($form, &$form_state) {
   migrate_autoregister();
   $form_state['redirect'] = 'admin/content/migrate';
+}
+
+/**
+ * Submit callback for the configuration form deregistration fieldset.
+ */
+function migrate_ui_configure_deregister_submit($form, &$form_state) {
+  $result = db_select('migrate_status', 'ms')
+                ->fields('ms', array('class_name', 'machine_name'))
+                ->execute();
+  foreach ($result as $row) {
+    if (!class_exists($row->class_name)) {
+      migrate_ui_deregister_migration($row->machine_name);
+    }
+  }
+  $form_state['redirect'] = 'admin/content/migrate';
+}
+
+/**
+ * Given a migration machine name, remove its tracking from the database.
+ *
+ * @param $machine_name
+ */
+function migrate_ui_deregister_migration($machine_name) {
+  // The class is gone, so we'll manually clear migrate_status, and make
+  // the default assumptions about the map/message tables.
+  db_drop_table('migrate_map_' . strtolower($machine_name));
+  db_drop_table('migrate_message_' . strtolower($machine_name));
+  db_delete('migrate_status')
+    ->condition('machine_name', $machine_name)
+    ->execute();
+  drupal_set_message(t("Deregistered '!description' migration",
+    array('!description' => $machine_name)));
 }
 
 /**

@@ -58,7 +58,7 @@ function migrate_schema_status() {
         'description' => 'A serialized array of arguments to the migration constructor',
       ),
     ),
-    'primary key' => array('machine_name', 'group_name'),
+    'primary key' => array('machine_name'),
   );
 }
 
@@ -172,6 +172,10 @@ function migrate_uninstall() {
       ->condition('module', 'migrate')
       ->execute();
   }
+
+  // Remove variables
+  variable_del('migrate_disable_autoregistration');
+  variable_del('migrate_disabled_handlers');
 }
 
 /**

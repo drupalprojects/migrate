@@ -291,7 +291,8 @@ abstract class MigrateUIWizard {
       MigrationBase::registerMigration($info['class_name'], $machine_name,
         $info['arguments'], $this->groupName);
     }
-    $form_state['redirect'] = 'admin/content/migrate';
+    menu_cache_clear('management');
+    $form_state['redirect'] = 'admin/content/import';
   }
 
   /**

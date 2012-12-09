@@ -25,10 +25,10 @@ function migrate_example_migrate_api() {
     // common to all migrations in the group.
     'groups' => array(
       'beer' => array(
-        'title' => t('Beer Migrations'),
+        'title' => t('Beer Imports'),
       ),
       'wine' => array(
-        'title' => t('Wine Migrations'),
+        'title' => t('Wine Imports'),
       ),
     ),
     // Here we register the individual migrations. The keys (BeerTerm, BeerUser,

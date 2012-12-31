@@ -2,6 +2,7 @@ Next release
 ============
 
 Bug fixes
+- #1839534 - Handle missing chunk separator in MigrateItemFile.
 - #1854382 - Prevent duplicate terms due to leading/trailing spaces.
 
 Migrate 2.5

@@ -1,3 +1,8 @@
+Next release
+============
+
+Bug fixes
+- #1854382 - Prevent duplicate terms due to leading/trailing spaces.
 
 Migrate 2.5
 ===========

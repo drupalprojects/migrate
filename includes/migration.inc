@@ -1261,7 +1261,7 @@ abstract class Migration extends MigrationBase {
     }
     else {
       $value = reset($results);
-      return empty($value) ? NULL : $value;
+      return empty($value) && $value !== 0 && $value !== '0' ? NULL : $value;
     }
   }
 

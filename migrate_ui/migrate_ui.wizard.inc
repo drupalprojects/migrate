@@ -146,9 +146,7 @@ abstract class MigrateUIWizard {
    */
   abstract public function getSourceName();
 
-  public function __construct() {
-
-  }
+  public function __construct() {}
 
   /**
    * Add a step to the wizard.
@@ -223,13 +221,20 @@ abstract class MigrateUIWizard {
    * @return array
    */
   public function form(&$form_state) {
-    drupal_set_title(t('Import from @source_title, step @step: @step_name',
-      array('@source_title' => $this->getSourceName(),
-            '@step' => $this->stepNumber,
-            '@step_name' => $this->currentStep->getName())));
+    drupal_set_title(t('Import from @source_title',
+      array('@source_title' => $this->getSourceName())));
 
     $form_method = $this->currentStep->getFormMethod();
-    $form = $this->{$form_method}($form_state);
+    $form['title'] = array(
+      '#prefix' => '<h2>',
+      '#markup' => t('Step @step: @step_name',
+          array(
+                '@step' => $this->stepNumber,
+                '@step_name' => $this->currentStep->getName())),
+      '#suffix' => '</h2>',
+    );
+    
+    $form += $this->{$form_method}($form_state);
 
     $form['actions'] = array('#type' => 'actions');
 

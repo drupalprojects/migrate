@@ -32,16 +32,17 @@ function migrate_ui_import_dashboard($form, &$form_state) {
   $header = array(
     'machinename' => array('data' => t('Job')),
     'status' => array('data' => t('Status')),
+    'source_system' => array('data' => t('Source system')),
   );
 
   $result = db_select('migrate_group', 'mg')
-            ->fields('mg', array('name', 'title'))
+            ->fields('mg', array('name', 'title', 'arguments'))
             ->execute();
   $rows = array();
   foreach ($result as $group_row) {
     $row = array();
     $migration_result = db_select('migrate_status', 'ms')
-                        ->fields('ms', array('machine_name', 'status'))
+                        ->fields('ms', array('machine_name', 'status', 'arguments'))
                         ->condition('group_name', $group_row->name)
                         ->execute();
     if (!$migration_result) {
@@ -105,6 +106,13 @@ function migrate_ui_import_dashboard($form, &$form_state) {
     $row['status'] = $status;
     $row['machinename'] =
       l($group_row->title, 'admin/content/import/jobs/' . $group_row->name);
+    $arguments = unserialize($group_row->arguments);
+    if (!empty($arguments['source_system'])) {
+      $row['source_system'] = $arguments['source_system'];
+    }
+    else {
+      $row['source_system'] = '';
+    }
     $rows[$group_row->name] = $row;
   }
 

@@ -209,7 +209,7 @@ function migrate_ui_import_job($form, &$form_state, $group_name) {
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
     $group_length = strlen($group_name);
-    if (!strncmp($group_name, $machine_name, strlen($group_length))) {
+    if (!strncasecmp($group_name, $machine_name, strlen($group_length))) {
       $display_name = substr($machine_name, $group_length);
     }
     else {
@@ -284,7 +284,7 @@ function _migrate_ui_import_operations() {
     'rollback' => t('Rollback'),
     'stop' => t('Stop'),
     'reset' => t('Reset'),
-    'deregister' => t('Delete tracking'),
+    'deregister' => t('Remove import settings'),
   );
   $operations['operation'] = array(
     '#type' => 'select',
@@ -303,15 +303,15 @@ function _migrate_ui_import_operations() {
     '#markup' => t(
       'Choose an operation to run on all selections above:
        <ul>
-         <li>Import - Imports all previously unimported records from the source, plus
+         <li>Import<br /> Imports all previously unimported records from the source, plus
              any records marked for update, into destination Drupal objects.</li>
-         <li>Rollback - Deletes all Drupal objects created by the import.</li>
-         <li>Stop - Cleanly interrupts any import or rollback processes that may
+         <li>Rollback<br /> Deletes all Drupal objects created by the import.</li>
+         <li>Stop<br /> Cleanly interrupts any import or rollback processes that may
              currently be running.</li>
-         <li>Reset - Sometimes a process may fail to stop cleanly, and be
+         <li>Reset<br /> Sometimes a process may fail to stop cleanly, and be
              left stuck in an Importing or Rolling Back status. Choose Reset to clear
              the status and permit other operations to proceed.</li>
-         <li>Delete tracking - Removes all tracking information for an import job
+         <li>Remove import settings<br /> Removes all information about an import job
              or task, while preserving any content that has already been imported.</li>
        </ul>'
     ),

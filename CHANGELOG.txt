@@ -2,6 +2,7 @@ Next release
 ============
 
 Bug fixes
+- #1880512 - Strip tags from descriptions on drush migrate-mappings.
 - #1872446 - Properly handle updates on role migration.
 - #1871764 - Pass zero values through handleSourceMigration.
 - #1839534 - Handle missing chunk separator in MigrateItemFile.

@@ -208,8 +208,15 @@ function migrate_ui_import_job($form, &$form_state, $group_name) {
 
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
+    $group_length = strlen($group_name);
+    if (!strncmp($group_name, $machine_name, strlen($group_length))) {
+      $display_name = substr($machine_name, $group_length);
+    }
+    else {
+      $display_name = $machine_name;
+    }
     $row['machinename'] =
-      l($machine_name, "admin/content/import/jobs/$group_name/$machine_name");
+      l($display_name, "admin/content/import/jobs/$group_name/$machine_name");
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {

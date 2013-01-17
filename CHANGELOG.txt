@@ -2,6 +2,7 @@ Next release
 ============
 
 Bug fixes
+- #1676652 - Make MigrateFileFid respect preserve_files.
 - #1885362 - Make access callback explicit, to avoid conflict with admin_views.
 - #1880512 - Strip tags from descriptions on drush migrate-mappings.
 - #1872446 - Properly handle updates on role migration.

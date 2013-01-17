@@ -1037,6 +1037,13 @@ abstract class Migration extends MigrationBase {
    * a populated destination object.
    */
   protected function applyMappings() {
+    // Make sure primary fields come before their subfields
+    static $mappings_sorted = FALSE;
+    if (!$mappings_sorted) {
+      ksort($this->fieldMappings);
+      $mappings_sorted = TRUE;
+    }
+
     $this->destinationValues = new stdClass;
     foreach ($this->fieldMappings as $mapping) {
       $destination = $mapping->getDestinationField();

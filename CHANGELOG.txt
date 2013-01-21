@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #1792894 - Remove empty field values, permitting proper defaulting.
 - #1894344 - Support warn_on_override for bulk unmigrated methods.
 - #1886404 - Allow subfields to be mapped before primary fields.
 

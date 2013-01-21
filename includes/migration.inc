@@ -254,12 +254,12 @@ abstract class Migration extends MigrationBase {
    * @param string $issue_group
    *  Issue group name to apply to the generated mappings (defaults to 'DNM').
    */
-  public function addUnmigratedDestinations(array $fields, $issue_group = NULL) {
+  public function addUnmigratedDestinations(array $fields, $issue_group = NULL, $warn_on_override = TRUE) {
     if (!$issue_group) {
       $issue_group = t('DNM');
     }
     foreach ($fields as $field) {
-      $this->addFieldMapping($field)
+      $this->addFieldMapping($field, NULL, $warn_on_override)
            ->issueGroup($issue_group);
     }
   }
@@ -274,12 +274,12 @@ abstract class Migration extends MigrationBase {
    * @param string $issue_group
    *  Issue group name to apply to the generated mappings (defaults to 'DNM').
    */
-  public function addUnmigratedSources(array $fields, $issue_group = NULL) {
+  public function addUnmigratedSources(array $fields, $issue_group = NULL, $warn_on_override = TRUE) {
     if (!$issue_group) {
       $issue_group = t('DNM');
     }
     foreach ($fields as $field) {
-      $this->addFieldMapping(NULL, $field)
+      $this->addFieldMapping(NULL, $field, $warn_on_override)
            ->issueGroup($issue_group);
     }
   }

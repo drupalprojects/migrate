@@ -62,11 +62,22 @@ function migrate_ui_wizard_next_submit($form, &$form_state) {
 }
 
 /**
- * Submit handler for the Finish button. Register the migrations that were
+ * Submit handler for the Save settings button. Register the migrations that were
  * (implicitly) defined along the way and redirect to the Migrate dashboard.
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
-  $form_state['wizard']->formFinish($form_state);
+  $form_state['wizard']->formSaveSettings();
+  $form_state['redirect'] = 'admin/content/import';
+}
+
+/**
+ * Submit handler for the "Save settings and import" button. Register the
+ * migrations that were (implicitly) defined along the way, run the import, and
+ * redirect to the Migrate dashboard.
+ */
+function migrate_ui_wizard_import_submit($form, &$form_state) {
+  $form_state['wizard']->formSaveSettings();
+  $form_state['wizard']->formPerformImport();
 }
 
 /**
@@ -233,7 +244,7 @@ abstract class MigrateUIWizard {
                 '@step_name' => $this->currentStep->getName())),
       '#suffix' => '</h2>',
     );
-    
+
     $form += $this->{$form_method}($form_state);
 
     $form['actions'] = array('#type' => 'actions');
@@ -257,7 +268,12 @@ abstract class MigrateUIWizard {
     if ($this->currentStep == $this->lastStep) {
       $form['actions']['finish'] = array(
         '#type' => 'submit',
-        '#value' => t('Finish'),
+        '#value' => t('Save settings'),
+      );
+      $form['actions']['import'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save settings and import'),
+        '#submit' => array('migrate_ui_wizard_import_submit'),
       );
     }
     else {
@@ -286,18 +302,22 @@ abstract class MigrateUIWizard {
   /**
    * Take the information we've accumulated throughout the wizard, and create
    * the Migrations to perform the import.
-   *
-   * @param array $form_state
    */
-  public function formFinish(&$form_state) {
+  public function formSaveSettings() {
     MigrateGroup::register($this->groupName, $this->groupTitle, $this->groupArguments);
     $info['arguments']['group_name'] = $this->groupName;
     foreach ($this->migrations as $machine_name => $info) {
       MigrationBase::registerMigration($info['class_name'], $machine_name,
         $info['arguments'], $this->groupName);
-    }
-    menu_cache_clear('management');
-    $form_state['redirect'] = 'admin/content/import';
+    };
+    menu_rebuild();
+  }
+
+  /**
+   * Run the import process for the import job we've defined.
+   */
+  public function formPerformImport() {
+
   }
 
   /**

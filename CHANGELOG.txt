@@ -19,6 +19,8 @@ Features and enhancements
 - #1833380 - Major refactoring of the UI, breaking groups (jobs) and migrations
              (tasks) into separate pages, introducing an advanced permission and
              presenting a simplified UI to those with only the basic permission.
+- #1896096 - Add ability to define field mappings via arguments at registration
+             time, and use those to override mappings in code.
 - #1839644 - Groups have been extended to record titles and arguments in the db.
 - #1550878 - Added UI for deregistering migrations, including one-button deregistration
              of orphans.

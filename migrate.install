@@ -10,6 +10,7 @@ function migrate_schema() {
   $schema['migrate_status'] = migrate_schema_status();
   $schema['migrate_log'] = migrate_schema_log();
   $schema['migrate_group'] = migrate_schema_group();
+  $schema['migrate_field_mapping'] = migrate_schema_field_mapping();
   return $schema;
 }
 
@@ -147,6 +148,40 @@ function migrate_schema_group() {
       ),
     ),
     'primary key' => array('name'),
+  );
+}
+
+function migrate_schema_field_mapping() {
+  return array(
+    'description' => 'History of migration processes',
+    'fields' => array(
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Parent migration for the field mapping',
+      ),
+      'destination_field' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Destination field for the field mapping',
+      ),
+      'source_field' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Source field for the field mapping',
+      ),
+      'options' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized MigrateFieldMapping object holding all options',
+      ),
+    ),
+    'primary key' => array('machine_name', 'destination_field', 'source_field'),
   );
 }
 
@@ -471,6 +506,18 @@ function migrate_update_7203() {
           ->execute();
       }
     }
+  }
+  return $ret;
+}
+
+/**
+ * Add database tracking of field mappings.
+ */
+function migrate_update_7204() {
+  $ret = array();
+  if (!db_table_exists('migrate_field_mapping')) {
+    $ret[] = t('Create migrate_field_mapping table');
+    db_create_table('migrate_field_mapping', migrate_schema_field_mapping());
   }
   return $ret;
 }

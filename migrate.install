@@ -521,3 +521,10 @@ function migrate_update_7204() {
   }
   return $ret;
 }
+
+/**
+ * Remove obsolete autoregistration disablement.
+ */
+function migrate_update_7205() {
+  variable_del('migrate_disable_autoregistration');
+}

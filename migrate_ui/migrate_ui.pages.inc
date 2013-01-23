@@ -927,48 +927,21 @@ function migrate_ui_registration() {
 function migrate_ui_registration_form($form, &$form_state) {
   $build = array();
 
+  $description = t('To register (or reregister with updated arguments) any
+    migrations defined in hook_migrate_api(), click the <strong>Register</strong>
+    button below.');
 
-  if (variable_get('migrate_disable_autoregistration', FALSE)) {
-    $description = t('You currently have automatic class registration turned off.
-      This means that any Migration classes, destination handler classes, or
-      field handlers must be explicitly registered, either through hook_migrate_api()
-      or by calling MigrationBase::registerMigration(). You may enable automatic
-      class registration by clicking this button - however, it\'s important to
-      note that in some environments registration may fail with errors like
-      "<em>Class \'views_handler_field\' not found</em>".');
-    $button_label = t('Enable automatic registration');
-  }
-  else {
-    $description = t('You currently have automatic class registration turned on.
-      This means that any Migration classes, destination handler classes, or
-      field handlers not explicitly registered, either through hook_migrate_api()
-      or by calling MigrationBase::registerMigration(), can be registered by
-      clicking the <strong>Register</strong> button below. It\'s important to
-      note that in some environments registration may fail with errors like
-      "<em>Class \'views_handler_field\' not found</em>" - in those cases, you
-      can click the <strong>Disable automatic registration</strong> button below,
-      but you must be sure that your classes are explicitly registered.');
-    $button_label = t('Disable automatic registration');
-  }
   $build['registration'] = array(
     '#type' => 'fieldset',
     '#title' => t('Registration'),
     '#description' => $description,
   );
 
-  $build['registration']['auto_register'] = array(
+  $build['registration']['submit'] = array(
     '#type' => 'submit',
-    '#value' => $button_label,
-    '#submit' => array('migrate_ui_configure_register_auto_register'),
+    '#value' => t('Register statically-defined classes'),
+    '#submit' => array('migrate_ui_configure_register_submit'),
   );
-
-  if (!variable_get('migrate_disable_autoregistration', FALSE)) {
-    $build['registration']['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Register'),
-      '#submit' => array('migrate_ui_configure_register_submit'),
-    );
-  }
 
   $migrations = array();
   $result = db_select('migrate_status', 'ms')
@@ -1005,8 +978,9 @@ function migrate_ui_registration_form($form, &$form_state) {
  * Submit callback for the configuration form registration fieldset.
  */
 function migrate_ui_configure_register_submit($form, &$form_state) {
-  migrate_autoregister();
-  $form_state['redirect'] = 'admin/content/migrate';
+  migrate_static_registration();
+  drupal_set_message(t('All statically defined migrations have been (re)registered.'));
+  $form_state['redirect'] = 'admin/content/import';
 }
 
 /**
@@ -1021,7 +995,7 @@ function migrate_ui_configure_deregister_submit($form, &$form_state) {
       migrate_ui_deregister_migration($row->machine_name);
     }
   }
-  $form_state['redirect'] = 'admin/content/migrate';
+  $form_state['redirect'] = 'admin/content/import';
 }
 
 /**
@@ -1039,14 +1013,6 @@ function migrate_ui_deregister_migration($machine_name) {
     ->execute();
   drupal_set_message(t("Deregistered '!description' task",
     array('!description' => $machine_name)));
-}
-
-/**
- * Submit callback for the configuration form auto-registration changes.
- */
-function migrate_ui_configure_register_auto_register($form, &$form_state) {
-  variable_set('migrate_disable_autoregistration',
-    !variable_get('migrate_disable_autoregistration', FALSE));
 }
 
 /**

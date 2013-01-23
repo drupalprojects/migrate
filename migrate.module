@@ -124,59 +124,6 @@ function migrate_migrations() {
 }
 
 /**
- * On request, scan the Drupal code registry for any new migration classes
- * for us to register in migrate_status.
- */
-function migrate_autoregister() {
-  // Make sure the registry is up-to-date on all available classes.
-  require_once 'includes/registry.inc';
-  _registry_update();
-
-  // Get list of modules implementing Migrate API
-  $modules = array_keys(migrate_get_module_apis(TRUE));
-
-  // Get list of classes we already know about
-  $existing_classes = db_select('migrate_status', 'ms')
-                      ->fields('ms', array('class_name'))
-                      ->execute()
-                      ->fetchCol();
-
-  // Discover class names registered with Drupal by modules implementing our API
-  $result = db_select('registry', 'r')
-            ->fields('r', array('name'))
-            ->condition('type', 'class')
-            ->condition('module', $modules, 'IN')
-            ->condition('filename', '%.test', 'NOT LIKE')
-            ->execute();
-
-  foreach ($result as $record) {
-    $class_name = $record->name;
-    // If we already know about this class, skip it
-    if (isset($existing_classes[$class_name])) {
-      continue;
-    }
-
-    // Validate it's an implemented subclass of the parent class
-    // Ignore errors
-    try {
-      $class = new ReflectionClass($class_name);
-    }
-    catch (Exception $e) {
-      continue;
-    }
-    if (!$class->isAbstract() && $class->isSubclassOf('MigrationBase')) {
-      // Verify that it's not a dynamic class (the implementor will be responsible
-      // for registering those).
-      $dynamic = call_user_func(array($class_name, 'isDynamic'));
-      if (!$dynamic) {
-        // OK, this is a new non-dynamic migration class, register it
-        MigrationBase::registerMigration($class_name);
-      }
-    }
-  }
-}
-
-/**
  * Invoke any available handlers attached to a given destination type.
  * If any handlers have dependencies defined, they will be invoked after
  * the specified handlers.
@@ -272,7 +219,6 @@ function _migrate_class_list($parent_class) {
   if (!isset($modules)) {
     $module_info = migrate_get_module_apis();
   }
-  $modules = array_keys($module_info);
 
   static $class_lists = array();
   if (!isset($class_lists[$parent_class])) {
@@ -288,90 +234,6 @@ function _migrate_class_list($parent_class) {
       if (isset($info[$handler_key]) && is_array($info[$handler_key])) {
         foreach ($info[$handler_key] as $handler_class) {
           $class_lists[$parent_class][$handler_class] = new $handler_class();
-        }
-      }
-    }
-    // Avoid scrounging the registry for handler classes if possible.
-    if (variable_get('migrate_disable_autoregistration', FALSE)) {
-      return $class_lists[$parent_class];
-    }
-    $dependent_classes = array();
-    $required_classes = array();
-    // Discover class names registered with Drupal by modules implementing our API
-    $result = db_select('registry', 'r')
-              ->fields('r', array('name'))
-              ->condition('type', 'class')
-              ->condition('module', $modules, 'IN')
-              ->condition('filename', '%.test', 'NOT LIKE')
-              ->execute();
-
-    foreach ($result as $record) {
-      // Validate it's an implemented subclass of the parent class
-      // We can get funky errors here, ignore them (and the class that caused them)
-      try {
-        $class = new ReflectionClass($record->name);
-      }
-      catch (Exception $e) {
-        continue;
-      }
-      if (!$class->isAbstract() && $class->isSubclassOf($parent_class)) {
-        // If the constructor has required parameters, this may fail. We will
-        // silently ignore - it is up to the implementor of such a class to
-        // instantiate it in hook_migrations_alter().
-        try {
-          $object = new $record->name;
-        }
-        catch (Exception $e) {
-          unset($object);
-        }
-        if (isset($object)) {
-          $dependencies = $object->getDependencies();
-          if (count($dependencies) > 0) {
-            // Set classes with dependencies aside for reordering
-            $dependent_classes[$record->name] = $object;
-            $required_classes += $dependencies;
-          }
-          else {
-            // No dependencies, just add
-            $class_lists[$parent_class][$record->name] = $object;
-          }
-        }
-      }
-    }
-
-    // Validate that each depended-on class at least exists
-    foreach ($required_classes as $class_name) {
-      if ((!isset($dependent_classes[$class_name])) && !isset($class_lists[$parent_class][$class_name])) {
-        throw new MigrateException(t('Dependency on non-existent class !class - make sure ' .
-            'you have added the file defining !class to the .info file.',
-          array('!class' => $class_name)));
-      }
-    }
-
-    // Scan modules with dependencies - we'll take 20 passes at it before
-    // giving up
-    $iterations = 0;
-    while (count($dependent_classes) > 0) {
-      if ($iterations++ > 20) {
-        $class_names = implode(',', array_keys($dependent_classes));
-        throw new MigrateException(t('Failure to sort class list - most likely due ' .
-            'to circular dependencies involving !class_names.',
-          array('!class_names' => $class_names)));
-      }
-      foreach ($dependent_classes as $name => $object) {
-        $ready = TRUE;
-        // Scan all the dependencies for this class and make sure they're all
-        // in the final list
-        foreach ($object->getDependencies() as $dependency) {
-          if (!isset($class_lists[$parent_class][$dependency])) {
-            $ready = FALSE;
-            break;
-          }
-        }
-        if ($ready) {
-          // Yes they are! Move this class to the final list
-          $class_lists[$parent_class][$name] = $object;
-          unset($dependent_classes[$name]);
         }
       }
     }
@@ -405,22 +267,6 @@ function migrate_get_module_apis($reset = FALSE) {
       $info = $function();
       if (isset($info['api']) && $info['api'] == MIGRATE_API_VERSION) {
         $cache[$module] = $info;
-        // Register any groups defined via the hook.
-        if (isset($info['groups']) && is_array($info['groups'])) {
-          foreach ($info['groups'] as $name => $arguments) {
-            $title = $arguments['title'];
-            unset($arguments['title']);
-            MigrateGroup::register($name, $title, $arguments);
-          }
-        }
-        // Register any migrations defined via the hook.
-        if (isset($info['migrations']) && is_array($info['migrations'])) {
-          foreach ($info['migrations'] as $machine_name => $arguments) {
-            $class_name = $arguments['class_name'];
-            unset($arguments['class_name']);
-            MigrationBase::registerMigration($class_name, $machine_name, $arguments);
-          }
-        }
       }
       else {
         drupal_set_message(t('%function supports Migrate API version %modversion,
@@ -432,6 +278,32 @@ function migrate_get_module_apis($reset = FALSE) {
   }
 
   return $cache;
+}
+
+/**
+ * Register any migrations defined in hook_migrate_api().
+ */
+function migrate_static_registration() {
+  $module_info = migrate_get_module_apis(TRUE);
+  foreach ($module_info as $module => $info) {
+    // Register any groups defined via the hook.
+    if (isset($info['groups']) && is_array($info['groups'])) {
+      foreach ($info['groups'] as $name => $arguments) {
+        $title = $arguments['title'];
+        unset($arguments['title']);
+        MigrateGroup::register($name, $title, $arguments);
+      }
+    }
+    // Register any migrations defined via the hook.
+    if (isset($info['migrations']) && is_array($info['migrations'])) {
+      foreach ($info['migrations'] as $machine_name => $arguments) {
+        $class_name = $arguments['class_name'];
+        unset($arguments['class_name']);
+        MigrationBase::registerMigration($class_name, $machine_name, $arguments);
+      }
+    }
+
+  }
 }
 
 /**

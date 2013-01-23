@@ -12,6 +12,12 @@ Migration developers will need to add the "advanced migration information"
 permission to their accounts to continue seeing all the info in the UI they're
 used to.
 
+Auto-registration (having classes be registered just based on their class name,
+with no call to registerMigration or definition in hook_migrate_api()) is no
+longer supported. Registration of classes defined in hook_migrate_api() is no
+longer automatic - do a drush migrate-register or use the Register button in the
+UI to register them.
+
 Features and enhancements
 - #1826112 - A new API has been added to support external modules in developing
              easy-to-use wizard-based UIs. This is a work-in-progress at the
@@ -22,6 +28,7 @@ Features and enhancements
 - #1896096 - Add ability to define field mappings via arguments at registration
              time, and use those to override mappings in code.
 - #1839644 - Groups have been extended to record titles and arguments in the db.
+- #1896920 - Remove auto-registration, and make static registration expicit.
 - #1550878 - Added UI for deregistering migrations, including one-button deregistration
              of orphans.
 - #1792894 - Remove empty field values, permitting proper defaulting.

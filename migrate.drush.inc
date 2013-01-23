@@ -217,6 +217,11 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mar'),
   );
+  $items['migrate-register'] = array(
+    'description' => 'Register or reregister any statically-defined migrations',
+    'drupal dependencies' => array('migrate'),
+    'aliases' => array('mreg'),
+  );
   $items['migrate-wipe'] = array(
     'description' => 'Delete all nodes from specified content types.',
     'examples' => array(
@@ -1299,10 +1304,22 @@ function drush_migrate_deregister_migration($machine_name) {
 }
 
 /**
- * Register any previously-unrecognized non-dynamic migrations.
+ * Auto-registration is no longer supported. This command should be removed
+ * entirely in a future point release.
+ *
+ * @deprecated
  */
 function drush_migrate_auto_register($args = NULL) {
-  migrate_autoregister();
+  drush_log(dt('The auto-registration feature has been removed. Migrations '
+    . 'must now be explicitly registered.'), 'error');
+}
+
+/**
+ * Register any migrations defined in hook_migrate_api().
+ */
+function drush_migrate_register($args = NULL) {
+  migrate_static_registration();
+  drush_log(dt('All statically defined migrations have been (re)registered.'), 'success');
 }
 
 /**

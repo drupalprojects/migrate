@@ -386,12 +386,6 @@ abstract class MigrationBase {
       $group_name = $arguments['group_name'];
     }
 
-    // Record any field mappings provided via arguments.
-    if (isset($arguments['field_mappings'])) {
-      self::saveFieldMappings($machine_name, $arguments['field_mappings']);
-      unset($arguments['field_mappings']);
-    }
-
     // Register the migration if it's not already there; if it is,
     // update the class and arguments in case they've changed.
     db_merge('migrate_status')
@@ -405,55 +399,12 @@ abstract class MigrationBase {
   }
 
   /**
-   * Record an array of field mappings to the database.
-   *
-   * @param $machine_name
-   * @param array $field_mappings
-   */
-  static public function saveFieldMappings($machine_name, array $field_mappings) {
-    foreach ($field_mappings as $field_mapping) {
-      $destination_field = $field_mapping->getDestinationField();
-      $source_field = $field_mapping->getSourceField();
-      db_merge('migrate_field_mapping')
-        ->key(array(
-            'machine_name' => $machine_name,
-            'destination_field' => is_null($destination_field) ? '' : $destination_field,
-            'source_field' => is_null($source_field) ? '' : $source_field,
-          ))
-        ->fields(array('options' => serialize($field_mapping)))
-        ->execute();
-    }
-  }
-
-  /**
-   * Load any stored field mappings from the database.
-   */
-  public function loadFieldMappings() {
-    $result = db_select('migrate_field_mapping', 'mfm')
-              ->fields('mfm', array('destination_field', 'source_field', 'options'))
-              ->condition('machine_name', $this->machineName)
-              ->execute();
-    foreach ($result as $row) {
-      $field_mapping = unserialize($row->options);
-      if (is_null($row->destination_field)) {
-        $this->fieldMappings[] = $field_mapping;
-      }
-      else {
-        $this->fieldMappings[$row->destination_field] = $field_mapping;
-      }
-    }
-  }
-
-  /**
    * Deregister a migration - remove all traces of it from the database (without
    * touching any content which was created by this migration).
    *
    * @param string $machine_name
    */
   static public function deregisterMigration($machine_name) {
-    $rows_deleted = db_delete('migrate_field_mapping')
-                    ->condition('machine_name', $machine_name)
-                    ->execute();
     $rows_deleted = db_delete('migrate_status')
                     ->condition('machine_name', $machine_name)
                     ->execute();

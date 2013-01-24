@@ -15,6 +15,17 @@
  * break in certain environments (see http://drupal.org/node/1778952).
  */
 function migrate_example_migrate_api() {
+  // Usually field mappings are established by code in the migration constructor -
+  // a call to addFieldMapping(). They may also be passed as arguments when
+  // registering a migration - in this case, they are stored in the database
+  // and override any mappings for the same field in the code. To do this,
+  // construct the field mapping object and configure it similarly to when
+  // you call addFieldMapping, and pass your mappings as an array below.
+  $translate_mapping = new MigrateFieldMapping('translate', NULL);
+  $translate_mapping->defaultValue(0);
+  $ignore_mapping = new MigrateFieldMapping('migrate_example_beer_styles:ignore_case', NULL);
+  $ignore_mapping->defaultValue(1);
+
   $api = array(
     'api' => 2,
     // Migrations can be organized into groups. The key used here will be the
@@ -31,6 +42,7 @@ function migrate_example_migrate_api() {
         'title' => t('Wine Imports'),
       ),
     ),
+
     // Here we register the individual migrations. The keys (BeerTerm, BeerUser,
     // etc.) are the machine names of the migrations, and the class_name
     // argument is required. The group_name is optional (defaulting to 'default')
@@ -47,6 +59,10 @@ function migrate_example_migrate_api() {
       'BeerNode' => array(
         'class_name' => 'BeerNodeMigration',
         'group_name' => 'beer',
+        'field_mappings' => array(
+          $translate_mapping,
+          $ignore_mapping,
+        ),
       ),
       'BeerComment' => array(
         'class_name' => 'BeerCommentMigration',

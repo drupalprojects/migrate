@@ -846,9 +846,16 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
           $priority = t('OK');
           $classes[] = 'migrate-priority-' . 1;
         }
+        $destination_field = $mapping->getDestinationField();
+        $source_field = $mapping->getSourceField();
+        // Highlight any mappings overridden in the database.
+        if ($mapping->getMappingSource() == MigrateFieldMapping::MAPPING_SOURCE_DB) {
+          $destination_field = "<em>$destination_field</em>";
+          $source_field = "<em>$source_field</em>";
+        }
         $row = array(
-          array('data' => $mapping->getDestinationField(), 'class' => $classes),
-          array('data' => $mapping->getSourceField(), 'class' => $classes),
+          array('data' => $destination_field, 'class' => $classes),
+          array('data' => $source_field, 'class' => $classes),
           array('data' => $default, 'class' => $classes),
           array('data' => $mapping->getDescription(),  'class' => $classes),
           array('data' => $priority, 'class' => $classes),

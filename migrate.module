@@ -299,7 +299,16 @@ function migrate_static_registration() {
       foreach ($info['migrations'] as $machine_name => $arguments) {
         $class_name = $arguments['class_name'];
         unset($arguments['class_name']);
-        MigrationBase::registerMigration($class_name, $machine_name, $arguments);
+        // Call the right registerMigration implementation. Note that this means
+        // that classes that override registerMigration() must always call it
+        // directly, they cannot register those classes by defining them in
+        // hook_migrate_api() and expect their extension to be called.
+        if (is_subclass_of($class_name, 'Migration')) {
+          Migration::registerMigration($class_name, $machine_name, $arguments);
+        }
+        else {
+          MigrationBase::registerMigration($class_name, $machine_name, $arguments);
+        }
       }
     }
 

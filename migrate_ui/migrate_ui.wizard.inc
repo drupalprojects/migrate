@@ -307,8 +307,18 @@ abstract class MigrateUIWizard {
     MigrateGroup::register($this->groupName, $this->groupTitle, $this->groupArguments);
     $info['arguments']['group_name'] = $this->groupName;
     foreach ($this->migrations as $machine_name => $info) {
-      MigrationBase::registerMigration($info['class_name'], $machine_name,
-        $info['arguments'], $this->groupName);
+      // Call the right registerMigration implementation. Note that this means
+      // that classes that override registerMigration() must handle registration
+      // themselves, they cannot leave it to us and expect their extension to be
+      // called.
+      if (is_subclass_of($info['class_name'], 'Migration')) {
+        Migration::registerMigration($info['class_name'], $machine_name,
+                $info['arguments'], $this->groupName);
+      }
+      else {
+        MigrationBase::registerMigration($info['class_name'], $machine_name,
+                $info['arguments'], $this->groupName);
+      }
     };
     menu_rebuild();
   }

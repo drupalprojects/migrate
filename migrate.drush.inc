@@ -1301,6 +1301,9 @@ function drush_migrate_deregister_migration($machine_name) {
   db_delete('migrate_status')
     ->condition('machine_name', $machine_name)
     ->execute();
+  db_delete('migrate_field_mapping')
+    ->condition('machine_name', $machine_name)
+    ->execute();
 }
 
 /**

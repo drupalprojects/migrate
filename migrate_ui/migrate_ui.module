@@ -31,8 +31,8 @@ function migrate_ui_menu() {
   $items = array();
 
   $items['admin/content/import'] = array(
-    'title' => 'Import',
     'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+    'title' => 'Import',
     'description' => 'Manage importing of data into your Drupal site',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('migrate_ui_import_dashboard'),
@@ -94,18 +94,35 @@ function migrate_ui_menu() {
       'file' => 'migrate_ui.pages.inc',
     );
     // Task (migration) detail pages come below jobs
+    // @todo We'd like to have tabs for View/Edit/Messages, but uncommenting
+    // below gives notices on the job page, which we haven't found an answer for.
     $items['admin/content/import/jobs/' . $row->name . '/%'] = array(
-      'title callback' => '_migrate_ui_title',
-      'title arguments' => array(5),
+//      'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('migrate_migration_info', 4, 5),
       'access arguments' => array(MIGRATE_ACCESS_BASIC),
       'file' => 'migrate_ui.pages.inc',
     );
+/*
+    $items['admin/content/import/jobs/' . $row->name . '/%/view'] = array(
+      'title' => 'View',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -10,
+    );
+*/
+    $items['admin/content/import/jobs/' . $row->name . '/%/edit'] = array(
+//      'type' => MENU_LOCAL_TASK,
+      'title' => 'Edit mappings',
+      'description' => 'Edit migration mappings',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('migrate_ui_edit_mappings', 4, 5),
+      'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+      'file' => 'migrate_ui.pages.inc',
+    );
 
     $items['admin/content/import/jobs/' . $row->name . '/%/messages'] = array(
-      'title callback' => '_migrate_ui_title',
-      'title arguments' => array(5),
+//      'type' => MENU_LOCAL_TASK,
+      'title' => 'Messages',
       'description' => 'View messages from a migration',
       'page callback' => 'migrate_ui_messages',
       'page arguments' => array(4, 5),

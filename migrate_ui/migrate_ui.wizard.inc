@@ -270,11 +270,12 @@ abstract class MigrateUIWizard {
         '#type' => 'submit',
         '#value' => t('Save settings'),
       );
+/*
       $form['actions']['import'] = array(
         '#type' => 'submit',
         '#value' => t('Save settings and import'),
         '#submit' => array('migrate_ui_wizard_import_submit'),
-      );
+      );*/
     }
     else {
       $form['actions']['next'] = array(

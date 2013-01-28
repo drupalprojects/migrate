@@ -605,6 +605,7 @@ function migrate_ui_capture_message($message, $level) {
  * Menu callback function for migration view page.
  */
 function migrate_migration_info($form, $form_state, $group_name, $migration_name) {
+  drupal_set_title($migration_name);
   $migration = Migration::getInstance($migration_name);
 
   $has_mappings = method_exists($migration, 'getFieldMappings');
@@ -626,6 +627,12 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
         'js' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.js'),
         'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
       ),
+    );
+
+    $form['edit_mappings'] = array(
+      '#prefix' => '<p>',
+      '#markup' => "<a href=\"/admin/content/import/jobs/$group_name/$migration_name/edit\">Edit mappings</a>",
+      '#suffix' => '</p>',
     );
   }
   else {
@@ -873,10 +880,86 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
   return $form;
 }
 
+function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
+  $form = migrate_ui_mapping_edit_form($migration_name);
+  // @todo: Add submit button redirecting to view page
+  return $form;
+}
+
+function migrate_ui_mapping_edit_form($migration_name) {
+  $migration = Migration::getInstance($migration_name);
+  $source_fields = $migration->getSource()->fields();
+  $dest_fields = $migration->getDestination()->fields();
+  $dest_key = $migration->getDestination()->getKeySchema();
+  $field_mappings = $migration->getFieldMappings();
+
+  $form['#tree'] = TRUE;
+
+  $base_options = array(
+    '-1' => t('--Do not import--'),
+    // @todo: Not yet supported
+//      '0' => t('--Create field--'),
+  );
+  $field_options = array();
+  foreach ($source_fields as $name => $description) {
+    if (is_array($description)) {
+      $description = reset($description);
+    }
+    $description = strip_tags($description);
+    // Limit the description length
+    if (strlen($description) > 50) {
+      $description = substr($description, 0, 50) . '...';
+    }
+    $field_options[$name] = t('!source_field (!description)',
+      array('!source_field' => $name, '!description' => $description));
+  }
+
+  foreach ($dest_fields as $name => $description) {
+    // Don't map the destination key
+    if (isset($dest_key[$name])) {
+      continue;
+    }
+    if (is_array($description)) {
+      $description = reset($description);
+    }
+    $options = $base_options + $field_options;
+    $default_value = NULL;
+    if (isset($field_mappings[$name])) {
+      $mapping = $field_mappings[$name];
+      if ($mapping->getSourceField()) {
+        $default_value = $mapping->getSourceField();
+      }
+    }
+    // If we have a match on field name, default the mapping to that match
+    // and remove the option to create a new field of that name.
+    if (is_null($default_value)) {
+      if (isset($field_options[$name])) {
+        $default_value = $name;
+        unset($options['0']);
+      }
+      else {
+        $default_value = '-1';
+      }
+    }
+
+    $form['field_mappings'][$name] = array(
+      '#type' => 'select',
+      '#title' => t('!field_name (!description)',
+                    array('!description' => $description, '!field_name' => $name)),
+      '#options' => $options,
+      '#default_value' => $default_value,
+    );
+  }
+
+  return $form;
+}
+
 /**
  * Menu callback for messages page
  */
 function migrate_ui_messages($group_name, $migration_name) {
+  drupal_set_title($migration_name);
+
   $build = $rows = array();
 
   $header = array(
@@ -1016,6 +1099,9 @@ function migrate_ui_deregister_migration($machine_name) {
   db_drop_table('migrate_map_' . strtolower($machine_name));
   db_drop_table('migrate_message_' . strtolower($machine_name));
   db_delete('migrate_status')
+    ->condition('machine_name', $machine_name)
+    ->execute();
+  db_delete('migrate_field_mapping')
     ->condition('machine_name', $machine_name)
     ->execute();
   drupal_set_message(t("Deregistered '!description' task",

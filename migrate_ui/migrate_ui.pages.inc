@@ -910,7 +910,13 @@ function migrate_ui_mapping_edit_form($migration_name) {
     if (strlen($description) > 50) {
       $description = substr($description, 0, 50) . '...';
     }
-    $field_options[$name] = t('!description (!source_field)',
+    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+      $label = '!description [!source_field]';
+    }
+    else {
+      $label = '!description';
+    }
+    $field_options[$name] = t($label,
       array('!source_field' => $name, '!description' => $description));
   }
 
@@ -943,9 +949,16 @@ function migrate_ui_mapping_edit_form($migration_name) {
       }
     }
 
+    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+      $label = '!description [!field_name]';
+    }
+    else {
+      $label = '!description';
+    }
+
     $form['field_mappings'][$name] = array(
       '#type' => 'select',
-      '#title' => t('!description (!field_name)',
+      '#title' => t($label,
                     array('!description' => $description, '!field_name' => $name)),
       '#options' => $options,
       '#default_value' => $default_value,

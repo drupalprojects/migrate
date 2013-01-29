@@ -29,8 +29,12 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
       $field_info = field_info_field($machine_name);
       $type = $field_info['type'];
 
-      $fields[$machine_name] = t('Field:') . ' ' . $instance['label'] .
-        ' (' . $field_info['type'] . ')';
+      if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+        $fields[$machine_name] = $instance['label'] . ' (' . $field_info['type'] . ')';
+      }
+      else {
+        $fields[$machine_name] = $instance['label'];
+      }
 
       // Look for subfields
       $class_list = _migrate_class_list('MigrateFieldHandler');

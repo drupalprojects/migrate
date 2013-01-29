@@ -13,9 +13,9 @@ class MigrateStatisticsEntityHandler extends MigrateDestinationHandler {
   public function fields() {
     if (module_exists('statistics')) {
       $fields = array(
-        'totalcount' => t('Node: The total number of times the node has been viewed.'),
-        'daycount' => t('Node: The total number of times the node has been viewed today.'),
-        'timestamp' => t('Node: The most recent time the node has been viewed.'),
+        'totalcount' => t('The total number of times the node has been viewed.'),
+        'daycount' => t('The total number of times the node has been viewed today.'),
+        'timestamp' => t('The most recent time the node has been viewed.'),
       );
     }
     else {

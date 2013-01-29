@@ -521,10 +521,10 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
   public function fields($migration = NULL) {
     $fields = array();
     // First the core properties
-    $fields['fid'] = t('File: Existing file ID');
-    $fields['uid'] = t('File: Uid of user associated with file');
-    $fields['value'] = t('File: Representation of the source file (usually a URI)');
-    $fields['timestamp'] = t('File: UNIX timestamp for the date the file was added');
+    $fields['fid'] = t('Existing file ID');
+    $fields['uid'] = t('Uid of user associated with file');
+    $fields['value'] = t('Representation of the source file (usually a URI)');
+    $fields['timestamp'] = t('UNIX timestamp for the date the file was added');
 
     // Then add in anything provided by handlers
     $fields += migrate_handler_invoke_all('Entity', 'fields', $this->entityType, $this->bundle, $migration);

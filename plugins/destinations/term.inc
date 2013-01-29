@@ -70,20 +70,20 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
   public function fields($migration = NULL) {
     $fields = array();
     // First the core (taxonomy_term_data table) properties
-    $fields['tid'] = t('Term: <a href="@doc">Existing term ID</a>',
+    $fields['tid'] = t('<a href="@doc">Existing term ID</a>',
                 array('@doc' => 'http://drupal.org/node/1349702#tid'));
-    $fields['name'] = t('Term: <a href="@doc">Name</a>',
+    $fields['name'] = t('<a href="@doc">Name</a>',
                     array('@doc' => 'http://drupal.org/node/1349702#name'));
-    $fields['description'] = t('Term: <a href="@doc">Description</a>',
+    $fields['description'] = t('<a href="@doc">Description</a>',
                     array('@doc' => 'http://drupal.org/node/1349702#description'));
-    $fields['parent'] = t('Term: <a href="@doc">Parent (by Drupal term ID)</a>',
+    $fields['parent'] = t('<a href="@doc">Parent (by Drupal term ID)</a>',
                     array('@doc' => 'http://drupal.org/node/1349702#parent'));
     // TODO: Remove parent_name, implement via arguments
-    $fields['parent_name'] = t('Term: <a href="@doc">Parent (by name)</a>',
+    $fields['parent_name'] = t('<a href="@doc">Parent (by name)</a>',
                     array('@doc' => 'http://drupal.org/node/1349702#parent_name'));
-    $fields['format'] = t('Term: <a href="@doc">Format</a>',
+    $fields['format'] = t('<a href="@doc">Format</a>',
                     array('@doc' => 'http://drupal.org/node/1349702#format'));
-    $fields['weight'] = t('Term: <a href="@doc">Weight</a>',
+    $fields['weight'] = t('<a href="@doc">Weight</a>',
                     array('@doc' => 'http://drupal.org/node/1349702#weight'));
 
     // Then add in anything provided by handlers

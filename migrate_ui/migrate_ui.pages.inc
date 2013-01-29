@@ -910,9 +910,10 @@ function migrate_ui_mapping_edit_form($migration_name) {
     if (strlen($description) > 50) {
       $description = substr($description, 0, 50) . '...';
     }
-    $field_options[$name] = t('!source_field (!description)',
+    $field_options[$name] = t('!description (!source_field)',
       array('!source_field' => $name, '!description' => $description));
   }
+
 
   foreach ($dest_fields as $name => $description) {
     // Don't map the destination key
@@ -944,14 +945,56 @@ function migrate_ui_mapping_edit_form($migration_name) {
 
     $form['field_mappings'][$name] = array(
       '#type' => 'select',
-      '#title' => t('!field_name (!description)',
+      '#title' => t('!description (!field_name)',
                     array('!description' => $description, '!field_name' => $name)),
       '#options' => $options,
       '#default_value' => $default_value,
     );
   }
 
+  // Set our theme function for this form
+  $form['#theme'] = 'migrate_ui_field_mapping_form';
+
   return $form;
+}
+
+/**
+ * Theme function to layout field mappings in a table
+ *
+ * @param array $variables
+ * @return rendered markup
+ */
+function theme_migrate_ui_field_mapping_form($variables) {
+  $output = '';
+  $form = $variables['form'];
+  $elements = element_children($form);
+  if (!empty($elements)) {
+    // Iterate over the elements - render directly except for field_mappings,
+    // which we'll pack into a table.
+    foreach ($elements as $key) {
+      if ($key == 'field_mappings') {
+        $header = array(t('Source field'), t('Destination field'));
+        $rows = array();
+        $mapping_elements = element_children($form[$key]);
+        foreach ($mapping_elements as $mapping_key) {
+          if ($form['field_mappings'][$mapping_key]['#type'] == 'select') {
+            $row = array();
+            $title = $form['field_mappings'][$mapping_key]['#title'];
+            unset($form['field_mappings'][$mapping_key]['#title']);
+            $row[] = drupal_render($form['field_mappings'][$mapping_key]);
+            $row[] = $title;
+            $rows[] = $row;
+          }
+        }
+        $output .= theme('table', array('header' => $header, 'rows' => $rows));
+      }
+      else {
+        $output .= drupal_render($form[$key]);
+      }
+    }
+  }
+  $output .= drupal_render_children($form);
+  return $output;
 }
 
 /**

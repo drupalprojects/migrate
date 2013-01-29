@@ -136,30 +136,18 @@ function migrate_ui_menu() {
 }
 
 /**
- * Menu load callback - load the migration before calling the form.
- *
- * @param $machine_name
- *
- * @return mixed
- */
-function _migrate_ui_load($machine_name) {
-  if ($machine_name) {
-    return Migration::getInstance($machine_name);
-  }
-}
-
-/**
- * Title callback - use the specified migration's machine name as a menu title.
- *
- * @param $migration
- *
- * @return mixed
- */
-function _migrate_ui_title($migration) {
-  if (is_string($migration)) {
-    $migration = _migrate_ui_load($migration);
-  }
-  return $migration->getMachineName();
+* Implements hook_theme()
+*
+* @return array
+*/
+function migrate_ui_theme() {
+  return array(
+    'migrate_ui_field_mapping_form' => array(
+      'arguments' => array('form' => NULL),
+      'render element' => 'form',
+      'file' => '/migrate_ui.pages.inc',
+    )
+  );
 }
 
 /**

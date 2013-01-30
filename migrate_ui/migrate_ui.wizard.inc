@@ -268,7 +268,7 @@ abstract class MigrateUIWizard {
     if ($this->currentStep == $this->lastStep) {
       $form['actions']['finish'] = array(
         '#type' => 'submit',
-        '#value' => t('Save settings'),
+        '#value' => t('Save import settings'),
       );
 /*
       $form['actions']['import'] = array(

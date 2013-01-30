@@ -81,7 +81,7 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
                 array('@doc' => 'http://drupal.org/node/1349632#mail'));
     $fields['name'] = t('<a href="@doc">Username</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#name'));
-    $fields['pass'] = t('<a href="@doc">Password (plain text)</a>',
+    $fields['pass'] = t('<a href="@doc">Password</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#pass'));
     $fields['status'] = t('<a href="@doc">Status</a>',
                 array('@doc' => 'http://drupal.org/node/1349632#status'));

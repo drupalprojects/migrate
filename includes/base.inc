@@ -408,6 +408,8 @@ abstract class MigrationBase {
     $rows_deleted = db_delete('migrate_status')
                     ->condition('machine_name', $machine_name)
                     ->execute();
+    // Make sure the group gets deleted if we were the only member.
+    MigrateGroup::deleteOrphans();
   }
 
   /**

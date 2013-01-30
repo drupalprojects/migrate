@@ -192,4 +192,20 @@ class MigrateGroup {
       ->condition('name', $name)
       ->execute();
   }
+
+  /**
+   * Remove any groups which no longer contain any migrations.
+   */
+  static public function deleteOrphans() {
+    $query = db_select('migrate_group', 'mg');
+    $query->addField('mg', 'name');
+    $query->leftJoin('migrate_status', 'ms', 'mg.name=ms.group_name');
+    $query->isNull('ms.machine_name');
+    $result = $query->execute();
+    foreach ($result as $row) {
+      db_delete('migrate_group')
+        ->condition('name', $row->name)
+        ->execute();
+    }
+  }
 }

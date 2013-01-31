@@ -616,6 +616,9 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
       $old_file = file_load($file->fid);
     }
 
+    // 'type' is the bundle property on file entities.
+    $file->type = $this->bundle;
+
     // Invoke migration prepare handlers
     $this->prepare($file, $row);
 

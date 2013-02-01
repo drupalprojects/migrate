@@ -143,8 +143,8 @@ function migrate_ui_menu() {
 function migrate_ui_theme() {
   return array(
     'migrate_ui_field_mapping_form' => array(
-      'arguments' => array('form' => NULL),
-      'render element' => 'form',
+      'arguments' => array('field_mappings' => NULL),
+      'render element' => 'field_mappings',
       'file' => '/migrate_ui.pages.inc',
     )
   );
@@ -219,6 +219,10 @@ function migrate_ui_mapping_edit_form($migration_name) {
     if (isset($dest_key[$name])) {
       continue;
     }
+    // For now, don't expose is_new
+    if ($name == 'is_new') {
+      continue;
+    }
     if (is_array($description)) {
       $description = reset($description);
     }
@@ -253,7 +257,7 @@ function migrate_ui_mapping_edit_form($migration_name) {
       $label = '!description';
     }
 
-    $form['field_mappings'][$name] = array(
+    $form['field_mappings'][$name]['mapping'] = array(
       '#type' => 'select',
       '#title' => t($label,
                     array('!description' => $description, '!field_name' => $name)),
@@ -267,7 +271,7 @@ function migrate_ui_mapping_edit_form($migration_name) {
     else {
       $field_default = '';
     }
-    $form['default_values'][$name] = array(
+    $form['field_mappings'][$name]['default_value'] = array(
       '#type' => 'textfield',
       '#default_value' => $field_default,
       '#size' => 20,
@@ -275,7 +279,7 @@ function migrate_ui_mapping_edit_form($migration_name) {
   }
 
   // Set our theme function for this form
-  $form['#theme'] = 'migrate_ui_field_mapping_form';
+  $form['field_mappings']['#theme'][] = 'migrate_ui_field_mapping_form';
 
   return $form;
 }

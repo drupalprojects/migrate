@@ -349,6 +349,11 @@ abstract class MigrateUIWizard {
         $arguments['dependencies'][$index] = $this->groupName . $dependency;
       }
     }
+    if (isset($arguments['soft_dependencies'])) {
+      foreach ($arguments['soft_dependencies'] as $index => $dependency) {
+        $arguments['soft_dependencies'][$index] = $this->groupName . $dependency;
+      }
+    }
     $arguments += array(
       'group_name' => $this->groupName,
       'machine_name' => $machine_name,

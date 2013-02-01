@@ -896,33 +896,21 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
  */
 function theme_migrate_ui_field_mapping_form($variables) {
   $output = '';
-  $form = $variables['form'];
+  $form = $variables['field_mappings'];
   $elements = element_children($form);
   if (!empty($elements)) {
-    // Iterate over the elements - render directly except for field_mappings,
-    // which we'll pack into a table.
-    foreach ($elements as $key) {
-      if ($key == 'field_mappings') {
-        $header = array(t('Source field'), t('Destination field'), t('Default value'));
-        $rows = array();
-        $mapping_elements = element_children($form[$key]);
-        foreach ($mapping_elements as $mapping_key) {
-          if ($form['field_mappings'][$mapping_key]['#type'] == 'select') {
-            $row = array();
-            $title = $form['field_mappings'][$mapping_key]['#title'];
-            unset($form['field_mappings'][$mapping_key]['#title']);
-            $row[] = drupal_render($form['field_mappings'][$mapping_key]);
-            $row[] = $title;
-            $row[] = drupal_render($form['default_values'][$mapping_key]);
-            $rows[] = $row;
-          }
-        }
-        $output .= theme('table', array('header' => $header, 'rows' => $rows));
-      }
-      else {
-        $output .= drupal_render($form[$key]);
-      }
+    $header = array(t('Destination field'), t('Source field'), t('Default value'));
+    $rows = array();
+    foreach ($elements as $mapping_key) {
+      $row = array();
+      $title = $form[$mapping_key]['mapping']['#title'];
+      unset($form[$mapping_key]['mapping']['#title']);
+      $row[] = $title;
+      $row[] = drupal_render($form[$mapping_key]['mapping']);
+      $row[] = drupal_render($form[$mapping_key]['default_value']);
+      $rows[] = $row;
     }
+    $output .= theme('table', array('header' => $header, 'rows' => $rows));
   }
   $output .= drupal_render_children($form);
   return $output;

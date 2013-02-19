@@ -185,7 +185,7 @@ class MigrateGroup {
               ->condition('group_name', $name)
               ->execute();
     foreach ($result as $row) {
-      MigrationBase::deregisterMigration($row->machine_name);
+      Migration::deregisterMigration($row->machine_name);
     }
 
     db_delete('migrate_group')

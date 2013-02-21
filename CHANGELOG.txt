@@ -36,6 +36,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1900914 - Disable email with no custom mail system configured.
 - #1901648 - Missing bundle property on file migrations.
 - #1885362 - Make access callback explicit, to avoid conflict with admin_views.
 - #1880512 - Strip tags from descriptions on drush migrate-mappings.

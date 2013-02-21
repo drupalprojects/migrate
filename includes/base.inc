@@ -337,6 +337,9 @@ abstract class MigrationBase {
         $conf['mail_system'][$system] = 'MigrateMailIgnore';
       }
     }
+    else {
+      $conf['mail_system']['default-system'] = 'MigrateMailIgnore';
+    }
 
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));

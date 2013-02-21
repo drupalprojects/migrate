@@ -19,12 +19,17 @@ define('MIGRATE_API_VERSION', 2);
  * Retrieve a list of all active migrations, ordered by dependencies. To be
  * recognized, a class must be non-abstract, and derived from MigrationBase.
  *
+ * @param $reset
+ *  If TRUE, the static cache of migrations will be flushed before attempting to
+ *  reinstantiate all active migrations. This can be important for script runs
+ *  where migration classes may be dynamically registered.
+ *
  * @return
  *  Array of migration objects, keyed by the machine name.
  */
-function migrate_migrations() {
+function migrate_migrations($reset = NULL) {
   static $migrations = array();
-  if (!empty($migrations)) {
+  if (!empty($migrations) && empty($reset)) {
     return $migrations;
   }
 

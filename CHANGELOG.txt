@@ -32,6 +32,7 @@ Features and enhancements
 - #1550878 - Added UI for deregistering migrations, including one-button deregistration
              of orphans.
 - #1792894 - Remove empty field values, permitting proper defaulting.
+- #1903236 - Allow reset of migrate_migrations() cache.
 - #1894344 - Support warn_on_override for bulk unmigrated methods.
 - #1886404 - Allow subfields to be mapped before primary fields.
 

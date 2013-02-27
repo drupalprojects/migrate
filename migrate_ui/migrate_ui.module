@@ -265,7 +265,7 @@ function migrate_ui_mapping_edit_form($migration_name) {
       '#default_value' => $default_value,
     );
 
-    if ($mapping && $mapping->getDefaultValue()) {
+    if ($mapping) {
       $field_default = $mapping->getDefaultValue();
     }
     else {

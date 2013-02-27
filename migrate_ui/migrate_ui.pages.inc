@@ -4,17 +4,6 @@
  * Pages for managing migration processes.
  */
  
-
-/**
- * Menu callback
- */
-/*
-function migrate_ui_import_dashboard() {
-  drupal_set_title(t('Import'));
-  return drupal_get_form('migrate_ui_import_dashboard_form');
-}
-*/
-
 /**
  * Form for managing import jobs (migration groups).
  */
@@ -882,8 +871,47 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
 
 function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
   $form = migrate_ui_mapping_edit_form($migration_name);
-  // @todo: Add submit button redirecting to view page
+  $form['machine_name'] = array(
+    '#type' => 'value',
+    '#value' => $migration_name,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Apply changes'),
+  );
   return $form;
+}
+
+function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
+  $machine_name = $form_state['values']['machine_name'];
+  $row = db_select('migrate_status', 'ms')
+               ->fields('ms', array('arguments', 'class_name', 'group_name'))
+               ->condition('machine_name', $machine_name)
+               ->execute()
+               ->fetchObject();
+  $class_name = $row->class_name;
+  $group_name = $row->group_name;
+  $arguments = unserialize($row->arguments);
+  $arguments['field_mappings'] = array();
+
+  foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
+    $field_mappings[$destination_field] = $info['mapping'];
+    $default_values[$destination_field] = $info['default_value'];
+  }
+  foreach ($field_mappings as $destination_field => $source_field) {
+    if ($source_field == -1) {
+      $source_field = NULL;
+    }
+    $mapping = new MigrateFieldMapping($destination_field, $source_field);
+    $mapping->defaultValue($default_values[$destination_field]);
+    $arguments['field_mappings'][] = $mapping;
+  }
+
+  Migration::registerMigration($class_name, $machine_name,
+    $arguments, $group_name);
+
+  drupal_set_message(t('Field mapping changes applied.'));
+  $form_state['redirect'] = "admin/content/import/jobs/$group_name/$machine_name";
 }
 
 /**

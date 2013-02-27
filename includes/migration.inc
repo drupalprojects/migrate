@@ -239,16 +239,20 @@ abstract class Migration extends MigrationBase {
    * @param array $field_mappings
    */
   static public function saveFieldMappings($machine_name, array $field_mappings) {
+    // Clear existing field mappings
+    db_delete('migrate_field_mapping')
+      ->condition('machine_name', $machine_name)
+      ->execute();
     foreach ($field_mappings as $field_mapping) {
       $destination_field = $field_mapping->getDestinationField();
       $source_field = $field_mapping->getSourceField();
-      db_merge('migrate_field_mapping')
-        ->key(array(
+      db_insert('migrate_field_mapping')
+        ->fields(array(
             'machine_name' => $machine_name,
             'destination_field' => is_null($destination_field) ? '' : $destination_field,
             'source_field' => is_null($source_field) ? '' : $source_field,
+            'options' => serialize($field_mapping)
           ))
-        ->fields(array('options' => serialize($field_mapping)))
         ->execute();
     }
   }

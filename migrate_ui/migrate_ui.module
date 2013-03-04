@@ -219,8 +219,24 @@ function migrate_ui_mapping_edit_form($migration_name) {
     if (isset($dest_key[$name])) {
       continue;
     }
-    // For now, don't expose is_new
-    if ($name == 'is_new') {
+    // For now, hide these fields
+    $skip_fields = array(
+      // node fields
+      'comment',
+      'daycount',
+      'is_new',
+      'language',
+      'log',
+      'revision',
+      'revision_uid',
+      'timestamp',
+      'tnid',
+      'totalcount',
+      'translate',
+      // user fields
+      'data',
+    );
+    if (in_array($name, $skip_fields)) {
       continue;
     }
     if (is_array($description)) {

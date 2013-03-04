@@ -904,6 +904,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     }
     $mapping = new MigrateFieldMapping($destination_field, $source_field);
     $mapping->defaultValue($default_values[$destination_field]);
+    // @Todo: We lose sourceMigration() here
     $arguments['field_mappings'][] = $mapping;
   }
 

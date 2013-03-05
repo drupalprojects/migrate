@@ -67,7 +67,7 @@ function migrate_ui_wizard_next_submit($form, &$form_state) {
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
   $form_state['wizard']->formSaveSettings();
-  $form_state['redirect'] = 'admin/content/import';
+  $form_state['redirect'] = 'admin/content/import/jobs/' . $form_state['wizard']->getGroupName();
 }
 
 /**
@@ -126,6 +126,9 @@ abstract class MigrateUIWizard {
    * @var string
    */
   protected $groupName = 'default';
+  public function getGroupName() {
+    return $this->groupName;
+  }
 
   /**
    * The user-visible title of the group.

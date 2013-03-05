@@ -870,6 +870,8 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
 }
 
 function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
+  drupal_set_title(t('Edit mappings for !migration',
+                   array('!migration' => $migration_name)));
   $form = migrate_ui_mapping_edit_form($migration_name);
   $form['machine_name'] = array(
     '#type' => 'value',
@@ -879,6 +881,149 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
     '#type' => 'submit',
     '#value' => t('Apply changes'),
   );
+  return $form;
+}
+
+/**
+ * Build a subform for editing the field mappings for the named migration.
+ *
+ * @param $migration_name
+ *
+ * @return array
+ */
+function migrate_ui_mapping_edit_form($migration_name) {
+  $migration = Migration::getInstance($migration_name);
+  $source_fields = $migration->getSource()->fields();
+  $dest_fields = $migration->getDestination()->fields();
+  $dest_key = $migration->getDestination()->getKeySchema();
+  $field_mappings = $migration->getFieldMappings();
+
+  $form = array();
+  $form['#tree'] = TRUE;
+
+  $base_options = array(
+    '-1' => t('--Do not import--'),
+    // @todo: Not yet supported
+//      '0' => t('--Create field--'),
+  );
+  $field_options = array();
+  foreach ($source_fields as $name => $description) {
+    if (is_array($description)) {
+      $description = reset($description);
+    }
+    $description = strip_tags($description);
+    // Limit the description length
+    if (strlen($description) > 50) {
+      $description = substr($description, 0, 50) . '...';
+    }
+    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+      $label = '!description [!source_field]';
+    }
+    else {
+      $label = '!description';
+    }
+    $field_options[$name] = t($label,
+      array('!source_field' => $name, '!description' => $description));
+  }
+
+  foreach ($dest_fields as $name => $description) {
+    // Don't map the destination key
+    if (isset($dest_key[$name])) {
+      continue;
+    }
+    // For now, hide these fields
+    $skip_fields = array(
+      // node fields
+      'comment',
+      'daycount',
+      'is_new',
+      'language',
+      'log',
+      'revision',
+      'revision_uid',
+      'timestamp',
+      'tnid',
+      'totalcount',
+      'translate',
+      // user fields
+      'data',
+    );
+    if (in_array($name, $skip_fields)) {
+      continue;
+    }
+    // And these subfields
+    $skip_suffixes = array(
+      // Text fields
+      'format',
+      'language',
+      // Term reference fields
+      'source_type',
+      'create_term',
+      'ignore_case',
+    );
+    $parts = explode(':', $name);
+    if (isset($parts[1]) && in_array($parts[1], $skip_suffixes)) {
+      continue;
+    }
+    if (is_array($description)) {
+      $description = reset($description);
+    }
+
+    $options = $base_options + $field_options;
+    $default_value = NULL;
+    if (isset($field_mappings[$name])) {
+      $mapping = $field_mappings[$name];
+      if ($mapping->getSourceField()) {
+        $default_value = $mapping->getSourceField();
+      }
+    }
+    else {
+      $mapping = NULL;
+    }
+
+    // If we have a match on field name, default the mapping to that match
+    // and remove the option to create a new field of that name.
+    if (is_null($default_value)) {
+      if (isset($field_options[$name])) {
+        $default_value = $name;
+        unset($options['0']);
+      }
+      else {
+        $default_value = '-1';
+      }
+    }
+
+    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+      $label = '!description [!field_name]';
+    }
+    else {
+      $label = '!description';
+    }
+
+    $form['field_mappings'][$name]['mapping'] = array(
+      '#type' => 'select',
+      '#title' => t($label,
+                    array('!description' => $description, '!field_name' => $name)),
+      '#options' => $options,
+      '#default_value' => $default_value,
+    );
+
+    if ($mapping) {
+      $field_default = $mapping->getDefaultValue();
+    }
+    else {
+      $field_default = '';
+    }
+    $form['field_mappings'][$name]['default_value'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $field_default,
+      '#size' => 20,
+    );
+  }
+
+  // Set our theme function for this form
+  $form['field_mappings']['#theme'][] = 'migrate_ui_field_mapping_form';
+
   return $form;
 }
 
@@ -906,6 +1051,14 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     $mapping->defaultValue($default_values[$destination_field]);
     // @Todo: We lose sourceMigration() here
     $arguments['field_mappings'][] = $mapping;
+    // Special handling for term references
+    $destination_title = $form['field_mappings'][$destination_field]['mapping']['#title'];
+    if (strstr($destination_title, '(taxonomy_term_reference)')) {
+      // Always allow creation of terms
+      $mapping = new MigrateFieldMapping("$destination_field:create_term", NULL);
+      $mapping->defaultValue(1);
+      $arguments['field_mappings'][] = $mapping;
+    }
   }
 
   Migration::registerMigration($class_name, $machine_name,

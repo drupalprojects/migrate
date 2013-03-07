@@ -1038,8 +1038,21 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   $group_name = $row->group_name;
   $arguments = unserialize($row->arguments);
   $arguments['field_mappings'] = array();
+  $field_mappings = array();
+  $default_values = array();
+
+  $migration = Migration::getInstance($machine_name);
+  $existing_mappings = $migration->getFieldMappings();
 
   foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
+    // If this mapping matches a coded mapping but not a stored mapping, remove it entirely (don't
+    // store it in the database) so the coded mapping is not overwritten.
+    if (isset($coded_mappings[$destination_field])) {
+      if ($info['mapping'] == $coded_mappings[$destination_field]->getSourceField() &&
+          $info['default_value'] == $coded_mappings[$destination_field]->getDefaultValue) {
+        continue;
+      }
+    }
     $field_mappings[$destination_field] = $info['mapping'];
     $default_values[$destination_field] = $info['default_value'];
   }
@@ -1047,13 +1060,37 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     if ($source_field == -1) {
       $source_field = NULL;
     }
-    $mapping = new MigrateFieldMapping($destination_field, $source_field);
-    $mapping->defaultValue($default_values[$destination_field]);
-    // @Todo: We lose sourceMigration() here
+
+    // Until we can provide editing of all the options that go along with
+    // field mappings, we want to avoid overwriting pre-existing mappings and
+    // losing important bits like sourceMigration.
+    $mapping = NULL;
+    if (isset($existing_mappings[$destination_field])) {
+      $old_mapping = $existing_mappings[$destination_field];
+      if ($source_field == $old_mapping->getSourceField() &&
+          $default_values[$destination_field] == $old_mapping->getDefaultValue) {
+        // First, if this mapping matches a previously-stored mapping, we want to
+        // preserve it as it was originally stored.
+        if ($old_mapping->getMappingSource() == MigrateFieldMapping::MAPPING_SOURCE_DB) {
+          $mapping = $old_mapping;
+        }
+        // If it matches a coded mapping, then we don't want to save it at all.
+        else {
+          continue;
+        }
+      }
+    }
+    // We're not skipping this mapping, or preserving an old one, so create the
+    // new mapping.
+    if (!$mapping) {
+      $mapping = new MigrateFieldMapping($destination_field, $source_field);
+      $mapping->defaultValue($default_values[$destination_field]);
+    }
     $arguments['field_mappings'][] = $mapping;
     // Special handling for term references
     $destination_title = $form['field_mappings'][$destination_field]['mapping']['#title'];
-    if (strstr($destination_title, '(taxonomy_term_reference)')) {
+    if (strstr($destination_title, '(taxonomy_term_reference)') &&
+        !is_null($default_values[$destination_field])) {
       // Always allow creation of terms
       $mapping = new MigrateFieldMapping("$destination_field:create_term", NULL);
       $mapping->defaultValue(1);
@@ -1061,8 +1098,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     }
   }
 
-  Migration::registerMigration($class_name, $machine_name,
-    $arguments, $group_name);
+  Migration::registerMigration($class_name, $machine_name, $arguments, $group_name);
 
   drupal_set_message(t('Field mapping changes applied.'));
   $form_state['redirect'] = "admin/content/import/jobs/$group_name/$machine_name";

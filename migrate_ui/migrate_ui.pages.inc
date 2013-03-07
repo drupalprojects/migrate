@@ -617,12 +617,6 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
         'css' => array(drupal_get_path('module', 'migrate_ui') . '/migrate_ui.css'),
       ),
     );
-
-    $form['edit_mappings'] = array(
-      '#prefix' => '<p>',
-      '#markup' => "<a href=\"/admin/content/import/jobs/$group_name/$migration_name/edit\">Edit mappings</a>",
-      '#suffix' => '</p>',
-    );
   }
   else {
     $form['detail'] = array(
@@ -870,7 +864,7 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
 }
 
 function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
-  drupal_set_title(t('Edit mappings for !migration',
+  drupal_set_title(t('Edit field mappings for !migration',
                    array('!migration' => $migration_name)));
   $form = migrate_ui_mapping_edit_form($migration_name);
   $form['machine_name'] = array(
@@ -1138,7 +1132,8 @@ function theme_migrate_ui_field_mapping_form($variables) {
  * Menu callback for messages page
  */
 function migrate_ui_messages($group_name, $migration_name) {
-  drupal_set_title($migration_name);
+  drupal_set_title(t('Import messages for !migration',
+                   array('!migration' => $migration_name)));
 
   $build = $rows = array();
 

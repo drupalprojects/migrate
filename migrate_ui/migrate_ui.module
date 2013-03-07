@@ -97,22 +97,22 @@ function migrate_ui_menu() {
     // @todo We'd like to have tabs for View/Edit/Messages, but uncommenting
     // below gives notices on the job page, which we haven't found an answer for.
     $items['admin/content/import/jobs/' . $row->name . '/%'] = array(
-//      'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+      'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('migrate_migration_info', 4, 5),
       'access arguments' => array(MIGRATE_ACCESS_BASIC),
       'file' => 'migrate_ui.pages.inc',
     );
-/*
+
     $items['admin/content/import/jobs/' . $row->name . '/%/view'] = array(
       'title' => 'View',
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'weight' => -10,
     );
-*/
+
     $items['admin/content/import/jobs/' . $row->name . '/%/edit'] = array(
-//      'type' => MENU_LOCAL_TASK,
-      'title' => 'Edit mappings',
+      'type' => MENU_LOCAL_TASK,
+      'title' => 'Edit',
       'description' => 'Edit migration mappings',
       'page callback' => 'drupal_get_form',
       'page arguments' => array('migrate_ui_edit_mappings', 4, 5),
@@ -121,7 +121,7 @@ function migrate_ui_menu() {
     );
 
     $items['admin/content/import/jobs/' . $row->name . '/%/messages'] = array(
-//      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_LOCAL_TASK,
       'title' => 'Messages',
       'description' => 'View messages from a migration',
       'page callback' => 'migrate_ui_messages',

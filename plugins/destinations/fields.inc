@@ -483,7 +483,7 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
         $file_class = $mapping->getDefaultValue();
       }
     }
-    if (!isset($file_class)) {
+    if (empty($file_class)) {
       $file_class = 'MigrateFileUri';
     }
     $fields += call_user_func(array($file_class, 'fields'));

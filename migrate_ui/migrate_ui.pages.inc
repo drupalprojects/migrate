@@ -1089,13 +1089,37 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     }
     // Special handling for term references
     $destination_title = $form['field_mappings'][$destination_field]['mapping']['#title'];
-    if (strstr($destination_title, '(taxonomy_term_reference)') &&
-        !is_null($default_values[$destination_field])) {
-      $arguments['field_mappings'][] = $mapping;
-      // Always allow creation of terms
-      $mapping = new MigrateFieldMapping("$destination_field:create_term", NULL);
-      $mapping->defaultValue(1);
-      $arguments['field_mappings'][] = $mapping;
+    if (strstr($destination_title, '(taxonomy_term_reference)')) {
+      // Assume the source field is going to reference a term migration
+      if (!empty($source_field)) {
+        // Find the destination vocabulary
+        $field_info = field_info_field($destination_field);
+        $destination_vocab = $field_info['settings']['allowed_values'][0]['vocabulary'];
+        $term_migrations = array();
+        // Look for term migrations
+        foreach (migrate_migrations() as $term_machine_name => $term_migration) {
+          $destination = $term_migration->getDestination();
+          if (is_a($destination, 'MigrateDestinationTerm') &&
+              ($destination->getBundle() == $destination_vocab) &&
+              ($term_migration->getGroup()->getName() == $group_name)) {
+            $term_migrations[] = $term_machine_name;
+          }
+        }
+        if (!empty($term_migrations)) {
+          $mapping->sourceMigration($term_migrations);
+          $arguments['field_mappings'][] = $mapping;
+          $type_mapping = new MigrateFieldMapping("$destination_field:source_type", NULL);
+          $type_mapping->defaultValue('tid');
+          $arguments['field_mappings'][] = $type_mapping;
+        }
+      }
+      elseif (!is_null($default_values[$destination_field])) {
+        $arguments['field_mappings'][] = $mapping;
+        // Always allow creation of terms
+        $mapping = new MigrateFieldMapping("$destination_field:create_term", NULL);
+        $mapping->defaultValue(1);
+        $arguments['field_mappings'][] = $mapping;
+      }
     }
     // Special handling for files
     elseif (strstr($destination_title, '(image)')) {

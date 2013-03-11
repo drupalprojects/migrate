@@ -954,6 +954,13 @@ function migrate_ui_mapping_edit_form($migration_name) {
       'source_type',
       'create_term',
       'ignore_case',
+      // File fields
+      'destination_dir',
+      'destination_file',
+      'file_replace',
+      'preserve_files',
+      'source_dir',
+      'file_class',
     );
     $parts = explode(':', $name);
     if (isset($parts[1]) && in_array($parts[1], $skip_suffixes)) {
@@ -1080,14 +1087,26 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       $mapping = new MigrateFieldMapping($destination_field, $source_field);
       $mapping->defaultValue($default_values[$destination_field]);
     }
-    $arguments['field_mappings'][] = $mapping;
     // Special handling for term references
     $destination_title = $form['field_mappings'][$destination_field]['mapping']['#title'];
     if (strstr($destination_title, '(taxonomy_term_reference)') &&
         !is_null($default_values[$destination_field])) {
+      $arguments['field_mappings'][] = $mapping;
       // Always allow creation of terms
       $mapping = new MigrateFieldMapping("$destination_field:create_term", NULL);
       $mapping->defaultValue(1);
+      $arguments['field_mappings'][] = $mapping;
+    }
+    // Special handling for files
+    elseif (strstr($destination_title, '(image)')) {
+      $mapping->sourceMigration($group_name . 'File');
+      $arguments['field_mappings'][] = $mapping;
+      // Always assume we're migrate from fids
+      $mapping = new MigrateFieldMapping("$destination_field:file_class", NULL);
+      $mapping->defaultValue('MigrateFileFid');
+      $arguments['field_mappings'][] = $mapping;
+    }
+    else {
       $arguments['field_mappings'][] = $mapping;
     }
   }

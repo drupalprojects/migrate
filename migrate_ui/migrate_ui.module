@@ -94,8 +94,6 @@ function migrate_ui_menu() {
       'file' => 'migrate_ui.pages.inc',
     );
     // Task (migration) detail pages come below jobs
-    // @todo We'd like to have tabs for View/Edit/Messages, but uncommenting
-    // below gives notices on the job page, which we haven't found an answer for.
     $items['admin/content/import/jobs/' . $row->name . '/%'] = array(
       'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',

@@ -1125,11 +1125,25 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     elseif (strpos($destination_title, '(image)') ||
             strpos($destination_title, '(file)') ||
             strpos($destination_title, '(media)')) {
-      $mapping->sourceMigration($group_name . 'File');
+      // Assume we're migrating from fids, unless it's a media video field, in
+      // which case use the Youtube class.
+      $file_class = 'MigrateFileFid';
+      if (module_exists('media')) {
+        $destination = $migration->getDestination();
+        if (is_a($destination, 'MigrateDestinationEntity')) {
+          $field_instance = field_info_instance($destination->getEntityType(),
+            $destination_field, $destination->getBundle());
+          if ($field_instance['widget']['settings']['allowed_types']['video'] == 'video') {
+            $file_class = 'MigrateExtrasFileYoutube';
+          }
+        }
+      }
+      if ($file_class == 'MigrateFileFid') {
+        $mapping->sourceMigration($group_name . 'File');
+      }
       $arguments['field_mappings'][] = $mapping;
-      // Always assume we're migrate from fids
       $mapping = new MigrateFieldMapping("$destination_field:file_class", NULL);
-      $mapping->defaultValue('MigrateFileFid');
+      $mapping->defaultValue($file_class);
       $arguments['field_mappings'][] = $mapping;
     }
     else {

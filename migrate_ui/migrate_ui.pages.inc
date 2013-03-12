@@ -1122,7 +1122,9 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       }
     }
     // Special handling for files
-    elseif (strstr($destination_title, '(image)')) {
+    elseif (strpos($destination_title, '(image)') ||
+            strpos($destination_title, '(file)') ||
+            strpos($destination_title, '(media)')) {
       $mapping->sourceMigration($group_name . 'File');
       $arguments['field_mappings'][] = $mapping;
       // Always assume we're migrate from fids

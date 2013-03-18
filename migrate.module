@@ -221,7 +221,7 @@ function migrate_field_handler_invoke_all($entity, array $field_info, array $ins
 function _migrate_class_list($parent_class) {
   // Get info on modules implementing Migrate API
   static $module_info;
-  if (!isset($modules)) {
+  if (!isset($module_info)) {
     $module_info = migrate_get_module_apis();
   }
 

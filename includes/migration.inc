@@ -214,7 +214,9 @@ abstract class Migration extends MigrationBase {
     try {
       // Remove map and message tables
       $migration = self::getInstance($machine_name);
-      $migration->map->destroy();
+      if (method_exists($migration, 'getMap')) {
+        $migration->getMap()->destroy();
+      }
 
       // @todo: Clear log entries? Or keep for historical purposes?
 

@@ -1133,7 +1133,10 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
         if (is_a($destination, 'MigrateDestinationEntity')) {
           $field_instance = field_info_instance($destination->getEntityType(),
             $destination_field, $destination->getBundle());
-          if ($field_instance['widget']['settings']['allowed_types']['video'] == 'video') {
+          // Note the === - if video is not allowed, the value is a numeric
+          // 0, and 0 == 'video' is, surprisingly, TRUE.
+          $video_setting = $field_instance['widget']['settings']['allowed_types']['video'];
+          if ($video_setting === 'video') {
             $file_class = 'MigrateExtrasFileYoutube';
           }
         }

@@ -683,9 +683,11 @@ abstract class Migration extends MigrationBase {
         else {
           $this->map->saveIDMapping($this->sourceValues, array(),
             MigrateMap::STATUS_FAILED, $this->rollbackAction);
-          $message = t('New object was not saved, no error provided');
-          $this->saveMessage($message);
-          self::displayMessage($message);
+          if ($this->map->messageCount() == 0) {
+            $message = t('New object was not saved, no error provided');
+            $this->saveMessage($message);
+            self::displayMessage($message);
+          }
         }
       }
       catch (MigrateException $e) {

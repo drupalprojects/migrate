@@ -24,7 +24,7 @@ class MigrateSourceSQL extends MigrateSource {
    * @return SelectQueryInterface
    */
   public function &query() {
-    return $this->originalQuery();
+    return $this->originalQuery;
   }
 
   /**

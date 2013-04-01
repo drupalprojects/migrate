@@ -1423,7 +1423,7 @@ function migrate_ui_configure_form($form, &$form_state) {
         'correctly.',
         array(
           '@drush' => 'http://drupal.org/project/drush',
-          '@config' => 'http://drupal.org/', // @todo
+          '@config' => 'http://drupal.org/node/1958170',
         )
       );
     }
@@ -1437,7 +1437,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       array(
         '@drush' => 'http://drupal.org/project/drush',
         '@recommended' => 'http://drupal.org/node/1806824',
-        '@config' => 'http://drupal.org/', // @todo
+        '@config' => 'http://drupal.org/node/1958170',
         '@dorg' => 'http://drupal.org/',
       )
     );

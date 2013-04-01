@@ -394,7 +394,7 @@ abstract class Migration extends MigrationBase {
    * source rows have been processed).
    */
   public function isComplete() {
-    $total = $this->source->count(TRUE);
+    $total = $this->sourceCount(TRUE);
     // If the source is uncountable, we have no way of knowing if it's
     // complete, so stipulate that it is.
     if ($total < 0) {

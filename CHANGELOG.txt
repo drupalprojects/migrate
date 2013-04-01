@@ -44,6 +44,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1954936 - Allow overriding source count in isComplete.
 - #1952430 - Prevent bogus "no error provided" messages.
 - #1931168 - Properly cache class info in _migrate_class_list().
 - #1900914 - Disable email with no custom mail system configured.

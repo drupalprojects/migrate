@@ -194,6 +194,14 @@ abstract class MigrationBase {
   protected $timeLimit;
 
   /**
+   * A time limit in seconds appropriate to be used in a batch
+   * import. Defaults to 240.
+   *
+   * @var int
+   */
+  protected $batchTimeLimit = 240;
+
+  /**
    * MigrateTeamMember objects representing people involved with this
    * migration.
    *
@@ -921,6 +929,14 @@ abstract class MigrationBase {
       $return = MigrationBase::RESULT_DISABLED;
     }
     return $return;
+  }
+
+  /**
+   * Set the PHP time limit. This method may be called from batch callbacks
+   * before calling the processImport method.
+   */
+  public function setBatchTimeLimit() {
+    drupal_set_time_limit($this->batchTimeLimit);
   }
 
   /**

@@ -571,6 +571,9 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
   $_migrate_messages = array();
   Migration::setDisplayFunction('migrate_ui_capture_message');
 
+  // Try to allocate enough time to run the full operation.
+  $migration->setBatchTimeLimit();
+
   // Perform the requested operation
   switch ($operation) {
     case 'import':

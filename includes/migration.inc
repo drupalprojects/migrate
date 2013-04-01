@@ -1309,10 +1309,10 @@ abstract class Migration extends MigrationBase {
     $results = array();
     // Each $source_key will be an array of key values
     foreach ($source_keys as $source_key) {
-      // If any source keys are empty, skip this set
+      // If any source keys are NULL, skip this set
       $continue = FALSE;
       foreach ($source_key as $value) {
-        if (empty($value) && $value !== 0 && $value !== '0') {
+        if (!isset($value)) {
           $continue = TRUE;
           break;
         }

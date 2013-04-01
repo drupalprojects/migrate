@@ -45,6 +45,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1831940 - Allow empty string source keys in handleSourceMigration().
 - #1896042 - Fix incorrect usage of originalQuery.
 - #1954936 - Allow overriding source count in isComplete.
 - #1952430 - Prevent bogus "no error provided" messages.

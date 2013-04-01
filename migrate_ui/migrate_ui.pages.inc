@@ -268,9 +268,32 @@ function _migrate_ui_import_operations() {
     '#title' => t('Operations'),
   );
 
-  $options = array(
-    'import' => t('Import'),
-    'rollback' => t('Rollback'),
+  //
+  switch (variable_get('migrate_import_method', 0)) {
+    case 1:
+      $options = array(
+        'import_background' => t('Import'),
+        'rollback_background' => t('Rollback'),
+      );
+      break;
+    case 2:
+      $options = array(
+        'import_immediate' => t('Import immediately'),
+        'import_background' => t('Import in background'),
+        'rollback_immediate' => t('Rollback immediately'),
+        'rollback_background' => t('Rollback in background'),
+      );
+      break;
+    case 0:
+    default:
+      $options = array(
+        'import_immediate' => t('Import'),
+        'rollback_immediate' => t('Rollback'),
+      );
+    break;
+  }
+
+  $options += array(
     'stop' => t('Stop'),
     'reset' => t('Reset'),
     'deregister' => t('Remove import settings'),
@@ -434,18 +457,23 @@ function migrate_ui_import_submit($form, &$form_state) {
     return;
   }
 
+  $drush_arguments = array();
   foreach ($machine_names as $machine_name) {
     $migration = Migration::getInstance($machine_name);
     switch ($operation) {
-      case 'import':
+      case 'import_immediate':
         // Update (if necessary) once, before starting
         if ($update && method_exists($migration, 'prepareUpdate')) {
           $migration->prepareUpdate();
         }
         $operations[] = array('migrate_ui_batch', array('import', $machine_name, $limit, $force));
         break;
-      case 'rollback':
+      case 'rollback_immediate':
         $operations[] = array('migrate_ui_batch', array('rollback', $machine_name, $limit, $force));
+        break;
+      case 'import_background':
+      case 'rollback_background':
+        $drush_arguments[] = $machine_name;
         break;
       case 'stop':
         $migration->stopProcess();
@@ -459,7 +487,7 @@ function migrate_ui_import_submit($form, &$form_state) {
     }
   }
 
-  // Only rollback and import operations will need to go through Batch API.
+  // Only immediate rollback and import operations will need to go through Batch API.
   if (count($operations) > 0) {
     $batch = array(
       'operations' => $operations,
@@ -471,6 +499,46 @@ function migrate_ui_import_submit($form, &$form_state) {
       'finished' => 'migrate_ui_batch_finish',
     );
     batch_set($batch);
+  }
+  elseif (count($drush_arguments) > 0) {
+    $drush_path = trim(variable_get('migrate_drush_path', ''));
+    $uri = 'http://' . $_SERVER['HTTP_HOST'];
+    $uid = $GLOBALS['user']->uid;
+    if ($operation == 'import_background') {
+      $command = 'mi';
+      $log_suffix = '.import.log';
+    }
+    else {
+      $command = 'mr';
+      $log_suffix = '.rollback.log';
+    }
+    $migrations = implode(',', $drush_arguments);
+    $drush_command = "$drush_path $command $migrations --user=$uid --uri=$uri " .
+      '--root=' . DRUPAL_ROOT;
+    if ($force) {
+      $drush_command .= ' --force';
+    }
+    if ($update) {
+      $drush_command .= ' --update';
+    }
+    if (variable_get('migrate_drush_mail', 0)) {
+      $drush_command .= ' --notify';
+    }
+    if (!empty($limit['value'])) {
+      $limit = $limit['value'] . ' ' . $limit['unit'];
+      $drush_command .= " --limit=\"$limit\"";
+    }
+    $log_file = '/tmp/' . $drush_arguments[0] . $log_suffix;
+    $drush_command .= " >$log_file 2>&1 &";
+    exec($drush_command, $output, $status);
+    if (variable_get('migrate_drush_mail', 0)) {
+      drupal_set_message('Your operation is running in the background. You will ' .
+        'receive an email message when it is complete.');
+    }
+    else {
+      drupal_set_message('Your operation is running in the background. You may '.
+        'refresh the dashboard page to check on its progress.');
+    }
   }
 }
 
@@ -1241,17 +1309,37 @@ function migrate_ui_messages($group_name, $migration_name) {
 }
 
 /**
+ * Given a migration machine name, remove its tracking from the database.
+ *
+ * @param $machine_name
+ */
+function migrate_ui_deregister_migration($machine_name) {
+  // The class is gone, so we'll manually clear migrate_status, and make
+  // the default assumptions about the map/message tables.
+  db_drop_table('migrate_map_' . strtolower($machine_name));
+  db_drop_table('migrate_message_' . strtolower($machine_name));
+  db_delete('migrate_status')
+    ->condition('machine_name', $machine_name)
+    ->execute();
+  db_delete('migrate_field_mapping')
+    ->condition('machine_name', $machine_name)
+    ->execute();
+  drupal_set_message(t("Deregistered '!description' task",
+    array('!description' => $machine_name)));
+}
+
+/**
  * Menu callback
  */
-function migrate_ui_registration() {
-  drupal_set_title(t('Class registration'));
-  return drupal_get_form('migrate_ui_registration_form');
+function migrate_ui_configure() {
+  drupal_set_title(t('Configure migration settings'));
+  return drupal_get_form('migrate_ui_configure_form');
 }
 
 /**
  * Form for reviewing migrations.
  */
-function migrate_ui_registration_form($form, &$form_state) {
+function migrate_ui_configure_form($form, &$form_state) {
   $build = array();
 
   $description = t('To register (or reregister with updated arguments) any
@@ -1298,73 +1386,135 @@ function migrate_ui_registration_form($form, &$form_state) {
     );
   }
 
-  return $build;
-}
-
-/**
- * Submit callback for the configuration form registration fieldset.
- */
-function migrate_ui_configure_register_submit($form, &$form_state) {
-  migrate_static_registration();
-  drupal_set_message(t('All statically defined migrations have been (re)registered.'));
-  $form_state['redirect'] = 'admin/content/import';
-}
-
-/**
- * Submit callback for the configuration form deregistration fieldset.
- */
-function migrate_ui_configure_deregister_submit($form, &$form_state) {
-  $result = db_select('migrate_status', 'ms')
-                ->fields('ms', array('class_name', 'machine_name'))
-                ->execute();
-  foreach ($result as $row) {
-    if (!class_exists($row->class_name)) {
-      migrate_ui_deregister_migration($row->machine_name);
+  // Configure background imports if the drush command has been set.
+  $drush_path = trim(variable_get('migrate_drush_path', ''));
+  $drush_validated = FALSE;
+  if ($drush_path) {
+    // Try running a drush status command to verify it's properly configured.
+    $uri = 'http://' . $_SERVER['HTTP_HOST'];
+    $uid = $GLOBALS['user']->uid;
+    $command = "$drush_path status --user=$uid --uri=$uri --root=" . DRUPAL_ROOT;
+    exec($command, $output, $status);
+    if ($status == 0) {
+      $version = '';
+      foreach ($output as $line) {
+        if (preg_match('|Drush version +: +(.*)|', $line, $matches)) {
+          $version = trim($matches[1]);
+        }
+        elseif (preg_match('|Drupal bootstrap +: +Successful *|', $line, $matches)) {
+          $drush_validated = TRUE;
+        }
+      }
+    }
+    if ($drush_validated) {
+      $description = t('Configure the use of <a href="@drush">drush</a> ' .
+          'version @version to run import and rollback operations in the ' .
+          'background.',
+        array(
+          '@drush' => 'http://drupal.org/project/drush',
+          '@version' => $version,
+        )
+      );
+    }
+    else {
+      $description = t('<a href="@drush">Drush</a> is misconfigured on the server. ' .
+        'Please review the <a href="@config">documentation</a> ' .
+        'on <a href="@dorg">drupal.org</a>, and make sure everything is set up ' .
+        'correctly.',
+        array(
+          '@drush' => 'http://drupal.org/project/drush',
+          '@config' => 'http://drupal.org/', // @todo
+        )
+      );
     }
   }
-  $form_state['redirect'] = 'admin/content/import';
-}
+  else {
+    $description = t('To enable running operations in the background with '.
+        '<a href="@drush">drush</a>, (which is ' .
+        '<a href="@recommended">recommended</a>), some configuration ' .
+        'must be done on the server. See the <a href="@config">documentation</a> ' .
+        'on <a href="@dorg">drupal.org</a>.',
+      array(
+        '@drush' => 'http://drupal.org/project/drush',
+        '@recommended' => 'http://drupal.org/node/1806824',
+        '@config' => 'http://drupal.org/', // @todo
+        '@dorg' => 'http://drupal.org/',
+      )
+    );
+  }
 
-/**
- * Given a migration machine name, remove its tracking from the database.
- *
- * @param $machine_name
- */
-function migrate_ui_deregister_migration($machine_name) {
-  // The class is gone, so we'll manually clear migrate_status, and make
-  // the default assumptions about the map/message tables.
-  db_drop_table('migrate_map_' . strtolower($machine_name));
-  db_drop_table('migrate_message_' . strtolower($machine_name));
-  db_delete('migrate_status')
-    ->condition('machine_name', $machine_name)
-    ->execute();
-  db_delete('migrate_field_mapping')
-    ->condition('machine_name', $machine_name)
-    ->execute();
-  drupal_set_message(t("Deregistered '!description' task",
-    array('!description' => $machine_name)));
-}
+  $build['drush'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#title' => t('Background operations'),
+    '#description' => $description,
+  );
 
-/**
- * Menu callback
- */
-function migrate_ui_handlers() {
-  drupal_set_title(t('Migrate handler configuration'));
-  return drupal_get_form('migrate_ui_handlers_form');
-}
+  if ($drush_validated) {
+    $options = array(
+      0 => t('Immediate operation only'),
+      1 => t('Background operation only'),
+      2 => t('Allows both immediate and background operations'),
+    );
+    $build['drush']['migrate_import_method'] = array(
+      '#type' => 'select',
+      '#options' => $options,
+      '#default_value' => variable_get('migrate_import_method', 0),
+      '#title' => t('Import method'),
+      '#description' => t('Choose whether the Import Dashboard will perform ' .
+        'operations immediately, in the background via drush, or offer a choice.'),
+    );
 
-/**
- * Form for reviewing migrations.
- */
-function migrate_ui_handlers_form($form, &$form_state) {
-  $build = array();
+    $build['drush']['migrate_drush_mail'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => variable_get('migrate_drush_mail', 0),
+      '#title' => t('Send email notification when a background operation ' .
+                    'completes.'),
+    );
+
+    $build['drush']['migrate_drush_mail_subject'] = array(
+      '#type' => 'textfield',
+      '#default_value' => variable_get('migrate_drush_mail_subject',
+        t('Migration operation completed')),
+      '#title' => t('Subject'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="migrate_drush_mail"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+
+    $build['drush']['migrate_drush_mail_body'] = array(
+      '#type' => 'textarea',
+      '#rows' => 10,
+      '#default_value' => variable_get('migrate_drush_mail_body',
+        t('The migration operation is complete. Please review the results on ' .
+          'your import dashboard')),
+      '#title' => t('Body'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="migrate_drush_mail"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+
+    $build['drush']['save_drush_config'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save background configuration'),
+      '#submit' => array('migrate_ui_configure_drush_submit'),
+    );
+  }
 
   $build['handlers'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Handler configuration'),
-    '#description' => t('In some cases, such as when a field handler for a contributed module is
-          implemented in both migrate_extras and the module itself, you may need to disable
-          a particular handler. In this case, you may uncheck the undesired handler below.'),
+    '#title' => t('Handlers'),
+    '#description' => t('In some cases, such as when a field handler for a ' .
+      'contributed module is implemented in both migrate_extras and the module ' .
+      'itself, you may need to disable a particular handler. In this case, you ' .
+      'may uncheck the undesired handler below.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
 
   $build['handlers']['destination'] = array(
@@ -1379,7 +1529,8 @@ function migrate_ui_handlers_form($form, &$form_state) {
     'types' => array('data' => t('Destination types handled')),
   );
 
-  $disabled = unserialize(variable_get('migrate_disabled_handlers', serialize(array())));
+  $disabled = unserialize(variable_get('migrate_disabled_handlers',
+                                       serialize(array())));
   $class_list = _migrate_class_list('MigrateDestinationHandler');
   $rows = array();
   $default_values = array();
@@ -1445,16 +1596,51 @@ function migrate_ui_handlers_form($form, &$form_state) {
   $build['handlers']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save handler statuses'),
-    '#submit' => array('migrate_ui_handlers_submit'),
+    '#submit' => array('migrate_ui_configure_submit'),
   );
 
   return $build;
 }
 
 /**
- * Submit callback for the configuration form handler fieldset.
+ * Submit callback for the configuration form registration fieldset.
  */
-function migrate_ui_handlers_submit($form, &$form_state) {
+function migrate_ui_configure_register_submit($form, &$form_state) {
+  migrate_static_registration();
+  drupal_set_message(t('All statically defined migrations have been (re)registered.'));
+  $form_state['redirect'] = 'admin/content/import';
+}
+
+/**
+ * Submit callback for the configuration form deregistration fieldset.
+ */
+function migrate_ui_configure_deregister_submit($form, &$form_state) {
+  $result = db_select('migrate_status', 'ms')
+                ->fields('ms', array('class_name', 'machine_name'))
+                ->execute();
+  foreach ($result as $row) {
+    if (!class_exists($row->class_name)) {
+      migrate_ui_deregister_migration($row->machine_name);
+    }
+  }
+  $form_state['redirect'] = 'admin/content/import';
+}
+
+/**
+ * Submit callback for the drush configuration form handler fieldset.
+ */
+function migrate_ui_configure_drush_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  variable_set('migrate_import_method', $values['migrate_import_method']);
+  variable_set('migrate_drush_mail', $values['migrate_drush_mail']);
+  variable_set('migrate_drush_mail_subject', $values['migrate_drush_mail_subject']);
+  variable_set('migrate_drush_mail_body', $values['migrate_drush_mail_body']);
+}
+
+/**
+ * Submit callback for the handler configuration form handler fieldset.
+ */
+function migrate_ui_configure_submit($form, &$form_state) {
   $disabled = array();
   foreach ($form_state['values']['destination_handlers'] as $class => $value) {
     if (!$value) {

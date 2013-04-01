@@ -17,6 +17,7 @@ function migrate_drush_command() {
     'instrument' => 'Capture performance information (timer, memory, or all)',
     'force' => 'Force an operation to run, even if all dependencies are not satisfied',
     'group' => 'Name of the migration group to run',
+    'notify' => 'Send email notification upon completion of operation',
   );
   $items['migrate-status'] = array(
     'description' => 'List all migrations with current status.',
@@ -798,6 +799,21 @@ function drush_migrate_audit($args = NULL) {
  */
 function drush_migrate_rollback($args = NULL) {
   try {
+    if (drush_get_option('notify', FALSE)) {
+      // Capture non-informational output for mailing
+      ob_start();
+      ob_implicit_flush(FALSE);
+      // Save original mail setup, which Migrate will disable, so we can
+      // restore it later.
+      global $conf;
+      if (!empty($conf['mail_system'])) {
+        $mail_system = $conf['mail_system'];
+      }
+      else {
+        $mail_system = NULL;
+      }
+    }
+
     $migrations = drush_migrate_get_migrations($args);
 
     // Rollback in reverse order
@@ -888,6 +904,37 @@ function drush_migrate_rollback($args = NULL) {
   if ($_migrate_track_timer && !drush_get_context('DRUSH_DEBUG')) {
     drush_print_timers();
   }
+
+  // Notify user
+  if (drush_get_option('notify')) {
+    if (is_null($mail_system)) {
+      unset($conf['mail_system']);
+    }
+    else {
+      $conf['mail_system'] = $mail_system;
+    }
+    _drush_migrate_notify();
+  }
+}
+
+/**
+ * Send email notification to the user running the operation.
+ */
+function _drush_migrate_notify() {
+  global $user;
+  if ($user->uid) {
+    $uid = $user->uid;
+  }
+  else {
+    $uid = 1;
+  }
+  $account = user_load($uid);
+  $params['account'] = $account;
+  $params['output'] = ob_get_contents();
+  drush_print_r(ob_get_status());
+  ob_end_flush();
+  drupal_mail('migrate_ui', 'import_complete', $account->mail,
+    user_preferred_language($account), $params);
 }
 
 function drush_migrate_get_migrations($args) {
@@ -1055,6 +1102,20 @@ function drush_migrate_pre_migrate_import($args = NULL) {
  */
 function drush_migrate_import($args = NULL) {
   try {
+    if (drush_get_option('notify', FALSE)) {
+      // Capture non-informational output for mailing
+      ob_start();
+      ob_implicit_flush(FALSE);
+      // Save original mail setup, which Migrate will disable, so we can
+      // restore it later.
+      global $conf;
+      if (!empty($conf['mail_system'])) {
+        $mail_system = $conf['mail_system'];
+      }
+      else {
+        $mail_system = NULL;
+      }
+    }
     $migrations = drush_migrate_get_migrations($args);
     $options = array();
     if ($idlist = drush_get_option('idlist', FALSE)) {
@@ -1205,14 +1266,25 @@ function drush_migrate_import($args = NULL) {
   if ($_migrate_track_timer && !drush_get_context('DRUSH_DEBUG')) {
     drush_print_timers();
   }
+
+  // Notify user
+  if (drush_get_option('notify')) {
+    if (is_null($mail_system)) {
+      unset($conf['mail_system']);
+    }
+    else {
+      $conf['mail_system'] = $mail_system;
+    }
+    _drush_migrate_notify();
+  }
 }
 
-//**
-// * Stop clearing or importing a given content set.
-// *
-// * @param $content_set
-// *  The name of the Migration
-// */
+/**
+ * Stop clearing or importing a given content set.
+ *
+ * @param $content_set
+ *  The name of the Migration
+ */
 function drush_migrate_stop($args = NULL) {
   try {
     $migrations = drush_migrate_get_migrations($args);

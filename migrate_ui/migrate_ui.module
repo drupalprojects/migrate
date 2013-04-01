@@ -46,20 +46,11 @@ function migrate_ui_menu() {
     'weight' => -10,
   );
 
-  $items['admin/content/import/registration'] = array(
-    'title' => 'Registration',
+  $items['admin/content/import/configure'] = array(
+    'title' => 'Configuration',
     'type' => MENU_LOCAL_TASK,
-    'description' => 'Configure class registration',
-    'page callback' => 'migrate_ui_registration',
-    'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
-    'file' => 'migrate_ui.pages.inc',
-    'weight' => 5,
-  );
-  $items['admin/content/import/handlers'] = array(
-    'title' => 'Handlers',
-    'type' => MENU_LOCAL_TASK,
-    'description' => 'Configure migration handlers',
-    'page callback' => 'migrate_ui_handlers',
+    'description' => 'Configure migration settings',
+    'page callback' => 'migrate_ui_configure',
     'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
     'file' => 'migrate_ui.pages.inc',
     'weight' => 100,
@@ -146,6 +137,24 @@ function migrate_ui_theme() {
       'file' => '/migrate_ui.pages.inc',
     )
   );
+}
+
+/**
+ * Implementation of hook_mail().
+ *
+ * @param $key
+ * @param $message
+ * @param $params
+ */
+function migrate_ui_mail($key, &$message, $params) {
+  $options['language'] = $message['language'];
+  user_mail_tokens($variables, array(), $options);
+  $langcode = $message['language']->language;
+  $subject = variable_get('migrate_drush_mail_subject', '');
+  $message['subject'] = t($subject, array(), array('langcode' => $langcode));
+  $body = variable_get('migrate_drush_mail_body', '');
+  $body .= "\n" . $params['output'];
+  $message['body'][] = t($body, array(), array('langcode' => $langcode));
 }
 
 /**

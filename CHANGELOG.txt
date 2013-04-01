@@ -12,6 +12,9 @@ Migration developers will need to add the "advanced migration information"
 permission to their accounts to continue seeing all the info in the UI they're
 used to.
 
+The pages of the UI have been completely reorganized. The root of the UI is
+now admin/content/import rather than admin/content/migrate.
+
 Auto-registration (having classes be registered just based on their class name,
 with no call to registerMigration or definition in hook_migrate_api()) is no
 longer supported. Registration of classes defined in hook_migrate_api() is no
@@ -25,12 +28,16 @@ Features and enhancements
 - #1833380 - Major refactoring of the UI, breaking groups (jobs) and migrations
              (tasks) into separate pages, introducing an advanced permission and
              presenting a simplified UI to those with only the basic permission.
+- #1860450 - The UI now has the capability of spawning import/rollback operations
+             in drush, with email notifications of completion. The notification
+             ability is available when running drush at the command line, which
+             may be useful for running imports via cron.
 - #1896096 - Add ability to define field mappings via arguments at registration
              time, and use those to override mappings in code.
 - #1839644 - Groups have been extended to record titles and arguments in the db.
 - #1896920 - Remove auto-registration, and make static registration expicit.
-- #1550878 - Added UI for deregistering migrations, including one-button deregistration
-             of orphans.
+- #1550878 - Added UI for deregistering migrations, including one-button
+             deregistration of orphans.
 - #1792894 - Remove empty field values, permitting proper defaulting.
 - #1903236 - Allow reset of migrate_migrations() cache.
 - #1894344 - Support warn_on_override for bulk unmigrated methods.

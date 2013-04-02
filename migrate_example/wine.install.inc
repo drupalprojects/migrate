@@ -1193,7 +1193,7 @@ function migrate_example_wine_data_files() {
   $query = db_insert('migrate_example_wine_files')
     ->fields($fields);
   $data = array(
-    array(1, 'http://drupal.org/sites/all/modules/drupalorg/drupalorg/images/association-individual.png', NULL, NULL, NULL),
+    array(1, 'http://placekitten.com/200/200', NULL, NULL, NULL),
     array(2, 'http://cyrve.com/files/penguin.jpeg', 'Penguin alt', 'Penguin title', 1),
     array(3, 'http://cyrve.com/files/rioja.jpeg', 'Rioja alt', 'Rioja title', 2),
     array(4, 'http://cyrve.com/files/boutisse_0.jpeg', 'Boutisse alt', 'Boutisse title', 2),

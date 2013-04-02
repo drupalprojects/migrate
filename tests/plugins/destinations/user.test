@@ -115,7 +115,7 @@ class MigrateUserUnitTest extends DrupalWebTestCase {
     $this->assert(!isset($users['fonzie']->field_migrate_example_gender[LANGUAGE_NONE][0]['value']),
       t('Missing gender left unmigrated'));
     $this->assert(is_object($users['fonzie']->picture) &&
-                  $users['fonzie']->picture->filename == 'association-individual.png',
+                  $users['fonzie']->picture->filename == '200',
       t('Picture migrated'));
     $this->assertNotNull($users['fonzie']->roles[$roles['Taster']], t('Taster role'));
     $this->assertNotNull($users['fonzie']->roles[$roles['Vintner']], t('Vintner role'));

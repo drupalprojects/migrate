@@ -318,10 +318,18 @@ class MigrateFileUri extends MigrateFile {
    */
   protected $sourcePath = '';
 
+  /**
+   * Whether to apply rawurlencode to the components of an incoming file path.
+   */
+  protected $urlEncode = TRUE;
+
   public function __construct($arguments = array(), $default_file = NULL) {
     parent::__construct($arguments, $default_file);
     if (isset($arguments['source_dir'])) {
       $this->sourceDir = rtrim($arguments['source_dir'], "/\\");
+    }
+    if (isset($arguments['urlencode'])) {
+      $this->urlEncode = $arguments['urlencode'];
     }
   }
 
@@ -335,6 +343,9 @@ class MigrateFileUri extends MigrateFile {
       array(
         'source_dir' => t('Subfield: <a href="@doc">Path to source file.</a>',
           array('@doc' => 'http://drupal.org/node/1540106#source_dir')),
+        'urlencode' => t('Option: <a href="@doc">Encode all segments of the ' .
+            'incoming path (defaults to TRUE).</a>',
+          array('@doc' => 'http://drupal.org/node/1540106#urlencode')),
       );
   }
 
@@ -348,8 +359,10 @@ class MigrateFileUri extends MigrateFile {
    *  TRUE if the copy succeeded, FALSE otherwise.
    */
   protected function copyFile($destination) {
-    // Perform the copy operation, with a cleaned-up path.
-    $this->sourcePath = self::urlencode($this->sourcePath);
+    if ($this->urlEncode) {
+      // Perform the copy operation, with a cleaned-up path.
+      $this->sourcePath = self::urlencode($this->sourcePath);
+    }
     if (!@copy($this->sourcePath, $destination)) {
       $migration = Migration::currentMigration();
       $migration->saveMessage(t('The specified file %file could not be copied to ' .

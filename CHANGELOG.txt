@@ -34,6 +34,7 @@ Features and enhancements
              may be useful for running imports via cron.
 - #1896096 - Add ability to define field mappings via arguments at registration
              time, and use those to override mappings in code.
+- #1856694 - Allow disabling of uri encoding.
 - #1835142 - Add names-only option to drush ms command.
 - #1892296 - Increase time limit for batch UI migrations.
 - #1839644 - Groups have been extended to record titles and arguments in the db.

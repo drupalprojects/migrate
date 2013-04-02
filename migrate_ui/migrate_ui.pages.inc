@@ -198,7 +198,7 @@ function migrate_ui_import_job($form, &$form_state, $group_name) {
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
     $group_length = strlen($group_name);
-    if (!strncasecmp($group_name, $machine_name, strlen($group_length))) {
+    if (!strncasecmp($group_name, $machine_name, $group_length)) {
       $display_name = substr($machine_name, $group_length);
     }
     else {

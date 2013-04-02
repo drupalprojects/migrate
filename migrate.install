@@ -453,7 +453,7 @@ function migrate_update_7202() {
       ));
     }
   }
-  $ret[] = t('Added rollback_action column to all map tables');
+  $ret = t('Added rollback_action column to all map tables');
   return $ret;
 }
 
@@ -461,13 +461,13 @@ function migrate_update_7202() {
  * Add database tracking of per-group info.
  */
 function migrate_update_7203() {
-  $ret = array();
+  $ret = '';
   if (!db_table_exists('migrate_group')) {
-    $ret[] = t('Create migrate_group table');
+    $ret .= t('Create migrate_group table') . "\n";
     db_create_table('migrate_group', migrate_schema_group());
   }
   if (!db_field_exists('migrate_status', 'group_name')) {
-    $ret[] = t('Add group relationship to migrate_status table');
+    $ret .= t('Add group relationship to migrate_status table'). "\n";
     db_add_field('migrate_status', 'group_name', array(
           'type' => 'varchar',
           'length' => 255,
@@ -514,9 +514,9 @@ function migrate_update_7203() {
  * Add database tracking of field mappings.
  */
 function migrate_update_7204() {
-  $ret = array();
+  $ret = '';
   if (!db_table_exists('migrate_field_mapping')) {
-    $ret[] = t('Create migrate_field_mapping table');
+    $ret = t('Create migrate_field_mapping table');
     db_create_table('migrate_field_mapping', migrate_schema_field_mapping());
   }
   return $ret;

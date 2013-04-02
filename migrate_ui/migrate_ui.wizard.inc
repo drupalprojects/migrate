@@ -317,11 +317,11 @@ abstract class MigrateUIWizard {
       // called.
       if (is_subclass_of($info['class_name'], 'Migration')) {
         Migration::registerMigration($info['class_name'], $machine_name,
-                $info['arguments'], $this->groupName);
+                $info['arguments']);
       }
       else {
         MigrationBase::registerMigration($info['class_name'], $machine_name,
-                $info['arguments'], $this->groupName);
+                $info['arguments']);
       }
     };
     menu_rebuild();

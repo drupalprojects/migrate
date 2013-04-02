@@ -377,7 +377,7 @@ abstract class MigrationBase {
    * @param array $arguments
    */
   static public function registerMigration($class_name, $machine_name = NULL,
-      array $arguments = array(), $group_name = 'default') {
+      array $arguments = array()) {
     if (!$machine_name) {
       $machine_name = self::machineFromClass($class_name);
     }
@@ -395,6 +395,9 @@ abstract class MigrationBase {
 
     if (isset($arguments['group_name'])) {
       $group_name = $arguments['group_name'];
+    }
+    else {
+      $group_name = 'default';
     }
 
     // Register the migration if it's not already there; if it is,

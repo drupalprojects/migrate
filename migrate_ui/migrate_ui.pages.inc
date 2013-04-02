@@ -1110,6 +1110,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   $group_name = $row->group_name;
   $arguments = unserialize($row->arguments);
   $arguments['field_mappings'] = array();
+  $arguments['group_name'] = $group_name;
   $field_mappings = array();
   $default_values = array();
 
@@ -1225,7 +1226,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     }
   }
 
-  Migration::registerMigration($class_name, $machine_name, $arguments, $group_name);
+  Migration::registerMigration($class_name, $machine_name, $arguments);
 
   drupal_set_message(t('Field mapping changes applied.'));
   $form_state['redirect'] = "admin/content/import/jobs/$group_name/$machine_name";

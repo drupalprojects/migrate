@@ -190,14 +190,14 @@ abstract class Migration extends MigrationBase {
    * @param array $arguments
    */
   static public function registerMigration($class_name, $machine_name = NULL,
-      array $arguments = array(), $group_name = 'default') {
+      array $arguments = array()) {
     // Record any field mappings provided via arguments.
     if (isset($arguments['field_mappings'])) {
       self::saveFieldMappings($machine_name, $arguments['field_mappings']);
       unset($arguments['field_mappings']);
     }
 
-    parent::registerMigration($class_name, $machine_name, $arguments, $group_name);
+    parent::registerMigration($class_name, $machine_name, $arguments);
   }
 
   /**

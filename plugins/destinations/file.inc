@@ -390,8 +390,10 @@ class MigrateFileUri extends MigrateFile {
         $components[$key] = rawurlencode($component);
       }
       $filename = implode('/', $components);
-      // Actually, we don't want colons encoded
+      // Actually, we don't want certain characters encoded
       $filename = str_replace('%3A', ':', $filename);
+      $filename = str_replace('%3F', '?', $filename);
+      $filename = str_replace('%26', '&', $filename);
     }
     return $filename;
   }

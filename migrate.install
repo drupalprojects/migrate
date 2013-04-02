@@ -437,10 +437,11 @@ function migrate_update_7201() {
 }
 
 /**
- * Add rollback_action field to all map tables
+ * Add rollback_action field to all map tables in the Drupal database.
  */
 function migrate_update_7202() {
-  $ret = array();
+  // Note this won't catch any prefixed tables, or any stored in the source
+  // database - ensureTables() will take care of those.
   foreach (db_find_tables('migrate_map_%') as $tablename) {
     if (!db_field_exists($tablename, 'rollback_action')) {
       db_add_field($tablename, 'rollback_action', array(

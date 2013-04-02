@@ -182,6 +182,18 @@ class MigrateSQLMap extends MigrateMap {
         );
         $this->connection->schema()->createTable($this->messageTable, $schema);
       }
+      else {
+        if (!db_field_exists($this->mapTable, 'rollback_action')) {
+          db_add_field($this->mapTable, 'rollback_action', array(
+            'type' => 'int',
+            'size' => 'tiny',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+            'default' => 0,
+            'description' => 'Flag indicating what to do for this item on rollback',
+          ));
+        }
+      }
       $this->ensured = TRUE;
     }
   }

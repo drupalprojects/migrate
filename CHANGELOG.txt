@@ -46,6 +46,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1844316 - Ensure rollback_action is added to all map tables.
 - #1913462 - Fix update functions returning arrays.
 - #1831940 - Allow empty string source keys in handleSourceMigration().
 - #1896042 - Fix incorrect usage of originalQuery.

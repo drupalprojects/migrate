@@ -167,7 +167,7 @@ abstract class MigrateFile extends MigrateFileBase {
         array('@doc' => 'http://drupal.org/node/1540106#destination_dir')),
       'destination_file' => t('Subfield: <a href="@doc">Path within destination_dir to store the file.</a>',
         array('@doc' => 'http://drupal.org/node/1540106#destination_file')),
-      'file_replace' => t('Option: <a href="@doc">Value of $replace in that file function. Does not apply to file_fast(). Defaults to FILE_EXISTS_RENAME.</a>',
+      'file_replace' => t('Option: <a href="@doc">Value of $replace in that file function. Defaults to FILE_EXISTS_RENAME.</a>',
         array('@doc' => 'http://drupal.org/node/1540106#file_replace')),
       'preserve_files' => t('Option: <a href="@doc">Boolean indicating whether files should be preserved or deleted on rollback</a>',
         array('@doc' => 'http://drupal.org/node/1540106#preserve_files')),

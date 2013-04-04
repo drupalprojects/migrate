@@ -675,14 +675,16 @@ abstract class Migration extends MigrationBase {
         $ids = $this->destination->import($this->destinationValues, $this->sourceValues);
         migrate_instrument_stop('destination import');
         if ($ids) {
-          $this->map->saveIDMapping($this->sourceValues, $ids, $this->needsUpdate,
-                                    $this->rollbackAction);
+          $this->map->saveIDMapping($this->sourceValues, $ids,
+            $this->needsUpdate, $this->rollbackAction,
+            $data_row->migrate_map_hash);
           $this->successes_since_feedback++;
           $this->total_successes++;
         }
         else {
           $this->map->saveIDMapping($this->sourceValues, array(),
-            MigrateMap::STATUS_FAILED, $this->rollbackAction);
+            MigrateMap::STATUS_FAILED, $this->rollbackAction,
+            $data_row->migrate_map_hash);
           if ($this->map->messageCount() == 0) {
             $message = t('New object was not saved, no error provided');
             $this->saveMessage($message);
@@ -692,13 +694,15 @@ abstract class Migration extends MigrationBase {
       }
       catch (MigrateException $e) {
         $this->map->saveIDMapping($this->sourceValues, array(),
-          MigrateMap::STATUS_FAILED, $this->rollbackAction);
+          MigrateMap::STATUS_FAILED, $this->rollbackAction,
+          $data_row->migrate_map_hash);
         $this->saveMessage($e->getMessage(), $e->getLevel());
         self::displayMessage($e->getMessage());
       }
       catch (Exception $e) {
         $this->map->saveIDMapping($this->sourceValues, array(),
-          MigrateMap::STATUS_FAILED, $this->rollbackAction);
+          MigrateMap::STATUS_FAILED, $this->rollbackAction,
+          $data_row->migrate_map_hash);
         $this->handleException($e);
       }
       $this->total_processed++;

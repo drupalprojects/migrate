@@ -1141,7 +1141,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     if (isset($existing_mappings[$destination_field])) {
       $old_mapping = $existing_mappings[$destination_field];
       if ($source_field == $old_mapping->getSourceField() &&
-          $default_values[$destination_field] == $old_mapping->getDefaultValue) {
+          $default_values[$destination_field] == $old_mapping->getDefaultValue()) {
         // First, if this mapping matches a previously-stored mapping, we want to
         // preserve it as it was originally stored.
         if ($old_mapping->getMappingSource() == MigrateFieldMapping::MAPPING_SOURCE_DB) {

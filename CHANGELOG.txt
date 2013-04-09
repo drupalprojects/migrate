@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.6 Beta 1
+==================
 
 IMPORTANT: The -dev releases between Migrate 2.5 and Migrate 2.6 will be less
 stable than we've typically maintained in the past. In particular, as far as

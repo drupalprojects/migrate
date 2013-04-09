@@ -227,7 +227,7 @@ abstract class XMLMigration extends Migration {
   public function addFieldMapping($destination_field, $source_field = NULL,
                                   $warn_on_override = TRUE) {
     // Warn of duplicate mappings
-    if ($warn_on_override && !is_null($destination_field) && isset($this->fieldMappings[$destination_field])) {
+    if ($warn_on_override && !is_null($destination_field) && isset($this->codedFieldMappings[$destination_field])) {
       self::displayMessage(
         t('!name addFieldMapping: !dest was previously mapped, overridden',
           array('!name' => $this->machineName, '!dest' => $destination_field)),
@@ -235,10 +235,10 @@ abstract class XMLMigration extends Migration {
     }
     $mapping = new MigrateXMLFieldMapping($destination_field, $source_field);
     if (is_null($destination_field)) {
-      $this->fieldMappings[] = $mapping;
+      $this->codedFieldMappings[] = $mapping;
     }
     else {
-      $this->fieldMappings[$destination_field] = $mapping;
+      $this->codedFieldMappings[$destination_field] = $mapping;
     }
     return $mapping;
   }
@@ -251,7 +251,7 @@ abstract class XMLMigration extends Migration {
    */
   protected function applyMappings() {
     // We only know what data to pull from the xpaths in the mappings.
-    foreach ($this->fieldMappings as $mapping) {
+    foreach ($this->getFieldMappings() as $mapping) {
       $source = $mapping->getSourceField();
       if ($source) {
         $xpath = $mapping->getXpath();
@@ -965,7 +965,7 @@ class MigrateSourceXML extends MigrateSource {
    * @return string
    */
   public function activeUrl() {
-    if ($this->activeUrl) {
+    if (!is_null($this->activeUrl)) {
       return $this->sourceUrls[$this->activeUrl];
     }
   }

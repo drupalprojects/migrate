@@ -194,6 +194,14 @@ abstract class MigrationBase {
   protected $timeLimit;
 
   /**
+   * A time limit in seconds appropriate to be used in a batch
+   * import. Defaults to 240.
+   *
+   * @var int
+   */
+  protected $batchTimeLimit = 240;
+
+  /**
    * MigrateTeamMember objects representing people involved with this
    * migration.
    *
@@ -288,9 +296,16 @@ abstract class MigrationBase {
    */
   public function __construct($group = NULL) {
     $this->machineName = $this->generateMachineName();
-
     if (empty($group)) {
-      $this->group = MigrateGroup::getInstance('default');
+      $group_name = db_select('migrate_status', 'ms')
+                    ->fields('ms', array('group_name'))
+                    ->condition('machine_name', $this->machineName)
+                    ->execute()
+                    ->fetchField();
+      if (empty($group_name)) {
+        $group_name = 'default';
+      }
+      $this->group = MigrateGroup::getInstance($group_name);
     }
     else {
       $this->group = $group;
@@ -330,6 +345,9 @@ abstract class MigrationBase {
         $conf['mail_system'][$system] = 'MigrateMailIgnore';
       }
     }
+    else {
+      $conf['mail_system']['default-system'] = 'MigrateMailIgnore';
+    }
 
     // Make sure we clear our semaphores in case of abrupt exit
     register_shutdown_function(array($this, 'endProcess'));
@@ -358,7 +376,8 @@ abstract class MigrationBase {
    * @param string $machine_name
    * @param array $arguments
    */
-  static public function registerMigration($class_name, $machine_name = NULL, array $arguments = array()) {
+  static public function registerMigration($class_name, $machine_name = NULL,
+      array $arguments = array()) {
     if (!$machine_name) {
       $machine_name = self::machineFromClass($class_name);
     }
@@ -374,12 +393,20 @@ abstract class MigrationBase {
       $arguments['machine_name'] = $machine_name;
     }
 
+    if (isset($arguments['group_name'])) {
+      $group_name = $arguments['group_name'];
+    }
+    else {
+      $group_name = 'default';
+    }
+
     // Register the migration if it's not already there; if it is,
     // update the class and arguments in case they've changed.
     db_merge('migrate_status')
       ->key(array('machine_name' => $machine_name))
       ->fields(array(
                 'class_name' => $class_name,
+                'group_name' => $group_name,
                 'arguments' => serialize($arguments)
         ))
       ->execute();
@@ -395,6 +422,8 @@ abstract class MigrationBase {
     $rows_deleted = db_delete('migrate_status')
                     ->condition('machine_name', $machine_name)
                     ->execute();
+    // Make sure the group gets deleted if we were the only member.
+    MigrateGroup::deleteOrphans();
   }
 
   /**
@@ -431,13 +460,14 @@ abstract class MigrationBase {
       if (!$class_name) {
         // See if we know about this migration
         $row = db_select('migrate_status', 'ms')
-               ->fields('ms', array('class_name', 'arguments'))
+               ->fields('ms', array('class_name', 'group_name', 'arguments'))
                ->condition('machine_name', $machine_name)
                ->execute()
                ->fetchObject();
         if ($row) {
           $class_name = $row->class_name;
           $arguments = unserialize($row->arguments);
+          $arguments['group_name'] = $row->group_name;
         }
         else {
           // Can't find a migration with this name
@@ -902,6 +932,14 @@ abstract class MigrationBase {
       $return = MigrationBase::RESULT_DISABLED;
     }
     return $return;
+  }
+
+  /**
+   * Set the PHP time limit. This method may be called from batch callbacks
+   * before calling the processImport method.
+   */
+  public function setBatchTimeLimit() {
+    drupal_set_time_limit($this->batchTimeLimit);
   }
 
   /**

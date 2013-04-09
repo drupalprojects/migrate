@@ -147,6 +147,12 @@ class MigrateSQLMap extends MigrateMap {
           'default' => 0,
           'description' => 'UNIX timestamp of the last time this row was imported',
         );
+        $fields['hash'] = array(
+          'type' => 'varchar',
+          'length' => '32',
+          'not null' => FALSE,
+          'description' => 'Hash of source row data, for detecting changes',
+        );
         $schema = array(
           'description' => t('Mappings from source key to destination key'),
           'fields' => $fields,
@@ -181,6 +187,27 @@ class MigrateSQLMap extends MigrateMap {
           'indexes' => array('sourcekey' => $pks),
         );
         $this->connection->schema()->createTable($this->messageTable, $schema);
+      }
+      else {
+        // Add any missing columns to the map table
+        if (!db_field_exists($this->mapTable, 'rollback_action')) {
+          db_add_field($this->mapTable, 'rollback_action', array(
+            'type' => 'int',
+            'size' => 'tiny',
+            'unsigned' => TRUE,
+            'not null' => TRUE,
+            'default' => 0,
+            'description' => 'Flag indicating what to do for this item on rollback',
+          ));
+        }
+        if (!db_field_exists($this->mapTable, 'hash')) {
+          db_add_field($this->mapTable, 'hash', array(
+            'type' => 'varchar',
+            'length' => '32',
+            'not null' => FALSE,
+            'description' => 'Hash of source row data, for detecting changes',
+          ));
+        }
       }
       $this->ensured = TRUE;
     }
@@ -300,9 +327,12 @@ class MigrateSQLMap extends MigrateMap {
    * @param int $rollback_action
    *  How to handle the destination object on rollback. Defaults to
    *  ROLLBACK_DELETE.
+   * $param string $hash
+   *  If hashing is enabled, the hash of the raw source row.
    */
   public function saveIDMapping(stdClass $source_row, array $dest_ids,
-      $needs_update = MigrateMap::STATUS_IMPORTED, $rollback_action = MigrateMap::ROLLBACK_DELETE) {
+      $needs_update = MigrateMap::STATUS_IMPORTED,
+      $rollback_action = MigrateMap::ROLLBACK_DELETE, $hash = NULL) {
     migrate_instrument_start('saveIDMapping');
     // Construct the source key
     $keys = array();
@@ -321,6 +351,7 @@ class MigrateSQLMap extends MigrateMap {
     $fields = array(
       'needs_update' => (int)$needs_update,
       'rollback_action' => (int)$rollback_action,
+      'hash' => $hash,
     );
     $count = 1;
     if (!empty($dest_ids)) {

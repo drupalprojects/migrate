@@ -1,19 +1,71 @@
-Next release
-============
+
+Migrate 2.6 Beta 1
+==================
+
+IMPORTANT: The -dev releases between Migrate 2.5 and Migrate 2.6 will be less
+stable than we've typically maintained in the past. In particular, as far as
+database updates are concerned, the goal is to have a clean upgrade from 2.5 to
+2.6 - intermediate updates are not supported and can't be expected to work
+cleanly. Backup your database before upgrading to a -dev release.
+
+Migration developers will need to add the "advanced migration information"
+permission to their accounts to continue seeing all the info in the UI they're
+used to.
+
+The pages of the UI have been completely reorganized. The root of the UI is
+now admin/content/import rather than admin/content/migrate.
+
+Auto-registration (having classes be registered just based on their class name,
+with no call to registerMigration or definition in hook_migrate_api()) is no
+longer supported. Registration of classes defined in hook_migrate_api() is no
+longer automatic - do a drush migrate-register or use the Register button in the
+UI to register them.
 
 Features and enhancements
+- #1826112 - A new API has been added to support external modules in developing
+             easy-to-use wizard-based UIs. This is a work-in-progress at the
+             moment - use at your own risk.
+- #1833380 - Major refactoring of the UI, breaking groups (jobs) and migrations
+             (tasks) into separate pages, introducing an advanced permission and
+             presenting a simplified UI to those with only the basic permission.
+- #1860450 - The UI now has the capability of spawning import/rollback operations
+             in drush, with email notifications of completion. The notification
+             ability is available when running drush at the command line, which
+             may be useful for running imports via cron.
+- #1896096 - Add ability to define field mappings via arguments at registration
+             time, and use those to override mappings in code.
+- #1835822 - Hash source rows to detect changes.
+- #1856694 - Allow disabling of uri encoding.
+- #1835142 - Add names-only option to drush ms command.
+- #1892296 - Increase time limit for batch UI migrations.
+- #1839644 - Groups have been extended to record titles and arguments in the db.
+- #1896920 - Remove auto-registration, and make static registration expicit.
+- #1550878 - Added UI for deregistering migrations, including one-button
+             deregistration of orphans.
 - #1792894 - Remove empty field values, permitting proper defaulting.
+- #1903236 - Allow reset of migrate_migrations() cache.
 - #1894344 - Support warn_on_override for bulk unmigrated methods.
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
-- #1676652 - Make MigrateFileFid respect preserve_files.
+- #1849350 - Make sure encoding of uris doesn't break query strings.
+- #1844316 - Ensure rollback_action is added to all map tables.
+- #1913462 - Fix update functions returning arrays.
+- #1831940 - Allow empty string source keys in handleSourceMigration().
+- #1896042 - Fix incorrect usage of originalQuery.
+- #1954936 - Allow overriding source count in isComplete.
+- #1952430 - Prevent bogus "no error provided" messages.
+- #1931168 - Properly cache class info in _migrate_class_list().
+- #1900914 - Disable email with no custom mail system configured.
+- #1901648 - Missing bundle property on file migrations.
 - #1885362 - Make access callback explicit, to avoid conflict with admin_views.
 - #1880512 - Strip tags from descriptions on drush migrate-mappings.
 - #1872446 - Properly handle updates on role migration.
 - #1871764 - Pass zero values through handleSourceMigration.
 - #1839534 - Handle missing chunk separator in MigrateItemFile.
 - #1854382 - Prevent duplicate terms due to leading/trailing spaces.
+- #1794236 - Namespace detail pages within menu system.
+- #1836426 - Proper check on activeUrl for multiple XML files.
 
 Migrate 2.5
 ===========
@@ -26,12 +78,6 @@ If your migrations are not explicitly registered, you must request auto-registra
 with a "drush mar" (drush migrate-auto-register) command, or by clicking the
 "Register" button at admin/content/migrate/registration.
 
-Bug fixes
-- #1827052 - Properly check for bad XML.
-
-Migrate 2.5 Release Candidate 2
-===============================
-
 Features and enhancements
 - #1824024 - Destination and field handlers may now be registered through
              hook_migrate_api(). Automatic registration of all migration and
@@ -42,14 +88,6 @@ Features and enhancements
              hook_migrate_api().
 - #1819730 - Make migration of files in a field context non-fatal.
 - #1816652 - Provide useful warning when file subfield arrays don't line up.
-
-Bug fixes
-- #1824118 - Make --force work for rollbacks.
-
-Migrate 2.5 Release Candidate 1
-===============================
-
-Features and enhancements
 - #1778952 - Enable registration of dynamic migrations via hook_migrate_api().
              Add explicit auto-registration of non-dynamic migrations, remove
              performing registration on cache clear.
@@ -70,6 +108,8 @@ Features and enhancements
 - #1621906 - Support DESTINATION system-of-records for menu links.
 
 Bug fixes
+- #1827052 - Properly check for bad XML.
+- #1824118 - Make --force work for rollbacks.
 - #1659150 - Change 'ok' message types to 'status'.
 - #1690080 - Deal with self-references in handleSourceMigration().
 - #1797644 - Remove bogus assignment on term update.

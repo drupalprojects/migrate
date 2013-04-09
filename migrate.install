@@ -9,6 +9,8 @@ function migrate_schema() {
   $schema = array();
   $schema['migrate_status'] = migrate_schema_status();
   $schema['migrate_log'] = migrate_schema_log();
+  $schema['migrate_group'] = migrate_schema_group();
+  $schema['migrate_field_mapping'] = migrate_schema_field_mapping();
   return $schema;
 }
 
@@ -27,6 +29,12 @@ function migrate_schema_status() {
         'length' => 255,
         'not null' => TRUE,
         'description' => 'Name of class to instantiate for this migration',
+      ),
+      'group_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Name of group containing migration',
       ),
       'status' => array(
         'type' => 'int',
@@ -115,6 +123,68 @@ function migrate_schema_log() {
   );
 }
 
+function migrate_schema_group() {
+  return array(
+    'description' => 'Information on migration groups',
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique machine name for a migration group',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Display name for a migration group',
+      ),
+      'arguments' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of arguments to the migration group',
+      ),
+    ),
+    'primary key' => array('name'),
+  );
+}
+
+function migrate_schema_field_mapping() {
+  return array(
+    'description' => 'History of migration processes',
+    'fields' => array(
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Parent migration for the field mapping',
+      ),
+      'destination_field' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Destination field for the field mapping',
+      ),
+      'source_field' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Source field for the field mapping',
+      ),
+      'options' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized MigrateFieldMapping object holding all options',
+      ),
+    ),
+    'primary key' => array('machine_name', 'destination_field', 'source_field'),
+  );
+}
+
 /**
  * Implements hook_uninstall().
  * Drop map/message tables, in case implementing classes did not.
@@ -137,6 +207,10 @@ function migrate_uninstall() {
       ->condition('module', 'migrate')
       ->execute();
   }
+
+  // Remove variables
+  variable_del('migrate_disable_autoregistration');
+  variable_del('migrate_disabled_handlers');
 }
 
 /**
@@ -363,10 +437,11 @@ function migrate_update_7201() {
 }
 
 /**
- * Add rollback_action field to all map tables
+ * Add rollback_action field to all map tables in the Drupal database.
  */
 function migrate_update_7202() {
-  $ret = array();
+  // Note this won't catch any prefixed tables, or any stored in the source
+  // database - ensureTables() will take care of those.
   foreach (db_find_tables('migrate_map_%') as $tablename) {
     if (!db_field_exists($tablename, 'rollback_action')) {
       db_add_field($tablename, 'rollback_action', array(
@@ -379,6 +454,78 @@ function migrate_update_7202() {
       ));
     }
   }
-  $ret[] = t('Added rollback_action column to all map tables');
+  $ret = t('Added rollback_action column to all map tables');
   return $ret;
+}
+
+/**
+ * Add database tracking of per-group info.
+ */
+function migrate_update_7203() {
+  $ret = '';
+  if (!db_table_exists('migrate_group')) {
+    $ret .= t('Create migrate_group table') . "\n";
+    db_create_table('migrate_group', migrate_schema_group());
+  }
+  if (!db_field_exists('migrate_status', 'group_name')) {
+    $ret .= t('Add group relationship to migrate_status table'). "\n";
+    db_add_field('migrate_status', 'group_name', array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => 'default',
+          'description' => 'Name of group containing migration',
+        )
+    );
+    // Populate each migration's group_name field
+    $groups = array();
+    foreach (migrate_migrations() as $machine_name => $migration) {
+      $group_name = $migration->getGroup()->getName();
+      if (empty($group_name)) {
+        $group_name = 'default';
+      }
+      $groups[$group_name] = $group_name;
+      db_update('migrate_status')
+        ->fields(array('group_name' => $group_name))
+        ->condition('machine_name', $machine_name)
+        ->execute();
+    }
+    // Populate the migrate_group table
+    foreach ($groups as $group_name) {
+      $title = db_select('migrate_group', 'mg')
+               ->fields('mg', array('title'))
+               ->condition('name', $group_name)
+               ->execute()
+               ->fetchField();
+      if (!$title) {
+        db_insert('migrate_group')
+          ->fields(array(
+              'name' => $group_name,
+              'title' => $group_name,
+              'arguments' => serialize(array()),
+            ))
+          ->execute();
+      }
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Add database tracking of field mappings.
+ */
+function migrate_update_7204() {
+  $ret = '';
+  if (!db_table_exists('migrate_field_mapping')) {
+    $ret = t('Create migrate_field_mapping table');
+    db_create_table('migrate_field_mapping', migrate_schema_field_mapping());
+  }
+  return $ret;
+}
+
+/**
+ * Remove obsolete autoregistration disablement.
+ */
+function migrate_update_7205() {
+  variable_del('migrate_disable_autoregistration');
 }

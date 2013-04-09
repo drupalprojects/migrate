@@ -34,6 +34,8 @@ Features and enhancements
              may be useful for running imports via cron.
 - #1896096 - Add ability to define field mappings via arguments at registration
              time, and use those to override mappings in code.
+- #1961620 - When editing field mappings, allow destination mappings to be
+             explicitly set DNM.
 - #1835822 - Hash source rows to detect changes.
 - #1856694 - Allow disabling of uri encoding.
 - #1835142 - Add names-only option to drush ms command.

@@ -23,8 +23,7 @@ UI to register them.
 
 Features and enhancements
 - #1826112 - A new API has been added to support external modules in developing
-             easy-to-use wizard-based UIs. This is a work-in-progress at the
-             moment - use at your own risk.
+             easy-to-use wizard-based UIs.
 - #1833380 - Major refactoring of the UI, breaking groups (jobs) and migrations
              (tasks) into separate pages, introducing an advanced permission and
              presenting a simplified UI to those with only the basic permission.

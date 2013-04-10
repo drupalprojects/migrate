@@ -162,6 +162,13 @@ abstract class MigrationBase {
   }
 
   /**
+   * Track whether or not we've already displayed an encryption warning
+   *
+   * @var bool
+   */
+  protected static $showEncryptionWarning = TRUE;
+
+  /**
    * The fraction of the memory limit at which an operation will be interrupted.
    * Can be overridden by a Migration subclass if one would like to push the
    * envelope. Defaults to 85%.
@@ -400,6 +407,8 @@ abstract class MigrationBase {
       $group_name = 'default';
     }
 
+    $arguments = self::encryptArguments($arguments);
+
     // Register the migration if it's not already there; if it is,
     // update the class and arguments in case they've changed.
     db_merge('migrate_status')
@@ -467,6 +476,7 @@ abstract class MigrationBase {
         if ($row) {
           $class_name = $row->class_name;
           $arguments = unserialize($row->arguments);
+          $arguments = self::decryptArguments($arguments);
           $arguments['group_name'] = $row->group_name;
         }
         else {
@@ -1035,6 +1045,130 @@ abstract class MigrationBase {
     else {
       return FALSE;
     }
+  }
+
+  /**
+   * Encrypt an incoming value. Detects for existence of the Drupal 'Encrypt'
+   *  module or the mcrypt PHP extension.
+   *
+   * @param string $value
+   * @return string The encrypted value.
+   */
+  static public function encrypt($value) {
+    if (module_exists('encrypt')) {
+      $value = encrypt($value);
+    }
+    else if (extension_loaded('mcrypt')) {
+      // Mimic encrypt module to ensure compatibility
+      $key = drupal_substr(variable_get('drupal_private_key', 'no_key'), 0, 32);
+      $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
+      $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+      $value = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $value,
+                              MCRYPT_MODE_ECB, $iv);
+
+      $encryption_array['text'] = $value;
+      // For forward compatibility with the encrypt module.
+      $encryption_array['method'] = 'mcrypt_rij_256';
+      $encryption_array['key_name'] = 'drupal_private_key';
+      $value = serialize($encryption_array);
+    }
+    else {
+      if (self::$showEncryptionWarning) {
+        MigrationBase::displayMessage(t('Encryption of secure migration ' .
+              'information is not supported. Ensure the ' .
+              '<a href="@encrypt">Encrypt module</a> or ' .
+              '<a href="mcrypt">mcrypt PHP extension</a> is installed for ' .
+              'this functionality.',
+            array(
+              '@encrypt' => 'http://drupal.org/project/encrypt',
+              '@mcrypt' => 'http://php.net/manual/en/book.mcrypt.php',
+            )
+          ),
+          'warning');
+        self::$showEncryptionWarning = FALSE;
+      }
+    }
+    return $value;
+  }
+
+  /**
+   * Decrypt an incoming value.
+   *
+   * @param string $value
+   * @return string The encrypted value
+   */
+  static public function decrypt($value) {
+    if (module_exists('encrypt')) {
+      $value = decrypt($value);
+    }
+    else if (extension_loaded('mcrypt')) {
+      // Mimic encrypt module to ensure compatibility
+      $encryption_array = unserialize($value);
+      $method = $encryption_array['method']; // Not used right now
+      $text = $encryption_array['text'];
+      $key_name = $encryption_array['key_name']; // Not used right now
+
+      $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
+      $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+      $key = drupal_substr(variable_get('drupal_private_key', 'no_key'), 0, 32);
+      $value = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, $text,
+                              MCRYPT_MODE_ECB, $iv);
+    }
+    else {
+      if (self::$showEncryptionWarning) {
+        MigrationBase::displayMessage(t('Encryption of secure migration ' .
+              'information is not supported. Ensure the ' .
+              '<a href="@encrypt">Encrypt module</a> or ' .
+              '<a href="mcrypt">mcrypt PHP extension</a> is installed for ' .
+              'this functionality.',
+            array(
+              '@encrypt' => 'http://drupal.org/project/encrypt',
+              '@mcrypt' => 'http://php.net/manual/en/book.mcrypt.php',
+            )
+          ),
+          'warning');
+        self::$showEncryptionWarning = FALSE;
+      }
+    }
+    return $value;
+  }
+
+  /**
+   * Make sure any arguments we want to be encrypted get encrypted.
+   *
+   * @param array $arguments
+   *
+   * @return array
+   */
+  static public function encryptArguments(array $arguments) {
+    if (isset($arguments['encrypted_arguments'])) {
+      foreach ($arguments['encrypted_arguments'] as $argument_name) {
+        if (isset($arguments[$argument_name])) {
+          $arguments[$argument_name] = self::encrypt(
+            serialize($arguments[$argument_name]));
+        }
+      }
+    }
+    return $arguments;
+  }
+
+  /**
+   * Make sure any arguments we want to be decrypted get decrypted.
+   *
+   * @param array $arguments
+   *
+   * @return array
+   */
+  static public function decryptArguments(array $arguments) {
+    if (isset($arguments['encrypted_arguments'])) {
+      foreach ($arguments['encrypted_arguments'] as $argument_name) {
+        if (isset($arguments[$argument_name])) {
+          $arguments[$argument_name] = unserialize(
+            self::decrypt($arguments[$argument_name]));
+        }
+      }
+    }
+    return $arguments;
   }
 
   /**

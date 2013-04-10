@@ -31,6 +31,9 @@ Features and enhancements
              in drush, with email notifications of completion. The notification
              ability is available when running drush at the command line, which
              may be useful for running imports via cron.
+- #1901980 - Support encrypting particular arguments saved to the database, to
+             support wizard implementations that may be prompting for secure
+             database credentials.
 - #1896096 - Add ability to define field mappings via arguments at registration
              time, and use those to override mappings in code.
 - #1961620 - When editing field mappings, allow destination mappings to be

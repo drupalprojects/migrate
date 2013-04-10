@@ -131,8 +131,10 @@ class MigrateGroup {
              ->execute()
              ->fetchObject();
       if ($row) {
+        $arguments = unserialize($row->arguments);
+        $arguments = MigrationBase::decryptArguments($arguments);
         self::$groupList[$name] = new MigrateGroup($name, $dependencies,
-          $row->title, unserialize($row->arguments));
+          $row->title, $arguments);
       }
       else {
         self::register($name);
@@ -159,6 +161,8 @@ class MigrateGroup {
     if (!$title) {
       $title = $name;
     }
+
+    $arguments = MigrationBase::encryptArguments($arguments);
 
     // Register the migration if it's not already there; if it is,
     // update the class and arguments in case they've changed.

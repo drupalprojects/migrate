@@ -1053,7 +1053,7 @@ function migrate_ui_mapping_edit_form($migration_name) {
       $mapping = NULL;
     }
 
-    if ($mapping->getIssueGroup() == t('DNM')) {
+    if (!isset($mapping) || $mapping->getIssueGroup() == t('DNM')) {
       $default_value = -1;
     }
 

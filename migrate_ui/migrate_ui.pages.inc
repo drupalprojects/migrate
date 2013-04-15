@@ -937,26 +937,6 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
 function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
   drupal_set_title(t('Edit field mappings for !migration',
                    array('!migration' => $migration_name)));
-  $form = migrate_ui_mapping_edit_form($migration_name);
-  $form['machine_name'] = array(
-    '#type' => 'value',
-    '#value' => $migration_name,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Apply changes'),
-  );
-  return $form;
-}
-
-/**
- * Build a subform for editing the field mappings for the named migration.
- *
- * @param $migration_name
- *
- * @return array
- */
-function migrate_ui_mapping_edit_form($migration_name) {
   $migration = Migration::getInstance($migration_name);
   $source_fields = $migration->getSource()->fields();
   $dest_fields = $migration->getDestination()->fields();
@@ -966,11 +946,31 @@ function migrate_ui_mapping_edit_form($migration_name) {
   $form = array();
   $form['#tree'] = TRUE;
 
+  $form['machine_name'] = array(
+    '#type' => 'value',
+    '#value' => $migration_name,
+  );
+
+  $form['field_mappings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Field mappings'),
+    '#collapsible' => TRUE,
+    '#description' => t('For each field available in your Drupal destination, ' .
+      'select the source field used to populate it. You can enter a default ' .
+      'value to be applied to the destination when there is no source field, ' .
+      'or the source field is empty in a given source item. Check the DNM ' .
+      'box for destination fields you do not want populated by migration.'),
+    '#theme' => array('migrate_ui_field_mapping_form'),
+    '#prefix' => '<div id="field-mappings">',
+    '#suffix' => '</div>',
+  );
+
   $base_options = array(
-    '-1' => t('--Do not import--'),
+    '-1' => t(''),
     // @todo: Not yet supported
 //      '0' => t('--Create field--'),
   );
+
   $field_options = array();
   foreach ($source_fields as $name => $description) {
     if (is_array($description)) {
@@ -1042,30 +1042,39 @@ function migrate_ui_mapping_edit_form($migration_name) {
     }
 
     $options = $base_options + $field_options;
-    $default_value = NULL;
-    if (isset($field_mappings[$name])) {
-      $mapping = $field_mappings[$name];
-      if ($mapping->getSourceField()) {
-        $default_value = $mapping->getSourceField();
-      }
+
+    $default_mapping = '-1';
+    $default_value = '';
+
+    // If the DNM box has been clicked, make sure we clear the mapping and
+    // default value fields.
+    if (isset($form_state['values']) &&
+        $form_state['values']['field_mappings'][$name]['issue_group'] == 1) {
+      $dnm_value = 1;
     }
     else {
-      $mapping = NULL;
-    }
-
-    if (!isset($mapping) || $mapping->getIssueGroup() == t('DNM')) {
-      $default_value = -1;
-    }
-
-    // If we have a match on field name, default the mapping to that match
-    // and remove the option to create a new field of that name.
-    if (is_null($default_value)) {
-      if (isset($field_options[$name])) {
-        $default_value = $name;
-        unset($options['0']);
+      // Determine the default field mapping - if we have an existing one, use
+      // that, otherwise try to match on name.
+      if (isset($field_mappings[$name])) {
+        $mapping = $field_mappings[$name];
+        if ($mapping->getSourceField()) {
+          $default_mapping = $mapping->getSourceField();
+        }
+        else {
+          // Look for a match on field names between source and destination.
+          if (isset($field_options[$name])) {
+            $default_mapping = $name;
+          }
+          else {
+            $default_mapping = '-1';
+          }
+        }
+        $default_value = $mapping->getDefaultValue();
+        $dnm_value = ($mapping->getIssueGroup() == t('DNM'));
       }
       else {
-        $default_value = '-1';
+        $default_mapping = '-1';
+        $dnm_value = 0;
       }
     }
 
@@ -1081,7 +1090,7 @@ function migrate_ui_mapping_edit_form($migration_name) {
       '#title' => t($label,
                     array('!description' => $description, '!field_name' => $name)),
       '#options' => $options,
-      '#default_value' => $default_value,
+      '#default_value' => $default_mapping,
       '#states' => array(
         'disabled' => array(
           ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
@@ -1090,17 +1099,9 @@ function migrate_ui_mapping_edit_form($migration_name) {
       ),
     );
 
-    if ($mapping) {
-      $field_default = $mapping->getDefaultValue();
-      $dnm_value = ($mapping->getIssueGroup() == t('DNM')) ? 1 : 0;
-    }
-    else {
-      $field_default = '';
-      $dnm_value = 0;
-    }
     $form['field_mappings'][$name]['default_value'] = array(
       '#type' => 'textfield',
-      '#default_value' => $field_default,
+      '#default_value' => $default_value,
       '#size' => 20,
       '#states' => array(
         'disabled' => array(
@@ -1112,14 +1113,28 @@ function migrate_ui_mapping_edit_form($migration_name) {
 
     $form['field_mappings'][$name]['issue_group'] = array(
       '#type' => 'checkbox',
-      '#default_value' => $dnm_value
+      '#default_value' => $dnm_value,
+      '#ajax' => array(
+        'callback' => 'migrate_ui_dnm_changed',
+        'wrapper' => 'field-mappings',
+      ),
     );
   }
 
-  // Set our theme function for this form
-  $form['field_mappings']['#theme'][] = 'migrate_ui_field_mapping_form';
-
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Apply changes'),
+  );
   return $form;
+}
+
+/**
+ * Selects the field mapping fieldset for re-rendering
+ *
+ * @return array
+ */
+function migrate_ui_dnm_changed(&$form, &$form_state) {
+  return $form['field_mappings'];
 }
 
 function migrate_ui_edit_mappings_submit(&$form, &$form_state) {

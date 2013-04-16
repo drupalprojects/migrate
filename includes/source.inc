@@ -325,7 +325,6 @@ abstract class MigrateSource implements Iterator {
             // prepareRow() told us to skip it.
             continue;
           }
-          $prepared = TRUE;
         }
         else {
           // No highwater and not tracking changes, skip.
@@ -402,7 +401,13 @@ abstract class MigrateSource implements Iterator {
       // after hashes).
       if ($this->trackChanges) {
         $unhashed_row = clone ($row);
-        unset($unhashed_row->migrate_map_hash);
+        // Remove all map data, otherwise we'll have a false positive on the
+        // second import (attempt) on a row.
+        foreach ($unhashed_row as $field => $data) {
+          if (strpos($field, 'migrate_map_') === 0) {
+            unset($unhashed_row->$field);
+          }
+        }
         $row->migrate_map_original_hash = $row->migrate_map_hash;
         $row->migrate_map_hash = $this->hash($unhashed_row);
       }

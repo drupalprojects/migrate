@@ -52,6 +52,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1968358 - Prevent unnecessary reimport when using track_changes.
 - #1968014 - Fix menu notices on task list page.
 - #1967946 - Missing check on existence of mapping.
 - #1849350 - Make sure encoding of uris doesn't break query strings.

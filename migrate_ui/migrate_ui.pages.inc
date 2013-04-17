@@ -1155,6 +1155,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
 
   $migration = Migration::getInstance($machine_name);
   $existing_mappings = $migration->getFieldMappings();
+  $coded_mappings = $migration->getCodedFieldMappings();
 
   foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
     // If this mapping matches a coded mapping but not a stored mapping, remove it entirely (don't

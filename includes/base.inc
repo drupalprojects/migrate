@@ -1178,14 +1178,14 @@ abstract class MigrationBase {
    * @param string $value
    */
   static public function timestamp($value) {
-    // Default empty values to now
-    if (empty($value)) {
-      return time();
-    }
-
     // Does it look like it's already a timestamp? Just return it
     if (is_numeric($value)) {
       return $value;
+    }
+
+    // Default empty values to now
+    if (empty($value)) {
+      return time();
     }
 
     $date = new DateTime($value);

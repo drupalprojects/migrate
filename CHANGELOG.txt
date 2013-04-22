@@ -52,6 +52,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1973030 - Handle zero-valued timestamps properly.
 - #1973092 - Fix preservation of sourceMigration when editing mappings.
 - #1968358 - Prevent unnecessary reimport when using track_changes.
 - #1968014 - Fix menu notices on task list page.

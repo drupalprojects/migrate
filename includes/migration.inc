@@ -270,7 +270,7 @@ abstract class Migration extends MigrationBase {
     foreach ($result as $row) {
       $field_mapping = unserialize($row->options);
       $field_mapping->setMappingSource(MigrateFieldMapping::MAPPING_SOURCE_DB);
-      if (is_null($row->destination_field)) {
+      if (empty($row->destination_field)) {
         $this->storedFieldMappings[] = $field_mapping;
       }
       else {

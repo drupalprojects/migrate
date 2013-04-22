@@ -934,6 +934,16 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
   return $form;
 }
 
+/**
+ * Page callback to edit field mappings for a given migration.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $group_name
+ * @param $migration_name
+ *
+ * @return array
+ */
 function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
   drupal_set_title(t('Edit field mappings for !migration',
                    array('!migration' => $migration_name)));
@@ -965,6 +975,14 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
     '#suffix' => '</div>',
   );
 
+  $form['source_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Source fields'),
+    '#collapsible' => TRUE,
+    '#description' => t('Check off any source fields that are not being mapped ' .
+      'to destination fields. They will be removed from the select lists above.'),
+  );
+
   $base_options = array(
     '-1' => t(''),
     // @todo: Not yet supported
@@ -973,22 +991,61 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
 
   $field_options = array();
   foreach ($source_fields as $name => $description) {
+    // Clean up the source field description
     if (is_array($description)) {
       $description = reset($description);
     }
     $description = strip_tags($description);
     // Limit the description length
     if (strlen($description) > 50) {
-      $description = substr($description, 0, 50) . '...';
-    }
-    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-      $label = '!description [!source_field]';
+      $short_description = substr($description, 0, 50) . '...';
     }
     else {
-      $label = '!description';
+      $short_description = $description;
     }
-    $field_options[$name] = t($label,
+    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+      $label_format = '!description [!source_field]';
+    }
+    else {
+      $label_format = '!description';
+    }
+    $label = t($label_format,
       array('!source_field' => $name, '!description' => $description));
+    $short_label = t($label_format,
+      array('!source_field' => $name, '!description' => $short_description));
+
+    $dnm_value = 0;
+
+    // Check for a click of the DNM box...
+    if (isset($form_state['values']) &&
+        $form_state['values']['source_fields'][$name] == 1) {
+      $dnm_value = 1;
+    }
+    else {
+      // ... or a source-only mapping with the DNM issue group.
+      foreach ($field_mappings as $mapping) {
+        if ($mapping->getSourceField() == $name &&
+            $mapping->getIssueGroup() == t('DNM')) {
+          $dnm_value = 1;
+        }
+      }
+    }
+
+    // So, if this field is not marked DNM, include it in possible source
+    // options in the field mappings.
+    if (!$dnm_value) {
+      $field_options[$name] = $short_label;
+    }
+
+    $form['source_fields'][$name] = array(
+      '#type' => 'checkbox',
+      '#title' => $label,
+      '#default_value' => $dnm_value,
+      '#ajax' => array(
+        'callback' => 'migrate_ui_dnm_changed',
+        'wrapper' => 'field-mappings',
+      ),
+    );
   }
 
   foreach ($dest_fields as $name => $description) {
@@ -1032,6 +1089,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       'preserve_files',
       'source_dir',
       'file_class',
+      'urlencode',
     );
     $parts = explode(':', $name);
     if (isset($parts[1]) && in_array($parts[1], $skip_suffixes)) {
@@ -1283,6 +1341,15 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       $arguments['field_mappings'][] = $mapping;
     }
     else {
+      $arguments['field_mappings'][] = $mapping;
+    }
+  }
+
+  // Handle any source fields marked DNM.
+  foreach ($form_state['values']['source_fields'] as $source_field => $value) {
+    if ($value) {
+      $mapping = new MigrateFieldMapping(NULL, $source_field);
+      $mapping->issueGroup(t('DNM'));
       $arguments['field_mappings'][] = $mapping;
     }
   }

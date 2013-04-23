@@ -39,6 +39,8 @@ Features and enhancements
 - #1961620 - When editing field mappings, allow destination or source fields to
              be explicitly set DNM.
 - #1835822 - Hash source rows to detect changes.
+- #1975180 - Explicitly check dependency existence so missing dependencies aren't
+             reported as circular.
 - #1856694 - Allow disabling of uri encoding.
 - #1835142 - Add names-only option to drush ms command.
 - #1892296 - Increase time limit for batch UI migrations.

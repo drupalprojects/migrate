@@ -77,7 +77,6 @@ function migrate_migrations($reset = NULL) {
 
   // Scan modules with dependencies - we'll take 20 passes at it before
   // giving up
-  // TODO: Can we share code with _migrate_class_list()?
   $iterations = 0;
   while (count($dependent_migrations) > 0) {
     if ($iterations++ > 20) {
@@ -91,9 +90,20 @@ function migrate_migrations($reset = NULL) {
       // Scan all the dependencies for this class and make sure they're all
       // in the final list
       foreach ($migration->getDependencies() as $dependency) {
-        if (!isset($migrations[$dependency])) {
-          $ready = FALSE;
-          break;
+        try {
+          // Make sure the referenced migration actually exists.
+          $required_migration = MigrationBase::getInstance($dependency);
+          // If the migration exists, but we haven't seen it yet, we need to
+          // wait for it.
+          if (!isset($migrations[$dependency])) {
+            $ready = FALSE;
+            break;
+          }
+        }
+        catch (MigrateException $e) {
+          // The referenced migration doesn't exist, let them know. We will
+          // continue checking other dependencies for the current migration.
+          MigrationBase::displayMessage($e->getMessage());
         }
       }
       if ($ready) {

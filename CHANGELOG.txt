@@ -41,6 +41,7 @@ Features and enhancements
 - #1835822 - Hash source rows to detect changes.
 - #1975180 - Explicitly check dependency existence so missing dependencies aren't
              reported as circular.
+- #1972600 - Add getter for the MigrateXMLReader member of MigrateSourceXML.
 - #1856694 - Allow disabling of uri encoding.
 - #1835142 - Add names-only option to drush ms command.
 - #1892296 - Increase time limit for batch UI migrations.

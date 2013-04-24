@@ -846,6 +846,9 @@ class MigrateSourceXML extends MigrateSource {
    * @var MigrateXMLReader
    */
   protected $reader;
+  public function getReader() {
+    return $this->reader;
+  }
 
   /**
    * The source URLs to load XML from

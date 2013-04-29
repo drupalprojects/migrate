@@ -79,6 +79,13 @@ abstract class MigrateSource implements Iterator {
   protected $highwaterField;
 
   /**
+   * The highwater mark at the beginning of the import operation.
+   *
+   * @var
+   */
+  protected $originalHighwater = '';
+
+  /**
    * List of source IDs to process.
    *
    * @var array
@@ -240,6 +247,9 @@ abstract class MigrateSource implements Iterator {
     $this->numProcessed = 0;
     $this->numIgnored = 0;
     $this->highwaterField = $this->activeMigration->getHighwaterField();
+    if (!empty($this->highwaterField)) {
+      $this->originalHighwater = $this->activeMigration->getHighwater();
+    }
     if ($this->activeMigration->getOption('idlist')) {
       $this->idList = explode(',', $this->activeMigration->getOption('idlist'));
     }
@@ -334,7 +344,7 @@ abstract class MigrateSource implements Iterator {
       // 5. The initial highwater mark, before anything is migrated, is ''. We
       //    want to make sure we don't mistakenly skip rows with a highwater
       //    field value of 0, so explicitly handle '' here.
-      elseif ($this->activeMigration->getHighwater() === '') {
+      elseif ($this->originalHighwater === '') {
         // Fall through
       }
       // 6. So, we are using highwater marks. Take the row if its highwater
@@ -342,8 +352,7 @@ abstract class MigrateSource implements Iterator {
       else {
         // Call prepareRow() here, in case the highwaterField needs preparation
         if ($this->prepareRow($row) !== FALSE) {
-          if ($row->{$this->highwaterField['name']} >
-              $this->activeMigration->getHighwater()) {
+          if ($row->{$this->highwaterField['name']} > $this->originalHighwater) {
             $this->currentRow = $row;
             break;
           }

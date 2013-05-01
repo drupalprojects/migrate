@@ -37,9 +37,9 @@ abstract class MigrationBase {
   }
 
   /**
-   * The name of a migration group, used to collect related migrations.
+   * A migration group object, used to collect related migrations.
    *
-   * @var string
+   * @var MigrateGroup
    */
   protected $group;
   public function getGroup() {
@@ -239,6 +239,13 @@ abstract class MigrationBase {
   protected $previousErrorHandler = NULL;
 
   /**
+   * Arguments configuring a migration.
+   *
+   * @var array
+   */
+  protected $arguments = array();
+
+  /**
    * Disabling a migration prevents it from running with --all, or individually
    * without --force
    *
@@ -248,6 +255,14 @@ abstract class MigrationBase {
   public function getEnabled() {
     return $this->enabled;
   }
+
+  /**
+   * Have we already warned about obsolete constructor argumentss on this request?
+   *
+   * @var bool
+   */
+  static protected $groupArgumentWarning = FALSE;
+  static protected $emptyArgumentsWarning = FALSE;
 
   /**
    * Codes representing the result of a rollback or import process.
@@ -299,24 +314,53 @@ abstract class MigrationBase {
   }
 
   /**
-   * General initialization of a MigrationBase object.
+   * Construction of a MigrationBase instance.
+   *
+   * @param array $arguments
    */
-  public function __construct($group = NULL) {
-    $this->machineName = $this->generateMachineName();
-    if (empty($group)) {
-      $group_name = db_select('migrate_status', 'ms')
-                    ->fields('ms', array('group_name'))
-                    ->condition('machine_name', $this->machineName)
-                    ->execute()
-                    ->fetchField();
-      if (empty($group_name)) {
-        $group_name = 'default';
+  public function __construct($arguments = array()) {
+    // Support for legacy code passing a group object as the first parameter.
+    if (is_object($arguments) && is_a($arguments, 'MigrateGroup')) {
+      $this->group = $arguments;
+      $this->arguments = array('group_name' => $arguments->getName());
+      if (!self::$groupArgumentWarning &&
+          variable_get('migrate_deprecation_warnings', 1)) {
+        self::displayMessage(t('Passing a group object to a migration ' .
+          'constructor is now deprecated - pass through the arguments array ' .
+          'passed to the leaf class instead.'));
+        self::$groupArgumentWarning = TRUE;
       }
-      $this->group = MigrateGroup::getInstance($group_name);
     }
     else {
-      $this->group = $group;
+      if (empty($arguments)) {
+        $this->arguments = array();
+        if (!self::$emptyArgumentsWarning &&
+            variable_get('migrate_deprecation_warnings', 1)) {
+          self::displayMessage(t('Passing an empty first parameter to a ' .
+            'migration constructor is now deprecated - pass through the ' .
+            'arguments array passed to the leaf class instead.'));
+          self::$emptyArgumentsWarning = TRUE;
+        }
+      }
+      else {
+        $this->arguments = $arguments;
+      }
+      if (empty($this->arguments['group_name'])) {
+        $this->arguments['group_name'] = 'default';
+      }
+      $this->group = MigrateGroup::getInstance($this->arguments['group_name']);
     }
+    if (isset($this->arguments['machine_name'])) {
+      $this->machineName = $this->arguments['machine_name'];
+    }
+    else {
+      // Deprecated - this supports old code which does not pass the arguments
+      // array through to the base constructor. Remove in the next version.
+      $this->machineName = $this->machineFromClass(get_class());
+    }
+    // Make any group arguments directly accessible to the specific migration.
+    $group_arguments = $this->group->getArguments();
+    $this->arguments += $group_arguments;
 
     // Record the memory limit in bytes
     $limit = trim(ini_get('memory_limit'));
@@ -385,6 +429,8 @@ abstract class MigrationBase {
    */
   static public function registerMigration($class_name, $machine_name = NULL,
       array $arguments = array()) {
+    // Support for legacy migration code - in later releases, the machine_name
+    // should always be explicit.
     if (!$machine_name) {
       $machine_name = self::machineFromClass($class_name);
     }
@@ -394,14 +440,14 @@ abstract class MigrationBase {
                           array('!name' => $machine_name)));
     }
 
-    // Making sure the machine name is in the arguments array helps with
-    // chicken-and-egg problems in determining the machine name.
-    if (!isset($arguments['machine_name'])) {
-      $arguments['machine_name'] = $machine_name;
+    // We no longer have any need to store the machine_name in the arguments.
+    if (isset($arguments['machine_name'])) {
+      unset($arguments['machine_name']);
     }
 
     if (isset($arguments['group_name'])) {
       $group_name = $arguments['group_name'];
+      unset($arguments['group_name']);
     }
     else {
       $group_name = 'default';
@@ -436,14 +482,22 @@ abstract class MigrationBase {
   }
 
   /**
-   * By default, the migration machine name is the class name (with the
-   * Migration suffix, if present, stripped).
+   * The migration machine name is stored in the arguments.
+   *
+   * @return string
    */
   protected function generateMachineName() {
-    $class_name = get_class($this);
-    return self::machineFromClass($class_name);
+    return $this->arguments['machine_name'];
   }
 
+  /**
+   * Given only a class name, derive a machine name (the class name with the
+   * "Migration" suffix, if any, removed).
+   *
+   * @param $class_name
+   *
+   * @return string
+   */
   protected static function machineFromClass($class_name) {
     if (preg_match('/Migration$/', $class_name)) {
       $machine_name = drupal_substr($class_name, 0,
@@ -460,40 +514,58 @@ abstract class MigrationBase {
    *
    * @param string $machine_name
    */
+
+  /**
+   * Return the single instance of the given migration.
+   *
+   * @param $machine_name
+   *  The unique machine name of the migration to retrieve.
+   * @param string $class_name
+   *  Deprecated - no longer used, class name is retrieved from migrate_status.
+   * @param array $arguments
+   *  Deprecated - no longer used, arguments are retrieved from migrate_status.
+   *
+   * @return MigrationBase
+   */
   static public function getInstance($machine_name, $class_name = NULL, array $arguments = array()) {
     $migrations = &drupal_static(__FUNCTION__, array());
     // Otherwise might miss cache hit on case difference
     $machine_name_key = drupal_strtolower($machine_name);
     if (!isset($migrations[$machine_name_key])) {
-      // Skip the query if our caller already made it
-      if (!$class_name) {
-        // See if we know about this migration
-        $row = db_select('migrate_status', 'ms')
-               ->fields('ms', array('class_name', 'group_name', 'arguments'))
-               ->condition('machine_name', $machine_name)
-               ->execute()
-               ->fetchObject();
-        if ($row) {
-          $class_name = $row->class_name;
-          $arguments = unserialize($row->arguments);
-          $arguments = self::decryptArguments($arguments);
-          $arguments['group_name'] = $row->group_name;
-        }
-        else {
-          // Can't find a migration with this name
-          throw new MigrateException(t('No migration found with machine name !machine',
-            array('!machine' => $machine_name)));
-        }
+      // See if we know about this migration
+      $row = db_select('migrate_status', 'ms')
+             ->fields('ms', array('class_name', 'group_name', 'arguments'))
+             ->condition('machine_name', $machine_name)
+             ->execute()
+             ->fetchObject();
+      if ($row) {
+        $class_name = $row->class_name;
+        $arguments = unserialize($row->arguments);
+        $arguments = self::decryptArguments($arguments);
+        $arguments['group_name'] = $row->group_name;
       }
-      $migrations[$machine_name_key] = new $class_name($arguments);
+      else {
+        // Can't find a migration with this name
+        self::displayMessage(t('No migration found with machine name !machine',
+          array('!machine' => $machine_name)));
+        return NULL;
+      }
+      $arguments['machine_name'] = $machine_name;
+      if (class_exists($class_name)) {
+        $migrations[$machine_name_key] = new $class_name($arguments);
+      }
+      else {
+        self::displayMessage(t('No migration class !class found',
+          array('!class' => $class_name)));
+        return NULL;
+      }
     }
     return $migrations[$machine_name_key];
   }
 
   /**
-   * Identifies whether this migration is "dynamic" (that is, allows multiple
-   * instances distinguished by differing parameters). A dynamic class should
-   * override this with a return value of TRUE.
+   * @deprecated - No longer a useful distinction between "status" and "dynamic"
+   *  migrations.
    */
   static public function isDynamic() {
     return FALSE;

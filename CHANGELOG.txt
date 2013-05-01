@@ -21,6 +21,11 @@ longer supported. Registration of classes defined in hook_migrate_api() is no
 longer automatic - do a drush migrate-register or use the Register button in the
 UI to register them.
 
+Migration class constructors should now always accept a $arguments array as
+the first parameter and pass it to its parent. This version does support legacy
+migrations which pass a group object, or nothing, but that support will be
+removed in a future version.
+
 Features and enhancements
 - #1826112 - A new API has been added to support external modules in developing
              easy-to-use wizard-based UIs.
@@ -47,6 +52,8 @@ Features and enhancements
 - #1892296 - Increase time limit for batch UI migrations.
 - #1839644 - Groups have been extended to record titles and arguments in the db.
 - #1896920 - Remove auto-registration, and make static registration expicit.
+- #1928956 - Clean up registration/instantiation chicken-and-egg problems, by
+             support consistent constructor arguments.
 - #1550878 - Added UI for deregistering migrations, including one-button
              deregistration of orphans.
 - #1792894 - Remove empty field values, permitting proper defaulting.

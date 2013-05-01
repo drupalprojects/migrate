@@ -13,11 +13,11 @@
 /**
  * Abstract intermediate class holding common settings.
  */
-abstract class AdvancedExampleMigration extends DynamicMigration {
+abstract class AdvancedExampleMigration extends Migration {
   public $basicFormat;
 
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
 
     $this->team = array(
       new MigrateTeamMember('Jack Kramer', 'jkramer@example.com', t('Taster')),
@@ -52,10 +52,8 @@ class WinePrepMigration extends MigrationBase {
   // to re-enable it. This is public so WineFinishMigration can reference it.
   public static $wasEnabled = FALSE;
 
-  public function __construct() {
-    // Because we're derived directly from migrationBase rather than AdvancedExampleMigration,
-    // we must specify the group again here.
-    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('If auto_nodetitle is present, disable it for the duration');
   }
   // Define isComplete(), returning a boolean, to indicate whether dependent
@@ -89,8 +87,8 @@ class WinePrepMigration extends MigrationBase {
 
 // The term migrations are very similar - implement the commonalities here
 abstract class WineTermMigration extends AdvancedExampleMigration {
-  public function __construct($type, $vocabulary_name, $description) {
-    parent::__construct();
+  public function __construct($arguments, $type, $vocabulary_name, $description) {
+    parent::__construct($arguments);
     $this->description = $description;
     $this->dependencies = array('WinePrep');
     $this->map = new MigrateSQLMap($this->machineName,
@@ -129,22 +127,22 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
 }
 
 class WineVarietyMigration extends WineTermMigration {
-  public function __construct() {
-    parent::__construct('variety', 'migrate_example_wine_varieties',
+  public function __construct($arguments) {
+    parent::__construct($arguments, 'variety', 'migrate_example_wine_varieties',
       t('Migrate varieties from the source database to taxonomy terms'));
   }
 }
 
 class WineRegionMigration extends WineTermMigration {
-  public function __construct() {
-    parent::__construct('region', 'migrate_example_wine_regions',
+  public function __construct($arguments) {
+    parent::__construct($arguments, 'region', 'migrate_example_wine_regions',
       t('Migrate regions from the source database to taxonomy terms'));
   }
 }
 
 class WineBestWithMigration extends WineTermMigration {
-  public function __construct() {
-    parent::__construct('best_with', 'migrate_example_wine_best_with',
+  public function __construct($arguments) {
+    parent::__construct($arguments, 'best_with', 'migrate_example_wine_best_with',
       t('Migrate "Best With" from the source database to taxonomy terms'));
   }
 }
@@ -155,8 +153,8 @@ class WineBestWithMigration extends WineTermMigration {
  * Drupal file tables appropriately.
  */
 class WineFileCopyMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Profile images');
     $this->dependencies = array('WinePrep');
     $this->map = new MigrateSQLMap($this->machineName,
@@ -193,8 +191,8 @@ class WineFileCopyMigration extends AdvancedExampleMigration {
  * @see MigrateExampleOracleNode()
  */
 class WineFileBlobMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Example migration from BLOB column into files.');
     $this->dependencies = array('WinePrep');
     $this->map = new MigrateSQLMap($this->machineName,
@@ -238,8 +236,8 @@ class WineFileBlobMigration extends AdvancedExampleMigration {
 }
 
 class WineRoleMigration extends XMLMigration {
-  public function __construct() {
-    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('XML feed (multi items) of roles (positions)');
 
     // TIP: Regular dependencies, besides enforcing (in the absence of --force)
@@ -295,8 +293,8 @@ class WineRoleMigration extends XMLMigration {
 }
 
 class WineUserMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Wine Drinkers of the world');
     $this->dependencies = array('WinePrep', 'WineFileCopy', 'WineRole');
     $this->map = new MigrateSQLMap($this->machineName,
@@ -373,8 +371,8 @@ class WineUserMigration extends AdvancedExampleMigration {
 }
 
 class WineProducerMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Wine producers of the world');
     $this->dependencies = array('WineRegion', 'WineUser');
 
@@ -437,8 +435,8 @@ class WineProducerMigration extends AdvancedExampleMigration {
  * from XMLMigration instead of Migration.
  */
 class WineProducerXMLMigration extends XMLMigration {
-  public function __construct() {
-    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('XML feed of wine producers of the world');
     $this->dependencies = array('WineRegion', 'WineUser');
 
@@ -533,8 +531,8 @@ class WineProducerXMLMigration extends XMLMigration {
  * from XMLMigration instead of Migration.
  */
 class WineProducerMultiXMLMigration extends XMLMigration {
-  public function __construct() {
-    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('XML feed (multi items) of wine producers of the world');
     $this->dependencies = array('WineRegion', 'WineUser');
 
@@ -633,8 +631,8 @@ class WineProducerMultiXMLMigration extends XMLMigration {
  * for selecting the elements to process.
  */
 class WineProducerXMLPullMigration extends XMLMigration {
-  public function __construct() {
-    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('XML feed (pull) of wine producers of the world');
     $this->dependencies = array('WineRegion', 'WineUser');
 
@@ -713,8 +711,8 @@ class WineProducerXMLPullMigration extends XMLMigration {
 
 // TODO: Add node_reference field pointing to producer
 class WineWineMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Wines of the world');
     $this->dependencies = array('WineVariety', 'WineRegion',
       'WineBestWith', 'WineUser', 'WineProducer');
@@ -894,8 +892,8 @@ class WineWineMigration extends AdvancedExampleMigration {
 }
 
 class WineCommentMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = 'Comments about wines';
     $this->dependencies = array('WineUser', 'WineWine');
     $this->map = new MigrateSQLMap($this->machineName,
@@ -947,8 +945,8 @@ class WineCommentMigration extends AdvancedExampleMigration {
 // through the Schema API) is to use the MigrateDestinationTable destination.
 // Just pass the table name to getKeySchema and the MigrateDestinationTable constructor.
 class WineTableMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = 'Miscellaneous table data';
     $this->softDependencies = array('WineComment');
     $table_name = 'migrate_example_wine_table_dest';
@@ -981,8 +979,8 @@ class WineTableMigration extends AdvancedExampleMigration {
  * is re-enabled if we disabled it.
  */
 class WineFinishMigration extends MigrationBase {
-  public function __construct() {
-    parent::__construct(MigrateGroup::getInstance('wine', array('default')));
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('If auto_nodetitle is present and was previously enabled,
       re-enable it');
     $this->dependencies = array('WineComment');
@@ -1017,8 +1015,8 @@ class WineFinishMigration extends MigrationBase {
  * to update existing content (in this case, revised wine ratings)
  */
 class WineUpdatesMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Update wine ratings');
     $this->dependencies = array('WineWine');
     $this->softDependencies = array('WineFinish');
@@ -1085,8 +1083,8 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
 }
 
 class WineCommentUpdatesMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = 'Update wine comments';
     $this->dependencies = array('WineComment');
     $this->softDependencies = array('WineUpdates');
@@ -1132,8 +1130,8 @@ class WineCommentUpdatesMigration extends AdvancedExampleMigration {
 }
 
 class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Migrate varieties from the source database to taxonomy terms');
     $this->dependencies = array('WineVariety');
     $this->softDependencies = array('WineUpdates');
@@ -1172,8 +1170,8 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
 
 
 class WineUserUpdatesMigration extends AdvancedExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Account updates');
     $this->dependencies = array('WineUser');
     $this->softDependencies = array('WineUpdates');

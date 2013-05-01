@@ -33,10 +33,10 @@
  * define an abstract intermediate class derived from Migration, then derive your
  * individual migrations from that, to share settings, utility functions, etc.
  */
-abstract class BasicExampleMigration extends DynamicMigration {
-  public function __construct() {
+abstract class BasicExampleMigration extends Migration {
+  public function __construct($arguments) {
     // Always call the parent constructor first for basic setup
-    parent::__construct();
+    parent::__construct($arguments);
 
     // With migrate_ui enabled, migration pages will indicate people involved in
     // the particular migration, with their role and contact info. We default the
@@ -69,8 +69,8 @@ abstract class BasicExampleMigration extends DynamicMigration {
  *    associated with the mappings.
  */
 class BeerTermMigration extends BasicExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     // Human-friendly description of your migration process. Be as detailed as you
     // like.
     $this->description = t('Migrate styles from the source database to taxonomy terms');
@@ -186,9 +186,9 @@ class BeerTermMigration extends BasicExampleMigration {
  * transformations of the data.
  */
 class BeerUserMigration extends BasicExampleMigration {
-  public function __construct() {
+  public function __construct($arguments) {
     // The basic setup is similar to BeerTermMigraiton
-    parent::__construct();
+    parent::__construct($arguments);
     $this->description = t('Beer Drinkers of the world');
     $this->map = new MigrateSQLMap($this->machineName,
         array('aid' => array(
@@ -283,8 +283,8 @@ class BeerUserMigration extends BasicExampleMigration {
  * and creates Drupal nodes of type 'Beer' as destination.
  */
 class BeerNodeMigration extends BasicExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Beers of the world');
 
     // You may optionally declare dependencies for your migration - other migrations
@@ -414,8 +414,8 @@ class BeerNodeMigration extends BasicExampleMigration {
  * Drupal comment objects.
  */
 class BeerCommentMigration extends BasicExampleMigration {
-  public function __construct() {
-    parent::__construct();
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = 'Comments about beers';
     $this->dependencies = array('BeerUser', 'BeerNode');
     $this->map = new MigrateSQLMap($this->machineName,

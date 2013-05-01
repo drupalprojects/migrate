@@ -175,8 +175,8 @@ abstract class Migration extends MigrationBase {
   /**
    * General initialization of a Migration object.
    */
-  public function __construct($group = NULL) {
-    parent::__construct($group);
+  public function __construct($arguments = array()) {
+    parent::__construct($arguments);
   }
 
   /**
@@ -1502,12 +1502,21 @@ abstract class Migration extends MigrationBase {
 }
 
 /**
- * Convenience class - deriving from this rather than directory from Migration
- * ensures that a class will not be registered as a migration itself - it is
- * the implementor's responsibility to register each instance of a dynamic
- * migration class.
+ * @deprecated - This class is no longer necessary, inherit directly from
+ *  Migration instead.
  */
 abstract class DynamicMigration extends Migration {
+  static $deprecationWarning = FALSE;
+  public function __construct($arguments) {
+    parent::__construct($arguments);
+    if (variable_get('migrate_deprecation_warnings', 1) &&
+        !self::$deprecationWarning) {
+      self::displayMessage(t('The DynamicMigration class is no longer necessary ' .
+        'and is now deprecated - please derive your migration classes directly ' .
+        'from Migration.'));
+      self::$deprecationWarning = TRUE;
+    }
+  }
   /**
    * Overrides default of FALSE
    */

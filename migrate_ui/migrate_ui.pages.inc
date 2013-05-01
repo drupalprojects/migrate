@@ -1520,6 +1520,23 @@ function migrate_ui_configure_form($form, &$form_state) {
     );
   }
 
+  $build['settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Settings'),
+  );
+  $build['settings']['deprecation_warnings'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Warn on usage of deprecated patterns'),
+    '#default_value' => variable_get('migrate_deprecation_warnings', 1),
+    '#description' => t('When checked, you will receive warnings when using ' .
+      'methods and patterns that are deprecated as of Migrate 2.6.'),
+  );
+  $build['settings']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save settings'),
+    '#submit' => array('migrate_ui_configure_settings_submit'),
+  );
+
   // Configure background imports if the drush command has been set.
   $drush_path = trim(variable_get('migrate_drush_path', ''));
   $drush_validated = FALSE;
@@ -1758,6 +1775,15 @@ function migrate_ui_configure_deregister_submit($form, &$form_state) {
     }
   }
   $form_state['redirect'] = 'admin/content/import';
+}
+
+/**
+ * Submit callback for the configuration form settings fieldset.
+ */
+function migrate_ui_configure_settings_submit($form, &$form_state) {
+  variable_set('migrate_deprecation_warnings',
+               $form_state['values']['deprecation_warnings']);
+  drupal_set_message(t('Migration settings saved.'));
 }
 
 /**

@@ -41,18 +41,13 @@ function migrate_migrations($reset = NULL) {
   $required_migrations = array();
 
   $result = db_select('migrate_status', 'ms')
-            ->fields('ms', array('machine_name', 'class_name', 'arguments'))
+            ->fields('ms', array('machine_name', 'class_name'))
             ->execute();
   foreach ($result as $row) {
     if (class_exists($row->class_name)) {
       $reflect = new ReflectionClass($row->class_name);
       if (!$reflect->isAbstract() && $reflect->isSubclassOf('MigrationBase')) {
-        $arguments = unserialize($row->arguments);
-        if (!$arguments || !is_array($arguments)) {
-          $arguments = array();
-        }
-        $migration = MigrationBase::getInstance($row->machine_name,
-          $row->class_name, $arguments);
+        $migration = MigrationBase::getInstance($row->machine_name);
         $dependencies = $migration->getDependencies();
         if (count($dependencies) > 0) {
           // Set classes with dependencies aside for reordering

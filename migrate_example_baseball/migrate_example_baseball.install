@@ -12,7 +12,7 @@ function migrate_example_baseball_enable() {
     $file = 'GL200' . $i . '.TXT';
     Migration::registerMigration('GameBaseball',
       pathinfo($file, PATHINFO_FILENAME),
-      array('source_file' => $path . '/' . $file));
+      array('source_file' => $path . '/' . $file, 'group_name' => 'baseball'));
   }
 }
 

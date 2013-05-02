@@ -55,6 +55,9 @@ abstract class MigrationBase {
   public function getDescription() {
     return $this->description;
   }
+  public function setDescription($description) {
+    $this->description = $description;
+  }
 
   /**
    * Save options passed to current operation
@@ -143,8 +146,20 @@ abstract class MigrationBase {
   public function getHardDependencies() {
     return $this->dependencies;
   }
+  public function setHardDependencies(array $dependencies) {
+    $this->dependencies = $dependencies;
+  }
+  public function addHardDependencies(array $dependencies) {
+    $this->dependencies = array_merge($this->dependencies, $dependencies);
+  }
   public function getSoftDependencies() {
     return $this->softDependencies;
+  }
+  public function setSoftDependencies(array $dependencies) {
+    $this->softDependencies = $dependencies;
+  }
+  public function addSoftDependencies(array $dependencies) {
+    $this->softDependencies = array_merge($this->softDependencies, $dependencies);
   }
   public function getDependencies() {
     return array_merge($this->dependencies, $this->softDependencies);
@@ -218,6 +233,9 @@ abstract class MigrationBase {
   public function getTeam() {
     return $this->team;
   }
+  public function setTeam(array $team) {
+    $this->team = $team;
+  }
 
   /**
    * If provided, an URL for an issue tracking system containing :id where
@@ -228,6 +246,9 @@ abstract class MigrationBase {
   protected $issuePattern;
   public function getIssuePattern() {
     return $this->issuePattern;
+  }
+  public function setIssuePattern($issue_pattern) {
+    $this->issuePattern = $issue_pattern;
   }
 
   /**
@@ -244,6 +265,15 @@ abstract class MigrationBase {
    * @var array
    */
   protected $arguments = array();
+  public function getArguments() {
+    return $this->arguments;
+  }
+  public function setArguments(array $arguments) {
+    $this->arguments = $arguments;
+  }
+  public function addArguments(array $arguments) {
+    $this->arguments = array_merge($this->arguments, $arguments);
+  }
 
   /**
    * Disabling a migration prevents it from running with --all, or individually
@@ -254,6 +284,9 @@ abstract class MigrationBase {
   protected $enabled = TRUE;
   public function getEnabled() {
     return $this->enabled;
+  }
+  public function setEnabled($enabled) {
+    $this->enabled = $enabled;
   }
 
   /**

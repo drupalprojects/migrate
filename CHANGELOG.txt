@@ -9,7 +9,7 @@ database updates are concerned, the goal is to have a clean upgrade from 2.5 to
 cleanly. Backup your database before upgrading to a -dev release.
 
 Migration developers will need to add the "advanced migration information"
-permission to their accounts to continue seeing all the info in the UI they're
+permission to their roles to continue seeing all the info in the UI they're
 used to.
 
 The pages of the UI have been completely reorganized. The root of the UI is
@@ -43,6 +43,8 @@ Features and enhancements
              time, and use those to override mappings in code.
 - #1961620 - When editing field mappings, allow destination or source fields to
              be explicitly set DNM.
+- #1984568 - Add setters to enable constructing migrations according to a
+             dependency injection pattern.
 - #1835822 - Hash source rows to detect changes.
 - #1975180 - Explicitly check dependency existence so missing dependencies aren't
              reported as circular.
@@ -53,7 +55,7 @@ Features and enhancements
 - #1839644 - Groups have been extended to record titles and arguments in the db.
 - #1896920 - Remove auto-registration, and make static registration expicit.
 - #1928956 - Clean up registration/instantiation chicken-and-egg problems, by
-             support consistent constructor arguments.
+             supporting consistent constructor arguments.
 - #1550878 - Added UI for deregistering migrations, including one-button
              deregistration of orphans.
 - #1792894 - Remove empty field values, permitting proper defaulting.

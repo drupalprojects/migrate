@@ -22,6 +22,9 @@ abstract class Migration extends MigrationBase {
   public function getSource() {
     return $this->source;
   }
+  public function setSource(MigrateSource $source) {
+    $this->source = $source;
+  }
 
   /**
    * Destination object for the migration, derived from MigrateDestination.
@@ -32,6 +35,9 @@ abstract class Migration extends MigrationBase {
   public function getDestination() {
     return $this->destination;
   }
+  public function setDestination(MigrateDestination $destination) {
+    $this->destination = $destination;
+  }
 
   /**
    * Map object tracking relationships between source and destination data
@@ -41,6 +47,9 @@ abstract class Migration extends MigrationBase {
   protected $map;
   public function getMap() {
     return $this->map;
+  }
+  public function setMap(MigrateMap $map) {
+    $this->map = $map;
   }
 
   /**
@@ -59,6 +68,9 @@ abstract class Migration extends MigrationBase {
   public function getSystemOfRecord() {
     return $this->systemOfRecord;
   }
+  public function setSystemOfRecord($system_of_record) {
+    $this->systemOfRecord = $system_of_record;
+  }
 
   /**
    * Specify value of needs_update for current map row. Usually set by
@@ -75,6 +87,12 @@ abstract class Migration extends MigrationBase {
    * @var int
    */
   protected $defaultRollbackAction = MigrateMap::ROLLBACK_DELETE;
+  public function getDefaultRollbackAction() {
+    return $this->defaultRollbackAction;
+  }
+  public function setDefaultRollbackAction($rollback_action) {
+    $this->defaultRollbackAction = $rollback_action;
+  }
 
   /**
    * The rollback action to be saved for the current row.
@@ -150,6 +168,9 @@ abstract class Migration extends MigrationBase {
   protected $highwaterField = array();
   public function getHighwaterField() {
     return $this->highwaterField;
+  }
+  public function setHighwaterField(array $highwater_field) {
+    $this->highwaterField = $highwater_field;
   }
 
   /**

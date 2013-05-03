@@ -64,6 +64,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1985750 - Add missing prepareRollback/completeRollback for file destinations.
 - #1978702 - Check highwater marks against the starting highwater.
 - #1974216 - Change field mapping table PK to a simple serial column.
 - #1977578 - Bad exception handling in MigrateDestinationTableCopy.

@@ -574,12 +574,14 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
       else {
         $preserve_files = FALSE;
       }
+      $this->prepareRollback($fid);
       if ($preserve_files) {
         $this->fileDelete($file);
       }
       else {
         file_delete($file, TRUE);
       }
+      $this->completeRollback($fid);
       migrate_instrument_stop('file_delete');
     }
   }

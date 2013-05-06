@@ -5,10 +5,10 @@
  */
  
 /**
- * Form for managing import jobs (migration groups).
+ * Form for managing migration jobs (migration groups).
  */
-function migrate_ui_import_dashboard($form, &$form_state) {
-  drupal_set_title(t('Import Jobs'));
+function migrate_ui_migrate_dashboard($form, &$form_state) {
+  drupal_set_title(t('Migration Jobs'));
 
   $build = array();
 
@@ -94,7 +94,7 @@ function migrate_ui_import_dashboard($form, &$form_state) {
 
     $row['status'] = $status;
     $row['machinename'] =
-      l($group_row->title, 'admin/content/import/jobs/' . $group_row->name);
+      l($group_row->title, 'admin/content/migrate/jobs/' . $group_row->name);
     $arguments = unserialize($group_row->arguments);
     if (!empty($arguments['source_system'])) {
       $row['source_system'] = $arguments['source_system'];
@@ -110,9 +110,9 @@ function migrate_ui_import_dashboard($form, &$form_state) {
     '#header' => $header,
     '#options' => $rows,
     '#tree' => TRUE,
-    '#empty' => t('No import jobs defined.'),
+    '#empty' => t('No migration jobs defined.'),
   );
-  $build['operations'] = _migrate_ui_import_operations();
+  $build['operations'] = _migrate_ui_migrate_operations();
 
   return $build;
 }
@@ -120,7 +120,7 @@ function migrate_ui_import_dashboard($form, &$form_state) {
 /**
  * Menu callback
  */
-function migrate_ui_import_job($form, &$form_state, $group_name) {
+function migrate_ui_migrate_job($form, &$form_state, $group_name) {
   $build = array();
 
   $header = array(
@@ -214,7 +214,7 @@ function migrate_ui_import_job($form, &$form_state, $group_name) {
       if (is_subclass_of($migration, 'Migration')) {
         $num_messages = $migration->messageCount();
         $row['messages'] = $num_messages ?
-          l($num_messages, "admin/content/import/jobs/$group_name/$machine_name/messages")
+          l($num_messages, "admin/content/migrate/jobs/$group_name/$machine_name/messages")
           : 0;
       }
       else {
@@ -250,10 +250,10 @@ function migrate_ui_import_job($form, &$form_state, $group_name) {
     '#header' => $header,
     '#options' => $rows,
     '#tree' => TRUE,
-    '#empty' => t('No tasks are defined for this import job.'),
+    '#empty' => t('No tasks are defined for this migration job.'),
   );
 
-  $build['operations'] = _migrate_ui_import_operations();
+  $build['operations'] = _migrate_ui_migrate_operations();
 
   return $build;
 }
@@ -261,7 +261,7 @@ function migrate_ui_import_job($form, &$form_state, $group_name) {
 /**
  * @return array
  */
-function _migrate_ui_import_operations() {
+function _migrate_ui_migrate_operations() {
   // Build the 'Update options' form.
   $operations = array(
     '#type' => 'fieldset',
@@ -296,7 +296,7 @@ function _migrate_ui_import_operations() {
   $options += array(
     'stop' => t('Stop'),
     'reset' => t('Reset'),
-    'deregister' => t('Remove import settings'),
+    'deregister' => t('Remove migration settings'),
   );
   $operations['operation'] = array(
     '#type' => 'select',
@@ -307,8 +307,8 @@ function _migrate_ui_import_operations() {
   $operations['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Execute'),
-    '#validate' => array('migrate_ui_import_validate'),
-    '#submit' => array('migrate_ui_import_submit'),
+    '#validate' => array('migrate_ui_migrate_validate'),
+    '#submit' => array('migrate_ui_migrate_submit'),
   );
   $operations['description'] = array(
     '#prefix' => '<p>',
@@ -323,7 +323,7 @@ function _migrate_ui_import_operations() {
          <li>Reset<br /> Sometimes a process may fail to stop cleanly, and be
              left stuck in an Importing or Rolling Back status. Choose Reset to clear
              the status and permit other operations to proceed.</li>
-         <li>Remove import settings<br /> Removes all information about an import job
+         <li>Remove migration settings<br /> Removes all information about a migration job
              or task, while preserving any content that has already been imported.</li>
        </ul>'
     ),
@@ -367,7 +367,7 @@ function _migrate_ui_import_operations() {
           'seconds' => t('seconds'),
         ),
         '#description' => t('Set a limit of how many items to process for
-          each import task, or how long each should run.'),
+          each migration task, or how long each should run.'),
       ),
     );
   }
@@ -378,7 +378,7 @@ function _migrate_ui_import_operations() {
 /**
  * Validate callback for the dashboard form.
  */
-function migrate_ui_import_validate($form, &$form_state) {
+function migrate_ui_migrate_validate($form, &$form_state) {
   $migrations = _migrate_ui_selected_migrations($form_state['values']);
   if (empty($migrations)) {
     if (isset($form_state['values']['migrations'])) {
@@ -420,7 +420,7 @@ function _migrate_ui_selected_migrations($values) {
 /**
  * Submit callback for the dashboard form.
  */
-function migrate_ui_import_submit($form, &$form_state) {
+function migrate_ui_migrate_submit($form, &$form_state) {
   $values = $form_state['values'];
   $operation = $values['operation'];
   if (isset($values['limit'])) {
@@ -771,7 +771,7 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
       '#title' => t('Destination'),
       '#group' => 'detail',
       '#description' =>
-        t('<p>These are the fields available in the destination of this import
+        t('<p>These are the fields available in the destination of this migration
            task. The machine names listed here are those available to be used
            as the first parameter to $this->addFieldMapping() in your Migration
            class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
@@ -812,7 +812,7 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
       '#title' => t('Source'),
       '#group' => 'detail',
       '#description' =>
-        t('<p>These are the fields available from the source of this import
+        t('<p>These are the fields available from the source of this migration
            task. The machine names listed here are those available to be used
            as the second parameter to $this->addFieldMapping() in your Migration
            class constructor. <span class="error">Unmapped fields are red</span>.</p>'),
@@ -1357,7 +1357,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   Migration::registerMigration($class_name, $machine_name, $arguments);
 
   drupal_set_message(t('Field mapping changes applied.'));
-  $form_state['redirect'] = "admin/content/import/jobs/$group_name/$machine_name";
+  $form_state['redirect'] = "admin/content/migrate/jobs/$group_name/$machine_name";
 }
 
 /**
@@ -1510,7 +1510,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       array('!list' => $migration_list));
     $build['deregistration'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Orphaned import tasks'),
+      '#title' => t('Orphaned migration tasks'),
       '#description' => $description,
     );
     $build['deregistration']['submit'] = array(
@@ -1613,7 +1613,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       '#options' => $options,
       '#default_value' => variable_get('migrate_import_method', 0),
       '#title' => t('Import method'),
-      '#description' => t('Choose whether the Import Dashboard will perform ' .
+      '#description' => t('Choose whether the dashboard will perform ' .
         'operations immediately, in the background via drush, or offer a choice.'),
     );
 
@@ -1641,7 +1641,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       '#rows' => 10,
       '#default_value' => variable_get('migrate_drush_mail_body',
         t('The migration operation is complete. Please review the results on ' .
-          'your import dashboard')),
+          'your dashboard')),
       '#title' => t('Body'),
       '#states' => array(
         'visible' => array(
@@ -1759,7 +1759,7 @@ function migrate_ui_configure_form($form, &$form_state) {
 function migrate_ui_configure_register_submit($form, &$form_state) {
   migrate_static_registration();
   drupal_set_message(t('All statically defined migrations have been (re)registered.'));
-  $form_state['redirect'] = 'admin/content/import';
+  $form_state['redirect'] = 'admin/content/migrate';
 }
 
 /**
@@ -1774,7 +1774,7 @@ function migrate_ui_configure_deregister_submit($form, &$form_state) {
       migrate_ui_deregister_migration($row->machine_name);
     }
   }
-  $form_state['redirect'] = 'admin/content/import';
+  $form_state['redirect'] = 'admin/content/migrate';
 }
 
 /**

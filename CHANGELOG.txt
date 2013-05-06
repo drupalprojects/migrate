@@ -12,9 +12,6 @@ Migration developers will need to add the "advanced migration information"
 permission to their roles to continue seeing all the info in the UI they're
 used to.
 
-The pages of the UI have been completely reorganized. The root of the UI is
-now admin/content/import rather than admin/content/migrate.
-
 Auto-registration (having classes be registered just based on their class name,
 with no call to registerMigration or definition in hook_migrate_api()) is no
 longer supported. Registration of classes defined in hook_migrate_api() is no

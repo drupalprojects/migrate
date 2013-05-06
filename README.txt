@@ -7,7 +7,7 @@ users are included. Plugins permit migration of other types of content.
 Usage
 -----
 Documentation is at http://drupal.org/migrate. To get started, enable the
-migrate_example module and browse to admin/content/import to see its dashboard.
+migrate_example module and browse to admin/content/migrate to see its dashboard.
 The code for this migration is in migrate_example/beer.inc (advanced examples are
 in wine.inc). Mimic that file in order to specify your own migrations. 
 

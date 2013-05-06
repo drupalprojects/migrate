@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Import wizard framework.
+ * Migration wizard framework.
  */
 
 /**
@@ -67,7 +67,7 @@ function migrate_ui_wizard_next_submit($form, &$form_state) {
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
   $form_state['wizard']->formSaveSettings();
-  $form_state['redirect'] = 'admin/content/import/jobs/' . $form_state['wizard']->getGroupName();
+  $form_state['redirect'] = 'admin/content/migrate/jobs/' . $form_state['wizard']->getGroupName();
 }
 
 /**
@@ -75,7 +75,7 @@ function migrate_ui_wizard_submit($form, &$form_state) {
  * migrations that were (implicitly) defined along the way, run the import, and
  * redirect to the Migrate dashboard.
  */
-function migrate_ui_wizard_import_submit($form, &$form_state) {
+function migrate_ui_wizard_migrate_submit($form, &$form_state) {
   $form_state['wizard']->formSaveSettings();
   $form_state['wizard']->formPerformImport();
 }
@@ -274,10 +274,10 @@ abstract class MigrateUIWizard {
         '#value' => t('Save import settings'),
       );
 /*
-      $form['actions']['import'] = array(
+      $form['actions']['migrate'] = array(
         '#type' => 'submit',
         '#value' => t('Save settings and import'),
-        '#submit' => array('migrate_ui_wizard_import_submit'),
+        '#submit' => array('migrate_ui_wizard_migrate_submit'),
       );*/
     }
     else {
@@ -328,7 +328,7 @@ abstract class MigrateUIWizard {
   }
 
   /**
-   * Run the import process for the import job we've defined.
+   * Run the import process for the migration job we've defined.
    */
   public function formPerformImport() {
 

@@ -5,8 +5,9 @@ define('MIGRATE_ACCESS_ADVANCED', 'advanced migration information');
 
 function migrate_ui_help($path, $arg) {
   switch ($path) {
-    case 'admin/content/import':
-      return t('The current status of each import job defined in this system. Click on a job name for details on its configuration.');
+    case 'admin/content/migrate':
+      return t('The current status of each migration job defined in this system. ' .
+               'Click on a job name for details on its configuration.');
   }
 }
 
@@ -30,23 +31,23 @@ function migrate_ui_permission() {
 function migrate_ui_menu() {
   $items = array();
 
-  $items['admin/content/import'] = array(
+  $items['admin/content/migrate'] = array(
     'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
-    'title' => 'Import',
+    'title' => 'Migrate',
     'description' => 'Manage importing of data into your Drupal site',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('migrate_ui_import_dashboard'),
+    'page arguments' => array('migrate_ui_migrate_dashboard'),
     'access arguments' => array(MIGRATE_ACCESS_BASIC),
     'access callback' => 'user_access',
     'file' => 'migrate_ui.pages.inc',
   );
-  $items['admin/content/import/jobs'] = array(
+  $items['admin/content/migrate/jobs'] = array(
     'title' => 'Dashboard',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
 
-  $items['admin/content/import/configure'] = array(
+  $items['admin/content/migrate/configure'] = array(
     'title' => 'Configuration',
     'type' => MENU_LOCAL_TASK,
     'description' => 'Configure migration settings',
@@ -56,10 +57,10 @@ function migrate_ui_menu() {
     'weight' => 100,
   );
 
-  // Add tabs for each implemented import wizard.
+  // Add tabs for each implemented migration wizard.
   $wizards = migrate_ui_wizards();
   foreach ($wizards as $wizard_class => $wizard) {
-    $items["admin/content/import/new/$wizard_class"] = array(
+    $items["admin/content/migrate/new/$wizard_class"] = array(
       'type' => MENU_LOCAL_TASK,
       'title' => 'Import from @source_title',
       'title arguments' => array('@source_title' => $wizard->getSourceName()),
@@ -70,17 +71,17 @@ function migrate_ui_menu() {
     );
   }
 
-  // Add callbacks for each migration group (a.k.a. import job)
+  // Add callbacks for each migration group (a.k.a. migration job)
   $job_result = db_select('migrate_group', 'mg')
                 ->fields('mg', array('name', 'title'))
                 ->orderBy('title')
                 ->execute();
   foreach ($job_result as $group_row) {
-    $items['admin/content/import/jobs/' . $group_row->name] = array(
+    $items['admin/content/migrate/jobs/' . $group_row->name] = array(
       'type' => MENU_NORMAL_ITEM,
       'title' => $group_row->title,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('migrate_ui_import_job', $group_row->name),
+      'page arguments' => array('migrate_ui_migrate_job', $group_row->name),
       'access arguments' => array(MIGRATE_ACCESS_BASIC),
       'file' => 'migrate_ui.pages.inc',
     );
@@ -90,7 +91,7 @@ function migrate_ui_menu() {
                    ->execute();
     foreach ($task_result as $task_row) {
       // Task (migration) detail pages come below jobs
-      $items['admin/content/import/jobs/' . $group_row->name . '/'.
+      $items['admin/content/migrate/jobs/' . $group_row->name . '/'.
              $task_row->machine_name] = array(
         'type' => MENU_NORMAL_ITEM,
         'page callback' => 'drupal_get_form',
@@ -99,14 +100,14 @@ function migrate_ui_menu() {
         'file' => 'migrate_ui.pages.inc',
       );
 
-      $items['admin/content/import/jobs/' . $group_row->name . '/' .
+      $items['admin/content/migrate/jobs/' . $group_row->name . '/' .
              $task_row->machine_name . '/view'] = array(
         'title' => 'View',
         'type' => MENU_DEFAULT_LOCAL_TASK,
         'weight' => -10,
       );
 
-      $items['admin/content/import/jobs/' . $group_row->name . '/' .
+      $items['admin/content/migrate/jobs/' . $group_row->name . '/' .
             $task_row->machine_name . '/edit'] = array(
         'type' => MENU_LOCAL_TASK,
         'title' => 'Edit',
@@ -117,7 +118,7 @@ function migrate_ui_menu() {
         'file' => 'migrate_ui.pages.inc',
       );
 
-      $items['admin/content/import/jobs/' . $group_row->name . '/' .
+      $items['admin/content/migrate/jobs/' . $group_row->name . '/' .
             $task_row->machine_name . '/messages'] = array(
         'type' => MENU_LOCAL_TASK,
         'title' => 'Messages',
@@ -167,7 +168,7 @@ function migrate_ui_mail($key, &$message, $params) {
 }
 
 /**
- * Get info on all modules supporting an import wizard.
+ * Get info on all modules supporting a migration wizard.
  *
  * @return array
  *  key: machine_name for a particular wizard implementation. Used in the menu

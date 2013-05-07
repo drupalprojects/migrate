@@ -205,7 +205,7 @@ function migrate_ui_migrate_job($form, &$form_state, $group_name) {
       $display_name = $machine_name;
     }
     $row['machinename'] =
-      l($display_name, "admin/content/import/jobs/$group_name/$machine_name");
+      l($display_name, "admin/content/migrate/jobs/$group_name/$machine_name");
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {

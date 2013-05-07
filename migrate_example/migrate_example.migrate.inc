@@ -9,10 +9,13 @@
 
 /*
  * You must implement hook_migrate_api(), setting the API level to 2, if you are
- * implementing any migration classes. As of Migrate 2.5, you should also
- * register your migration and handler classes explicitly here - the former
- * method of letting them get automatically registered on a cache clear will
- * break in certain environments (see http://drupal.org/node/1778952).
+ * implementing any migration classes. If your migration application is static -
+ * that is, you know at implementation time exactly what migrations must be
+ * instantiated - then you should register your migrations here. If your
+ * application is more dynamic (for example, if selections in the UI determine
+ * exactly what migrations need to be instantiated), then you would register
+ * your migrations using registerMigration() - see migrate_example_baseball for
+ * more information.
  */
 function migrate_example_migrate_api() {
   // Usually field mappings are established by code in the migration constructor -
@@ -27,6 +30,8 @@ function migrate_example_migrate_api() {
   $ignore_mapping->defaultValue(1);
 
   $api = array(
+    // Required - tells the Migrate module that you are implementing version 2
+    // of the Migrate API.
     'api' => 2,
     // Migrations can be organized into groups. The key used here will be the
     // machine name of the group, which can be used in Drush:
@@ -59,6 +64,8 @@ function migrate_example_migrate_api() {
       'BeerNode' => array(
         'class_name' => 'BeerNodeMigration',
         'group_name' => 'beer',
+        // Here is where we add field mappings which may override those
+        // specified in the group constructor.
         'field_mappings' => array(
           $translate_mapping,
           $ignore_mapping,

@@ -133,7 +133,7 @@ class MigrateGroup {
       if ($row) {
         $arguments = unserialize($row->arguments);
         $arguments = MigrationBase::decryptArguments($arguments);
-        if (empty($dependencies)) {
+        if (empty($dependencies) && isset($arguments['dependencies'])) {
           $dependencies = $arguments['dependencies'];
         }
         self::$groupList[$name] = new MigrateGroup($name, $dependencies,

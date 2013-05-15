@@ -396,6 +396,10 @@ abstract class MigrateSource implements Iterator {
     migrate_instrument_stop(get_class($this->activeMigration) . ' prepareRow');
     // We're explicitly skipping this row - keep track in the map table
     if ($return === FALSE) {
+      // Make sure we replace any previous messages for this item with any
+      // new ones.
+      $this->activeMigration->getMap()->delete($this->currentKey, TRUE);
+      $this->activeMigration->saveQueuedMessages();
       $this->activeMigration->getMap()->saveIDMapping($row, array(),
         MigrateMap::STATUS_IGNORED, $this->activeMigration->rollbackAction);
       $this->numIgnored++;

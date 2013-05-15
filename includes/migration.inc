@@ -1504,7 +1504,7 @@ abstract class Migration extends MigrationBase {
   /**
    * Save any messages we've queued up to the message table.
    */
-  protected function saveQueuedMessages() {
+  public function saveQueuedMessages() {
     foreach ($this->queuedMessages as $queued_message) {
       $this->saveMessage($queued_message['message'], $queued_message['level']);
     }

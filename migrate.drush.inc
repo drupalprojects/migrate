@@ -407,7 +407,7 @@ function drush_migrate_fields_destination($args = NULL) {
       if (method_exists($destination, 'fields')) {
         $table = array();
         foreach ($destination->fields($migration) as $machine_name => $description) {
-          $table[] = array($description, $machine_name);
+          $table[] = array(strip_tags($description), $machine_name);
         }
         drush_print_table($table);
       }
@@ -432,7 +432,7 @@ function drush_migrate_fields_source($args = NULL) {
       if (method_exists($source, 'fields')) {
         $table = array();
         foreach ($source->fields() as $machine_name => $description) {
-          $table[] = array($description, $machine_name);
+          $table[] = array(strip_tags($description), $machine_name);
         }
         drush_print_table($table);
       }

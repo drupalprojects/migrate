@@ -62,6 +62,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1989022 - Strip HTML tags from drush fields output.
 - #1988008 - Restore group dependency support.
 - #1985750 - Add missing prepareRollback/completeRollback for file destinations.
 - #1978702 - Check highwater marks against the starting highwater.

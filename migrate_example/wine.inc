@@ -859,7 +859,7 @@ class WineWineMigration extends AdvancedExampleMigration {
         t('Image titles attached to this wine; populated in prepareRow()'),
     );
 
-    // TIP: By default, each time a migration is run, any previously unimported
+    // TIP: By default, each time a migration is run, any previously unprocessed
     // source items are imported (along with any previously-imported items
     // marked for update). If the source data contains a timestamp that is set
     // to the creation time of each new item, as well as set to the update time

@@ -131,7 +131,7 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
   );
   if (user_access(MIGRATE_ACCESS_ADVANCED)) {
     $header += array(
-      'unimported' => array('data' => t('Unimported')),
+      'unprocessed' => array('data' => t('Unprocessed')),
       'messages' => array('data' => t('Messages')),
       'lastthroughput' => array('data' => t('Throughput')),
       'lastimported' => array('data' => t('Last imported')),
@@ -168,10 +168,10 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
       $imported = t('N/A');
     }
     if ($has_counts) {
-      $unimported = $total - $processed;
+      $unprocessed = $total - $processed;
     }
     else {
-      $unimported = t('N/A');
+      $unprocessed = t('N/A');
     }
     $status = $migration->getStatus();
     switch ($status) {
@@ -209,7 +209,7 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-      $row['unimported'] = $unimported;
+      $row['unprocessed'] = $unprocessed;
 
       if (is_subclass_of($migration, 'Migration')) {
         $num_messages = $migration->messageCount();
@@ -315,7 +315,7 @@ function _migrate_ui_migrate_operations() {
     '#markup' => t(
       'Choose an operation to run on all selections above:
        <ul>
-         <li>Import<br /> Imports all previously unimported records from the source, plus
+         <li>Import<br /> Imports all previously unprocessed records from the source, plus
              any records marked for update, into destination Drupal objects.</li>
          <li>Rollback<br /> Deletes all Drupal objects created by the import.</li>
          <li>Stop<br /> Cleanly interrupts any import or rollback processes that may

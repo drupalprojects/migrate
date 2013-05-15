@@ -62,6 +62,7 @@ Features and enhancements
 - #1886404 - Allow subfields to be mapped before primary fields.
 
 Bug fixes
+- #1989012 - Support preserve_files for MigrateFileFid.
 - #1982564 - Properly handle messages for ignored rows.
 - #1989022 - Strip HTML tags from drush fields output.
 - #1988008 - Restore group dependency support.

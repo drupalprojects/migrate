@@ -5,10 +5,10 @@
  */
  
 /**
- * Form for managing migration jobs (migration groups).
+ * Form for managing migration groups.
  */
 function migrate_ui_migrate_dashboard($form, &$form_state) {
-  drupal_set_title(t('Migration Jobs'));
+  drupal_set_title(t('Migration Groups'));
 
   $build = array();
 
@@ -19,7 +19,7 @@ function migrate_ui_migrate_dashboard($form, &$form_state) {
   );
 
   $header = array(
-    'machinename' => array('data' => t('Job')),
+    'machinename' => array('data' => t('Group')),
     'status' => array('data' => t('Status')),
     'source_system' => array('data' => t('Source system')),
   );
@@ -94,7 +94,7 @@ function migrate_ui_migrate_dashboard($form, &$form_state) {
 
     $row['status'] = $status;
     $row['machinename'] =
-      l($group_row->title, 'admin/content/migrate/jobs/' . $group_row->name);
+      l($group_row->title, 'admin/content/migrate/groups/' . $group_row->name);
     $arguments = unserialize($group_row->arguments);
     if (!empty($arguments['source_system'])) {
       $row['source_system'] = $arguments['source_system'];
@@ -110,7 +110,7 @@ function migrate_ui_migrate_dashboard($form, &$form_state) {
     '#header' => $header,
     '#options' => $rows,
     '#tree' => TRUE,
-    '#empty' => t('No migration jobs defined.'),
+    '#empty' => t('No migration groups defined.'),
   );
   $build['operations'] = _migrate_ui_migrate_operations();
 
@@ -120,7 +120,7 @@ function migrate_ui_migrate_dashboard($form, &$form_state) {
 /**
  * Menu callback
  */
-function migrate_ui_migrate_job($form, &$form_state, $group_name) {
+function migrate_ui_migrate_group($form, &$form_state, $group_name) {
   $build = array();
 
   $header = array(
@@ -205,7 +205,7 @@ function migrate_ui_migrate_job($form, &$form_state, $group_name) {
       $display_name = $machine_name;
     }
     $row['machinename'] =
-      l($display_name, "admin/content/migrate/jobs/$group_name/$machine_name");
+      l($display_name, "admin/content/migrate/groups/$group_name/$machine_name");
     $row['importrows'] = $total;
     $row['imported'] = $imported;
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {
@@ -214,7 +214,7 @@ function migrate_ui_migrate_job($form, &$form_state, $group_name) {
       if (is_subclass_of($migration, 'Migration')) {
         $num_messages = $migration->messageCount();
         $row['messages'] = $num_messages ?
-          l($num_messages, "admin/content/migrate/jobs/$group_name/$machine_name/messages")
+          l($num_messages, "admin/content/migrate/groups/$group_name/$machine_name/messages")
           : 0;
       }
       else {
@@ -250,7 +250,7 @@ function migrate_ui_migrate_job($form, &$form_state, $group_name) {
     '#header' => $header,
     '#options' => $rows,
     '#tree' => TRUE,
-    '#empty' => t('No tasks are defined for this migration job.'),
+    '#empty' => t('No tasks are defined for this migration group.'),
   );
 
   $build['operations'] = _migrate_ui_migrate_operations();
@@ -323,7 +323,7 @@ function _migrate_ui_migrate_operations() {
          <li>Reset<br /> Sometimes a process may fail to stop cleanly, and be
              left stuck in an Importing or Rolling Back status. Choose Reset to clear
              the status and permit other operations to proceed.</li>
-         <li>Remove migration settings<br /> Removes all information about a migration job
+         <li>Remove migration settings<br /> Removes all information about a migration group
              or task, while preserving any content that has already been imported.</li>
        </ul>'
     ),
@@ -388,7 +388,7 @@ function migrate_ui_migrate_validate($form, &$form_state) {
 }
 
 /**
- * Determine what migrations are selected (whether directly on a job page, or
+ * Determine what migrations are selected (whether directly on a group page, or
  * via group selections on the dashboard).
  *
  * @param $values
@@ -397,13 +397,13 @@ function migrate_ui_migrate_validate($form, &$form_state) {
  */
 function _migrate_ui_selected_migrations($values) {
   if (isset($values['migrations'])) {
-    // From the specific job page, just take them in order (they were already
+    // From the specific group page, just take them in order (they were already
     // sorted by dependencies).
     $machine_names = array_filter($values['migrations']);
   }
   else {
-    // From the jobs page, we need to use migrate_migrations to be sure we've
-    // got the tasks for each job in dependency order.
+    // From the groups page, we need to use migrate_migrations to be sure we've
+    // got the tasks for each group in dependency order.
     $tasks = array_filter($values['tasks']);
     $migrations = migrate_migrations();
     $machine_names = array();
@@ -1357,7 +1357,8 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   Migration::registerMigration($class_name, $machine_name, $arguments);
 
   drupal_set_message(t('Field mapping changes applied.'));
-  $form_state['redirect'] = "admin/content/migrate/jobs/$group_name/$machine_name";
+  $form_state['redirect'] =
+    "admin/content/migrate/groups/$group_name/$machine_name";
 }
 
 /**

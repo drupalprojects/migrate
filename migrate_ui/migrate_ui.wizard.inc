@@ -67,7 +67,7 @@ function migrate_ui_wizard_next_submit($form, &$form_state) {
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
   $form_state['wizard']->formSaveSettings();
-  $form_state['redirect'] = 'admin/content/migrate/jobs/' . $form_state['wizard']->getGroupName();
+  $form_state['redirect'] = 'admin/content/migrate/groups/' . $form_state['wizard']->getGroupName();
 }
 
 /**
@@ -328,7 +328,7 @@ abstract class MigrateUIWizard {
   }
 
   /**
-   * Run the import process for the migration job we've defined.
+   * Run the import process for the migration group we've defined.
    */
   public function formPerformImport() {
 

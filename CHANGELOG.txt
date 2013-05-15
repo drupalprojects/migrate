@@ -26,7 +26,7 @@ removed in a future version.
 Features and enhancements
 - #1826112 - A new API has been added to support external modules in developing
              easy-to-use wizard-based UIs.
-- #1833380 - Major refactoring of the UI, breaking groups (jobs) and migrations
+- #1833380 - Major refactoring of the UI, breaking groups and migrations
              (tasks) into separate pages, introducing an advanced permission and
              presenting a simplified UI to those with only the basic permission.
 - #1860450 - The UI now has the capability of spawning import/rollback operations

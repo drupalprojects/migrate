@@ -6,8 +6,9 @@ define('MIGRATE_ACCESS_ADVANCED', 'advanced migration information');
 function migrate_ui_help($path, $arg) {
   switch ($path) {
     case 'admin/content/migrate':
-      return t('The current status of each migration job defined in this system. ' .
-               'Click on a job name for details on its configuration.');
+      return t('The current status of each migration group defined in this ' .
+               'system. Click on a group name for details on its ' .
+               'configuration.');
   }
 }
 
@@ -41,7 +42,7 @@ function migrate_ui_menu() {
     'access callback' => 'user_access',
     'file' => 'migrate_ui.pages.inc',
   );
-  $items['admin/content/migrate/jobs'] = array(
+  $items['admin/content/migrate/groups'] = array(
     'title' => 'Dashboard',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
@@ -71,17 +72,17 @@ function migrate_ui_menu() {
     );
   }
 
-  // Add callbacks for each migration group (a.k.a. migration job)
-  $job_result = db_select('migrate_group', 'mg')
+  // Add callbacks for each migration group.
+  $group_result = db_select('migrate_group', 'mg')
                 ->fields('mg', array('name', 'title'))
                 ->orderBy('title')
                 ->execute();
-  foreach ($job_result as $group_row) {
-    $items['admin/content/migrate/jobs/' . $group_row->name] = array(
+  foreach ($group_result as $group_row) {
+    $items['admin/content/migrate/groups/' . $group_row->name] = array(
       'type' => MENU_NORMAL_ITEM,
       'title' => $group_row->title,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('migrate_ui_migrate_job', $group_row->name),
+      'page arguments' => array('migrate_ui_migrate_group', $group_row->name),
       'access arguments' => array(MIGRATE_ACCESS_BASIC),
       'file' => 'migrate_ui.pages.inc',
     );
@@ -90,8 +91,8 @@ function migrate_ui_menu() {
                    ->condition('group_name', $group_row->name)
                    ->execute();
     foreach ($task_result as $task_row) {
-      // Task (migration) detail pages come below jobs
-      $items['admin/content/migrate/jobs/' . $group_row->name . '/'.
+      // Task (migration) detail pages come below groups.
+      $items['admin/content/migrate/groups/' . $group_row->name . '/'.
              $task_row->machine_name] = array(
         'type' => MENU_NORMAL_ITEM,
         'page callback' => 'drupal_get_form',
@@ -100,14 +101,14 @@ function migrate_ui_menu() {
         'file' => 'migrate_ui.pages.inc',
       );
 
-      $items['admin/content/migrate/jobs/' . $group_row->name . '/' .
+      $items['admin/content/migrate/groups/' . $group_row->name . '/' .
              $task_row->machine_name . '/view'] = array(
         'title' => 'View',
         'type' => MENU_DEFAULT_LOCAL_TASK,
         'weight' => -10,
       );
 
-      $items['admin/content/migrate/jobs/' . $group_row->name . '/' .
+      $items['admin/content/migrate/groups/' . $group_row->name . '/' .
             $task_row->machine_name . '/edit'] = array(
         'type' => MENU_LOCAL_TASK,
         'title' => 'Edit',
@@ -118,7 +119,7 @@ function migrate_ui_menu() {
         'file' => 'migrate_ui.pages.inc',
       );
 
-      $items['admin/content/migrate/jobs/' . $group_row->name . '/' .
+      $items['admin/content/migrate/groups/' . $group_row->name . '/' .
             $task_row->machine_name . '/messages'] = array(
         'type' => MENU_LOCAL_TASK,
         'title' => 'Messages',

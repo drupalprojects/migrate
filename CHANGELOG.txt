@@ -27,6 +27,8 @@ Features and enhancements
              in drush, with email notifications of completion. The notification
              ability is available when running drush at the command line, which
              may be useful for running imports via cron.
+- #1996602 - A default field handler is now provided that should handle many if
+             not most field types without custom handlers.
 - #1901980 - Support encrypting particular arguments saved to the database, to
              support wizard implementations that may be prompting for secure
              database credentials.

@@ -173,8 +173,6 @@ function migrate_handler_invoke_all($destination, $method) {
 
 /**
  * Invoke any available handlers attached to a given field type.
- * If any handlers have dependencies defined, they will be invoked after
- * the specified handlers.
  *
  * @param $entity
  *  The object we are building up before calling example_save().
@@ -188,18 +186,21 @@ function migrate_handler_invoke_all($destination, $method) {
  * @param $method
  *  Handler method to call (defaults to prepare()).
  */
-function migrate_field_handler_invoke_all($entity, array $field_info, array $instance,
-    array $values, $method = 'prepare') {
+function migrate_field_handler_invoke_all($entity, array $field_info,
+    array $instance, array $values, $method = 'prepare') {
   $return = array();
   $type = $field_info['type'];
   $class_list = _migrate_class_list('MigrateFieldHandler');
-  $disabled = unserialize(variable_get('migrate_disabled_handlers', serialize(array())));
+  $disabled = unserialize(variable_get('migrate_disabled_handlers',
+                                       serialize(array())));
+  $handler_called = FALSE;
   foreach ($class_list as $class_name => $handler) {
     if (!in_array($class_name, $disabled) && $handler->handlesType($type)
         && method_exists($handler, $method)) {
       migrate_instrument_start($class_name . '->' . $method);
       $result = call_user_func_array(array($handler, $method),
         array($entity, $field_info, $instance, $values));
+      $handler_called = TRUE;
       migrate_instrument_stop($class_name . '->' . $method);
       if (isset($result) && is_array($result)) {
         $return = array_merge_recursive($return, $result);
@@ -207,6 +208,20 @@ function migrate_field_handler_invoke_all($entity, array $field_info, array $ins
       elseif (isset($result)) {
         $return[] = $result;
       }
+    }
+  }
+
+  if (!$handler_called && $method == 'prepare') {
+    $handler = new MigrateDefaultFieldHandler();
+    migrate_instrument_start('MigrateDefaultFieldHandler->prepare');
+    $result = call_user_func_array(array($handler, 'prepare'),
+      array($entity, $field_info, $instance, $values));
+    migrate_instrument_stop('MigrateDefaultFieldHandler->prepare');
+    if (isset($result) && is_array($result)) {
+      $return = array_merge_recursive($return, $result);
+    }
+    elseif (isset($result)) {
+      $return[] = $result;
     }
   }
   return $return;

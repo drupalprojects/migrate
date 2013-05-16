@@ -1066,7 +1066,12 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
 
     $default_mapping = '-1';
     $default_value = '';
-    $mapping = $field_mappings[$name];
+    if (isset($field_mappings[$name])) {
+      $mapping = $field_mappings[$name];
+    }
+    else {
+      $mapping = NULL;
+    }
 
     // If the DNM box has been clicked, make sure we clear the mapping and
     // default value fields.
@@ -1147,7 +1152,10 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       ),
     );
 
-    $source_migration = $mapping->getSourceMigration();
+    $source_migration = NULL;
+    if ($mapping) {
+      $source_migration = $mapping->getSourceMigration();
+    }
     if (!$source_migration) {
       $source_migration = '-1';
     }
@@ -1286,7 +1294,8 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       $mapping->issueGroup(NULL);
     }
 
-    if ($source_migrations[$destination_field]) {
+    if ($source_migrations[$destination_field] &&
+        $source_migrations[$destination_field] != '-1') {
       $mapping->sourceMigration($source_migrations[$destination_field]);
     }
 

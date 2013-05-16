@@ -1066,6 +1066,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
 
     $default_mapping = '-1';
     $default_value = '';
+    $mapping = $field_mappings[$name];
 
     // If the DNM box has been clicked, make sure we clear the mapping and
     // default value fields.
@@ -1077,7 +1078,6 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       // Determine the default field mapping - if we have an existing one, use
       // that, otherwise try to match on name.
       if (isset($field_mappings[$name])) {
-        $mapping = $field_mappings[$name];
         if ($mapping->getSourceField()) {
           $default_mapping = $mapping->getSourceField();
         }
@@ -1296,9 +1296,20 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   // Handle any source fields marked DNM.
   foreach ($form_state['values']['source_fields'] as $source_field => $value) {
     if ($value) {
-      $mapping = new MigrateFieldMapping(NULL, $source_field);
-      $mapping->issueGroup(t('DNM'));
-      $arguments['field_mappings'][] = $mapping;
+      // But if there in the coded mappings we have this field mapped to no
+      // destination field, then let that mapping stand.
+      $already_ignored = FALSE;
+      foreach ($coded_mappings as $destination_field => $mapping) {
+        if (is_numeric($destination_field) &&
+            $mapping->getSourceField() == $source_field) {
+          $already_ignored = TRUE;
+        }
+      }
+      if (!$already_ignored) {
+        $mapping = new MigrateFieldMapping(NULL, $source_field);
+        $mapping->issueGroup(t('DNM'));
+        $arguments['field_mappings'][] = $mapping;
+      }
     }
   }
 

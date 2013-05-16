@@ -969,7 +969,8 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       'select the source field used to populate it. You can enter a default ' .
       'value to be applied to the destination when there is no source field, ' .
       'or the source field is empty in a given source item. Check the DNM ' .
-      'box for destination fields you do not want populated by migration.'),
+      '(Do Not Migrate) box for destination fields you do not want populated ' .
+      'by migration.'),
     '#theme' => array('migrate_ui_field_mapping_form'),
     '#prefix' => '<div id="field-mappings">',
     '#suffix' => '</div>',
@@ -1053,48 +1054,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
     if (isset($dest_key[$name])) {
       continue;
     }
-    // For now, hide these fields
-    $skip_fields = array(
-      // node fields
-      'comment',
-      'daycount',
-      'is_new',
-      'language',
-      'log',
-      'revision',
-      'revision_uid',
-      'timestamp',
-      'tnid',
-      'totalcount',
-      'translate',
-      // user fields
-      'data',
-    );
-    if (in_array($name, $skip_fields)) {
-      continue;
-    }
-    // And these subfields
-    $skip_suffixes = array(
-      // Text fields
-      'format',
-      'language',
-      // Term reference fields
-      'source_type',
-      'create_term',
-      'ignore_case',
-      // File fields
-      'destination_dir',
-      'destination_file',
-      'file_replace',
-      'preserve_files',
-      'source_dir',
-      'file_class',
-      'urlencode',
-    );
-    $parts = explode(':', $name);
-    if (isset($parts[1]) && in_array($parts[1], $skip_suffixes)) {
-      continue;
-    }
+
     if (is_array($description)) {
       $description = reset($description);
     }
@@ -1136,11 +1096,17 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       }
     }
 
+    // Only show the machine name to advanced users.
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {
       $label = '!description [!field_name]';
     }
     else {
       $label = '!description';
+    }
+
+    // Indent subfields and options to show their relationship to the parent.
+    if (strpos($name, ':') > 0) {
+      $description = '&nbsp;&nbsp;' . $description;
     }
 
     $form['field_mappings'][$name]['mapping'] = array(

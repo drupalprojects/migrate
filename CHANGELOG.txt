@@ -2,12 +2,6 @@
 Migrate 2.6 Beta 1
 ==================
 
-IMPORTANT: The -dev releases between Migrate 2.5 and Migrate 2.6 will be less
-stable than we've typically maintained in the past. In particular, as far as
-database updates are concerned, the goal is to have a clean upgrade from 2.5 to
-2.6 - intermediate updates are not supported and can't be expected to work
-cleanly. Backup your database before upgrading to a -dev release.
-
 Migration developers will need to add the "advanced migration information"
 permission to their roles to continue seeing all the info in the UI they're
 used to.
@@ -40,6 +34,8 @@ Features and enhancements
              time, and use those to override mappings in code.
 - #1961620 - When editing field mappings, allow destination or source fields to
              be explicitly set DNM.
+- #1996280 - Allow all field/subfields/options to be edited, and indent
+             subfields/options to make the relationship more clear.
 - #1984568 - Add setters to enable constructing migrations according to a
              dependency injection pattern.
 - #1835822 - Hash source rows to detect changes.

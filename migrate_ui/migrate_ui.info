@@ -1,8 +1,7 @@
 name = "Migrate UI"
 description = "UI for managing migration processes"
-package = "Development"
-;configure = admin/config/development/migrate
+package = "Migration"
+configure = admin/content/migrate/configure
 core = 7.x
 dependencies[] = migrate
 files[] = migrate_ui.wizard.inc
-

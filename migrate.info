@@ -1,6 +1,6 @@
 name = "Migrate"
 description = "Import content from external sources"
-package = "Development"
+package = "Migration"
 core = 7.x
 
 files[] = includes/base.inc

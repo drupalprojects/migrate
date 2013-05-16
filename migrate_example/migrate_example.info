@@ -1,6 +1,6 @@
 name = "Migrate Example"
 description = "Example migration data."
-package = "Migrate Examples"
+package = "Migration"
 core = 7.x
 dependencies[] = taxonomy
 dependencies[] = image

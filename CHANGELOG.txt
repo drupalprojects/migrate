@@ -36,6 +36,7 @@ Features and enhancements
              be explicitly set DNM.
 - #1996280 - Allow all field/subfields/options to be edited, and indent
              subfields/options to make the relationship more clear.
+- #1996350 - Allow sourceMigration to be edited.
 - #1984568 - Add setters to enable constructing migrations according to a
              dependency injection pattern.
 - #1835822 - Hash source rows to detect changes.

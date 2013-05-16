@@ -986,8 +986,6 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
 
   $base_options = array(
     '-1' => t(''),
-    // @todo: Not yet supported
-//      '0' => t('--Create field--'),
   );
 
   $field_options = array();
@@ -1047,6 +1045,11 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
         'wrapper' => 'field-mappings',
       ),
     );
+  }
+
+  $source_migration_options = array('-1' => t(''),);
+  foreach (migrate_migrations() as $machine_name => $migration_info) {
+    $source_migration_options[$machine_name] = $machine_name;
   }
 
   foreach ($dest_fields as $name => $description) {
@@ -1109,6 +1112,15 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       $description = '&nbsp;&nbsp;' . $description;
     }
 
+    $form['field_mappings'][$name]['issue_group'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $dnm_value,
+      '#ajax' => array(
+        'callback' => 'migrate_ui_dnm_changed',
+        'wrapper' => 'field-mappings',
+      ),
+    );
+
     $form['field_mappings'][$name]['mapping'] = array(
       '#type' => 'select',
       '#title' => t($label,
@@ -1135,12 +1147,19 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
       ),
     );
 
-    $form['field_mappings'][$name]['issue_group'] = array(
-      '#type' => 'checkbox',
-      '#default_value' => $dnm_value,
-      '#ajax' => array(
-        'callback' => 'migrate_ui_dnm_changed',
-        'wrapper' => 'field-mappings',
+    $source_migration = $mapping->getSourceMigration();
+    if (!$source_migration) {
+      $source_migration = '-1';
+    }
+    $form['field_mappings'][$name]['source_migration'] = array(
+      '#type' => 'select',
+      '#options' => $source_migration_options,
+      '#default_value' => $source_migration,
+      '#states' => array(
+        'disabled' => array(
+          ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
+            array('checked' => TRUE),
+        ),
       ),
     );
   }
@@ -1161,6 +1180,13 @@ function migrate_ui_dnm_changed(&$form, &$form_state) {
   return $form['field_mappings'];
 }
 
+/**
+ * Submit callback for the edit mappings form. Save any choices made in the
+ * UI which override mappings made in code.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   $machine_name = $form_state['values']['machine_name'];
   $row = db_select('migrate_status', 'ms')
@@ -1180,18 +1206,33 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   $migration = Migration::getInstance($machine_name);
   $existing_mappings = $migration->getFieldMappings();
   $coded_mappings = $migration->getCodedFieldMappings();
-
   foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
-    // If this mapping matches a coded mapping but not a stored mapping, remove it entirely (don't
-    // store it in the database) so the coded mapping is not overwritten.
+    // If this mapping matches a coded mapping but not a stored mapping, remove
+    // it entirely (don't store it in the database) so the coded mapping is not
+    // overwritten.
     if (isset($coded_mappings[$destination_field])) {
-      if ($info['mapping'] == $coded_mappings[$destination_field]->getSourceField() &&
-          $info['default_value'] == $coded_mappings[$destination_field]->getDefaultValue()) {
+      $coded_source_field =
+        $coded_mappings[$destination_field]->getSourceField();
+      $coded_default_value =
+        $coded_mappings[$destination_field]->getDefaultValue();
+      $coded_source_migration =
+        $coded_mappings[$destination_field]->getSourceMigration();
+      if ($info['mapping'] == '-1') {
+        $info['mapping'] = NULL;
+      }
+      if ($info['source_migration'] == '-1') {
+        $info['source_migration'] = NULL;
+      }
+      if ($info['mapping'] == $coded_source_field &&
+          $info['default_value'] == $coded_default_value &&
+          $info['source_migration'] == $coded_source_migration) {
         continue;
       }
     }
+    // This is not a match for a coded mapping, so we will want to save it.
     $field_mappings[$destination_field] = $info['mapping'];
     $default_values[$destination_field] = $info['default_value'];
+    $source_migrations[$destination_field] = $info['source_migration'];
     $issue_group_values[$destination_field] = $info['issue_group'];
   }
 
@@ -1210,16 +1251,18 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
 
     // Until we can provide editing of all the options that go along with
     // field mappings, we want to avoid overwriting pre-existing mappings and
-    // losing important bits like sourceMigration.
+    // losing important bits.
     $mapping = NULL;
     if (isset($existing_mappings[$destination_field]) &&
         $issue_group_values[$destination_field] != 0) {
       $old_mapping = $existing_mappings[$destination_field];
       if ($source_field == $old_mapping->getSourceField() &&
-          $default_values[$destination_field] == $old_mapping->getDefaultValue()) {
+          $default_values[$destination_field] == $old_mapping->getDefaultValue() &&
+          $source_migrations[$destination_field] == $old_mapping->getSourceMigration()) {
         // First, if this mapping matches a previously-stored mapping, we want to
         // preserve it as it was originally stored.
-        if ($old_mapping->getMappingSource() == MigrateFieldMapping::MAPPING_SOURCE_DB) {
+        if ($old_mapping->getMappingSource() ==
+            MigrateFieldMapping::MAPPING_SOURCE_DB) {
           $mapping = $old_mapping;
         }
         // If it matches a coded mapping, then we don't want to save it at all.
@@ -1243,72 +1286,11 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       $mapping->issueGroup(NULL);
     }
 
-    // Special handling for term references
-    $destination_title =
-      $form['field_mappings'][$destination_field]['mapping']['#title'];
-    if (strstr($destination_title, '(taxonomy_term_reference)')) {
-      // Assume the source field is going to reference a term migration
-      if (!empty($source_field)) {
-        // Find the destination vocabulary
-        $field_info = field_info_field($destination_field);
-        $destination_vocab = $field_info['settings']['allowed_values'][0]['vocabulary'];
-        $term_migrations = array();
-        // Look for term migrations
-        foreach (migrate_migrations() as $term_machine_name => $term_migration) {
-          $destination = $term_migration->getDestination();
-          if (is_a($destination, 'MigrateDestinationTerm') &&
-              ($destination->getBundle() == $destination_vocab) &&
-              ($term_migration->getGroup()->getName() == $group_name)) {
-            $term_migrations[] = $term_machine_name;
-          }
-        }
-        if (!empty($term_migrations)) {
-          $mapping->sourceMigration($term_migrations);
-          $arguments['field_mappings'][] = $mapping;
-          $type_mapping = new MigrateFieldMapping("$destination_field:source_type", NULL);
-          $type_mapping->defaultValue('tid');
-          $arguments['field_mappings'][] = $type_mapping;
-        }
-      }
-      elseif (!is_null($default_values[$destination_field])) {
-        $arguments['field_mappings'][] = $mapping;
-        // Always allow creation of terms
-        $mapping = new MigrateFieldMapping("$destination_field:create_term", NULL);
-        $mapping->defaultValue(1);
-        $arguments['field_mappings'][] = $mapping;
-      }
+    if ($source_migrations[$destination_field]) {
+      $mapping->sourceMigration($source_migrations[$destination_field]);
     }
-    // Special handling for files
-    elseif (strpos($destination_title, '(image)') ||
-            strpos($destination_title, '(file)') ||
-            strpos($destination_title, '(media)')) {
-      // Assume we're migrating from fids, unless it's a media video field, in
-      // which case use the Youtube class.
-      $file_class = 'MigrateFileFid';
-      if (module_exists('media')) {
-        $destination = $migration->getDestination();
-        if (is_a($destination, 'MigrateDestinationEntity')) {
-          $field_instance = field_info_instance($destination->getEntityType(),
-            $destination_field, $destination->getBundle());
-          // Note the === - if video is not allowed, the value is a numeric
-          // 0, and 0 == 'video' is, surprisingly, TRUE.
-          $video_setting = $field_instance['widget']['settings']['allowed_types']['video'];
-          if ($video_setting === 'video') {
-            $file_class = 'MigrateExtrasFileYoutube';
-          }
-        }
-      }
-      if ($file_class == 'MigrateFileFid') {
-        $mapping->sourceMigration($group_name . 'File');
-      }
-      $arguments['field_mappings'][] = $mapping;
-      $mapping = new MigrateFieldMapping("$destination_field:file_class", NULL);
-      $mapping->defaultValue($file_class);
-      $arguments['field_mappings'][] = $mapping;
-    }
-    else {
-      $arguments['field_mappings'][] = $mapping;
-    }
+
+    $arguments['field_mappings'][] = $mapping;
   }
 
   // Handle any source fields marked DNM.
@@ -1340,17 +1322,18 @@ function theme_migrate_ui_field_mapping_form($variables) {
   $form = $variables['field_mappings'];
   $elements = element_children($form);
   if (!empty($elements)) {
-    $header = array(t('Destination field'), t('Source field'),
-                    t('Default value'), t('DNM'));
+    $header = array(t('DNM'), t('Destination field'), t('Source field'),
+                    t('Default value'), t('Source migration'));
     $rows = array();
     foreach ($elements as $mapping_key) {
       $row = array();
       $title = $form[$mapping_key]['mapping']['#title'];
       unset($form[$mapping_key]['mapping']['#title']);
+      $row[] = drupal_render($form[$mapping_key]['issue_group']);
       $row[] = $title;
       $row[] = drupal_render($form[$mapping_key]['mapping']);
       $row[] = drupal_render($form[$mapping_key]['default_value']);
-      $row[] = drupal_render($form[$mapping_key]['issue_group']);
+      $row[] = drupal_render($form[$mapping_key]['source_migration']);
       $rows[] = $row;
     }
     $output .= theme('table', array('header' => $header, 'rows' => $rows));

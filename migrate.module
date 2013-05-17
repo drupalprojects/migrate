@@ -274,6 +274,9 @@ function migrate_hook_info() {
   $hooks['migrate_api'] = array(
     'group' => 'migrate',
   );
+  $hooks['migrate_api_alter'] = array(
+    'group' => 'migrate',
+  );
   return $hooks;
 }
 
@@ -300,6 +303,9 @@ function migrate_get_module_apis($reset = FALSE) {
                 '%version' => MIGRATE_API_VERSION)));
       }
     }
+
+    // Allow modules to alter the migration information.
+    drupal_alter('migrate_api', $cache);
   }
 
   return $cache;

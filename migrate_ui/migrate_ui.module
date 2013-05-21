@@ -1,8 +1,5 @@
 <?php
 
-define('MIGRATE_ACCESS_BASIC', 'migration information');
-define('MIGRATE_ACCESS_ADVANCED', 'advanced migration information');
-
 function migrate_ui_help($path, $arg) {
   switch ($path) {
     case 'admin/content/migrate':
@@ -10,20 +7,6 @@ function migrate_ui_help($path, $arg) {
                'system. Click on a group name for details on its ' .
                'configuration.');
   }
-}
-
-/**
- * Implementation of hook_permission().
- */
-function migrate_ui_permission() {
-  return array(
-    MIGRATE_ACCESS_BASIC => array(
-      'title' => t('Access to basic migration information'),
-    ),
-    MIGRATE_ACCESS_ADVANCED => array(
-      'title' => t('Access to advanced migration information'),
-    ),
-  );
 }
 
 /**

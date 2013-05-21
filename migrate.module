@@ -15,6 +15,9 @@
 
 define('MIGRATE_API_VERSION', 2);
 
+define('MIGRATE_ACCESS_BASIC', 'migration information');
+define('MIGRATE_ACCESS_ADVANCED', 'advanced migration information');
+
 /**
  * Retrieve a list of all active migrations, ordered by dependencies. To be
  * recognized, a class must be non-abstract, and derived from MigrationBase.
@@ -278,6 +281,20 @@ function migrate_hook_info() {
     'group' => 'migrate',
   );
   return $hooks;
+}
+
+/**
+ * Implementation of hook_permission().
+ */
+function migrate_permission() {
+  return array(
+    MIGRATE_ACCESS_BASIC => array(
+      'title' => t('Access to basic migration information'),
+    ),
+    MIGRATE_ACCESS_ADVANCED => array(
+      'title' => t('Access to advanced migration information'),
+    ),
+  );
 }
 
 /**

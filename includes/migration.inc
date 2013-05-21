@@ -811,7 +811,7 @@ abstract class Migration extends MigrationBase {
       $row = $this->source->current();
       // Cheat for XML migrations, which don't pick up the source values
       // until applyMappings() applies the xpath()
-      if (is_a($this, 'XMLMigration')) {
+      if (is_a($this, 'XMLMigration') && isset($row->xml)) {
         $this->sourceValues = $row;
         $this->applyMappings();
         $row = $this->sourceValues;

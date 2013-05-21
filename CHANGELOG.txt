@@ -1,6 +1,6 @@
 
-Migrate 2.6 Beta 1
-==================
+Next release
+============
 
 Migration developers will need to add the "advanced migration information"
 permission to their roles to continue seeing all the info in the UI they're
@@ -16,6 +16,12 @@ Migration class constructors should now always accept a $arguments array as
 the first parameter and pass it to its parent. This version does support legacy
 migrations which pass a group object, or nothing, but that support will be
 removed in a future version.
+
+Bug fixes
+- #1999290 - Check that an XMLMigration has actually populated $row->xml.
+
+Migrate 2.6 Beta 1
+==================
 
 Features and enhancements
 - #1826112 - A new API has been added to support external modules in developing

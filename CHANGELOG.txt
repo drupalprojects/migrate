@@ -18,6 +18,7 @@ migrations which pass a group object, or nothing, but that support will be
 removed in a future version.
 
 Bug fixes
+- #2009222 - Properly update map/message tables on a non-default connection.
 - #2006158 - Fix warnings on default field handler fields().
 - #1999918 - Move permissions to core Migrate module.
 - #1999290 - Check that an XMLMigration has actually populated $row->xml.

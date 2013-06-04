@@ -190,8 +190,10 @@ class MigrateSQLMap extends MigrateMap {
       }
       else {
         // Add any missing columns to the map table
-        if (!db_field_exists($this->mapTable, 'rollback_action')) {
-          db_add_field($this->mapTable, 'rollback_action', array(
+        if (!$this->connection->schema()->fieldExists($this->mapTable,
+                                                      'rollback_action')) {
+          $this->connection->schema()->addField($this->mapTable,
+                                                'rollback_action', array(
             'type' => 'int',
             'size' => 'tiny',
             'unsigned' => TRUE,
@@ -200,8 +202,8 @@ class MigrateSQLMap extends MigrateMap {
             'description' => 'Flag indicating what to do for this item on rollback',
           ));
         }
-        if (!db_field_exists($this->mapTable, 'hash')) {
-          db_add_field($this->mapTable, 'hash', array(
+        if (!$this->connection->schema()->fieldExists($this->mapTable, 'hash')) {
+          $this->connection->schema()->addField($this->mapTable, 'hash', array(
             'type' => 'varchar',
             'length' => '32',
             'not null' => FALSE,

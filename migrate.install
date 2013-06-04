@@ -553,3 +553,26 @@ function migrate_update_7206() {
     );
   }
 }
+
+/**
+ * Make sure we remove an empty 'default' group created by the previous updates.
+ */
+function migrate_update_7207() {
+  $rows = db_select('migrate_group', 'mg')
+          ->fields('mg', array('name'))
+          ->condition('name', 'default')
+          ->execute()
+          ->rowCount();
+  if ($rows > 0) {
+    $rows = db_select('migrate_status', 'ms')
+            ->fields('ms', array('machine_name'))
+            ->condition('group_name', 'default')
+            ->execute()
+            ->rowCount();
+    if ($rows == 0) {
+      db_delete('migrate_group')
+      ->condition('name', 'default')
+      ->execute();
+    }
+  }
+}

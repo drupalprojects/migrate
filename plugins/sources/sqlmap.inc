@@ -74,14 +74,18 @@ class MigrateSQLMap extends MigrateMap {
     if (isset($options['track_last_imported'])) {
       $this->trackLastImported = TRUE;
     }
+
+    $this->connection = Database::getConnection('default', $connection_key);
+
     // Default generated table names, limited to 63 characters
+    $prefixLength = strlen($this->connection->tablePrefix()) ;
     $this->mapTable = 'migrate_map_' . drupal_strtolower($machine_name);
-    $this->mapTable = drupal_substr($this->mapTable, 0, 63);
+    $this->mapTable = drupal_substr($this->mapTable, 0, 63 - $prefixLength);
     $this->messageTable = 'migrate_message_' . drupal_strtolower($machine_name);
-    $this->messageTable = drupal_substr($this->messageTable, 0, 63);
+    $this->messageTable = drupal_substr($this->messageTable, 0, 63 - $prefixLength);
     $this->sourceKey = $source_key;
     $this->destinationKey = $destination_key;
-    $this->connection = Database::getConnection('default', $connection_key);
+
     // Build the source and destination key maps
     $this->sourceKeyMap = array();
     $count = 1;

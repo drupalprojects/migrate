@@ -8,7 +8,7 @@
  * Form for managing migration groups.
  */
 function migrate_ui_migrate_dashboard($form, &$form_state) {
-  drupal_set_title(t('Migration Groups'));
+  drupal_set_title(t('Migrate dashboard'));
 
   $build = array();
 
@@ -121,6 +121,8 @@ function migrate_ui_migrate_dashboard($form, &$form_state) {
  * Menu callback
  */
 function migrate_ui_migrate_group($form, &$form_state, $group_name) {
+  $group = MigrateGroup::getInstance($group_name);
+  drupal_set_title($group->getTitle());
   $build = array();
 
   $header = array(

@@ -18,6 +18,8 @@ migrations which pass a group object, or nothing, but that support will be
 removed in a future version.
 
 Bug fixes
+- #2011024 - Wildcard groups/tasks in the menu hierarchy, saving the need to
+             rebuild menus when migrations are registered/deregistered.
 - #2010884 - Clean up empty default groups on dbupdate.
 - #2004296 - Enforce map/message table names with prefixes.
 - #2009222 - Properly update map/message tables on a non-default connection.

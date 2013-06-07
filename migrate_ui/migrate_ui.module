@@ -55,65 +55,52 @@ function migrate_ui_menu() {
     );
   }
 
-  // Add callbacks for each migration group.
-  $group_result = db_select('migrate_group', 'mg')
-                ->fields('mg', array('name', 'title'))
-                ->orderBy('title')
-                ->execute();
-  foreach ($group_result as $group_row) {
-    $items['admin/content/migrate/groups/' . $group_row->name] = array(
+  $items['admin/content/migrate/groups/%'] =
+    array(
       'type' => MENU_NORMAL_ITEM,
-      'title' => $group_row->title,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('migrate_ui_migrate_group', $group_row->name),
+      'page arguments' => array('migrate_ui_migrate_group', 4),
       'access arguments' => array(MIGRATE_ACCESS_BASIC),
       'file' => 'migrate_ui.pages.inc',
     );
-    $task_result = db_select('migrate_status', 'ms')
-                   ->fields('ms', array('machine_name'))
-                   ->condition('group_name', $group_row->name)
-                   ->execute();
-    foreach ($task_result as $task_row) {
-      // Task (migration) detail pages come below groups.
-      $items['admin/content/migrate/groups/' . $group_row->name . '/'.
-             $task_row->machine_name] = array(
-        'type' => MENU_NORMAL_ITEM,
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array('migrate_migration_info', 4, 5),
-        'access arguments' => array(MIGRATE_ACCESS_BASIC),
-        'file' => 'migrate_ui.pages.inc',
-      );
 
-      $items['admin/content/migrate/groups/' . $group_row->name . '/' .
-             $task_row->machine_name . '/view'] = array(
-        'title' => 'View',
-        'type' => MENU_DEFAULT_LOCAL_TASK,
-        'weight' => -10,
-      );
+  $items['admin/content/migrate/groups/%/%'] =
+    array(
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('migrate_migration_info', 4, 5),
+      'access arguments' => array(MIGRATE_ACCESS_BASIC),
+      'file' => 'migrate_ui.pages.inc',
+    );
 
-      $items['admin/content/migrate/groups/' . $group_row->name . '/' .
-            $task_row->machine_name . '/edit'] = array(
-        'type' => MENU_LOCAL_TASK,
-        'title' => 'Edit',
-        'description' => 'Edit migration mappings',
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array('migrate_ui_edit_mappings', 4, 5),
-        'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
-        'file' => 'migrate_ui.pages.inc',
-      );
+  $items['admin/content/migrate/groups/%/%/view'] =
+    array(
+      'title' => 'View',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -10,
+    );
 
-      $items['admin/content/migrate/groups/' . $group_row->name . '/' .
-            $task_row->machine_name . '/messages'] = array(
-        'type' => MENU_LOCAL_TASK,
-        'title' => 'Messages',
-        'description' => 'View messages from a migration',
-        'page callback' => 'migrate_ui_messages',
-        'page arguments' => array(4, 5),
-        'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
-        'file' => 'migrate_ui.pages.inc',
-      );
-    }
-  }
+  $items['admin/content/migrate/groups/%/%/edit'] =
+    array(
+      'type' => MENU_LOCAL_TASK,
+      'title' => 'Edit',
+      'description' => 'Edit migration mappings',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('migrate_ui_edit_mappings', 4, 5),
+      'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+      'file' => 'migrate_ui.pages.inc',
+    );
+
+  $items['admin/content/migrate/groups/%/%/messages'] =
+    array(
+      'type' => MENU_LOCAL_TASK,
+      'title' => 'Messages',
+      'description' => 'View messages from a migration',
+      'page callback' => 'migrate_ui_messages',
+      'page arguments' => array(4, 5),
+      'access arguments' => array(MIGRATE_ACCESS_ADVANCED),
+      'file' => 'migrate_ui.pages.inc',
+    );
 
   return $items;
 }

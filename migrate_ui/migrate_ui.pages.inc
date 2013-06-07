@@ -227,16 +227,8 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
         if ($rate == '') {
           $row['lastthroughput'] = t('Unknown');
         }
-        elseif ($status == MigrationBase::STATUS_IDLE) {
-          $row['lastthroughput'] = t('!rate/min', array('!rate' => $rate));
-        }
         else {
-          if ($rate > 0) {
-            $row['lastthroughput'] = t('!rate/min, !time remaining', array('!rate' => $rate, '!time' => format_interval((60*$unimported) / $rate)));
-          }
-          else {
-            $row['lastthroughput'] = t('!rate/min, unknown time remaining', array('!rate' => $rate));
-          }
+          $row['lastthroughput'] = t('!rate/min', array('!rate' => $rate));
         }
       }
       else {
@@ -947,7 +939,7 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
  * @return array
  */
 function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
-  drupal_set_title(t('Edit field mappings for !migration',
+  drupal_set_title(t('Edit !migration',
                    array('!migration' => $migration_name)));
   $migration = Migration::getInstance($migration_name);
   $source_fields = $migration->getSource()->fields();

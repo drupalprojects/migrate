@@ -1080,20 +1080,10 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
         if ($mapping->getSourceField()) {
           $default_mapping = $mapping->getSourceField();
         }
-        else {
-          // Look for a match on field names between source and destination.
-          if (isset($field_options[$name])) {
-            $default_mapping = $name;
-          }
-          else {
-            $default_mapping = '-1';
-          }
-        }
         $default_value = $mapping->getDefaultValue();
         $dnm_value = ($mapping->getIssueGroup() == t('DNM'));
       }
       else {
-        $default_mapping = '-1';
         $dnm_value = 0;
       }
     }

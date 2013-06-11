@@ -64,6 +64,14 @@ function migrate_example_migrate_api() {
       'BeerNode' => array(
         'class_name' => 'BeerNodeMigration',
         'group_name' => 'beer',
+        // You may optionally declare dependencies for your migration - other
+        // migrations which should run first. In this case, terms assigned to our
+        // nodes and the authors of the nodes should be migrated before the nodes
+        // themselves.
+        'dependencies' => array(
+          'BeerTerm',
+          'BeerUser',
+        ),
         // Here is where we add field mappings which may override those
         // specified in the group constructor.
         'field_mappings' => array(
@@ -74,6 +82,10 @@ function migrate_example_migrate_api() {
       'BeerComment' => array(
         'class_name' => 'BeerCommentMigration',
         'group_name' => 'beer',
+        'dependencies' => array(
+          'BeerUser',
+          'BeerNode',
+        ),
       ),
       'WinePrep' => array(
         'class_name' => 'WinePrepMigration',
@@ -94,66 +106,116 @@ function migrate_example_migrate_api() {
       'WineFileCopy' => array(
         'class_name' => 'WineFileCopyMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WinePrep'),
       ),
       'WineFileBlob' => array(
         'class_name' => 'WineFileBlobMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WinePrep'),
       ),
       'WineRole' => array(
         'class_name' => 'WineRoleMigration',
         'group_name' => 'wine',
+        // TIP: Regular dependencies, besides enforcing (in the absence of
+        // --force) the run order of migrations, affect the sorting of
+        // migrations on display. You can use soft dependencies to affect just
+        // the display order when the migrations aren't technically required to
+        // run in a certain order. In this case, we want the role migration to
+        // appear after the file migrations.
+        'soft_dependencies' => array('WineFileCopy'),
       ),
       'WineUser' => array(
         'class_name' => 'WineUserMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineFileCopy',
+          'WineRole',
+        ),
       ),
       'WineProducer' => array(
         'class_name' => 'WineProducerMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineRegion',
+          'WineUser',
+        ),
       ),
       'WineProducerXML' => array(
         'class_name' => 'WineProducerXMLMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineRegion',
+          'WineUser',
+        ),
       ),
       'WineProducerMultiXML' => array(
         'class_name' => 'WineProducerMultiXMLMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineRegion',
+          'WineUser',
+        ),
       ),
       'WineProducerXMLPull' => array(
         'class_name' => 'WineProducerXMLPullMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineRegion',
+          'WineUser',
+        ),
       ),
       'WineWine' => array(
         'class_name' => 'WineWineMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineRegion',
+          'WineVariety',
+          'WineBestWith',
+          'WineUser',
+          'WineProducer',
+        ),
       ),
       'WineComment' => array(
         'class_name' => 'WineCommentMigration',
         'group_name' => 'wine',
+        'dependencies' => array(
+          'WineUser',
+          'WineWine',
+        ),
       ),
       'WineTable' => array(
         'class_name' => 'WineTableMigration',
         'group_name' => 'wine',
+        'soft_dependencies' => array('WineComment'),
       ),
       'WineFinish' => array(
         'class_name' => 'WineFinishMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WineComment'),
       ),
       'WineUpdates' => array(
         'class_name' => 'WineUpdatesMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WineWine'),
+        'soft_dependencies' => array('WineFinish'),
       ),
       'WineCommentUpdates' => array(
         'class_name' => 'WineCommentUpdatesMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WineComment'),
+        'soft_dependencies' => array('WineUpdates'),
       ),
       'WineVarietyUpdates' => array(
         'class_name' => 'WineVarietyUpdatesMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WineVariety'),
+        'soft_dependencies' => array('WineUpdates'),
       ),
       'WineUserUpdates' => array(
         'class_name' => 'WineUserUpdatesMigration',
         'group_name' => 'wine',
+        'dependencies' => array('WineUser'),
+        'soft_dependencies' => array('WineUpdates'),
       ),
     ),
   );

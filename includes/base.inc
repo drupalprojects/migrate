@@ -592,6 +592,14 @@ abstract class MigrationBase {
           array('!class' => $class_name)));
         return NULL;
       }
+      if (isset($arguments['dependencies'])) {
+        $migrations[$machine_name_key]->setHardDependencies(
+          $arguments['dependencies']);
+      }
+      if (isset($arguments['soft_dependencies'])) {
+        $migrations[$machine_name_key]->setSoftDependencies(
+          $arguments['soft_dependencies']);
+      }
     }
     return $migrations[$machine_name_key];
   }

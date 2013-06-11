@@ -321,12 +321,6 @@ class BeerNodeMigration extends BasicExampleMigration {
     parent::__construct($arguments);
     $this->description = t('Beers of the world');
 
-    // You may optionally declare dependencies for your migration - other
-    // migrations which should run first. In this case, terms assigned to our
-    // nodes and the authors of the nodes should be migrated before the nodes
-    // themselves.
-    $this->dependencies = array('BeerTerm', 'BeerUser');
-
     // We have a more complicated query. The Migration class fundamentally
     // depends on taking a single source row and turning it into a single
     // Drupal object, so how do we deal with zero or more terms attached to
@@ -478,7 +472,7 @@ class BeerCommentMigration extends BasicExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = 'Comments about beers';
-    $this->dependencies = array('BeerUser', 'BeerNode');
+
     $query = db_select('migrate_example_beer_comment', 'mec')
              ->fields('mec', array('cid', 'cid_parent', 'name', 'mail', 'aid',
                'body', 'bid', 'subject'))

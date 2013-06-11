@@ -104,6 +104,11 @@ abstract class WineTermMigration extends AdvancedExampleMigration {
                               $description) {
     parent::__construct($arguments);
     $this->description = $description;
+
+    // Best practice as of Migrate 2.6 is to specify dependencies in
+    // hook_migrate_api. However, in this case, since we have a common class
+    // for a few different migrations, we'll specify this dependency here
+    // rather than repeatedly in hook_migrate_api().
     $this->dependencies = array('WinePrep');
 
     $query = db_select('migrate_example_wine_categories', 'wc')
@@ -172,7 +177,6 @@ class WineFileCopyMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Profile images');
-    $this->dependencies = array('WinePrep');
 
     $query = db_select('migrate_example_wine_files', 'wf')
              ->fields('wf', array('imageid', 'url'))
@@ -218,7 +222,6 @@ class WineFileBlobMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Example migration from BLOB column into files.');
-    $this->dependencies = array('WinePrep');
 
     $query = db_select('migrate_example_wine_blobs', 'wf')
              ->fields('wf', array('imageid', 'imageblob'));
@@ -269,13 +272,6 @@ class WineRoleMigration extends XMLMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('XML feed (multi items) of roles (positions)');
-
-    // TIP: Regular dependencies, besides enforcing (in the absence of --force)
-    // the run order of migrations, affect the sorting of migrations on display.
-    // You can use soft dependencies to affect just the display order when the
-    // migrations aren't technically required to run in a certain order. In this
-    // case, we want the role migration to appear after the file migration.
-    $this->softDependencies = array('WineFileCopy');
 
     // There isn't a consistent way to automatically identify appropriate
     // "fields" from an XML feed, so we pass an explicit list of source fields
@@ -331,7 +327,6 @@ class WineUserMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Wine Drinkers of the world');
-    $this->dependencies = array('WinePrep', 'WineFileCopy', 'WineRole');
 
     $query = db_select('migrate_example_wine_account', 'wa')
              ->fields('wa', array('accountid', 'status', 'posted', 'name',
@@ -412,7 +407,6 @@ class WineProducerMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Wine producers of the world');
-    $this->dependencies = array('WineRegion', 'WineUser');
 
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -492,7 +486,6 @@ class WineProducerXMLMigration extends XMLMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('XML feed of wine producers of the world');
-    $this->dependencies = array('WineRegion', 'WineUser');
 
     // There isn't a consistent way to automatically identify appropriate
     // "fields" from an XML feed, so we pass an explicit list of source fields.
@@ -607,7 +600,6 @@ class WineProducerMultiXMLMigration extends XMLMigration {
     parent::__construct($arguments);
     $this->description =
       t('XML feed (multi items) of wine producers of the world');
-    $this->dependencies = array('WineRegion', 'WineUser');
 
     // There isn't a consistent way to automatically identify appropriate
     // "fields" from an XML feed, so we pass an explicit list of source fields.
@@ -726,7 +718,6 @@ class WineProducerXMLPullMigration extends XMLMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('XML feed (pull) of wine producers of the world');
-    $this->dependencies = array('WineRegion', 'WineUser');
 
     $fields = array(
       'name' => t('Producer name'),
@@ -826,8 +817,6 @@ class WineWineMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Wines of the world');
-    $this->dependencies = array('WineVariety', 'WineRegion',
-      'WineBestWith', 'WineUser', 'WineProducer');
 
     $query = db_select('migrate_example_wine', 'w')
              ->fields('w', array('wineid', 'name', 'body', 'excerpt',
@@ -1046,7 +1035,6 @@ class WineCommentMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = 'Comments about wines';
-    $this->dependencies = array('WineUser', 'WineWine');
 
     $query = db_select('migrate_example_wine_comment', 'wc')
              ->fields('wc', array('commentid', 'comment_parent', 'name', 'mail',
@@ -1105,7 +1093,6 @@ class WineTableMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = 'Miscellaneous table data';
-    $this->softDependencies = array('WineComment');
 
     $table_name = 'migrate_example_wine_table_dest';
 
@@ -1142,7 +1129,6 @@ class WineFinishMigration extends MigrationBase {
     parent::__construct($arguments);
     $this->description =
       t('If auto_nodetitle is present and was previously enabled, re-enable it');
-    $this->dependencies = array('WineComment');
   }
 
   public function isComplete() {
@@ -1177,8 +1163,6 @@ class WineUpdatesMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Update wine ratings');
-    $this->dependencies = array('WineWine');
-    $this->softDependencies = array('WineFinish');
 
     $query = db_select('migrate_example_wine_updates', 'w')
              ->fields('w', array('wineid', 'rating'));
@@ -1269,8 +1253,6 @@ class WineCommentUpdatesMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = 'Update wine comments';
-    $this->dependencies = array('WineComment');
-    $this->softDependencies = array('WineUpdates');
 
     $query = db_select('migrate_example_wine_comment_updates', 'wc')
              ->fields('wc', array('commentid', 'subject'));
@@ -1322,8 +1304,6 @@ class WineVarietyUpdatesMigration extends AdvancedExampleMigration {
     parent::__construct($arguments);
     $this->description =
       t('Migrate varieties from the source database to taxonomy terms');
-    $this->dependencies = array('WineVariety');
-    $this->softDependencies = array('WineUpdates');
 
     $query = db_select('migrate_example_wine_variety_updates', 'wc')
              ->fields('wc', array('categoryid', 'details'));
@@ -1364,8 +1344,6 @@ class WineUserUpdatesMigration extends AdvancedExampleMigration {
   public function __construct($arguments) {
     parent::__construct($arguments);
     $this->description = t('Account updates');
-    $this->dependencies = array('WineUser');
-    $this->softDependencies = array('WineUpdates');
 
     $query = db_select('migrate_example_wine_account_updates', 'wa')
              ->fields('wa', array('accountid', 'sex'));

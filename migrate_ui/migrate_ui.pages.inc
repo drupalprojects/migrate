@@ -938,14 +938,9 @@ function migrate_migration_info($form, $form_state, $group_name, $migration_name
  *
  * @return array
  */
-function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_name) {
-  drupal_set_title(t('Edit !migration',
-                   array('!migration' => $migration_name)));
-  $migration = Migration::getInstance($migration_name);
-  $source_fields = $migration->getSource()->fields();
-  $dest_fields = $migration->getDestination()->fields();
-  $dest_key = $migration->getDestination()->getKeySchema();
-  $field_mappings = $migration->getFieldMappings();
+function migrate_ui_edit_mappings($form, $form_state, $group_name,
+                                  $migration_name) {
+  drupal_set_title(t('Edit !migration', array('!migration' => $migration_name)));
 
   $form = array();
   $form['#tree'] = TRUE;
@@ -955,91 +950,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
     '#value' => $migration_name,
   );
 
-  $form['field_mappings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Field mappings'),
-    '#collapsible' => TRUE,
-    '#description' => t('For each field available in your Drupal destination, ' .
-      'select the source field used to populate it. You can enter a default ' .
-      'value to be applied to the destination when there is no source field, ' .
-      'or the source field is empty in a given source item. Check the DNM ' .
-      '(Do Not Migrate) box for destination fields you do not want populated ' .
-      'by migration.'),
-    '#theme' => array('migrate_ui_field_mapping_form'),
-    '#prefix' => '<div id="field-mappings">',
-    '#suffix' => '</div>',
-  );
-
-  $form['source_fields'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Source fields'),
-    '#collapsible' => TRUE,
-    '#description' => t('Check off any source fields that are not being mapped ' .
-      'to destination fields. They will be removed from the select lists above.'),
-  );
-
-  $base_options = array(
-    '-1' => t(''),
-  );
-
-  $field_options = array();
-  foreach ($source_fields as $name => $description) {
-    // Clean up the source field description
-    if (is_array($description)) {
-      $description = reset($description);
-    }
-    $description = strip_tags($description);
-    // Limit the description length
-    if (strlen($description) > 50) {
-      $short_description = substr($description, 0, 50) . '...';
-    }
-    else {
-      $short_description = $description;
-    }
-    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-      $label_format = '!description [!source_field]';
-    }
-    else {
-      $label_format = '!description';
-    }
-    $label = t($label_format,
-      array('!source_field' => $name, '!description' => $description));
-    $short_label = t($label_format,
-      array('!source_field' => $name, '!description' => $short_description));
-
-    $dnm_value = 0;
-
-    // Check for a click of the DNM box...
-    if (isset($form_state['values']) &&
-        $form_state['values']['source_fields'][$name] == 1) {
-      $dnm_value = 1;
-    }
-    else {
-      // ... or a source-only mapping with the DNM issue group.
-      foreach ($field_mappings as $mapping) {
-        if ($mapping->getSourceField() == $name &&
-            $mapping->getIssueGroup() == t('DNM')) {
-          $dnm_value = 1;
-        }
-      }
-    }
-
-    // So, if this field is not marked DNM, include it in possible source
-    // options in the field mappings.
-    if (!$dnm_value) {
-      $field_options[$name] = $short_label;
-    }
-
-    $form['source_fields'][$name] = array(
-      '#type' => 'checkbox',
-      '#title' => $label,
-      '#default_value' => $dnm_value,
-      '#ajax' => array(
-        'callback' => 'migrate_ui_dnm_changed',
-        'wrapper' => 'field-mappings',
-      ),
-    );
-  }
+  $migration = Migration::getInstance($migration_name);
 
   $source_migration_options = array('-1' => t(''),);
   $all_dependencies = array();
@@ -1051,121 +962,214 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name, $migration_na
     }
   }
 
-  foreach ($dest_fields as $name => $description) {
-    // Don't map the destination key
-    if (isset($dest_key[$name])) {
-      continue;
-    }
+  if (is_a($migration, 'Migration')) {
+    $source_fields = $migration->getSource()->fields();
+    $dest_fields = $migration->getDestination()->fields();
+    $dest_key = $migration->getDestination()->getKeySchema();
+    $field_mappings = $migration->getFieldMappings();
 
-    if (is_array($description)) {
-      $description = reset($description);
-    }
+    $form['field_mappings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Field mappings'),
+      '#collapsible' => TRUE,
+      '#description' => t('For each field available in your Drupal destination, ' .
+        'select the source field used to populate it. You can enter a default ' .
+        'value to be applied to the destination when there is no source field, ' .
+        'or the source field is empty in a given source item. Check the DNM ' .
+        '(Do Not Migrate) box for destination fields you do not want populated ' .
+        'by migration.'),
+      '#theme' => array('migrate_ui_field_mapping_form'),
+      '#prefix' => '<div id="field-mappings">',
+      '#suffix' => '</div>',
+    );
 
-    $options = $base_options + $field_options;
+    $form['source_fields'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Source fields'),
+      '#collapsible' => TRUE,
+      '#description' => t('Check off any source fields that are not being mapped ' .
+        'to destination fields. They will be removed from the select lists above.'),
+    );
 
-    $default_mapping = '-1';
-    $default_value = '';
-    if (isset($field_mappings[$name])) {
-      $mapping = $field_mappings[$name];
-    }
-    else {
-      $mapping = NULL;
-    }
+    $base_options = array(
+      '-1' => t(''),
+    );
 
-    // If the DNM box has been clicked, make sure we clear the mapping and
-    // default value fields.
-    if (isset($form_state['values']) &&
-        $form_state['values']['field_mappings'][$name]['issue_group'] == 1) {
-      $dnm_value = 1;
-    }
-    else {
-      // Determine the default field mapping - if we have an existing one, use
-      // that, otherwise try to match on name.
-      if (isset($field_mappings[$name])) {
-        if ($mapping->getSourceField()) {
-          $default_mapping = $mapping->getSourceField();
-        }
-        $default_value = $mapping->getDefaultValue();
-        $dnm_value = ($mapping->getIssueGroup() == t('DNM'));
+    $field_options = array();
+    foreach ($source_fields as $name => $description) {
+      // Clean up the source field description
+      if (is_array($description)) {
+        $description = reset($description);
+      }
+      $description = strip_tags($description);
+      // Limit the description length
+      if (strlen($description) > 50) {
+        $short_description = substr($description, 0, 50) . '...';
       }
       else {
-        $dnm_value = 0;
+        $short_description = $description;
       }
-    }
+      if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+        $label_format = '!description [!source_field]';
+      }
+      else {
+        $label_format = '!description';
+      }
+      $label = t($label_format,
+        array('!source_field' => $name, '!description' => $description));
+      $short_label = t($label_format,
+        array('!source_field' => $name, '!description' => $short_description));
 
-    // Only show the machine name to advanced users.
-    if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-      $label = '!description [!field_name]';
-    }
-    else {
-      $label = '!description';
-    }
+      $dnm_value = 0;
 
-    // Indent subfields and options to show their relationship to the parent.
-    if (strpos($name, ':') > 0) {
-      $description = '&nbsp;&nbsp;' . $description;
-    }
+      // Check for a click of the DNM box...
+      if (isset($form_state['values']) &&
+          $form_state['values']['source_fields'][$name] == 1) {
+        $dnm_value = 1;
+      }
+      else {
+        // ... or a source-only mapping with the DNM issue group.
+        foreach ($field_mappings as $mapping) {
+          if ($mapping->getSourceField() == $name &&
+              $mapping->getIssueGroup() == t('DNM')) {
+            $dnm_value = 1;
+          }
+        }
+      }
 
-    $form['field_mappings'][$name]['issue_group'] = array(
-      '#type' => 'checkbox',
-      '#default_value' => $dnm_value,
-      '#ajax' => array(
-        'callback' => 'migrate_ui_dnm_changed',
-        'wrapper' => 'field-mappings',
-      ),
-    );
+      // So, if this field is not marked DNM, include it in possible source
+      // options in the field mappings.
+      if (!$dnm_value) {
+        $field_options[$name] = $short_label;
+      }
 
-    $form['field_mappings'][$name]['mapping'] = array(
-      '#type' => 'select',
-      '#title' => t($label,
-                    array('!description' => $description, '!field_name' => $name)),
-      '#options' => $options,
-      '#default_value' => $default_mapping,
-      '#states' => array(
-        'disabled' => array(
-          ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
-            array('checked' => TRUE),
+      $form['source_fields'][$name] = array(
+        '#type' => 'checkbox',
+        '#title' => $label,
+        '#default_value' => $dnm_value,
+        '#ajax' => array(
+          'callback' => 'migrate_ui_dnm_changed',
+          'wrapper' => 'field-mappings',
         ),
-      ),
-    );
-
-    $form['field_mappings'][$name]['default_value'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $default_value,
-      '#size' => 20,
-      '#states' => array(
-        'disabled' => array(
-          ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
-            array('checked' => TRUE),
-        ),
-      ),
-    );
-
-    $source_migration = NULL;
-    if ($mapping) {
-      $source_migration = $mapping->getSourceMigration();
+      );
     }
-    if (!$source_migration) {
-      $source_migration = '-1';
-    }
-    $form['field_mappings'][$name]['source_migration'] = array(
-      '#type' => 'select',
-      '#options' => $source_migration_options,
-      '#default_value' => $source_migration,
-      '#states' => array(
-        'disabled' => array(
-          ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
-            array('checked' => TRUE),
+
+    foreach ($dest_fields as $name => $description) {
+      // Don't map the destination key
+      if (isset($dest_key[$name])) {
+        continue;
+      }
+
+      if (is_array($description)) {
+        $description = reset($description);
+      }
+
+      $options = $base_options + $field_options;
+
+      $default_mapping = '-1';
+      $default_value = '';
+      if (isset($field_mappings[$name])) {
+        $mapping = $field_mappings[$name];
+      }
+      else {
+        $mapping = NULL;
+      }
+
+      // If the DNM box has been clicked, make sure we clear the mapping and
+      // default value fields.
+      if (isset($form_state['values']) &&
+          $form_state['values']['field_mappings'][$name]['issue_group'] == 1) {
+        $dnm_value = 1;
+      }
+      else {
+        // Determine the default field mapping - if we have an existing one, use
+        // that, otherwise try to match on name.
+        if (isset($field_mappings[$name])) {
+          if ($mapping->getSourceField()) {
+            $default_mapping = $mapping->getSourceField();
+          }
+          $default_value = $mapping->getDefaultValue();
+          $dnm_value = ($mapping->getIssueGroup() == t('DNM'));
+        }
+        else {
+          $dnm_value = 0;
+        }
+      }
+
+      // Only show the machine name to advanced users.
+      if (user_access(MIGRATE_ACCESS_ADVANCED)) {
+        $label = '!description [!field_name]';
+      }
+      else {
+        $label = '!description';
+      }
+
+      // Indent subfields and options to show their relationship to the parent.
+      if (strpos($name, ':') > 0) {
+        $description = '&nbsp;&nbsp;' . $description;
+      }
+
+      $form['field_mappings'][$name]['issue_group'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => $dnm_value,
+        '#ajax' => array(
+          'callback' => 'migrate_ui_dnm_changed',
+          'wrapper' => 'field-mappings',
         ),
-      ),
-    );
+      );
+
+      $form['field_mappings'][$name]['mapping'] = array(
+        '#type' => 'select',
+        '#title' => t($label,
+                      array('!description' => $description, '!field_name' => $name)),
+        '#options' => $options,
+        '#default_value' => $default_mapping,
+        '#states' => array(
+          'disabled' => array(
+            ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
+              array('checked' => TRUE),
+          ),
+        ),
+      );
+
+      $form['field_mappings'][$name]['default_value'] = array(
+        '#type' => 'textfield',
+        '#default_value' => $default_value,
+        '#size' => 20,
+        '#states' => array(
+          'disabled' => array(
+            ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
+              array('checked' => TRUE),
+          ),
+        ),
+      );
+
+      $source_migration = NULL;
+      if ($mapping) {
+        $source_migration = $mapping->getSourceMigration();
+      }
+      if (!$source_migration) {
+        $source_migration = '-1';
+      }
+      $form['field_mappings'][$name]['source_migration'] = array(
+        '#type' => 'select',
+        '#options' => $source_migration_options,
+        '#default_value' => $source_migration,
+        '#states' => array(
+          'disabled' => array(
+            ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
+              array('checked' => TRUE),
+          ),
+        ),
+      );
+    }
   }
 
   $form['dependencies'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dependencies'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => is_a($migration, 'Migration') ? TRUE : FALSE,
     '#theme' => 'migrate_ui_field_mapping_dependencies',
     '#description' => t('Set any dependencies on other migrations here. A ' .
       '<em>hard dependency</em> means that this migration is not allowed ' .
@@ -1270,112 +1274,114 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   $issue_group_values = array();
 
   $migration = Migration::getInstance($machine_name);
-  $existing_mappings = $migration->getFieldMappings();
-  $coded_mappings = $migration->getCodedFieldMappings();
-  foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
-    // If this mapping matches a coded mapping but not a stored mapping, remove
-    // it entirely (don't store it in the database) so the coded mapping is not
-    // overwritten.
-    if (isset($coded_mappings[$destination_field])) {
-      $coded_source_field =
-        $coded_mappings[$destination_field]->getSourceField();
-      $coded_default_value =
-        $coded_mappings[$destination_field]->getDefaultValue();
-      $coded_source_migration =
-        $coded_mappings[$destination_field]->getSourceMigration();
-      if ($info['mapping'] == '-1') {
-        $info['mapping'] = NULL;
-      }
-      if ($info['source_migration'] == '-1') {
-        $info['source_migration'] = NULL;
-      }
-      if ($info['mapping'] == $coded_source_field &&
-          $info['default_value'] == $coded_default_value &&
-          $info['source_migration'] == $coded_source_migration) {
-        continue;
-      }
-    }
-    // This is not a match for a coded mapping, so we will want to save it.
-    $field_mappings[$destination_field] = $info['mapping'];
-    $default_values[$destination_field] = $info['default_value'];
-    $source_migrations[$destination_field] = $info['source_migration'];
-    $issue_group_values[$destination_field] = $info['issue_group'];
-  }
-
-  foreach ($field_mappings as $destination_field => $source_field) {
-    if ($source_field == -1) {
-      $source_field = NULL;
-    }
-
-    if ($issue_group_values[$destination_field]) {
-      $source_field = NULL;
-      $default = NULL;
-    }
-    else {
-      $default = $default_values[$destination_field];
-    }
-
-    // Until we can provide editing of all the options that go along with
-    // field mappings, we want to avoid overwriting pre-existing mappings and
-    // losing important bits.
-    $mapping = NULL;
-    if (isset($existing_mappings[$destination_field]) &&
-        $issue_group_values[$destination_field] != 0) {
-      $old_mapping = $existing_mappings[$destination_field];
-      if ($source_field == $old_mapping->getSourceField() &&
-          $default_values[$destination_field] == $old_mapping->getDefaultValue() &&
-          $source_migrations[$destination_field] == $old_mapping->getSourceMigration()) {
-        // First, if this mapping matches a previously-stored mapping, we want to
-        // preserve it as it was originally stored.
-        if ($old_mapping->getMappingSource() ==
-            MigrateFieldMapping::MAPPING_SOURCE_DB) {
-          $mapping = $old_mapping;
+  if (is_a($migration, 'Migration')) {
+    $existing_mappings = $migration->getFieldMappings();
+    $coded_mappings = $migration->getCodedFieldMappings();
+    foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
+      // If this mapping matches a coded mapping but not a stored mapping, remove
+      // it entirely (don't store it in the database) so the coded mapping is not
+      // overwritten.
+      if (isset($coded_mappings[$destination_field])) {
+        $coded_source_field =
+          $coded_mappings[$destination_field]->getSourceField();
+        $coded_default_value =
+          $coded_mappings[$destination_field]->getDefaultValue();
+        $coded_source_migration =
+          $coded_mappings[$destination_field]->getSourceMigration();
+        if ($info['mapping'] == '-1') {
+          $info['mapping'] = NULL;
         }
-        // If it matches a coded mapping, then we don't want to save it at all.
-        else {
+        if ($info['source_migration'] == '-1') {
+          $info['source_migration'] = NULL;
+        }
+        if ($info['mapping'] == $coded_source_field &&
+            $info['default_value'] == $coded_default_value &&
+            $info['source_migration'] == $coded_source_migration) {
           continue;
         }
       }
+      // This is not a match for a coded mapping, so we will want to save it.
+      $field_mappings[$destination_field] = $info['mapping'];
+      $default_values[$destination_field] = $info['default_value'];
+      $source_migrations[$destination_field] = $info['source_migration'];
+      $issue_group_values[$destination_field] = $info['issue_group'];
     }
 
-    // We're not skipping this mapping, or preserving an old one, so create the
-    // new mapping.
-    if (!$mapping) {
-      $mapping = new MigrateFieldMapping($destination_field, $source_field);
-      $mapping->defaultValue($default);
-    }
+    foreach ($field_mappings as $destination_field => $source_field) {
+      if ($source_field == -1) {
+        $source_field = NULL;
+      }
 
-    if ($issue_group_values[$destination_field]) {
-      $mapping->issueGroup(t('DNM'));
-    }
-    else {
-      $mapping->issueGroup(NULL);
-    }
+      if ($issue_group_values[$destination_field]) {
+        $source_field = NULL;
+        $default = NULL;
+      }
+      else {
+        $default = $default_values[$destination_field];
+      }
 
-    if ($source_migrations[$destination_field] &&
-        $source_migrations[$destination_field] != '-1') {
-      $mapping->sourceMigration($source_migrations[$destination_field]);
-    }
-
-    $arguments['field_mappings'][] = $mapping;
-  }
-
-  // Handle any source fields marked DNM.
-  foreach ($form_state['values']['source_fields'] as $source_field => $value) {
-    if ($value) {
-      // But if there in the coded mappings we have this field mapped to no
-      // destination field, then let that mapping stand.
-      $already_ignored = FALSE;
-      foreach ($coded_mappings as $destination_field => $mapping) {
-        if (is_numeric($destination_field) &&
-            $mapping->getSourceField() == $source_field) {
-          $already_ignored = TRUE;
+      // Until we can provide editing of all the options that go along with
+      // field mappings, we want to avoid overwriting pre-existing mappings and
+      // losing important bits.
+      $mapping = NULL;
+      if (isset($existing_mappings[$destination_field]) &&
+          $issue_group_values[$destination_field] != 0) {
+        $old_mapping = $existing_mappings[$destination_field];
+        if ($source_field == $old_mapping->getSourceField() &&
+            $default_values[$destination_field] == $old_mapping->getDefaultValue() &&
+            $source_migrations[$destination_field] == $old_mapping->getSourceMigration()) {
+          // First, if this mapping matches a previously-stored mapping, we want to
+          // preserve it as it was originally stored.
+          if ($old_mapping->getMappingSource() ==
+              MigrateFieldMapping::MAPPING_SOURCE_DB) {
+            $mapping = $old_mapping;
+          }
+          // If it matches a coded mapping, then we don't want to save it at all.
+          else {
+            continue;
+          }
         }
       }
-      if (!$already_ignored) {
-        $mapping = new MigrateFieldMapping(NULL, $source_field);
+
+      // We're not skipping this mapping, or preserving an old one, so create the
+      // new mapping.
+      if (!$mapping) {
+        $mapping = new MigrateFieldMapping($destination_field, $source_field);
+        $mapping->defaultValue($default);
+      }
+
+      if ($issue_group_values[$destination_field]) {
         $mapping->issueGroup(t('DNM'));
-        $arguments['field_mappings'][] = $mapping;
+      }
+      else {
+        $mapping->issueGroup(NULL);
+      }
+
+      if ($source_migrations[$destination_field] &&
+          $source_migrations[$destination_field] != '-1') {
+        $mapping->sourceMigration($source_migrations[$destination_field]);
+      }
+
+      $arguments['field_mappings'][] = $mapping;
+    }
+
+    // Handle any source fields marked DNM.
+    foreach ($form_state['values']['source_fields'] as $source_field => $value) {
+      if ($value) {
+        // But if there in the coded mappings we have this field mapped to no
+        // destination field, then let that mapping stand.
+        $already_ignored = FALSE;
+        foreach ($coded_mappings as $destination_field => $mapping) {
+          if (is_numeric($destination_field) &&
+              $mapping->getSourceField() == $source_field) {
+            $already_ignored = TRUE;
+          }
+        }
+        if (!$already_ignored) {
+          $mapping = new MigrateFieldMapping(NULL, $source_field);
+          $mapping->issueGroup(t('DNM'));
+          $arguments['field_mappings'][] = $mapping;
+        }
       }
     }
   }
@@ -1392,7 +1398,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
 
   Migration::registerMigration($class_name, $machine_name, $arguments);
 
-  drupal_set_message(t('Field mapping changes applied.'));
+  drupal_set_message(t('Migration changes applied.'));
   $form_state['redirect'] =
     "admin/content/migrate/groups/$group_name/$machine_name";
 }

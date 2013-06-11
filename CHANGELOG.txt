@@ -22,6 +22,7 @@ Features and enhancements
              through arguments.
 
 Bug fixes
+- #2016173 - Fix fatal error editing MigrationBase migrations.
 - #2015327 - Remove broken automatic field mapping feature.
 - #2014849 - Make sure statistics properly default to 0.
 - #2011024 - Wildcard groups/tasks in the menu hierarchy, saving the need to

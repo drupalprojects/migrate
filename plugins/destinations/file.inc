@@ -36,15 +36,46 @@ interface MigrateFileInterface {
 
 abstract class MigrateFileBase implements MigrateFileInterface {
   /**
+   * Extension of the core FILE_EXISTS_* constants, offering an alternative to
+   * reuse the existing file if present as-is (core only offers the options of
+   * replacing it or renaming to avoid collision).
+   */
+  const FILE_EXISTS_REUSE = -1;
+
+  /**
+   * An optional file object to use as a default starting point for building the
+   * file entity.
+   *
+   * @var stdClass
+   */
+  protected $defaultFile;
+
+  /**
+   * How to handle destination filename collisions.
+   *
+   * @var int
+   */
+  protected $fileReplace = FILE_EXISTS_RENAME;
+
+  /**
    * Set to TRUE to prevent file deletion on rollback.
    *
    * @var bool
    */
   protected $preserveFiles = FALSE;
 
-  public function __construct($arguments = array()) {
+  public function __construct($arguments = array(), $default_file = NULL) {
     if (isset($arguments['preserve_files'])) {
       $this->preserveFiles = $arguments['preserve_files'];
+    }
+    if (isset($arguments['file_replace'])) {
+      $this->fileReplace = $arguments['file_replace'];
+    }
+    if ($default_file) {
+      $this->defaultFile = $default_file;
+    }
+    else {
+      $this->defaultFile = new stdClass;
     }
   }
 
@@ -60,6 +91,50 @@ abstract class MigrateFileBase implements MigrateFileInterface {
         array('@doc' => 'http://drupal.org/node/1540106#preserve_files')),
 
     );
+  }
+
+  /**
+   * Setup a file entity object suitable for saving.
+   *
+   * @param $destination
+   *  Path to the Drupal copy of the file.
+   * @param $owner
+   *  Uid of the file owner.
+   * @return stdClass
+   *  A file object ready to be saved.
+   */
+  protected function createFileEntity($destination, $owner) {
+    $file = clone $this->defaultFile;
+    $file->uri = $destination;
+    $file->uid = $owner;
+    if (!isset($file->filename)) {
+      $file->filename = drupal_basename($destination);
+    }
+    if (!isset($file->filemime)) {
+      $file->filemime = file_get_mimetype(urldecode($destination));
+    }
+    if (!isset($file->status)) {
+      $file->status = FILE_STATUS_PERMANENT;
+    }
+    if ($slash_pos = strpos($file->filemime, '/')) {
+      $file->type = substr($file->filemime, 0, $slash_pos);
+    }
+    if (empty($file->type)) {
+      $file->type = 'file';
+    }
+
+    // If we are replacing or reusing an existing filesystem entry,
+    // also re-use its database record.
+    if ($this->fileReplace == FILE_EXISTS_REPLACE ||
+        $this->fileReplace == self::FILE_EXISTS_REUSE) {
+      $existing_files = file_load_multiple(array(), array('uri' => $destination));
+      if (count($existing_files)) {
+        $existing = reset($existing_files);
+        $file->fid = $existing->fid;
+        $file->filename = $existing->filename;
+      }
+    }
+    return $file;
   }
 
   /**
@@ -83,6 +158,18 @@ abstract class MigrateFileBase implements MigrateFileInterface {
         ->fields(array('count' => 1))
         ->execute();
     }
+  }
+}
+
+/**
+ * The simplest possible file class - where the value is a remote URI which
+ * simply needs to be saved as the URI on the destination side, with no attempt
+ * to copy or otherwise use it.
+ */
+class MigrateFileUriAsIs extends MigrateFileBase {
+  public function processFile($value, $owner) {
+    $file = file_save($this->createFileEntity($value, $owner));
+    return $file;
   }
 }
 
@@ -111,13 +198,6 @@ class MigrateFileFid extends MigrateFileBase {
  */
 abstract class MigrateFile extends MigrateFileBase {
   /**
-   * Extension of the core FILE_EXISTS_* constants, offering an alternative to
-   * reuse the existing file if present as-is (core only offers the options of
-   * replacing it or renaming to avoid collision).
-   */
-  const FILE_EXISTS_REUSE = -1;
-
-  /**
    * The destination directory within Drupal.
    *
    * @var string
@@ -131,37 +211,13 @@ abstract class MigrateFile extends MigrateFileBase {
    */
   protected $destinationFile = '';
 
-  /**
-   * How to handle destination filename collisions.
-   *
-   * @var int
-   */
-  protected $fileReplace = FILE_EXISTS_RENAME;
-
-  /**
-   * An optional file object to use as a default starting point for building the
-   * file entity.
-   *
-   * @var stdClass
-   */
-  protected $defaultFile;
-
   public function __construct($arguments = array(), $default_file = NULL) {
-    parent::__construct($arguments);
+    parent::__construct($arguments, $default_file);
     if (isset($arguments['destination_dir'])) {
       $this->destinationDir = $arguments['destination_dir'];
     }
     if (isset($arguments['destination_file'])) {
       $this->destinationFile = $arguments['destination_file'];
-    }
-    if (isset($arguments['file_replace'])) {
-      $this->fileReplace = $arguments['file_replace'];
-    }
-    if ($default_file) {
-      $this->defaultFile = $default_file;
-    }
-    else {
-      $this->defaultFile = new stdClass;
     }
   }
 
@@ -179,43 +235,6 @@ abstract class MigrateFile extends MigrateFileBase {
       'file_replace' => t('Option: <a href="@doc">Value of $replace in that file function. Defaults to FILE_EXISTS_RENAME.</a>',
         array('@doc' => 'http://drupal.org/node/1540106#file_replace')),
     );
-  }
-
-  /**
-   * Setup a file entity object suitable for saving.
-   *
-   * @param $destination
-   *  Path to the Drupal copy of the file.
-   * @param $owner
-   *  Uid of the file owner.
-   * @return stdClass
-   *  A file object ready to be saved.
-   */
-  protected function createFileEntity($destination, $owner) {
-    $file = clone $this->defaultFile;
-    $file->uri = $destination;
-    $file->uid = $owner;
-    if (!isset($file->filename)) {
-      $file->filename = drupal_basename($destination);
-    }
-    if (!isset($file->filemime)) {
-      $file->filemime = file_get_mimetype($destination);
-    }
-    if (!isset($file->status)) {
-      $file->status = FILE_STATUS_PERMANENT;
-    }
-    // If we are replacing or reusing an existing filesystem entry,
-    // also re-use its database record.
-    if ($this->fileReplace == FILE_EXISTS_REPLACE ||
-        $this->fileReplace == self::FILE_EXISTS_REUSE) {
-      $existing_files = file_load_multiple(array(), array('uri' => $destination));
-      if (count($existing_files)) {
-        $existing = reset($existing_files);
-        $file->fid = $existing->fid;
-        $file->filename = $existing->filename;
-      }
-    }
-    return $file;
   }
 
   /**
@@ -495,6 +514,9 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
    * @var string
    */
   protected $fileClass;
+  public function setFileClass($file_class) {
+    $this->fileClass = $file_class;
+  }
 
   /**
    * Boolean indicating whether we should avoid deleting the actual file on
@@ -640,8 +662,12 @@ class MigrateDestinationFile extends MigrateDestinationEntity {
       $old_file = file_load($file->fid);
     }
 
-    // 'type' is the bundle property on file entities.
-    $file->type = $this->bundle;
+    // 'type' is the bundle property on file entities. It must be set here for
+    // the sake of the prepare handlers, although it may be overridden later
+    // based on the detected mime type.
+    if (empty($file->type)) {
+      $file->type = $this->bundle;
+    }
 
     // Invoke migration prepare handlers
     $this->prepare($file, $row);

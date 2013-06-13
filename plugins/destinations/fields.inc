@@ -170,7 +170,8 @@ class MigrateDefaultFieldHandler extends MigrateFieldHandler {
         $first = FALSE;
       }
       else {
-        $fields[$column_name] = $column_info['description'];
+        $fields[$column_name] = empty($column_info['description']) ?
+          $column_name : $column_info['description'];
       }
     }
     return $fields;

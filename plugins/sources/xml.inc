@@ -1071,4 +1071,13 @@ class MigrateSourceXML extends MigrateSource {
     migrate_instrument_stop('MigrateSourceXML::nextSource');
     return $status;
   }
+
+  /**
+   * Overrides MigrateSource->hash().
+   */
+  protected function hash($row) {
+    // $row->xml is a SimpleXMLElement. Temporarily set it as an XML string
+    // to prevent parent::hash() failing when try to create the hash.
+    return parent::hash($row->xml->asXML());
+  }
 }

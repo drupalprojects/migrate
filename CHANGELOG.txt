@@ -24,6 +24,7 @@ Features and enhancements
              through arguments.
 
 Bug fixes
+- #2020095 - Preserve arguments in legacy constructors.
 - #2018841 - Default field handler needs to account for empty column
              descriptions.
 - #2016173 - Fix fatal error editing MigrationBase migrations.

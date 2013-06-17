@@ -180,6 +180,18 @@ class MigrateItemXML extends MigrateItem {
   protected function loadXmlUrl($item_url) {
     return simplexml_load_file($item_url);
   }
+
+  /**
+   * Implments MigrateItem::hash().
+   */
+  public function hash($row) {
+    // $row->xml is a SimpleXMLElement. Temporarily set it as an XML string
+    // to prevent parent::hash() failing when try to create the hash.
+    migrate_instrument_start('MigrateItemXML::hash');
+    $hash = md5(serialize($row->xml->asXML()));
+    migrate_instrument_stop('MigrateItemXML::hash');
+    return $hash;
+  }
 }
 
 /**
@@ -576,6 +588,18 @@ class MigrateItemsXML extends MigrateItems {
       libxml_clear_errors();
       return NULL;
     }
+  }
+
+  /**
+   * Implments MigrateItem::hash().
+   */
+  public function hash($row) {
+    // $row->xml is a SimpleXMLElement. Temporarily set it as an XML string
+    // to prevent parent::hash() failing when try to create the hash.
+    migrate_instrument_start('MigrateItemXML::hash');
+    $hash = md5(serialize($row->xml->asXML()));
+    migrate_instrument_stop('MigrateItemXML::hash');
+    return $hash;
   }
 }
 

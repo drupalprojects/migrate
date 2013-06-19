@@ -715,8 +715,7 @@ abstract class Migration extends MigrationBase {
       }
       catch (MigrateException $e) {
         $this->map->saveIDMapping($this->sourceValues, array(),
-          MigrateMap::STATUS_FAILED, $this->rollbackAction,
-          $data_row->migrate_map_hash);
+          $e->getStatus(), $this->rollbackAction, $data_row->migrate_map_hash);
         $this->saveMessage($e->getMessage(), $e->getLevel());
         self::displayMessage($e->getMessage());
       }

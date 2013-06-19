@@ -18,6 +18,8 @@ migrations which pass a group object, or nothing, but that support will be
 removed in a future version.
 
 Features and enhancements
+- #1990612 - Add a row status argument to MigrateException, allowing rows to
+             be cleanly skipped by throwing exceptions.
 - #2017835 - Add MigrateFileUriAsIs file class, and make file migrations more
              flexible.
 - #2004426 - UI support for editing dependencies; enable setting dependencies

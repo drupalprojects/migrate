@@ -24,6 +24,7 @@ Features and enhancements
              through arguments.
 
 Bug fixes
+- #2021973 - Drush deregistration needs to handle mixed-case machine names.
 - #2017443 - Properly hash XML source rows with track_changes on.
 - #2020095 - Preserve arguments in legacy constructors.
 - #2018841 - Default field handler needs to account for empty column

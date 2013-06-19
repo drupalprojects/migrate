@@ -1363,7 +1363,7 @@ function drush_migrate_deregister($args = NULL) {
         $migrations = explode(',', $args);
       }
       foreach ($migrations as $machine_name) {
-        drush_migrate_deregister_migration($machine_name);
+        drush_migrate_deregister_migration(drupal_strtolower($machine_name));
         drush_log(dt("Deregistered '!description' migration",
           array('!description' => $machine_name)), 'success');
       }

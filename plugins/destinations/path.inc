@@ -19,9 +19,19 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
 
   public function prepare($entity, stdClass $row) {
     if (module_exists('path') && isset($entity->path)) {
-      $path = $entity->path;
-      $entity->path = array();
-      $entity->path['alias'] = $path;
+      // Make sure the alias doesn't already exist
+      $query = db_select('url_alias')
+        ->condition('alias', $entity->path);
+      $query->addExpression('1');
+      $query->range(0, 1);
+      if (!$query->execute()->fetchField()) {
+        $path = $entity->path;
+        $entity->path = array();
+        $entity->path['alias'] = $path;
+      }
+      else {
+        unset($entity->path);
+      }
     }
   }
 }

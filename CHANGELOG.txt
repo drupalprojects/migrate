@@ -26,6 +26,7 @@ Features and enhancements
              through arguments.
 
 Bug fixes
+- #2023657 - Prevent duplicate aliases when updating nodes.
 - #2021973 - Drush deregistration needs to handle mixed-case machine names.
 - #2017443 - Properly hash XML source rows with track_changes on.
 - #2020095 - Preserve arguments in legacy constructors.

@@ -311,21 +311,45 @@ abstract class XMLMigration extends Migration {
  */
 class MigrateItemsXML extends MigrateItems {
   /**
-   * A URL pointing to an XML document containing the ids and data.
+   * An array with all urls to available xml files.
+   *
+   * @var array
+   */
+  protected $urls;
+
+  /**
+   * Define the current cursor over the urls array.
    *
    * @var string
    */
-  protected $xmlUrl;
+  protected $currentUrl;
 
   /**
-   * Stores the loaded XML document.
+   * Stores the loaded XML document from currentUrl.
    *
    * @var SimpleXMLElement
    */
-  protected $xml = FALSE;
+  protected $currentXml = FALSE;
 
   /**
-   * xpath identifying the element used for each item
+   * To find the right url depending on the id, we'll built a map
+   * in form of array('url1' => $ids, 'url2' => $ids, ...).
+   *
+   * @var array
+   */
+  protected $idsMap = NULL;
+
+  /**
+   * Stores the id list from all urls.
+   *
+   * @var array
+   */
+  protected $cacheIDs = NULL;
+
+  /**
+   * xpath identifying the element used for each item.
+   *
+   * @var string
    */
   protected $itemXpath;
   public function getItemXpath() {
@@ -335,15 +359,20 @@ class MigrateItemsXML extends MigrateItems {
   /**
    * xpath identifying the subelement under itemXpath that holds the id for
    * each item.
+   *
+   * @var string
    */
   protected $itemIDXpath;
   public function getIDXpath() {
     return $this->itemIDXpath;
   }
 
-  public function __construct($xml_url, $item_xpath='item', $itemID_xpath='id') {
+  public function __construct($urls, $item_xpath='item', $itemID_xpath='id') {
     parent::__construct();
-    $this->xmlUrl = $xml_url;
+    if (!is_array($urls)) {
+      $urls = array($urls);
+    }
+    $this->urls = $urls;
     $this->itemXpath = $item_xpath;
     $this->itemIDXpath = $itemID_xpath;
 
@@ -352,37 +381,46 @@ class MigrateItemsXML extends MigrateItems {
   }
 
   /**
-   * Our public face is the URL we're getting items from
+   * Our public face is the URL list we're getting items from.
    *
    * @return string
    */
   public function __toString() {
-    return 'url = ' . $this->xmlUrl . ' | item xpath = ' . $this->itemXpath .
-                                      ' | item ID xpath = ' . $this->itemIDXpath;
+    $urls = implode('</li><li>', $this->urls);
+    // Prepare a list of urls.
+    $output = '<b>urls</b> = <ul><li>' . $urls . '</li></ul>';
+    $output .= '<br />';
+    // Add selection rules to the end.
+    $output .= '<b>item xpath</b> = ' . $this->itemXpath .' | ';
+    $output .= '<b>item ID xpath</b> = ' . $this->itemIDXpath ;
+
+    return $output;
   }
 
   /**
-   * Load and return the xml from the defined xmlUrl.
+   * Load and return the xml from currentUrl.
+   *
    * @return SimpleXMLElement
    */
   public function &xml() {
-    if (!$this->xml && !empty($this->xmlUrl)) {
-      $this->xml = simplexml_load_file($this->xmlUrl);
-      if (!$this->xml) {
+    if (!empty($this->currentUrl)) {
+      $this->currentXml = simplexml_load_file($this->currentUrl);
+      if (!$this->currentXml) {
         Migration::displayMessage(t(
-          'Loading of !xmlUrl failed:',
-          array('!xmlUrl' => $this->xmlUrl)
+          'Loading of !currentUrl failed:',
+          array('!currentUrl' => $this->currentUrl)
         ));
         foreach (libxml_get_errors() as $error) {
           Migration::displayMessage(self::parseLibXMLError($error));
         }
       }
     }
-    return $this->xml;
+    return $this->currentXml;
   }
 
   /**
    * Parses a LibXMLError to a error message string.
+   *
    * @param LibXMLError $error
    * @return string
    */
@@ -400,7 +438,7 @@ class MigrateItemsXML extends MigrateItems {
         break;
     }
     return t(
-       "!libxmlerrorcodename !libxmlerrorcode: !libxmlerrormessage\n" .
+      "!libxmlerrorcodename !libxmlerrorcode: !libxmlerrormessage\n" .
       "Line: !libxmlerrorline\n" .
       "Column: !libxmlerrorcolumn\n" .
       "File: !libxmlerrorfile",
@@ -416,17 +454,30 @@ class MigrateItemsXML extends MigrateItems {
   }
 
   /**
-   * Load the XML at the given URL, and return an array of the IDs found
-   * within it.
+   * Load ids from all urls and map them in idsMap depending on the currentURL.
+   * After ids were fetched from all urls store them in cacheIDs and return the
+   * whole list.
    *
    * @return array
    */
   public function getIdList() {
-    migrate_instrument_start("Retrieve $this->xmlUrl");
-    $xml = $this->xml();
-    migrate_instrument_stop("Retrieve $this->xmlUrl");
-    if ($xml !== FALSE) {
-      return $this->getIDsFromXML($xml);
+    $ids = array();
+    foreach ($this->urls as $url) {
+      migrate_instrument_start("Retrieve $url");
+      // Make sure, to load new xml.
+      $this->currentUrl = $url;
+      $xml = $this->xml();
+      if ($xml !== FALSE) {
+        $url_ids = $this->getIdsFromXML($xml);
+        $this->idsMap[$url] = $url_ids;
+        $ids = array_merge($ids, $url_ids);
+      }
+      migrate_instrument_stop("Retrieve $url");
+    }
+    if (!empty($ids)) {
+      //sort($ids);
+      $this->cacheIDs = array_unique($ids);
+      return $this->cacheIDs;
     }
     return NULL;
   }
@@ -441,17 +492,10 @@ class MigrateItemsXML extends MigrateItems {
    * TRUE.
    *
    * @param SimpleXMLElement $xml
-   * @param boolean $refresh
    *
    * @return array
    */
-  protected $cache_ids = NULL;
-  protected function getIDsFromXML(SimpleXMLElement $xml, $refresh = FALSE) {
-    if ($refresh !== TRUE && $this->cache_ids != NULL) {
-      return $this->cache_ids;
-    }
-
-    $this->cache_ids = NULL;
+  protected function getIDsFromXML(SimpleXMLElement $xml) {
     $result = $xml->xpath($this->itemXpath);
 
     $ids = array();
@@ -463,21 +507,20 @@ class MigrateItemsXML extends MigrateItems {
         }
       }
     }
-    $this->cache_ids = array_unique($ids);
-    return $this->cache_ids;
+    return array_unique($ids);
   }
+
 
   /**
    * Return a count of all available IDs from the source listing.
+   *
+   * @return int
    */
   public function computeCount() {
-    $count = 0;
-    $xml = $this->xml();
-    if ($xml !== FALSE) {
-      $ids = $this->getIDsFromXML($xml, TRUE);
-      $count = count($ids);
+    if (!isset($this->cacheIDs)) {
+      $this->getIdList();
     }
-    return $count;
+    return count($this->cacheIDs);
   }
 
   /**
@@ -489,7 +532,7 @@ class MigrateItemsXML extends MigrateItems {
   public function getAllItems() {
     $xml = $this->xml();
     if ($xml !== FALSE) {
-      return $this->getItemsFromXML($xml);
+      return $this->getItemsFromXML($xml, TRUE);
     }
     return NULL;
   }
@@ -497,11 +540,11 @@ class MigrateItemsXML extends MigrateItems {
   /**
    * Given an XML object, parse out the items for processing and return them as
    * an array. The location of the items in the XML are based on the item xpath
-   * set in the constructor.  Items are cached.  The list of items are returned
-   * from the cache except when this is the first call (ie, cache is NULL) OR
-   * the refresh parameter is TRUE.
+   * set in the constructor. Items from currentUrl are cached. The list of items
+   * returned from the cache except when this is the first call (ie, cache is NULL)
+   * OR the refresh parameter is TRUE.
    *
-   * Items are cached as an array of key=ID and value=stdclass object with
+   * Items are cached as an array of key=ID and value=stdClass object with
    * attribute xml containing the xml SimpleXMLElement object of the item.
    *
    * @param SimpleXMLElement $xml
@@ -509,13 +552,13 @@ class MigrateItemsXML extends MigrateItems {
    *
    * @return array
    */
-  protected $cache_items = NULL;
+  protected $currentItems = NULL;
   public function getItemsFromXML(SimpleXMLElement $xml, $refresh=FALSE) {
-    if ($refresh !== FALSE && $this->cache_items != NULL) {
-      return $this->cache_items;
+    if ($refresh !== FALSE && $this->currentItems != NULL) {
+      return $this->currentItems;
     }
 
-    $this->cache_items = NULL;
+    $this->currentItems = NULL;
     $items = array();
     $result = $xml->xpath($this->itemXpath);
 
@@ -526,16 +569,17 @@ class MigrateItemsXML extends MigrateItems {
         $item->xml = $item_xml;
         $items[$id] = $item;
       }
-      $this->cache_items = $items;
-      return $items;
+      $this->currentItems = $items;
+      return $this->currentItems;
     }
     else {
       return NULL;
     }
   }
-
   /**
    * Get the item ID from the itemXML based on itemIDXpath.
+   *
+   * @param SimpleXMLElement
    *
    * @return string
    */
@@ -545,6 +589,9 @@ class MigrateItemsXML extends MigrateItems {
 
   /**
    * Get an element from the itemXML based on an xpath.
+   *
+   * @param SimpleXMLElement
+   * @param string
    *
    * @return string
    */
@@ -559,8 +606,8 @@ class MigrateItemsXML extends MigrateItems {
   }
 
   /**
-   * Implementors are expected to return an object representing a source item.
-   * Items are cached as an array of key=ID and value=stdclass object with
+   * Implementers are expected to return an object representing a source item.
+   * Items from currentUrl are cached as an array of key=ID and value=stdClass object with
    * attribute xml containing the xml SimpleXMLElement object of the item.
    *
    * @param mixed $id
@@ -572,9 +619,22 @@ class MigrateItemsXML extends MigrateItems {
     if (empty($id)) {
       return NULL;
     }
-    $items = $this->getAllItems();
-    $item = $items[$id];
-    if ($item) {
+    // If $id is in currentXml return the right item immediately
+    if (isset($this->currentItems) && isset($this->currentItems[$id])) {
+      $item = $this->currentItems[$id];
+    }
+    else {
+      // Otherwise find the right url and get the items from.
+      foreach ($this->idsMap as $url => $ids) {
+        if (in_array($id, $ids)) {
+          $this->currentItems = NULL;
+          $this->currentUrl = $url;
+          $items = $this->getAllItems();
+          $item = $items[$id];
+        }
+      }
+    }
+    if (!empty($item)) {
       return $item;
     }
     else {
@@ -591,7 +651,7 @@ class MigrateItemsXML extends MigrateItems {
   }
 
   /**
-   * Implments MigrateItem::hash().
+   * {@inheritdoc}
    */
   public function hash($row) {
     // $row->xml is a SimpleXMLElement. Temporarily set it as an XML string

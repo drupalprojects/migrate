@@ -269,7 +269,10 @@ abstract class XMLMigration extends Migration {
         $xpath = $mapping->getXpath();
         if ($xpath) {
           // Derived class may override applyXpath()
-          $this->sourceValues->$source = $this->applyXpath($this->sourceValues, $xpath);
+          $source_value = $this->applyXpath($this->sourceValues, $xpath);
+          if (!is_null($source_value)) {
+            $this->sourceValues->$source = $source_value;
+          }
         }
       }
     }

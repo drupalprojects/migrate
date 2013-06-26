@@ -27,6 +27,7 @@ Features and enhancements
              through arguments.
 
 Bug fixes
+- #2023813 - Apply defaultValue() for empty XML values.
 - #2023657 - Prevent duplicate aliases when updating nodes.
 - #2021973 - Drush deregistration needs to handle mixed-case machine names.
 - #2017443 - Properly hash XML source rows with track_changes on.

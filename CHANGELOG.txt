@@ -1,6 +1,6 @@
 
-Next release
-============
+Migrate 2.6 Release Candidate 1
+===============================
 
 Migration developers will need to add the "advanced migration information"
 permission to their roles to continue seeing all the info in the UI they're

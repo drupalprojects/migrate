@@ -1192,7 +1192,7 @@ function drush_migrate_import($args = NULL) {
     foreach ($migrations as $machine_name => $migration) {
       drush_log(dt("Importing '!description' migration",
         array('!description' => $machine_name)));
-      if (drush_get_option('update')) {
+      if (drush_get_option('update') && !$idlist) {
         $migration->prepareUpdate();
       }
       if (drush_get_option('needs-update')) {

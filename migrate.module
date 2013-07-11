@@ -517,3 +517,12 @@ function migrate_overview() {
   }
   return $overview;
 }
+
+/**
+ * Implements hook_modules_enabled.
+ */
+function migrate_modules_enabled($modules) {
+  if (array_intersect($modules, module_implements('migrate_api'))) {
+    migrate_static_registration();
+  }
+}

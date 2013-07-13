@@ -199,8 +199,10 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
 
     $row['status'] = $status;
     $machine_name = $migration->getMachineName();
+    $name_length = strlen($machine_name);
     $group_length = strlen($group_name);
-    if (!strncasecmp($group_name, $machine_name, $group_length)) {
+    if ($name_length != $group_length &&
+        !strncasecmp($group_name, $machine_name, $group_length)) {
       $display_name = substr($machine_name, $group_length);
     }
     else {

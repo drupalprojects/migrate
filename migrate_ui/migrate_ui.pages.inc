@@ -3,7 +3,7 @@
  * @file
  * Pages for managing migration processes.
  */
- 
+
 /**
  * Form for managing migration groups.
  */
@@ -122,7 +122,6 @@ function migrate_ui_migrate_dashboard($form, &$form_state) {
  */
 function migrate_ui_migrate_group($form, &$form_state, $group_name) {
   $group = MigrateGroup::getInstance($group_name);
-  drupal_set_title($group->getTitle());
   $build = array();
 
   $header = array(
@@ -661,7 +660,6 @@ function migrate_ui_capture_message($message, $level) {
  * Menu callback function for migration view page.
  */
 function migrate_migration_info($form, $form_state, $group_name, $migration_name) {
-  drupal_set_title($migration_name);
   $migration = Migration::getInstance($migration_name);
 
   $has_mappings = method_exists($migration, 'getFieldMappings');

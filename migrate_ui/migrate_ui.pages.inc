@@ -1165,11 +1165,14 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
     }
   }
 
+  unset($source_migration_options[-1]);
+  unset($source_migration_options[$migration_name]);
+
   $form['dependencies'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dependencies'),
     '#collapsible' => TRUE,
-    '#collapsed' => is_a($migration, 'Migration') ? TRUE : FALSE,
+    '#collapsed' => is_a($migration, 'Migration'),
     '#theme' => 'migrate_ui_field_mapping_dependencies',
     '#description' => t('Set any dependencies on other migrations here. A ' .
       '<em>hard dependency</em> means that this migration is not allowed ' .
@@ -1181,8 +1184,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
 
   // Get the list of possible dependencies - it's the same as the list of
   // possible source migrations, minus the empty choice and ourselves.
-  unset($source_migration_options[-1]);
-  unset($source_migration_options[$migration_name]);
+
   $dependency_options = array(
     0 => t('None'),
     1 => t('Hard'),
@@ -1195,7 +1197,6 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
                                                         $all_dependencies);
   $source_migration_options = array_diff_key($source_migration_options,
     $descendent_migrations);
-
   foreach ($source_migration_options as $machine_name) {
     if (in_array($machine_name, $migration->getHardDependencies())) {
       $default_value = 1;
@@ -1387,12 +1388,14 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   }
 
   $arguments['dependencies'] = $arguments['soft_dependencies'] = array();
-  foreach ($form_state['values']['dependencies'] as $dependency => $value) {
-    if ($value == 1) {
-      $arguments['dependencies'][] = $dependency;
-    }
-    elseif ($value == 2) {
-      $arguments['soft_dependencies'][] = $dependency;
+  if (isset($form_state['values']['dependencies'])) {
+    foreach ($form_state['values']['dependencies'] as $dependency => $value) {
+      if ($value == 1) {
+        $arguments['dependencies'][] = $dependency;
+      }
+      elseif ($value == 2) {
+        $arguments['soft_dependencies'][] = $dependency;
+      }
     }
   }
 
@@ -1447,19 +1450,19 @@ function theme_migrate_ui_field_mapping_form($variables) {
 function theme_migrate_ui_field_mapping_dependencies($variables) {
   $output = '';
   $form = $variables['dependencies'];
+  $header = array(t('Migration'), t('Dependency'));
+  $rows = array();
   $elements = element_children($form);
-  if (!empty($elements)) {
-    $rows = array();
-    foreach ($elements as $mapping_key) {
-      $row = array();
-      $title = $form[$mapping_key]['#title'];
-      unset($form[$mapping_key]['#title']);
-      $row[] = $title;
-      $row[] = drupal_render($form[$mapping_key]);
-      $rows[] = $row;
-    }
-    $output .= theme('table', array('rows' => $rows));
+  foreach ($elements as $mapping_key) {
+    $row = array();
+    $title = $form[$mapping_key]['#title'];
+    unset($form[$mapping_key]['#title']);
+    $row[] = $title;
+    $row[] = drupal_render($form[$mapping_key]);
+    $rows[] = $row;
   }
+  $output .= theme('table', array('rows' => $rows, 'header' => $header, 'empty' => t('No other migrations were found.')));
+
   $output .= drupal_render_children($form);
   return $output;
 }

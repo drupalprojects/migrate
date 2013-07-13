@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but that support will be
 removed in a future version.
 
 Bug fixes
+- #2041267 - Handle lack of potential dependencies on edit page.
 - #2040101 - Breadcrumbs in migration UI missing sections
 - #2033947 - Empty migration display names when matching group names.
 - #2037265 - Static migrations were not registered on module enable.

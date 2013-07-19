@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but that support will be
 removed in a future version.
 
 Bug fixes
+- #2042399 - Node import did not respect revision flag.
 - #2034885 - For XML sources, don't override values populated in prepareRow().
 - #2041267 - Handle lack of potential dependencies on edit page.
 - #2040101 - Breadcrumbs in migration UI missing sections

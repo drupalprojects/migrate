@@ -208,13 +208,21 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       if (isset($node->uid)) {
         $uid = $node->uid;
       }
+      if (isset($node->revision)) {
+        $revision = $node->revision;
+      }
+
       node_object_prepare($node);
+
       if (isset($created)) {
         $node->created = $created;
       }
       // No point to resetting $node->changed here, node_save() will overwrite it
       if (isset($uid)) {
         $node->uid = $uid;
+      }
+      if (isset($revision)) {
+        $node->revision = $revision;
       }
     }
 

@@ -305,7 +305,7 @@ abstract class XMLMigration extends Migration {
     // We only know what data to pull from the xpaths in the mappings.
     foreach ($this->getFieldMappings() as $mapping) {
       $source = $mapping->getSourceField();
-      if ($source) {
+      if ($source && !isset($this->sourceValues->{$source})) {
         $xpath = $mapping->getXpath();
         if ($xpath) {
           // Derived class may override applyXpath().

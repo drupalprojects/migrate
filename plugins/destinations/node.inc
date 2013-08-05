@@ -255,6 +255,11 @@ class MigrateDestinationNode extends MigrateDestinationEntity {
       $updating = FALSE;
     }
 
+    // Make sure that if is_new is not TRUE, it is not present.
+    if (isset($node->is_new) && empty($node->is_new)) {
+      unset($node->is_new);
+    }
+
     migrate_instrument_start('node_save');
     node_save($node);
     migrate_instrument_stop('node_save');

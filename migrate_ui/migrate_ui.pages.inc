@@ -977,7 +977,9 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
         'value to be applied to the destination when there is no source field, ' .
         'or the source field is empty in a given source item. Check the DNM ' .
         '(Do Not Migrate) box for destination fields you do not want populated ' .
-        'by migration.'),
+        'by migration. Note that any changes you make here override any ' .
+        'field mappings defined by the underlying migration module. Clicking ' .
+        'the Revert button will remove all such overrides.'),
       '#theme' => array('migrate_ui_field_mapping_form'),
       '#prefix' => '<div id="field-mappings">',
       '#suffix' => '</div>',
@@ -1219,6 +1221,13 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
     '#type' => 'submit',
     '#value' => t('Apply changes'),
   );
+
+  $form['revert'] = array(
+    '#type' => 'submit',
+    '#value' => t('Revert'),
+    '#submit' => array('migrate_ui_edit_mappings_revert'),
+  );
+
   return $form;
 }
 
@@ -1404,6 +1413,24 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   drupal_set_message(t('Migration changes applied.'));
   $form_state['redirect'] =
     "admin/content/migrate/groups/$group_name/$machine_name";
+}
+
+/**
+ * Revert callback for the edit mappings form. Remove any field mappings that
+ * were defined through the UI.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function migrate_ui_edit_mappings_revert(&$form, &$form_state) {
+  $machine_name = $form_state['values']['machine_name'];
+  db_delete('migrate_field_mapping')
+    ->condition('machine_name', $machine_name)
+    ->execute();
+  // Note that not all field mappings in the database came from the UI - they
+  // may also have been passed through a hook_migrate_api registration, so
+  // reregister the migration to restore those mappings.
+  migrate_static_registration(array($machine_name));
 }
 
 /**

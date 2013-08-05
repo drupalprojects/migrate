@@ -330,8 +330,11 @@ function migrate_get_module_apis($reset = FALSE) {
 
 /**
  * Register any migrations defined in hook_migrate_api().
+ *
+ * @param array $machine_names
+ *  If populated, only (re)register the specified migrations.
  */
-function migrate_static_registration() {
+function migrate_static_registration($machine_names = array()) {
   $module_info = migrate_get_module_apis(TRUE);
   foreach ($module_info as $module => $info) {
     // Register any groups defined via the hook.
@@ -345,6 +348,10 @@ function migrate_static_registration() {
     // Register any migrations defined via the hook.
     if (isset($info['migrations']) && is_array($info['migrations'])) {
       foreach ($info['migrations'] as $machine_name => $arguments) {
+        // If we have an explicit list to register, skip any not in the list.
+        if (!empty($machine_names) && !in_array($machine_name, $machine_names)) {
+          continue;
+        }
         $class_name = $arguments['class_name'];
         unset($arguments['class_name']);
         // Call the right registerMigration implementation. Note that this means

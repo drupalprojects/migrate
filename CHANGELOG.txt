@@ -20,6 +20,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2060631 - Fix notices on poll vote import.
 - #2049689 - Empty values for node is_new caused SQL errors.
 - #2042399 - Node import did not respect revision flag.
 - #2034885 - For XML sources, don't override values populated in prepareRow().

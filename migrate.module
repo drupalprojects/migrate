@@ -533,3 +533,19 @@ function migrate_modules_enabled($modules) {
     migrate_static_registration();
   }
 }
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function migrate_module_implements_alter(&$implementation, $hook) {
+  // Ensure that the Migration class exists, as different bootstrap phases may
+  // not have included migration.inc yet.
+  if (class_exists('Migration') && $migration = Migration::currentMigration()) {
+    $disable_hooks = $migration->getDisableHooks();
+    if (isset($disable_hooks[$hook])) {
+      foreach ($disable_hooks[$hook] as $module) {
+        unset($implementation[$module]);
+      }
+    }
+  }
+}

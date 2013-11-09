@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2088255 - Eliminate notices on migrate_map_hash with track_changes.
 - #2014849 - Make sure (again) statistics properly default to 0.
 - #2042535 - Properly set file_usage for user pictures.
 - #2060631 - Fix notices on poll vote import.

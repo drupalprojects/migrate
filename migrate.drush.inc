@@ -174,7 +174,8 @@ function migrate_drush_command() {
   );
   $items['migrate-stop'] = array(
     'description' => 'Stop an active migration operation',
-    'options' => array('all' => 'Stop all active migration operations'),
+    'options' => array('all' => 'Stop all active migration operations',
+      'group' => 'Name of a specific migration group to stop'),
     'arguments' => array(
       'migration' => 'Name of migration to stop',
     ),

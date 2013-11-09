@@ -13,7 +13,7 @@ UI to register them.
 
 Migration class constructors should now always accept a $arguments array as
 the first parameter and pass it to its parent. This version does support legacy
-migrations which pass a group object, or nothing, but that support will be
+migrations which pass a group object, or nothing, but that support may be
 removed in a future version.
 
 Features and enhancements
@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2042535 - Properly set file_usage for user pictures.
 - #2060631 - Fix notices on poll vote import.
 - #2049689 - Empty values for node is_new caused SQL errors.
 - #2042399 - Node import did not respect revision flag.

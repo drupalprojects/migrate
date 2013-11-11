@@ -401,7 +401,7 @@ abstract class MigrationBase {
     else {
       // Deprecated - this supports old code which does not pass the arguments
       // array through to the base constructor. Remove in the next version.
-      $this->machineName = $this->machineFromClass(get_class());
+      $this->machineName = $this->machineFromClass(get_class($this));
     }
     // Make any group arguments directly accessible to the specific migration.
     $group_arguments = $this->group->getArguments();

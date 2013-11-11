@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2102087 - Don't pass --group to drush subprocess.
 - #2099585 - Enable group option on drush migrate-stop.
 - #2088255 - Eliminate notices on migrate_map_hash with track_changes.
 - #2014849 - Make sure (again) statistics properly default to 0.

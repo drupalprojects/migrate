@@ -248,7 +248,7 @@ function migrate_drush_command() {
  */
 function drush_migrate_get_options() {
   $options = array();
-  $blacklist = array('stop', 'rollback', 'update', 'all');
+  $blacklist = array('stop', 'rollback', 'update', 'all', 'group');
   $command = drush_parse_command();
   foreach ($command['options'] as $key => $value) {
     // Strip leading --

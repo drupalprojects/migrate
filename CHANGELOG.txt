@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2120205 - Fix bug when upgrading lastimported from D6 to D7.
 - #2109821 - Handle multi-value subfields in the default field handler.
 - #2039649 - Smarter setting of file 'type' field.
 - #2106925 - Fix machine_name generation for legacy migrations.

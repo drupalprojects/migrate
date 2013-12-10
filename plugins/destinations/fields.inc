@@ -203,8 +203,18 @@ class MigrateDefaultFieldHandler extends MigrateFieldHandler {
     // Setup the standard Field API array for saving.
     $delta = 0;
     foreach ($values as $value) {
+      // Handle multivalue arguments (especially for subfields).
+      $delta_arguments = array();
+      foreach ($arguments as $name => $argument) {
+        if (is_array($argument) && isset($argument[$delta])) {
+          $delta_arguments[$name] = $argument[$delta];
+        }
+        else {
+          $delta_arguments[$name] = $argument;
+        }
+      }
       $return[$language][$delta] = array($primary_column => $value) +
-        array_intersect_key($arguments, $field_info['columns']);
+        array_intersect_key($delta_arguments, $field_info['columns']);
       $delta++;
     }
 

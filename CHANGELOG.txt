@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2109821 - Handle multi-value subfields in the default field handler.
 - #2039649 - Smarter setting of file 'type' field.
 - #2106925 - Fix machine_name generation for legacy migrations.
 - #2102087 - Don't pass --group to drush subprocess.

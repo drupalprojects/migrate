@@ -1272,7 +1272,8 @@ abstract class Migration extends MigrationBase {
         }
         // We've seen a subfield, so add as an array value.
         else {
-          $this->destinationValues->{$destination_field}[] = $destination_values;
+          $this->destinationValues->{$destination_field} = array_merge(
+            (array)$destination_values, $this->destinationValues->{$destination_field});
         }
       }
     }

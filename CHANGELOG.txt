@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2141409 - Handle drush spawning when Drupal in subdirectory.
 - #2191335 - Remove unused columns from CSV source row.
 - #2210533 - Properly pass directory by reference.
 - #2141569 - Explicitly create group in baseball example.

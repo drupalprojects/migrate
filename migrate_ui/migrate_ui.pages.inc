@@ -497,7 +497,7 @@ function migrate_ui_migrate_submit($form, &$form_state) {
   }
   elseif (count($drush_arguments) > 0) {
     $drush_path = trim(variable_get('migrate_drush_path', ''));
-    $uri = 'http://' . $_SERVER['HTTP_HOST'];
+    $uri = $GLOBALS['base_url'];
     $uid = $GLOBALS['user']->uid;
     if ($operation == 'import_background') {
       $command = 'mi';
@@ -1659,7 +1659,7 @@ function migrate_ui_configure_form($form, &$form_state) {
   $drush_validated = FALSE;
   if ($drush_path) {
     // Try running a drush status command to verify it's properly configured.
-    $uri = 'http://' . $_SERVER['HTTP_HOST'];
+    $uri = $GLOBALS['base_url'];
     $uid = $GLOBALS['user']->uid;
     $command = "$drush_path status --user=$uid --uri=$uri --root=" . DRUPAL_ROOT;
     exec($command, $output, $status);

@@ -288,7 +288,8 @@ abstract class MigrateFile extends MigrateFileBase {
     }
 
     // Prepare the destination directory.
-    if (!file_prepare_directory(drupal_dirname($destination),
+    $destdir = drupal_dirname($destination);
+    if (!file_prepare_directory($destdir,
                                 FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
       $migration->saveMessage(t('Could not create destination directory for !dest',
                               array('!dest' => $destination)));

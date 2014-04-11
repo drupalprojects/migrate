@@ -446,7 +446,7 @@ abstract class MigrationBase {
     }
 
     // Make sure we clear our semaphores in case of abrupt exit
-    register_shutdown_function(array($this, 'endProcess'));
+    drupal_register_shutdown_function(array($this, 'endProcess'));
 
     // Save any hook disablement information.
     if (isset($this->arguments['disable_hooks']) &&

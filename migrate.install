@@ -217,6 +217,7 @@ function migrate_uninstall() {
   // Remove variables
   variable_del('migrate_disable_autoregistration');
   variable_del('migrate_disabled_handlers');
+  variable_del('migrate_deprecation_warnings');
 }
 
 /**

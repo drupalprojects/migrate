@@ -538,6 +538,8 @@ function migrate_ui_migrate_submit($form, &$form_state) {
 }
 
 /**
+ * Implements callback_batch_operation().
+ *
  * Process all enabled migration processes in a browser, using the Batch API
  * to break it into manageable chunks.
  *
@@ -631,7 +633,9 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
 }
 
 /**
- * Batch API finished callback - report results
+ * Implements callback_batch_finished().
+ *
+ * Report results.
  *
  * @param $success
  *  Ignored

@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2213033 - Add batch callback documentation.
 - #2095829 - Remove all variables on uninstall.
 - #2072721 - Proper title for migrate_example_baseball feature.
 - #1999228 - Removed AJAX from field mapping form for performance.

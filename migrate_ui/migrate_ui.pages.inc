@@ -1049,10 +1049,6 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
         '#type' => 'checkbox',
         '#title' => $label,
         '#default_value' => $dnm_value,
-        '#ajax' => array(
-          'callback' => 'migrate_ui_dnm_changed',
-          'wrapper' => 'field-mappings',
-        ),
       );
     }
 
@@ -1114,10 +1110,6 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
       $form['field_mappings'][$name]['issue_group'] = array(
         '#type' => 'checkbox',
         '#default_value' => $dnm_value,
-        '#ajax' => array(
-          'callback' => 'migrate_ui_dnm_changed',
-          'wrapper' => 'field-mappings',
-        ),
       );
 
       $form['field_mappings'][$name]['mapping'] = array(
@@ -1126,24 +1118,12 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
                       array('!description' => $description, '!field_name' => $name)),
         '#options' => $options,
         '#default_value' => $default_mapping,
-        '#states' => array(
-          'disabled' => array(
-            ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
-              array('checked' => TRUE),
-          ),
-        ),
       );
 
       $form['field_mappings'][$name]['default_value'] = array(
         '#type' => 'textfield',
         '#default_value' => $default_value,
         '#size' => 20,
-        '#states' => array(
-          'disabled' => array(
-            ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
-              array('checked' => TRUE),
-          ),
-        ),
       );
 
       $source_migration = NULL;
@@ -1157,12 +1137,6 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
         '#type' => 'select',
         '#options' => $source_migration_options,
         '#default_value' => $source_migration,
-        '#states' => array(
-          'disabled' => array(
-            ':input[name="field_mappings[' . $name . '][issue_group]"]' =>
-              array('checked' => TRUE),
-          ),
-        ),
       );
     }
   }
@@ -1249,15 +1223,6 @@ function _migrate_ui_get_descendents($migration_name, array $all_dependencies) {
     }
   }
   return $descendents;
-}
-
-/**
- * Selects the field mapping fieldset for re-rendering
- *
- * @return array
- */
-function migrate_ui_dnm_changed(&$form, &$form_state) {
-  return $form['field_mappings'];
 }
 
 /**

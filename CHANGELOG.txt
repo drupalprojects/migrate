@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #1999228 - Removed AJAX from field mapping form for performance.
 - #2237755 - Fix activeUrl handling in JSON source.
 - #2237891 - Use drupal_register_shutdown_function().
 - #2141409 - Handle drush spawning when Drupal in subdirectory.

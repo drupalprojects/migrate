@@ -1056,9 +1056,14 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
       );
     }
 
+    if (isset($field_mappings['is_new'])) {
+      $default_is_new = $field_mappings['is_new']->getDefaultValue();
+    } else {
+      $default_is_new = 0;
+    }
     foreach ($dest_fields as $name => $description) {
-      // Don't map the destination key
-      if (isset($dest_key[$name])) {
+      // Don't map the destination key unless is_new = 1 (ie, TRUE)
+      if (isset($dest_key[$name]) && $default_is_new == 0) {
         continue;
       }
 

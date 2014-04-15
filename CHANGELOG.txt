@@ -13,14 +13,15 @@ UI to register them.
 
 Migration class constructors should now always accept a $arguments array as
 the first parameter and pass it to its parent. This version does support legacy
-migrations which pass a group object, or nothing, but that support may be
-removed in a future version.
+migrations which pass a group object, or nothing, but these methods are
+deprecated.
 
 Features and enhancements
 - #2065295 - Add ability to disable other module's hooks during migration.
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2076035 - Validate that term names are not empty.
 - #2225809 - Use proper API for registering wizard classes.
 - #2105037 - Expose nid/uid destinations when is_new is on.
 - #2145213 - Add SQLMap constructor documentation.

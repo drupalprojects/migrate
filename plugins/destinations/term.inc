@@ -215,6 +215,10 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       }
       $this->prepare($term, $row);
 
+      if (empty($term->name)) {
+        throw new MigrateException(t('Taxonomy term name is required.'));
+      }
+
       if (!$this->allowDuplicateTerms && $existing_term = $this->findMatchingTerm($term)) {
         foreach ($existing_term as $field => $value) {
           if (!isset($term->$field)) {

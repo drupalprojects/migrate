@@ -408,8 +408,8 @@ class MigrateSQLMap extends MigrateMap {
     if (is_array($source_key)) {
       foreach ($source_key as $key_value) {
         $fields['sourceid' . $count++] = $key_value;
-        // If any key value is empty, we can't save - print out and abort
-        if (empty($key_value)) {
+        // If any key value is not set, we can't save - print out and abort
+        if (!isset($key_value)) {
           print($message);
           return;
         }

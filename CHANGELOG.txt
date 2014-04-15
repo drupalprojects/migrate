@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2225809 - Use proper API for registering wizard classes.
 - #2105037 - Expose nid/uid destinations when is_new is on.
 - #2145213 - Add SQLMap constructor documentation.
 - #2213033 - Add batch callback documentation.

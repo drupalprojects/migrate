@@ -440,7 +440,7 @@ function migrate_ui_migrate_submit($form, &$form_state) {
   $operations = array();
 
   // Rollback in reverse order.
-  if ($operation == 'rollback') {
+  if (in_array($operation, array('rollback_immediate', 'deregister'))) {
     $machine_names = array_reverse($machine_names);
   }
 

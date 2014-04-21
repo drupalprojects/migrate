@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2047523 - Consistently document destination handler fields() implementations.
 - #2244759 - Rollback migrations in proper (reverse) order in UI.
 - #2184641 - Make saveHighwater() work with PostgreSQL.
 - #2076035 - Properly check key values in saveMessage().

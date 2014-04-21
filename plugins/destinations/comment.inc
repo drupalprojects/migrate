@@ -328,7 +328,10 @@ class MigrateCommentNodeHandler extends MigrateDestinationHandler {
     $this->registerTypes(array('node'));
   }
 
-  public function fields($entity_type, $bundle) {
+  /**
+   * Implementation of MigrateDestinationHandler::fields().
+   */
+  public function fields($entity_type, $bundle, $migration = NULL) {
     $fields = array();
     $fields['comment'] = t('Whether comments may be posted to the node');
     return $fields;

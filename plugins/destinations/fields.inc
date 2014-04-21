@@ -12,15 +12,6 @@ class MigrateFieldsEntityHandler extends MigrateDestinationHandler {
 
   /**
    * Implementation of MigrateDestinationHandler::fields().
-   *
-   * @param $entity_type
-   *  The entity type (node, user, etc.) for which to list fields.
-   * @param $bundle
-   *  The bundle (article, blog, etc.), if any, for which to list fields.
-   * @param Migration $migration
-   *  Optionally, the migration providing the context.
-   * @return array
-   *  An array keyed by field name, with field descriptions as values.
    */
   public function fields($entity_type, $bundle, $migration = NULL) {
     $fields = array();

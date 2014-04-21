@@ -10,7 +10,10 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
     $this->registerTypes(array('entity'));
   }
 
-  public function fields($entity_type, $bundle) {
+  /**
+   * Implementation of MigrateDestinationHandler::fields().
+   */
+  public function fields($entity_type, $bundle, $migration = NULL) {
     if (module_exists('path')) {
       return array('path' => t('Path alias'));
     }

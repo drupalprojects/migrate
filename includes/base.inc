@@ -796,9 +796,16 @@ abstract class MigrationBase {
         if (!empty($this->highwaterField['type']) && $this->highwaterField['type'] == 'int') {
           // If the highwater is an integer type, we need to force the DB server
           // to treat the varchar highwater field as an integer (otherwise it will
-          // think '5' > '10'). CAST(highwater AS INTEGER) would be ideal, but won't
-          // work in MySQL. This hack is thought to be portable.
-          $query->where('(highwater+0) < :highwater', array(':highwater' => $highwater));
+          // think '5' > '10').
+          switch (Database::getConnection()->databaseType()) {
+            case 'pgsql':
+              $query->where('(CASE WHEN highwater=\'\' THEN 0 ELSE CAST(highwater AS INTEGER) END) < :highwater', array(':highwater' => intval($highwater)));
+              break;
+            default:
+              // CAST(highwater AS INTEGER) would be ideal, but won't
+              // work in MySQL. This hack is thought to be portable.
+              $query->where('(highwater+0) < :highwater', array(':highwater' => $highwater));
+          }
         }
         else {
           $query->condition('highwater', $highwater, '<');

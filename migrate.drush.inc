@@ -250,7 +250,9 @@ function drush_migrate_get_options() {
   $options = array();
   $blacklist = array('stop', 'rollback', 'update', 'all', 'group');
   $command = drush_parse_command();
-  foreach ($command['options'] as $key => $value) {
+  $global_options = drush_get_global_options();
+  $opts = array_merge($command['options'], $global_options);
+  foreach ($opts as $key => $value) {
     // Strip leading --
     $key = ltrim($key, '-');
     if (!in_array($key, $blacklist)) {

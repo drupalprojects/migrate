@@ -32,6 +32,7 @@ files[] = plugins/sources/csv.inc
 files[] = plugins/sources/files.inc
 files[] = plugins/sources/json.inc
 files[] = plugins/sources/list.inc
+files[] = plugins/sources/mongodb.inc
 files[] = plugins/sources/multiitems.inc
 files[] = plugins/sources/sql.inc
 files[] = plugins/sources/sqlmap.inc

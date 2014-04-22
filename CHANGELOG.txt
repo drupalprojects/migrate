@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2236279 - Prevent ignore_case from causing created terms to be lower-cased.
 - #2104149 - Sanity-check decrypted arguments.
 - #2047523 - Consistently document destination handler fields() implementations.
 - #2244759 - Rollback migrations in proper (reverse) order in UI.

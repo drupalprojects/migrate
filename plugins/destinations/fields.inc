@@ -511,11 +511,18 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       // If we're ignoring case, change both the matched term name keys and the
       // source values to lowercase.
       if (isset($arguments['ignore_case']) && $arguments['ignore_case']) {
+        $ignore_case = TRUE;
         $existing_terms = array_change_key_case($existing_terms);
-        $values = array_map('strtolower', $values);
+        foreach ($values as $value) {
+          $lower_values[$value] = strtolower($value);
+        }
+      }
+      else {
+        $ignore_case = FALSE;
       }
       foreach ($values as $value) {
-        if (isset($existing_terms[$value])) {
+        if (isset($existing_terms[$value]) ||
+            ($ignore_case && isset($existing_terms[$lower_values[$value]]))) {
           $tids[] = $existing_terms[$value];
         }
         elseif (!empty($arguments['create_term'])) {

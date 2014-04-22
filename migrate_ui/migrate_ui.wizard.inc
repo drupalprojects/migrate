@@ -23,13 +23,17 @@ function migrate_ui_wizard($form, &$form_state, $class_name = '') {
   // instance there, and it encapsulates all the state. We just need
   // to create the instance the first time in, and it will be serialized
   // between steps.
+  /** @var MigrateUIWizard $wizard */
   if (empty($form_state['wizard'])) {
     $wizard = new $class_name();
     $form_state['wizard'] = $wizard;
   }
+  else {
+    $wizard = $form_state['wizard'];
+  }
 
   // Fetch the form for the wizard's current step.
-  $form = $form_state['wizard']->form($form_state);
+  $form = $wizard->form($form_state);
 
   return $form;
 }
@@ -41,7 +45,9 @@ function migrate_ui_wizard($form, &$form_state, $class_name = '') {
  * @todo: Can we remove steps that were dynamically added?
  */
 function migrate_ui_wizard_previous_submit($form, &$form_state) {
-  $form_state['wizard']->gotoPreviousStep($form_state);
+  /** @var MigrateUIWizard $wizard */
+  $wizard = $form_state['wizard'];
+  $wizard->gotoPreviousStep($form_state);
 }
 
 /**
@@ -49,7 +55,9 @@ function migrate_ui_wizard_previous_submit($form, &$form_state) {
  * step for validation.
  */
 function migrate_ui_wizard_next_validate($form, &$form_state) {
-  $form_state['wizard']->formValidate($form_state);
+  /** @var MigrateUIWizard $wizard */
+  $wizard = $form_state['wizard'];
+  $wizard->formValidate($form_state);
 }
 
 /**
@@ -58,7 +66,9 @@ function migrate_ui_wizard_next_validate($form, &$form_state) {
  * next step.
  */
 function migrate_ui_wizard_next_submit($form, &$form_state) {
-  $form_state['wizard']->gotoNextStep($form_state);
+  /** @var MigrateUIWizard $wizard */
+  $wizard = $form_state['wizard'];
+  $wizard->gotoNextStep($form_state);
 }
 
 /**
@@ -66,8 +76,11 @@ function migrate_ui_wizard_next_submit($form, &$form_state) {
  * (implicitly) defined along the way and redirect to the Migrate dashboard.
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
-  $form_state['wizard']->formSaveSettings();
-  $form_state['redirect'] = 'admin/content/migrate/groups/' . $form_state['wizard']->getGroupName();
+  /** @var MigrateUIWizard $wizard */
+  $wizard = $form_state['wizard'];
+  $wizard->formSaveSettings();
+  $form_state['redirect'] = 'admin/content/migrate/groups/' .
+                            $wizard->getGroupName();
 }
 
 /**
@@ -76,8 +89,12 @@ function migrate_ui_wizard_submit($form, &$form_state) {
  * redirect to the Migrate dashboard.
  */
 function migrate_ui_wizard_migrate_submit($form, &$form_state) {
-  $form_state['wizard']->formSaveSettings();
-  $form_state['wizard']->formPerformImport();
+  /** @var MigrateUIWizard $wizard */
+  $wizard = $form_state['wizard'];
+  $wizard->formSaveSettings();
+  $wizard->formPerformImport();
+  $form_state['redirect'] = 'admin/content/migrate/groups/' .
+                            $wizard->getGroupName();
 }
 
 /**
@@ -273,12 +290,12 @@ abstract class MigrateUIWizard {
         '#type' => 'submit',
         '#value' => t('Save import settings'),
       );
-/*
+
       $form['actions']['migrate'] = array(
         '#type' => 'submit',
-        '#value' => t('Save settings and import'),
+        '#value' => t('Save import settings and run import'),
         '#submit' => array('migrate_ui_wizard_migrate_submit'),
-      );*/
+      );
     }
     else {
       $form['actions']['next'] = array(
@@ -331,7 +348,28 @@ abstract class MigrateUIWizard {
    * Run the import process for the migration group we've defined.
    */
   public function formPerformImport() {
+    $migrations = migrate_migrations();
+    $operations = array();
+    /** @var Migration $migration */
+    foreach ($migrations as $migration) {
+      $group_name = $migration->getGroup()->getName();
+      if ($group_name == $this->groupName) {
+        $operations[] = array('migrate_ui_batch', array('import', $migration->getMachineName(), NULL, 0));
+      }
+    }
 
+    if (count($operations) > 0) {
+      $batch = array(
+        'operations' => $operations,
+        'title' => t('Import processing'),
+        'file' => drupal_get_path('module', 'migrate_ui') . '/migrate_ui.pages.inc',
+        'init_message' => t('Starting import process'),
+        'progress_message' => t(''),
+        'error_message' => t('An error occurred. Some or all of the import processing has failed.'),
+        'finished' => 'migrate_ui_batch_finish',
+      );
+      batch_set($batch);
+    }
   }
 
   /**

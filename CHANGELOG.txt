@@ -21,6 +21,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2129609 - Remove warnings on MS SQL counts.
 - #2109931 - Pass drush global options to subprocess.
 - #2236279 - Prevent ignore_case from causing created terms to be lower-cased.
 - #2104149 - Sanity-check decrypted arguments.

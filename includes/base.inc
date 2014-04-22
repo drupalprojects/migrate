@@ -1312,8 +1312,18 @@ abstract class MigrationBase {
     if (isset($arguments['encrypted_arguments'])) {
       foreach ($arguments['encrypted_arguments'] as $argument_name) {
         if (isset($arguments[$argument_name])) {
-          $arguments[$argument_name] = unserialize(
-            self::decrypt($arguments[$argument_name]));
+          $decrypted_string = self::decrypt($arguments[$argument_name]);
+          // A decryption failure will return FALSE and issue a notice. We need
+          // to distinguish a failure from a serialized FALSE.
+          $unserialized_value = @unserialize($decrypted_string);
+          if ($unserialized_value === FALSE && $decrypted_string != serialize(FALSE)) {
+            self::displayMessage(t('Failed to decrypt argument %argument_name',
+              array('%argument_name' => $argument_name)));
+            unset($arguments[$argument_name]);
+          }
+          else {
+            $arguments[$argument_name] = $unserialized_value;
+          }
         }
       }
     }

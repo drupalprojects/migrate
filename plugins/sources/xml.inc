@@ -894,17 +894,19 @@ class MigrateXMLReader implements Iterator {
   public function rewind() {
     // (Re)open the provided URL.
     $this->reader->close();
-    $status = $this->reader->open($this->url);
-    if (!$status) {
-      Migration::displayMessage(t('Could not open XML file !url',
-        array('!url' => $this->url)));
-    }
+    $status = $this->reader->open($this->url, NULL, LIBXML_NOWARNING);
 
     // Reset our path tracker.
     $this->currentPath = array();
 
-    // Load the first matching element and its ID.
-    $this->next();
+    if ($status) {
+      // Load the first matching element and its ID.
+      $this->next();
+    }
+    else {
+      Migration::displayMessage(t('Could not open XML file !url',
+                                array('!url' => $this->url)));
+    }
   }
 
   /**

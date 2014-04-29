@@ -521,9 +521,11 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
         $ignore_case = FALSE;
       }
       foreach ($values as $value) {
-        if (isset($existing_terms[$value]) ||
-            ($ignore_case && isset($existing_terms[$lower_values[$value]]))) {
+        if (isset($existing_terms[$value])) {
           $tids[] = $existing_terms[$value];
+        }
+        elseif ($ignore_case && isset($existing_terms[$lower_values[$value]])) {
+          $tids[] = $existing_terms[$lower_values[$value]];
         }
         elseif (!empty($arguments['create_term'])) {
           $new_term = new stdClass();

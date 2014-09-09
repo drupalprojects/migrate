@@ -150,6 +150,7 @@ function migrate_drush_command() {
   $migration_options['stop'] = 'Stop specified migration(s) if applicable.';
   $migration_options['rollback'] = 'Rollback specified migration(s) if applicable.';
   $migration_options['file_function'] = 'Override file function to use when migrating images.';
+  $migration_options['ignore-highwater'] = 'Ignore the highwater field during migration';
   $items['migrate-import'] = array(
     'description' => 'Perform one or more migration processes',
     'options' => $migration_options,
@@ -1199,6 +1200,10 @@ function drush_migrate_import($args = NULL) {
         array('!description' => $machine_name)));
       if (drush_get_option('update') && !$idlist) {
         $migration->prepareUpdate();
+
+        if (drush_get_option('ignore-highwater')) {
+          $migration->setHighwaterField(array());
+        }
       }
       if (drush_get_option('needs-update')) {
         $map_rows = $migration->getMap()->getRowsNeedingUpdate(10000);

@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but these methods are
 deprecated.
 
 Features and enhancements
+- #2312075 - Add --ignore-highwater option to drush imports
 - #1961316 - Get data from all XML namespaces
 - #1298724 - Add a node revision destination plugin.
 - #1890610 - Add a MongoDB source plugin

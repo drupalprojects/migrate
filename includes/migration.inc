@@ -1203,7 +1203,7 @@ abstract class Migration extends MigrationBase {
 
         // If there's a source mapping, and a source value in the data row, copy
         // to the destination
-        if ($source && property_exists($this->sourceValues, $source)) {
+        if ($source && isset($this->sourceValues->{$source})) {
           $destination_values = $this->sourceValues->$source;
         }
         // Otherwise, apply the default value (if any)

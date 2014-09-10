@@ -44,7 +44,6 @@ class MigrateSourceMongoDB extends MigrateSource {
       array $fields = array(), array $sort = array('_id' => 1),
       array $options = array()) {
     parent::__construct($options);
-    MongoCursor::$timeout = -1;
 
     $this->collection = $collection;
     $this->query = $query;
@@ -109,6 +108,7 @@ class MigrateSourceMongoDB extends MigrateSource {
       $this->cursor = $this->collection
                            ->find($this->query)
                            ->sort($this->sort);
+      $this->cursor->timeout(-1);
     } catch (MongoCursorException $e) {
       Migration::displayMessage($e->getMessage(), 'error');
     }
@@ -125,6 +125,7 @@ class MigrateSourceMongoDB extends MigrateSource {
       $this->cursor = $this->collection
                            ->find($this->query)
                            ->sort($this->sort);
+      $this->cursor->timeout(-1);
     }
 
     $query_info = $this->cursor->info();

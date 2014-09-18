@@ -968,7 +968,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
 
   if (is_a($migration, 'Migration')) {
     $source_fields = $migration->getSource()->fields();
-    $dest_fields = $migration->getDestination()->fields();
+    $dest_fields = $migration->getDestination()->fields($migration);
     $dest_key = $migration->getDestination()->getKeySchema();
     $field_mappings = $migration->getFieldMappings();
 

@@ -25,6 +25,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2323605 - Handle single-parent terms properly.
 - #2313495 - Handle multilingual path aliases.
 - #2261227 - Fixed missing subfields on edit mapping form.
 - #2154385 - Add file/line context to source plugin exceptions.

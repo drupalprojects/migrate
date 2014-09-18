@@ -205,7 +205,13 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       if (empty($term->parent)) {
         $term->parent = array(0);
       }
-      if (is_array($term->parent) && isset($term->parent['arguments'])) {
+      elseif (!is_array($term->parent)) {
+        // Convert to an array for comparison in findMatchingTerm().
+        // Note: taxonomy_term_save() also normalizes to an array.
+        $term->parent = array($term->parent);
+      }
+
+      if (isset($term->parent['arguments'])) {
         // Unset arguments here to avoid duplicate entries in the
         // term_hierarchy table.
         unset($term->parent['arguments']);

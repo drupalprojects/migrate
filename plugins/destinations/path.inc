@@ -24,7 +24,8 @@ class MigratePathEntityHandler extends MigrateDestinationHandler {
     if (module_exists('path') && isset($entity->path)) {
       // Make sure the alias doesn't already exist
       $query = db_select('url_alias')
-        ->condition('alias', $entity->path);
+        ->condition('alias', $entity->path)
+        ->condition('language', $entity->language);
       $query->addExpression('1');
       $query->range(0, 1);
       if (!$query->execute()->fetchField()) {

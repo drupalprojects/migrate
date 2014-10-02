@@ -624,7 +624,7 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
       $arguments = array();
     }
 
-    $language = $this->getFieldLanguage($entity, $field_info, $arguments);
+    $default_language = $this->getFieldLanguage($entity, $field_info, $arguments);
     $migration = Migration::currentMigration();
 
     // One can override the source class via CLI or drushrc.php (the
@@ -683,6 +683,7 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
         // MigrateFile class has saved a message indicating why.
         if ($file) {
           $field_array = array('fid' => $file->fid);
+          $language = isset($instance_arguments['language']) ? $instance_arguments['language'] : $default_language;
           $return[$language][] = $this->buildFieldArray($field_array, $instance_arguments, $delta);
         }
       }

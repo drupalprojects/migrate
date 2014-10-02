@@ -684,6 +684,9 @@ abstract class MigrateFileFieldBaseHandler extends MigrateFieldHandler {
         if ($file) {
           $field_array = array('fid' => $file->fid);
           $language = isset($instance_arguments['language']) ? $instance_arguments['language'] : $default_language;
+          if (is_array($language)) {
+            $language = $language[$delta];
+          }
           $return[$language][] = $this->buildFieldArray($field_array, $instance_arguments, $delta);
         }
       }

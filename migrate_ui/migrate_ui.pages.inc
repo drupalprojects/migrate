@@ -1579,7 +1579,7 @@ function migrate_ui_configure_form($form, &$form_state) {
 
   $build['registration']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Register statically-defined classes'),
+    '#value' => t('Register statically defined classes'),
     '#submit' => array('migrate_ui_configure_register_submit'),
   );
 

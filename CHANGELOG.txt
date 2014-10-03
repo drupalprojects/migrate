@@ -25,6 +25,9 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2305105 - Remove pedantically-deprecated hyphens.
+- #2325237 - Handle language arrays for file fields.
+- #2258909 - Use migrated languages for file fields.
 - #2323605 - Handle single-parent terms properly.
 - #2313495 - Handle multilingual path aliases.
 - #2261227 - Fixed missing subfields on edit mapping form.

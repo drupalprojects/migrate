@@ -215,12 +215,12 @@ function migrate_drush_command() {
     'drupal dependencies' => array('migrate'),
   );
   $items['migrate-auto-register'] = array(
-    'description' => 'Register any newly-defined migration classes',
+    'description' => 'Register any newly defined migration classes',
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mar'),
   );
   $items['migrate-register'] = array(
-    'description' => 'Register or reregister any statically-defined migrations',
+    'description' => 'Register or reregister any statically defined migrations',
     'drupal dependencies' => array('migrate'),
     'aliases' => array('mreg'),
   );

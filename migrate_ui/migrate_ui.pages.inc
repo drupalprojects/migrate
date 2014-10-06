@@ -325,47 +325,46 @@ function _migrate_ui_migrate_operations() {
     '#postfix' => '</p>',
   );
 
-  if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-    $operations['options'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Options'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $operations['options']['update'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Update'),
-      '#description' => t('Check this box to update all previously-imported content
-        in addition to importing new content. Leave unchecked to only import
-        new content'),
-    );
-    $operations['options']['force'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Ignore dependencies'),
-      '#description' => t('Check this box to ignore dependencies when running imports
-        - all tasks will run whether or not their dependent tasks have
-        completed.'),
-    );
-    $operations['options']['limit'] = array(
-      '#tree' => TRUE,
-      '#type' => 'fieldset',
-      '#attributes' => array('class' => array('container-inline')),
-      'value' => array(
-        '#type' => 'textfield',
-        '#title' => t('Limit to:'),
-        '#size' => 10,
+  $operations['options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Options'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#access' => user_access(MIGRATE_ACCESS_ADVANCED),
+  );
+  $operations['options']['update'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Update'),
+    '#description' => t('Check this box to update all previously-imported content
+      in addition to importing new content. Leave unchecked to only import
+      new content'),
+  );
+  $operations['options']['force'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Ignore dependencies'),
+    '#description' => t('Check this box to ignore dependencies when running imports
+      - all tasks will run whether or not their dependent tasks have
+      completed.'),
+  );
+  $operations['options']['limit'] = array(
+    '#tree' => TRUE,
+    '#type' => 'fieldset',
+    '#attributes' => array('class' => array('container-inline')),
+    'value' => array(
+      '#type' => 'textfield',
+      '#title' => t('Limit to:'),
+      '#size' => 10,
+    ),
+    'unit' => array(
+      '#type' => 'select',
+      '#options' => array(
+        'items' => t('items'),
+        'seconds' => t('seconds'),
       ),
-      'unit' => array(
-        '#type' => 'select',
-        '#options' => array(
-          'items' => t('items'),
-          'seconds' => t('seconds'),
-        ),
-        '#description' => t('Set a limit of how many items to process for
-          each migration task, or how long each should run.'),
-      ),
-    );
-  }
+      '#description' => t('Set a limit of how many items to process for
+        each migration task, or how long each should run.'),
+    ),
+  );
 
   return $operations;
 }
@@ -418,12 +417,9 @@ function _migrate_ui_selected_migrations($values) {
 function migrate_ui_migrate_submit($form, &$form_state) {
   $values = $form_state['values'];
   $operation = $values['operation'];
-  if (isset($values['limit'])) {
-    $limit = $values['limit'];
-  }
-  else {
-    $limit = '';
-  }
+
+  $limit = $values['limit'];
+
   if (isset($values['update'])) {
     $update = $values['update'];
   }

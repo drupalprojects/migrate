@@ -27,6 +27,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2347205 - Explicitly default the language for terms.
 - #2307599 - Notice for non-advanced users on rollback.
 - #2305105 - Remove pedantically-deprecated hyphens.
 - #2325237 - Handle language arrays for file fields.

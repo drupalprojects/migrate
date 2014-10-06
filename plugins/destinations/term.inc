@@ -219,6 +219,9 @@ class MigrateDestinationTerm extends MigrateDestinationEntity {
       if (!isset($term->format)) {
         $term->format = $this->textFormat;
       }
+      if (!isset($term->language)) {
+        $term->language = $this->language;
+      }
       $this->prepare($term, $row);
 
       if (empty($term->name)) {

@@ -602,11 +602,13 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
       }
       break;
     case MigrationBase::RESULT_SKIPPED:
-      $_migrate_messages[] = t("Skipped !name due to unfulfilled dependencies: !depends",
-        array(
-          '!name' => $machine_name,
-          '!depends' => implode(", ", $migration->incompleteDependencies()),
-        ));
+      $_migrate_messages[] = array(
+        'message' => t("Skipped !name due to unfulfilled dependencies: !depends",
+          array(
+            '!name' => $machine_name,
+            '!depends' => implode(", ", $migration->incompleteDependencies()),
+          ))
+        );
       $context['finished'] = 1;
       break;
     case MigrationBase::RESULT_STOPPED:
@@ -620,14 +622,14 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
   }
 
   // Add any messages generated in this batch to the cumulative list
-  foreach ($_migrate_messages as $message) {
-    $context['results'][] = $message;
+  foreach ($_migrate_messages as $message_data) {
+    $context['results'][] = $message_data;
   }
 
   // While in progress, show the cumulative list of messages
   $full_message = '';
-  foreach ($context['results'] as $message) {
-    $full_message .= $message . '<br />';
+  foreach ($context['results'] as $message_data) {
+    $full_message .= $message_data['message'] . '<br />';
   }
   $context['message'] = $full_message;
 }
@@ -648,15 +650,36 @@ function migrate_ui_batch_finish($success, $results, $operations) {
   unset($results['stopped']);
   if (user_access(MIGRATE_ACCESS_ADVANCED)) {
     foreach ($results as $result) {
-      drupal_set_message($result);
+      // Migration::progressMessage() uses message levels that don't match what
+      // drupal_set_message() expects.
+      if (isset($result['level'])) {
+        if ($result['level'] == 'completed') {
+          $level = 'status';
+        }
+        elseif ($result['level'] == 'failed') {
+          $level = 'error';
+        }
+        else {
+          $level = $result['level'];
+        }
+      }
+      else {
+        $level = NULL;
+      }
+
+      drupal_set_message($result['message'], $level);
     }
   }
 }
 
 function migrate_ui_capture_message($message, $level) {
   if ($level != 'debug') {
+    // Store each message as an array with keys 'message' and 'level'.
     global $_migrate_messages;
-    $_migrate_messages[] = $message;
+    $_migrate_messages[] = array(
+      'message' => $message,
+      'level' => $level,
+    );
   }
 }
 

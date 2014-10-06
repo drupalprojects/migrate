@@ -1492,13 +1492,20 @@ function migrate_ui_messages($group_name, $migration_name) {
 
   $build = $rows = array();
 
-  $header = array(
-    array('data' => t('Source ID'), 'field' => 'sourceid1', 'sort' => 'asc'),
-    array('data' => t('Level'), 'field' => 'level'),
-    array('data' => t('Message'), 'field' => 'message'),
-  );
-
   $migration = Migration::getInstance($migration_name);
+
+  $source_key = $migration->getMap()->getSourceKey();
+  $source_key_map = $migration->getMap()->getSourceKeyMap();
+  $source_key_map_flipped = array_flip($source_key_map);
+
+  $header = array();
+  // Add a table header for each source key in the migration's map.
+  foreach ($source_key as $key => $map_info) {
+    $header[] = array('data' => $map_info['description'], 'field' => $source_key_map[$key], 'sort' => 'asc');
+  }
+
+  $header[] = array('data' => t('Level'), 'field' => 'level');
+  $header[] = array('data' => t('Message'), 'field' => 'message');
 
   // TODO: need a general MigrateMap API
   $messages = $migration->getMap()->getConnection()
@@ -1512,11 +1519,19 @@ function migrate_ui_messages($group_name, $migration_name) {
 
   foreach ($messages as $message) {
     $classes[] = $message->level <= MigrationBase::MESSAGE_WARNING ? 'migrate-error' : '';
-    $rows[] = array(
-      array('data' => $message->sourceid1, 'class' => $classes), // TODO: deal with compound keys
-      array('data' => $migration->getMessageLevelName($message->level), 'class' => $classes),
-      array('data' => $message->message, 'class' => $classes),
-    );
+    $row = array();
+    // Add a table column for each source key.
+    foreach ($source_key_map_flipped as $source_key => $source_field) {
+      $row[] = array(
+        'data' => $message->{$source_key},
+        'class' => $classes,
+      );
+    }
+    $row[] = array('data' => $migration->getMessageLevelName($message->level), 'class' => $classes);
+    $row[] = array('data' => $message->message, 'class' => $classes);
+
+    $rows[] = $row;
+
     unset($classes);
   }
 

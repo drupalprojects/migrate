@@ -1281,6 +1281,11 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
     $existing_mappings = $migration->getFieldMappings();
     $coded_mappings = $migration->getCodedFieldMappings();
     foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
+      // Treat an empty string for the default value as NULL.
+      if ($info['default_value'] === '') {
+        $info['default_value'] = NULL;
+      }
+
       // If this mapping matches a coded mapping but not a stored mapping, remove
       // it entirely (don't store it in the database) so the coded mapping is not
       // overwritten.

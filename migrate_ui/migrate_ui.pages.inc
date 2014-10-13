@@ -129,10 +129,10 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
     'status' => array('data' => t('Status')),
     'importrows' => array('data' => t('Items')),
     'imported' => array('data' => t('Imported')),
+    'unprocessed' => array('data' => t('Unprocessed')),
   );
   if (user_access(MIGRATE_ACCESS_ADVANCED)) {
     $header += array(
-      'unprocessed' => array('data' => t('Unprocessed')),
       'messages' => array('data' => t('Messages')),
       'lastthroughput' => array('data' => t('Throughput')),
       'lastimported' => array('data' => t('Last imported')),
@@ -211,9 +211,8 @@ function migrate_ui_migrate_group($form, &$form_state, $group_name) {
       l($display_name, "admin/content/migrate/groups/$group_name/$machine_name");
     $row['importrows'] = $total;
     $row['imported'] = $imported;
+    $row['unprocessed'] = $unprocessed;
     if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-      $row['unprocessed'] = $unprocessed;
-
       if (is_subclass_of($migration, 'Migration')) {
         $num_messages = $migration->messageCount();
         $row['messages'] = $num_messages ?
@@ -644,27 +643,26 @@ function migrate_ui_batch($operation, $machine_name, $limit, $force = FALSE, &$c
  */
 function migrate_ui_batch_finish($success, $results, $operations) {
   unset($results['stopped']);
-  if (user_access(MIGRATE_ACCESS_ADVANCED)) {
-    foreach ($results as $result) {
-      // Migration::progressMessage() uses message levels that don't match what
-      // drupal_set_message() expects.
-      if (isset($result['level'])) {
-        if ($result['level'] == 'completed') {
-          $level = 'status';
-        }
-        elseif ($result['level'] == 'failed') {
-          $level = 'error';
-        }
-        else {
-          $level = $result['level'];
-        }
+
+  foreach ($results as $result) {
+    // Migration::progressMessage() uses message levels that don't match what
+    // drupal_set_message() expects.
+    if (isset($result['level'])) {
+      if ($result['level'] == 'completed') {
+        $level = 'status';
+      }
+      elseif ($result['level'] == 'failed') {
+        $level = 'error';
       }
       else {
-        $level = NULL;
+        $level = $result['level'];
       }
-
-      drupal_set_message($result['message'], $level);
     }
+    else {
+      $level = NULL;
+    }
+
+    drupal_set_message($result['message'], $level);
   }
 }
 

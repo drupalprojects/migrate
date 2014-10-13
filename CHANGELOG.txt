@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but these methods are
 deprecated.
 
 Features and enhancements
+- #2306953 - Give basic users a little more information.
 - #2261357 - Add prepareCallback/completeCallback to table destination.
 - #2306923 - Propagate message statuses to drupal_set_message in batch.
 - #2301679 - Display all source key fields in the message view.

@@ -27,6 +27,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2177313 - Make sure reused file entities are saved to pick up field changes.
 - #2352971 - Treat empty default values as NULL in field mapping editor.
 - #2347205 - Explicitly default the language for terms.
 - #2307599 - Notice for non-advanced users on rollback.

@@ -273,13 +273,10 @@ abstract class MigrateFile extends MigrateFileBase {
     // Our own file_replace behavior - if the file exists, use it without
     // replacing it
     if ($this->fileReplace == self::FILE_EXISTS_REUSE) {
-      // See if we this file already (we'll reuse a file entity if it exists).
+      // See if we this file already (we'll reuse and resave a file entity if it exists).
       if (file_exists($destination)) {
         $file = $this->createFileEntity($destination, $owner);
-        // File entity didn't already exist, create it
-        if (empty($file->fid)) {
-          $file = file_save($file);
-        }
+        $file = file_save($file);
         $this->markForPreservation($file->fid);
         return $file;
       }

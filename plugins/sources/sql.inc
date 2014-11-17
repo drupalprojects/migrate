@@ -43,6 +43,20 @@ class MigrateSourceSQL extends MigrateSource {
   protected $numProcessed = 0;
 
   /**
+   * Current data batch.
+   *
+   * @var int
+   */
+  protected $batch = 0;
+
+  /**
+   * Number of records to fetch from the database during each batch.
+   *
+   * @var int
+   */
+  protected $batchSize = 1000;
+
+  /**
    * List of available source fields.
    *
    * @var array
@@ -116,6 +130,10 @@ class MigrateSourceSQL extends MigrateSource {
     }
     else {
       $this->countQuery = $count_query;
+    }
+
+    if (isset($options['batch_size'])) {
+      $this->batchSize = $options['batch_size'];
     }
 
     // If we're tracking changes, then we need to fetch all rows to see if
@@ -250,6 +268,7 @@ class MigrateSourceSQL extends MigrateSource {
   public function performRewind() {
     $this->result = NULL;
     $this->query = clone $this->originalQuery;
+    $this->batch = 0;
 
     // Get the key values, for potential use in joining to the map table, or
     // enforcing idlist.
@@ -332,6 +351,9 @@ class MigrateSourceSQL extends MigrateSource {
       if ($condition_added) {
         $this->query->condition($conditions);
       }
+
+      // 4. Download data in batches for performance.
+      $this->query->range($this->batch * $this->batchSize, $this->batchSize);
     }
 
     migrate_instrument_start('MigrateSourceSQL execute');
@@ -345,8 +367,32 @@ class MigrateSourceSQL extends MigrateSource {
    * @return object
    */
   public function getNextRow() {
-    return $this->result->fetchObject();
+    $row = $this->result->fetchObject();
+
+    // We might be out of data entirely, or just out of data in the current batch.
+    // Attempt to fetch the next batch and see.
+    if (!is_object($row)) {
+      $this->getNextBatch();
+      $row = $this->result->fetchObject();
+    }
+    if (is_object($row)) {
+      return $row;
+    }
+    else {
+      return NULL;
+    }
   }
+
+  /**
+   * Downloads the next set of data from the source database.
+   */
+  protected function getNextBatch() {
+    $this->batch++;
+    $query = clone $this->originalQuery;
+    $query->range($this->batch * $this->batchSize, $this->batchSize);
+    $this->result = $query->execute();
+  }
+
 }
 
 /**

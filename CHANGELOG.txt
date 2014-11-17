@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but these methods are
 deprecated.
 
 Features and enhancements
+- #2353527 - Add getter/setter for trackLastImported.
 - #2302929 - Explicitly count IDs for JSON source counts.
 - #2296187 - Batch MigrateSQLSource queries.
 - #2260211 - Allow skipping of file contents in MigrateListFiles.

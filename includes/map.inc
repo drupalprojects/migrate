@@ -56,6 +56,14 @@ abstract class MigrateMap implements Iterator {
    * @var boolean
    */
   protected $trackLastImported = FALSE;
+  public function getTrackLastImported() {
+    return $this->trackLastImported;
+  }
+  public function setTrackLastImported($trackLastImported) {
+    if (is_bool($trackLastImported)) {
+      $this->trackLastImported = $trackLastImported;
+    }
+  }
 
   /**
    * Save a mapping from the key values in the source row to the destination

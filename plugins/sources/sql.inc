@@ -159,14 +159,15 @@ class MigrateSourceSQL extends MigrateSource {
     }
   }
 
-
   /**
    * Return a string representing the source query.
    *
    * @return string
    */
   public function __toString() {
-    return (string) $this->query;
+    $query = clone $this->query;
+    $query = $query->extend('MigrateConnectionQuery');
+    return $query->getString();
   }
 
   /**
@@ -345,5 +346,46 @@ class MigrateSourceSQL extends MigrateSource {
    */
   public function getNextRow() {
     return $this->result->fetchObject();
+  }
+}
+
+/**
+ * Query extender for retrieving the connection used on the query.
+ */
+class MigrateConnectionQuery extends SelectQueryExtender {
+
+  public function __construct(SelectQueryInterface $query, DatabaseConnection $connection) {
+    parent::__construct($query, $connection);
+    // Add the connection as metadata if anything else wants to access it.
+    $query->addMetaData('connection', $connection);
+  }
+
+  /**
+   * Return a string representing the source query.
+   *
+   * This is copied from devel module's dpq() function.
+   *
+   * @param bool $prefix
+   *   If the tables should be prefixed. If FALSE will return tables names in
+   *   the query like {tablename}.
+   *
+   * @return string
+   *   The SQL query.
+   */
+  public function getString($prefix = TRUE) {
+    $query = $this;
+    if (method_exists($this, 'preExecute')) {
+      $query->preExecute();
+    }
+    $sql = (string) $this;
+    $quoted = array();
+    foreach ((array) $this->arguments() as $key => $val) {
+      $quoted[$key] = $this->connection->quote($val);
+    }
+    $sql = strtr($sql, $quoted);
+    if ($prefix) {
+      $sql = $this->connection->prefixTables($sql);
+    }
+    return $sql;
   }
 }

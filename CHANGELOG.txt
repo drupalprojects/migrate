@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but these methods are
 deprecated.
 
 Features and enhancements
+- #2224297 - Destination handler for custom blocks.
 - #2370677 - Add removeStep() method to Wizard API.
 - #2306953 - Give basic users a little more information.
 - #2261357 - Add prepareCallback/completeCallback to table destination.

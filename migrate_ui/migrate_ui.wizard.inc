@@ -221,6 +221,31 @@ abstract class MigrateUIWizard {
   }
 
   /**
+   * Remove the named step from the wizard.
+   *
+   * @param $name
+   */
+  protected function removeStep($name) {
+    for ($current_step = $this->firstStep; !is_null($current_step); $current_step = $current_step->nextStep) {
+      if ($current_step->getName() == $name) {
+        if (is_null($current_step->previousStep)) {
+          $this->firstStep = $current_step->nextStep;
+        }
+        else {
+          $current_step->previousStep->nextStep = $current_step->nextStep;
+        }
+        if (is_null($current_step->nextStep)) {
+          $this->lastStep = $current_step->previousStep;
+        }
+        else {
+          $current_step->nextStep->previousStep = $current_step->previousStep;
+        }
+        break;
+      }
+    }
+  }
+
+  /**
    * Move the wizard to the next step in line (if any), first squirreling away
    * the current step's form values.
    */

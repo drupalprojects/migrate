@@ -92,7 +92,7 @@ class MigrateListJSON extends MigrateList {
     if ($json) {
       $data = drupal_json_decode($json);
       if ($data) {
-        $count = count($data);
+        $count = count($this->getIDsFromJSON($data));
       }
     }
     return $count;

@@ -12,7 +12,6 @@ dependencies[] = number
 ;node_reference is useful but not required
 ;dependencies[] = node_reference
 
-files[] = migrate_example.module
 files[] = beer.inc
 files[] = wine.inc
 

@@ -255,6 +255,15 @@ abstract class MigrateUIWizard {
       $form_state['rebuild'] = TRUE;
       $this->currentStep = $this->currentStep->nextStep;
       $this->stepNumber++;
+
+      // Ensure a page reload remains on the current step.
+      $current_step_form_values = $this->currentStep->getFormValues();
+      if (!empty($current_step_form_values)) {
+        $form_state['values'] = $current_step_form_values;
+      }
+      else {
+        $form_state['values'] = array();
+      }
     }
   }
 

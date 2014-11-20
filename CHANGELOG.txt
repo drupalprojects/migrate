@@ -36,6 +36,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2370877 - Fix reloading of wizard steps after first.
 - #2358767 - Topological sort to help avoid false circular dependency errors.
 - #2019193 - Properly handle destination DNM status on field mapping save.
 - #2250081 - Fix PostgreSQL failure updating node statistics on comments.

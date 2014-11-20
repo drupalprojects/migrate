@@ -603,7 +603,15 @@ abstract class MigrationBase {
       }
       $arguments['machine_name'] = $machine_name;
       if (class_exists($class_name)) {
-        $migrations[$machine_name_key] = new $class_name($arguments);
+        try {
+          $migrations[$machine_name_key] = new $class_name($arguments);
+        }
+        catch (Exception $e) {
+          self::displayMessage(t('Migration !machine could not be constructed.',
+            array('!machine' => $machine_name)));
+          self::displayMessage($e->getMessage());
+          return NULL;
+        }
       }
       else {
         self::displayMessage(t('No migration class !class found',
@@ -862,7 +870,7 @@ abstract class MigrationBase {
     else {
       foreach ($this->dependencies as $dependency) {
         $migration = MigrationBase::getInstance($dependency);
-        if (!$migration->isComplete()) {
+        if (!$migration || !$migration->isComplete()) {
           return FALSE;
         }
       }
@@ -877,7 +885,7 @@ abstract class MigrationBase {
     $incomplete = array();
     foreach ($this->getDependencies() as $dependency) {
       $migration = MigrationBase::getInstance($dependency);
-      if (!$migration->isComplete()) {
+      if (!$migration || !$migration->isComplete()) {
         $incomplete[] = $dependency;
       }
     }

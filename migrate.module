@@ -52,16 +52,18 @@ function migrate_migrations($reset = NULL) {
       $reflect = new ReflectionClass($row->class_name);
       if (!$reflect->isAbstract() && $reflect->isSubclassOf('MigrationBase')) {
         $migration = MigrationBase::getInstance($row->machine_name);
-        $dependencies = $migration->getDependencies();
-        $dependencies_list[$row->machine_name] = $dependencies;
-        if (count($dependencies) > 0) {
-          // Set classes with dependencies aside for reordering
-          $dependent_migrations[$row->machine_name] = $migration;
-          $required_migrations += $dependencies;
-        }
-        else {
-          // No dependencies, just add
-          $migrations[$row->machine_name] = $migration;
+        if ($migration) {
+          $dependencies = $migration->getDependencies();
+          $dependencies_list[$row->machine_name] = $dependencies;
+          if (count($dependencies) > 0) {
+            // Set classes with dependencies aside for reordering
+            $dependent_migrations[$row->machine_name] = $migration;
+            $required_migrations += $dependencies;
+          }
+          else {
+            // No dependencies, just add
+            $migrations[$row->machine_name] = $migration;
+          }
         }
       }
       else {

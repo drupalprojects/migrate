@@ -252,7 +252,7 @@ abstract class Migration extends MigrationBase {
     try {
       // Remove map and message tables
       $migration = self::getInstance($machine_name);
-      if (method_exists($migration, 'getMap')) {
+      if ($migration && method_exists($migration, 'getMap')) {
         $migration->getMap()->destroy();
       }
 

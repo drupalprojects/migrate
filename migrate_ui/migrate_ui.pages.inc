@@ -1300,9 +1300,17 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
         if ($info['source_migration'] == '-1') {
           $info['source_migration'] = NULL;
         }
+        if ($info['issue_group'] == 0 && $coded_mappings[$destination_field]->getIssueGroup() != t('DNM') ||
+            $info['issue_group'] == 1 && $coded_mappings[$destination_field]->getIssueGroup() == t('DNM')) {
+          $dnm_matches = TRUE;
+        }
+        else {
+          $dnm_matches = FALSE;
+        }
         if ($info['mapping'] == $coded_source_field &&
             $info['default_value'] == $coded_default_value &&
-            $info['source_migration'] == $coded_source_migration) {
+            $info['source_migration'] == $coded_source_migration &&
+            $dnm_matches) {
           continue;
         }
       }

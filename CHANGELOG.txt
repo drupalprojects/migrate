@@ -36,6 +36,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2019193 - Properly handle destination DNM status on field mapping save.
 - #2250081 - Fix PostgreSQL failure updating node statistics on comments.
 - #2157933 - Fix PostgreSQL error with empty source migrations.
 - #2177313 - Make sure reused file entities are saved to pick up field changes.

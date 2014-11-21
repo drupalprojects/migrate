@@ -36,6 +36,7 @@ Features and enhancements
 - #2051547 - Add ability to revert UI-defined field mappings.
 
 Bug fixes
+- #2225551 - Add field validation to entity destination plugins.
 - #2285966 - Added exception handling around constructors.
 - #2370877 - Fix reloading of wizard steps after first.
 - #2358767 - Topological sort to help avoid false circular dependency errors.

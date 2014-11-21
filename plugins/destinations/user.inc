@@ -230,6 +230,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
       $account->login = MigrationBase::timestamp($account->login);
     }
 
+    // Validate field data prior to saving.
+    field_attach_validate('user', $account);
+
     migrate_instrument_start('user_save');
     $newaccount = user_save($old_account, (array)$account);
     migrate_instrument_stop('user_save');

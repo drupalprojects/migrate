@@ -214,6 +214,10 @@ class MigrateDestinationComment extends MigrateDestinationEntity {
     else {
       $updating = FALSE;
     }
+
+    // Validate field data prior to saving.
+    field_attach_validate('comment', $comment);
+
     migrate_instrument_start('comment_save');
     comment_save($comment);
     migrate_instrument_stop('comment_save');

@@ -269,7 +269,9 @@ class MigrateDestinationUser extends MigrateDestinationEntity {
         // to do it ourselves.
         if (!empty($newaccount->picture)) {
           $file = file_load($newaccount->picture);
-          file_usage_add($file, 'user', 'user', $newaccount->uid);
+          if (is_object($file)) {
+            file_usage_add($file, 'user', 'user', $newaccount->uid);
+          }
         }
       }
       $this->complete($newaccount, $row);

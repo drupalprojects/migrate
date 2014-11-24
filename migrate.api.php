@@ -30,6 +30,9 @@
  *   - destination handlers: An array of classes implementing destination
  *     handlers.
  *   - field handlers: An array of classes implementing field handlers.
+ *   - wizard classes: An array of classes that provide Migrate UI wizards.
+ *   - wizard extenders: An array of classes that extend Migrate UI wizards.
+ *     Keys are the wizard classes, values are arrays of extender classes.
  *
  * See system_hook_info() for all hook groups defined by Drupal core.
  *

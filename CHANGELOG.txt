@@ -1,5 +1,5 @@
-Next release
-============
+Migrate 2.6 Release Candidate 2
+===============================
 
 Migration developers will need to add the "advanced migration information"
 permission to their roles to continue seeing all the info in the UI they're
@@ -17,6 +17,7 @@ migrations which pass a group object, or nothing, but these methods are
 deprecated.
 
 Features and enhancements
+- #2363015 - Add support for modifying wizards defined by other modules.
 - #2353527 - Add getter/setter for trackLastImported.
 - #2302929 - Explicitly count IDs for JSON source counts.
 - #2296187 - Batch MigrateSQLSource queries.

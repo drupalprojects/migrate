@@ -403,8 +403,10 @@ abstract class MigrationBase {
       // array through to the base constructor. Remove in the next version.
       $this->machineName = $this->machineFromClass(get_class($this));
     }
-    // Make any group arguments directly accessible to the specific migration.
+    // Make any group arguments directly accessible to the specific migration,
+    // other than group dependencies.
     $group_arguments = $this->group->getArguments();
+    unset($group_arguments['dependencies']);
     $this->arguments += $group_arguments;
 
     // Record the memory limit in bytes

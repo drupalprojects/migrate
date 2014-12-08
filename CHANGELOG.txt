@@ -1,6 +1,8 @@
-Migrate 2.6 Release Candidate 2
-===============================
+Next release
+============
 
+IMPORTANT CHANGES SINCE MIGRATE 2.5
+-----------------------------------
 Migration developers will need to add the "advanced migration information"
 permission to their roles to continue seeing all the info in the UI they're
 used to.
@@ -15,6 +17,12 @@ Migration class constructors should now always accept an $arguments array as
 the first parameter and pass it to its parent. This version does support legacy
 migrations which pass a group object, or nothing, but these methods are
 deprecated.
+
+Bug fixes
+- #2314077 - Don't merge group dependencies into migration dependencies.
+
+Migrate 2.6 Release Candidate 2
+===============================
 
 Features and enhancements
 - #2363015 - Add support for modifying wizards defined by other modules.

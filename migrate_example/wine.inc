@@ -59,8 +59,7 @@ class WinePrepMigration extends MigrationBase {
 
   public function __construct($arguments) {
     parent::__construct($arguments);
-    $this->description = t('If auto_nodetitle is present, disable it for the ' .
-                           'duration');
+    $this->description = t('If auto_nodetitle is present, disable it for the duration');
   }
 
   // Define isComplete(), returning a boolean, to indicate whether dependent

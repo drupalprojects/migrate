@@ -335,17 +335,14 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
   public function fields($type, $instance, $migration = NULL) {
     $fields = array();
     if ($type == 'text_with_summary') {
-      $fields['summary'] = t('Subfield: <a href="@doc">Summary of field ' .
-          'contents</a>',
+      $fields['summary'] = t('Subfield: <a href="@doc">Summary of field contents</a>',
         array('@doc' => 'http://drupal.org/node/1224042#summary'));
     }
     if ($instance['settings']['text_processing']) {
-      $fields['format'] = t('Subfield: <a href="@doc">Text format for the ' .
-          'field</a>',
+      $fields['format'] = t('Subfield: <a href="@doc">Text format for the field</a>',
         array('@doc' => 'http://drupal.org/node/1224042#format'));
     }
-    $fields['language'] = t('Subfield: <a href="@doc">Language for the ' .
-          'field</a>',
+    $fields['language'] = t('Subfield: <a href="@doc">Language for the field</a>',
         array('@doc' => 'http://drupal.org/node/1224042#language'));
     return $fields;
   }
@@ -455,14 +452,11 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
    */
   public function fields($type, $instance, $migration = NULL) {
     return array(
-      'source_type' => t('Option: <a href="@doc">Set to \'tid\' when the ' .
-          'value is a source ID</a>',
+      'source_type' => t('Option: <a href="@doc">Set to \'tid\' when the value is a source ID</a>',
         array('@doc' => 'http://drupal.org/node/1224042#source_type')),
-      'create_term' => t('Option: <a href="@doc">Set to TRUE to create ' .
-          'referenced terms when necessary</a>',
+      'create_term' => t('Option: <a href="@doc">Set to TRUE to create referenced terms when necessary</a>',
         array('@doc' => 'http://drupal.org/node/1224042#create_term')),
-      'ignore_case' => t('Option: <a href="@doc">Set to TRUE to ignore case ' .
-          'differences between source data and existing term names</a>',
+      'ignore_case' => t('Option: <a href="@doc">Set to TRUE to ignore case differences between source data and existing term names</a>',
         array('@doc' => 'http://drupal.org/node/1224042#ignore_case')),
     );
   }
@@ -761,11 +755,9 @@ class MigrateFileFieldHandler extends MigrateFileFieldBaseHandler {
   public function fields($type, $instance, $migration = NULL) {
     $fields = parent::fields($type, $instance, $migration);
     $fields += array(
-      'description' => t('Subfield: <a href="@doc">String to be used as the ' .
-          'description value</a>',
+      'description' => t('Subfield: <a href="@doc">String to be used as the description value</a>',
         array('@doc' => 'http://drupal.org/node/1224042#description')),
-      'display' => t('Subfield: <a href="@doc">String to be used as the ' .
-          'display value</a>',
+      'display' => t('Subfield: <a href="@doc">String to be used as the display value</a>',
         array('@doc' => 'http://drupal.org/node/1224042#display')),
     );
     return $fields;
@@ -826,11 +818,9 @@ class MigrateImageFieldHandler extends MigrateFileFieldBaseHandler {
   public function fields($type, $instance, $migration = NULL) {
     $fields = parent::fields($type, $instance, $migration);
     $fields += array(
-      'alt' => t('Subfield: <a href="@doc">String to be used as the alt ' .
-          'value</a>',
+      'alt' => t('Subfield: <a href="@doc">String to be used as the alt value</a>',
         array('@doc' => 'http://drupal.org/node/1224042#alt')),
-      'title' => t('Subfield: <a href="@doc">String to be used as the title ' .
-          'value</a>',
+      'title' => t('Subfield: <a href="@doc">String to be used as the title value</a>',
         array('@doc' => 'http://drupal.org/node/1224042#title')),
     );
     return $fields;

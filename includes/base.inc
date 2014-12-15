@@ -370,9 +370,7 @@ abstract class MigrationBase {
       $this->arguments['group_name'] = $arguments->getName();
       if (!self::$groupArgumentWarning &&
           variable_get('migrate_deprecation_warnings', 1)) {
-        self::displayMessage(t('Passing a group object to a migration ' .
-          'constructor is now deprecated - pass through the arguments array ' .
-          'passed to the leaf class instead.'));
+        self::displayMessage(t('Passing a group object to a migration constructor is now deprecated - pass through the arguments array passed to the leaf class instead.'));
         self::$groupArgumentWarning = TRUE;
       }
     }
@@ -381,9 +379,7 @@ abstract class MigrationBase {
         $this->arguments = array();
         if (!self::$emptyArgumentsWarning &&
             variable_get('migrate_deprecation_warnings', 1)) {
-          self::displayMessage(t('Passing an empty first parameter to a ' .
-            'migration constructor is now deprecated - pass through the ' .
-            'arguments array passed to the leaf class instead.'));
+          self::displayMessage(t('Passing an empty first parameter to a migration constructor is now deprecated - pass through the arguments array passed to the leaf class instead.'));
           self::$emptyArgumentsWarning = TRUE;
         }
       }
@@ -1233,11 +1229,7 @@ abstract class MigrationBase {
     }
     else {
       if (self::$showEncryptionWarning) {
-        MigrationBase::displayMessage(t('Encryption of secure migration ' .
-              'information is not supported. Ensure the ' .
-              '<a href="@encrypt">Encrypt module</a> or ' .
-              '<a href="mcrypt">mcrypt PHP extension</a> is installed for ' .
-              'this functionality.',
+        MigrationBase::displayMessage(t('Encryption of secure migration information is not supported. Ensure the <a href="@encrypt">Encrypt module</a> or <a href="mcrypt">mcrypt PHP extension</a> is installed for this functionality.',
             array(
               '@encrypt' => 'http://drupal.org/project/encrypt',
               '@mcrypt' => 'http://php.net/manual/en/book.mcrypt.php',
@@ -1275,11 +1267,7 @@ abstract class MigrationBase {
     }
     else {
       if (self::$showEncryptionWarning) {
-        MigrationBase::displayMessage(t('Encryption of secure migration ' .
-              'information is not supported. Ensure the ' .
-              '<a href="@encrypt">Encrypt module</a> or ' .
-              '<a href="mcrypt">mcrypt PHP extension</a> is installed for ' .
-              'this functionality.',
+        MigrationBase::displayMessage(t('Encryption of secure migration information is not supported. Ensure the <a href="@encrypt">Encrypt module</a> or <a href="mcrypt">mcrypt PHP extension</a> is installed for this functionality.',
             array(
               '@encrypt' => 'http://drupal.org/project/encrypt',
               '@mcrypt' => 'http://php.net/manual/en/book.mcrypt.php',

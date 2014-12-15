@@ -3,9 +3,7 @@
 function migrate_ui_help($path, $arg) {
   switch ($path) {
     case 'admin/content/migrate':
-      return t('The current status of each migration group defined in this ' .
-               'system. Click on a group name for details on its ' .
-               'configuration.');
+      return t('The current status of each migration group defined in this system. Click on a group name for details on its configuration.');
   }
 }
 

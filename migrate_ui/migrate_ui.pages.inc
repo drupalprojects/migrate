@@ -527,8 +527,7 @@ function migrate_ui_migrate_submit($form, &$form_state) {
     $drush_command .= " >$log_file 2>&1 &";
     exec($drush_command, $output, $status);
     if (variable_get('migrate_drush_mail', 0)) {
-      drupal_set_message('Your operation is running in the background. You will ' .
-        'receive an email message when it is complete.');
+      drupal_set_message('Your operation is running in the background. You will receive an email message when it is complete.');
     }
     else {
       drupal_set_message('Your operation is running in the background. You may '.
@@ -1009,14 +1008,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
       '#type' => 'fieldset',
       '#title' => t('Field mappings'),
       '#collapsible' => TRUE,
-      '#description' => t('For each field available in your Drupal destination, ' .
-        'select the source field used to populate it. You can enter a default ' .
-        'value to be applied to the destination when there is no source field, ' .
-        'or the source field is empty in a given source item. Check the DNM ' .
-        '(Do Not Migrate) box for destination fields you do not want populated ' .
-        'by migration. Note that any changes you make here override any ' .
-        'field mappings defined by the underlying migration module. Clicking ' .
-        'the Revert button will remove all such overrides.'),
+      '#description' => t('For each field available in your Drupal destination, select the source field used to populate it. You can enter a default value to be applied to the destination when there is no source field, or the source field is empty in a given source item. Check the DNM (Do Not Migrate) box for destination fields you do not want populated by migration. Note that any changes you make here override any field mappings defined by the underlying migration module. Clicking the Revert button will remove all such overrides.'),
       '#theme' => array('migrate_ui_field_mapping_form'),
       '#prefix' => '<div id="field-mappings">',
       '#suffix' => '</div>',
@@ -1026,8 +1018,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
       '#type' => 'fieldset',
       '#title' => t('Source fields'),
       '#collapsible' => TRUE,
-      '#description' => t('Check off any source fields that are not being mapped ' .
-        'to destination fields. They will be removed from the select lists above.'),
+      '#description' => t('Check off any source fields that are not being mapped to destination fields. They will be removed from the select lists above.'),
     );
 
     $base_options = array(
@@ -1192,12 +1183,7 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
     '#collapsible' => TRUE,
     '#collapsed' => is_a($migration, 'Migration'),
     '#theme' => 'migrate_ui_field_mapping_dependencies',
-    '#description' => t('Set any dependencies on other migrations here. A ' .
-      '<em>hard dependency</em> means that this migration is not allowed ' .
-      'to run until the dependent migration has completed (without forcing '.
-      'it). A <em>soft dependency</em> places no such requirement - it simply ' .
-      'affects the default order of migration. Note that any migrations that ' .
-      'would lead to circular dependencies are not listed here.'),
+    '#description' => t('Set any dependencies on other migrations here. A <em>hard dependency</em> means that this migration is not allowed to run until the dependent migration has completed (without forcing it). A <em>soft dependency</em> places no such requirement - it simply affects the default order of migration. Note that any migrations that would lead to circular dependencies are not listed here.'),
   );
 
   // Get the list of possible dependencies - it's the same as the list of
@@ -1683,8 +1669,7 @@ function migrate_ui_configure_form($form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Warn on usage of deprecated patterns'),
     '#default_value' => variable_get('migrate_deprecation_warnings', 1),
-    '#description' => t('When checked, you will receive warnings when using ' .
-      'methods and patterns that are deprecated as of Migrate 2.6.'),
+    '#description' => t('When checked, you will receive warnings when using methods and patterns that are deprecated as of Migrate 2.6.'),
   );
   $build['settings']['submit'] = array(
     '#type' => 'submit',
@@ -1714,9 +1699,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       }
     }
     if ($drush_validated) {
-      $description = t('Configure the use of <a href="@drush">drush</a> ' .
-          'version @version to run import and rollback operations in the ' .
-          'background.',
+      $description = t('Configure the use of <a href="@drush">drush</a> version @version to run import and rollback operations in the background.',
         array(
           '@drush' => 'http://drupal.org/project/drush',
           '@version' => $version,
@@ -1724,10 +1707,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       );
     }
     else {
-      $description = t('<a href="@drush">Drush</a> is misconfigured on the server. ' .
-        'Please review the <a href="@config">documentation</a> ' .
-        'on <a href="@dorg">drupal.org</a>, and make sure everything is set up ' .
-        'correctly.',
+      $description = t('<a href="@drush">Drush</a> is misconfigured on the server. Please review the <a href="@config">documentation</a> on <a href="@dorg">drupal.org</a>, and make sure everything is set up correctly.',
         array(
           '@drush' => 'http://drupal.org/project/drush',
           '@config' => 'http://drupal.org/node/1958170',
@@ -1736,11 +1716,7 @@ function migrate_ui_configure_form($form, &$form_state) {
     }
   }
   else {
-    $description = t('To enable running operations in the background with '.
-        '<a href="@drush">drush</a>, (which is ' .
-        '<a href="@recommended">recommended</a>), some configuration ' .
-        'must be done on the server. See the <a href="@config">documentation</a> ' .
-        'on <a href="@dorg">drupal.org</a>.',
+    $description = t('To enable running operations in the background with <a href="@drush">drush</a>, (which is <a href="@recommended">recommended</a>), some configuration must be done on the server. See the <a href="@config">documentation</a> on <a href="@dorg">drupal.org</a>.',
       array(
         '@drush' => 'http://drupal.org/project/drush',
         '@recommended' => 'http://drupal.org/node/1806824',
@@ -1769,15 +1745,13 @@ function migrate_ui_configure_form($form, &$form_state) {
       '#options' => $options,
       '#default_value' => variable_get('migrate_import_method', 0),
       '#title' => t('Import method'),
-      '#description' => t('Choose whether the dashboard will perform ' .
-        'operations immediately, in the background via drush, or offer a choice.'),
+      '#description' => t('Choose whether the dashboard will perform operations immediately, in the background via drush, or offer a choice.'),
     );
 
     $build['drush']['migrate_drush_mail'] = array(
       '#type' => 'checkbox',
       '#default_value' => variable_get('migrate_drush_mail', 0),
-      '#title' => t('Send email notification when a background operation ' .
-                    'completes.'),
+      '#title' => t('Send email notification when a background operation completes.'),
     );
 
     $build['drush']['migrate_drush_mail_subject'] = array(
@@ -1796,8 +1770,7 @@ function migrate_ui_configure_form($form, &$form_state) {
       '#type' => 'textarea',
       '#rows' => 10,
       '#default_value' => variable_get('migrate_drush_mail_body',
-        t('The migration operation is complete. Please review the results on ' .
-          'your dashboard')),
+        t('The migration operation is complete. Please review the results on your dashboard')),
       '#title' => t('Body'),
       '#states' => array(
         'visible' => array(
@@ -1816,10 +1789,7 @@ function migrate_ui_configure_form($form, &$form_state) {
   $build['handlers'] = array(
     '#type' => 'fieldset',
     '#title' => t('Handlers'),
-    '#description' => t('In some cases, such as when a field handler for a ' .
-      'contributed module is implemented in both migrate_extras and the module ' .
-      'itself, you may need to disable a particular handler. In this case, you ' .
-      'may uncheck the undesired handler below.'),
+    '#description' => t('In some cases, such as when a field handler for a contributed module is implemented in both migrate_extras and the module itself, you may need to disable a particular handler. In this case, you may uncheck the undesired handler below.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );

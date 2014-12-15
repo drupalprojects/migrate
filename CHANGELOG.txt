@@ -23,6 +23,7 @@ Features and enhancements
 - #2391789 - Add extender getter to better support extending wizards.
 
 Bug fixes
+- #2391891 - idlist with XML source causes exception.
 - #2314077 - Don't merge group dependencies into migration dependencies.
 
 Migrate 2.6 Release Candidate 2

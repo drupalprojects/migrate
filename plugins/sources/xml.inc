@@ -808,6 +808,10 @@ class MigrateItemsXML extends MigrateItems {
     }
     else {
       // Otherwise find the right url and get the items from.
+      if ($this->idsMap === NULL) {
+        // Populate the map.
+        $this->getIdList();
+      }
       foreach ($this->idsMap as $url => $ids) {
         if (in_array($id, $ids)) {
           $this->currentItems = NULL;

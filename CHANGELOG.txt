@@ -25,6 +25,7 @@ Features and enhancements
 Bug fixes
 - #2391891 - idlist with XML source causes exception.
 - #2314077 - Don't merge group dependencies into migration dependencies.
+- #2392683 - Set vocabulary name (bundle) explicitly for term reference fields.
 
 Migrate 2.6 Release Candidate 2
 ===============================

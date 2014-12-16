@@ -479,6 +479,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
       $tids = $values;
     }
     elseif ($values) {
+      $vocab_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
       $names = taxonomy_vocabulary_get_names();
 
       // Get the vocabulary for this term
@@ -486,7 +487,6 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
         $vid = $field_info['settings']['allowed_values'][0]['vid'];
       }
       else {
-        $vocab_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
         $vid = $names[$vocab_name]->vid;
       }
 
@@ -525,6 +525,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
           $new_term = new stdClass();
           $new_term->vid = $vid;
           $new_term->name = $value;
+          $new_term->vocabulary_machine_name = $vocab_name;
 
           // This term is being created with no fields, but we should still call
           // field_attach_validate() before saving, as that invokes

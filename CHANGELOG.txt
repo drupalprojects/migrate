@@ -1,5 +1,5 @@
-Next release
-============
+Migrate 2.6
+===========
 
 IMPORTANT CHANGES SINCE MIGRATE 2.5
 -----------------------------------
@@ -18,11 +18,11 @@ the first parameter and pass it to its parent. This version does support legacy
 migrations which pass a group object, or nothing, but these methods are
 deprecated.
 
-Features and enhancements
+Features and enhancements (since RC2)
 - #2390229 - Make literal strings monolithic.
 - #2391789 - Add extender getter to better support extending wizards.
 
-Bug fixes
+Bug fixes (since RC2)
 - #2391891 - idlist with XML source causes exception.
 - #2314077 - Don't merge group dependencies into migration dependencies.
 - #2392683 - Set vocabulary name (bundle) explicitly for term reference fields.

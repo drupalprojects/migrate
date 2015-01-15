@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #1751438 - Add spreadsheet source plugin.
 
 Bug fixes
 - #2403593 - SQL batching messes up use of --idlist.

@@ -39,6 +39,7 @@ files[] = plugins/sources/sql.inc
 files[] = plugins/sources/sqlmap.inc
 files[] = plugins/sources/mssql.inc
 files[] = plugins/sources/oracle.inc
+files[] = plugins/sources/spreadsheet.inc
 files[] = plugins/sources/xml.inc
 files[] = tests/import/options.test
 files[] = tests/plugins/destinations/comment.test

@@ -4,7 +4,7 @@ Next release
 Features and enhancements
 
 Bug fixes
-
+- #2403593 - SQL batching messes up use of --idlist.
 
 Migrate 2.6
 ===========

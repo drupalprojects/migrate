@@ -14,7 +14,7 @@ class MigrateSourceSQL extends MigrateSource {
    *
    * @var SelectQueryInterface
    */
-  protected $originalQuery, $query, $countQuery;
+  protected $originalQuery, $query, $countQuery, $alteredQuery;
 
   /**
    * Return a reference to the base query, in particular so Migration classes
@@ -356,6 +356,9 @@ class MigrateSourceSQL extends MigrateSource {
       $this->query->range($this->batch * $this->batchSize, $this->batchSize);
     }
 
+    // Save our fixed-up query so getNextBatch() matches it.
+    $this->alteredQuery = clone $this->query;
+
     migrate_instrument_start('MigrateSourceSQL execute');
     $this->result = $this->query->execute();
     migrate_instrument_stop('MigrateSourceSQL execute');
@@ -388,7 +391,7 @@ class MigrateSourceSQL extends MigrateSource {
    */
   protected function getNextBatch() {
     $this->batch++;
-    $query = clone $this->originalQuery;
+    $query = clone $this->alteredQuery;
     $query->range($this->batch * $this->batchSize, $this->batchSize);
     $this->result = $query->execute();
   }

@@ -6,6 +6,7 @@ Features and enhancements
 
 Bug fixes
 - #2403593 - SQL batching messes up use of --idlist.
+- #2410523 - Remove inconsistent escaping of migrate_drush_path.
 
 Migrate 2.6
 ===========

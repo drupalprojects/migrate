@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2047815 - Support multi-column source keys in idlist.
 - #1751438 - Add spreadsheet source plugin.
 
 Bug fixes

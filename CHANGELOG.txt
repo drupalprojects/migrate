@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2296911 - Add a source handler for IBM DB2.
 - #2256761 - Add a destination handler for variables.
 - #2047815 - Support multi-column source keys in idlist.
 - #1751438 - Add spreadsheet source plugin.

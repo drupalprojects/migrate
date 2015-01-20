@@ -31,6 +31,7 @@ files[] = plugins/destinations/menu_links.inc
 files[] = plugins/destinations/statistics.inc
 files[] = plugins/destinations/variable.inc
 files[] = plugins/sources/csv.inc
+files[] = plugins/sources/db2.inc
 files[] = plugins/sources/files.inc
 files[] = plugins/sources/json.inc
 files[] = plugins/sources/list.inc

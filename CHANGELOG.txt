@@ -8,7 +8,8 @@ Features and enhancements
 - #1751438 - Add spreadsheet source plugin.
 
 Bug fixes
-- #2403593 - SQL batching messes up use of --idlist.
+- #2403593 - SQL batching messes up cases with altered queries, such as idlist.
+- #2268863 - Fix drush --all option.
 - #2410523 - Remove inconsistent escaping of migrate_drush_path.
 
 Migrate 2.6

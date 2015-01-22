@@ -9,6 +9,7 @@ Features and enhancements
 
 Bug fixes
 - #2403593 - SQL batching messes up cases with altered queries, such as idlist.
+- #2298969 - Verify wizard validation function exists.
 - #2268863 - Fix drush --all option.
 - #2410523 - Remove inconsistent escaping of migrate_drush_path.
 

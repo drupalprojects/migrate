@@ -1,5 +1,5 @@
-Next release
-============
+Migrate 2.7 Release Candidate 1
+===============================
 
 Features and enhancements
 - #2296911 - Add a source handler for IBM DB2.

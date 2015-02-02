@@ -50,11 +50,12 @@ class MigrateSourceSQL extends MigrateSource {
   protected $batch = 0;
 
   /**
-   * Number of records to fetch from the database during each batch.
+   * Number of records to fetch from the database during each batch. A value
+   * of zero indicates no batching is to be done.
    *
    * @var int
    */
-  protected $batchSize = 1000;
+  protected $batchSize = 0;
 
   /**
    * List of available source fields.
@@ -134,6 +135,8 @@ class MigrateSourceSQL extends MigrateSource {
 
     if (isset($options['batch_size'])) {
       $this->batchSize = $options['batch_size'];
+      // Joining to the map table is incompatible with batching, disable it.
+      $options['map_joinable'] = FALSE;
     }
 
     // If we're tracking changes, then we need to fetch all rows to see if
@@ -387,7 +390,9 @@ class MigrateSourceSQL extends MigrateSource {
       }
 
       // 4. Download data in batches for performance.
-      $this->query->range($this->batch * $this->batchSize, $this->batchSize);
+      if ($this->batchSize > 0) {
+        $this->query->range($this->batch * $this->batchSize, $this->batchSize);
+      }
     }
 
     // Save our fixed-up query so getNextBatch() matches it.
@@ -408,7 +413,7 @@ class MigrateSourceSQL extends MigrateSource {
 
     // We might be out of data entirely, or just out of data in the current batch.
     // Attempt to fetch the next batch and see.
-    if (!is_object($row)) {
+    if (!is_object($row) && $this->batchSize > 0) {
       $this->getNextBatch();
       $row = $this->result->fetchObject();
     }

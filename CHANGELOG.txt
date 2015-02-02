@@ -1,5 +1,5 @@
-Next release
-============
+Migrate 2.7
+===========
 
 Bug fixes
 - #2415597 - Make batching of SQL sources optional, and force map_joinable FALSE.

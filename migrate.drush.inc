@@ -18,6 +18,7 @@ function migrate_drush_command() {
     'force' => 'Force an operation to run, even if all dependencies are not satisfied',
     'group' => 'Name of the migration group to run',
     'notify' => 'Send email notification upon completion of operation',
+    'wildcard' => 'Process migrations that match a certain pattern. For example, Content*.',
   );
   $items['migrate-status'] = array(
     'description' => 'List all migrations with current status.',
@@ -970,6 +971,14 @@ function drush_migrate_get_migrations($args) {
       }
     }
   }
+  elseif ($wildcard = drush_get_option('wildcard')) {
+    foreach ($migration_objects as $name => $migration) {
+      if (!fnmatch(drupal_strtolower($wildcard), drupal_strtolower($name)) ||
+        !$migration->getEnabled()) {
+        unset($migration_objects[$name]);
+      }
+    }
+  }
   else {
     $named_migrations = array();
     foreach (explode(',', $args) as $name) {
@@ -1042,18 +1051,23 @@ function drush_migrate_rollback_validate($args = NULL) {
 
 function drush_migrate_validate_common($args) {
   if (drush_get_option('all')) {
-    if (!empty($args) || drush_get_option('group')) {
-      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
+    if (!empty($args) || drush_get_option('group') || drush_get_option('wildcard')) {
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group, or --wildcard'));
     }
   }
   elseif (drush_get_option('group')) {
-    if (!empty($args) || drush_get_option('all')) {
-      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
+    if (!empty($args) || drush_get_option('all') || drush_get_option('wildcard')) {
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group, or --wildcard'));
+    }
+  }
+  elseif (drush_get_option('wildcard')) {
+    if (!empty($args) || drush_get_option('all') || drush_get_option('group')) {
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group, or --wildcard'));
     }
   }
   else {
     if (empty($args)) {
-      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group'));
+      return drush_set_error(NULL, dt('You must specify exactly one of a migration name, --all, or --group, or --wildcard'));
     }
     $machine_names = explode(',', $args);
 

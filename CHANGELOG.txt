@@ -1,3 +1,9 @@
+Next release
+============
+
+Features and enhancements
+- #2141687 - Provide detailed message on file copy error.
+
 Migrate 2.7
 ===========
 

@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2095841 - Abstract mail system disablement for more flexibility.
 - #2419373 - Provide ability to cache map lookups.
 - #2141687 - Provide detailed message on file copy error.
 

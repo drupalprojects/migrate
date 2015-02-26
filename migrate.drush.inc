@@ -824,15 +824,6 @@ function drush_migrate_rollback($args = NULL) {
       // Capture non-informational output for mailing
       ob_start();
       ob_implicit_flush(FALSE);
-      // Save original mail setup, which Migrate will disable, so we can
-      // restore it later.
-      global $conf;
-      if (!empty($conf['mail_system'])) {
-        $mail_system = $conf['mail_system'];
-      }
-      else {
-        $mail_system = NULL;
-      }
     }
 
     $migrations = drush_migrate_get_migrations($args);
@@ -928,12 +919,6 @@ function drush_migrate_rollback($args = NULL) {
 
   // Notify user
   if (drush_get_option('notify')) {
-    if (is_null($mail_system)) {
-      unset($conf['mail_system']);
-    }
-    else {
-      $conf['mail_system'] = $mail_system;
-    }
     _drush_migrate_notify();
   }
 }
@@ -1127,15 +1112,6 @@ function drush_migrate_import($args = NULL) {
       // Capture non-informational output for mailing
       ob_start();
       ob_implicit_flush(FALSE);
-      // Save original mail setup, which Migrate will disable, so we can
-      // restore it later.
-      global $conf;
-      if (!empty($conf['mail_system'])) {
-        $mail_system = $conf['mail_system'];
-      }
-      else {
-        $mail_system = NULL;
-      }
     }
     $migrations = drush_migrate_get_migrations($args);
     $options = array();
@@ -1294,12 +1270,6 @@ function drush_migrate_import($args = NULL) {
 
   // Notify user
   if (drush_get_option('notify')) {
-    if (is_null($mail_system)) {
-      unset($conf['mail_system']);
-    }
-    else {
-      $conf['mail_system'] = $mail_system;
-    }
     _drush_migrate_notify();
   }
 }

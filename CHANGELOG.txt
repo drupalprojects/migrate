@@ -2,16 +2,11 @@ Next release
 ============
 
 Features and enhancements
+- #2419373 - Provide ability to cache map lookups.
 - #2141687 - Provide detailed message on file copy error.
 
 Migrate 2.7
 ===========
-
-Bug fixes
-- #2415597 - Make batching of SQL sources optional, and force map_joinable FALSE.
-
-Migrate 2.7 Release Candidate 1
-===============================
 
 Features and enhancements
 - #2296911 - Add a source handler for IBM DB2.
@@ -20,6 +15,7 @@ Features and enhancements
 - #1751438 - Add spreadsheet source plugin.
 
 Bug fixes
+- #2415597 - Make batching of SQL sources optional, and force map_joinable FALSE.
 - #2403593 - SQL batching messes up cases with altered queries, such as idlist.
 - #2298969 - Verify wizard validation function exists.
 - #2268863 - Fix drush --all option.

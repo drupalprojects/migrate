@@ -530,7 +530,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
           // This term is being created with no fields, but we should still call
           // field_attach_validate() before saving, as that invokes
           // hook_field_attach_validate().
-          field_attach_validate('taxonomy_term', $new_term);
+          MigrateDestinationEntity::fieldAttachValidate('taxonomy_term', $new_term);
 
           taxonomy_term_save($new_term);
           $tids[] = $new_term->tid;

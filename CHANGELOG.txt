@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2397791 - Provide detailed field validation errors.
 - #2309563 - Add support for running migrations via wildcard name.
 - #2095841 - Abstract mail system disablement for more flexibility.
 - #2419373 - Provide ability to cache map lookups.

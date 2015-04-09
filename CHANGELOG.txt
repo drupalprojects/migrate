@@ -8,6 +8,9 @@ Features and enhancements
 - #2419373 - Provide ability to cache map lookups.
 - #2141687 - Provide detailed message on file copy error.
 
+Bug fixes
+- #2465387 - Fix handling of --stop option on migrate-import.
+
 Migrate 2.7
 ===========
 

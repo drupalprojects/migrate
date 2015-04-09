@@ -1106,7 +1106,29 @@ function drush_migrate_validate_common($args) {
  */
 function drush_migrate_pre_migrate_import($args = NULL) {
   if (drush_get_option('stop')) {
-    drush_invoke('migrate-stop', $args);
+    drush_unset_option('stop');
+    try {
+      /** @var Migration[] $migrations */
+      $migrations = drush_migrate_get_migrations($args);
+      foreach ($migrations as $migration) {
+        $status = $migration->getStatus();
+        if ($status == MigrationBase::STATUS_IMPORTING ||
+            $status == MigrationBase::STATUS_ROLLING_BACK) {
+          drush_log(dt("Stopping '!description' migration", array('!description' => $migration->getMachineName())));
+          $migration->stopProcess();
+          // Give the process a chance to stop.
+          $count = 0;
+          while ($migration->getStatus() != MigrationBase::STATUS_IDLE
+                 && $count++ < 5) {
+            sleep(1);
+          }
+        }
+      }
+    }
+    catch (MigrateException $e) {
+      drush_print($e->getMessage());
+      exit;
+    }
   }
   if (drush_get_option('rollback')) {
     drush_unset_option('rollback');

@@ -9,6 +9,7 @@ Features and enhancements
 - #2141687 - Provide detailed message on file copy error.
 
 Bug fixes
+- #2475473 - Fix handling of --idlist when map not joined.
 - #2465387 - Fix handling of --stop option on migrate-import.
 
 Migrate 2.7

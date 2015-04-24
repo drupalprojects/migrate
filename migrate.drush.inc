@@ -162,6 +162,7 @@ function migrate_drush_command() {
       'migrate-import Article' => 'Import new articles',
       'migrate-import Article --update' => 'Import new items, and also update previously-imported items',
       'migrate-import Article --idlist=4,9' => 'Import two specific articles. The ids refer to the value of the primary key in base table',
+      'migrate-import Article --idlist=450:pasta,451' => 'Import two specific articles. A colon can be used to separate parts of compound keys; otherwise, compound keys match by the first key field.',
       'migrate-import Article --limit="60 seconds" --stop --rollback' =>
         'Import for up to 60 seconds after stopping and rolling back the Article migration.',
       'migrate-import Article --limit="100 items"' =>

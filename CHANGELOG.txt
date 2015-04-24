@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2474809 - Provide better message for bad dependencies.
 - #2397791 - Provide detailed field validation errors.
 - #2309563 - Add support for running migrations via wildcard name.
 - #2095841 - Abstract mail system disablement for more flexibility.

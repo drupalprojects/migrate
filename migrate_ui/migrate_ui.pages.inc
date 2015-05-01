@@ -523,7 +523,7 @@ function migrate_ui_migrate_submit($form, &$form_state) {
       $limit = $limit['value'] . ' ' . $limit['unit'];
       $drush_command .= " --limit=\"$limit\"";
     }
-    $log_file = '/tmp/' . $drush_arguments[0] . $log_suffix;
+    $log_file = drupal_realpath('temporary://' . $drush_arguments[0] . $log_suffix);
     $drush_command .= " >$log_file 2>&1 &";
     exec($drush_command, $output, $status);
     if (variable_get('migrate_drush_mail', 0)) {

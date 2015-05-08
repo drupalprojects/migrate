@@ -12,6 +12,7 @@ Features and enhancements
 - #2141687 - Provide detailed message on file copy error.
 
 Bug fixes
+- #2446105 - Keep coded DNM source field mappings from overriding UI mappings.
 - #2415977 - Use temporary:// instead of /tmp for drush logging.
 - #2475473 - Fix handling of --idlist when map not joined.
 - #2465387 - Fix handling of --stop option on migrate-import.

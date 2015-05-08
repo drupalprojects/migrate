@@ -141,16 +141,26 @@ abstract class Migration extends MigrationBase {
       // destination field, keep only the last (so the UI can override a source
       // field DNM that was defined in code).
       $no_destination = array();
+      // But also remove a mapping of a source field to nothing, if there is
+      // a mapping to something.
+      $mapped_source_fields = array();
+      /** @var MigrateFieldMapping $mapping */
       foreach ($this->allFieldMappings as $destination_field => $mapping) {
+        $source_field = $mapping->getSourceField();
         // If the source field is not mapped to a destination field, the
         // array index is integer.
         if (is_int($destination_field)) {
-          $source_field = $mapping->getSourceField();
           if (isset($no_destination[$source_field])) {
             unset($this->allFieldMappings[$no_destination[$source_field]]);
             unset($no_destination[$source_field]);
           }
           $no_destination[$source_field] = $destination_field;
+          if (isset($mapped_source_fields[$source_field])) {
+            unset($this->allFieldMappings[$destination_field]);
+          }
+        }
+        else {
+          $mapped_source_fields[$source_field] = $source_field;
         }
       }
 

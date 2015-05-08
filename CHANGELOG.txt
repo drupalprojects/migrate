@@ -1,5 +1,5 @@
-Next release
-============
+Migrate 2.8 beta 1
+==================
 
 Features and enhancements
 - #2379289 - Better handle interaction of --update with highwater marks.

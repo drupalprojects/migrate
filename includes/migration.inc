@@ -1267,8 +1267,11 @@ abstract class Migration extends MigrationBase {
         // Are we dealing with the primary value of the destination field, or a
         // subfield?
         $destination = explode(':', $destination);
+        // Count how many levels of fields are in the mapping. We'll use the
+        // last one.
+        $destination_count = count($destination);
         $destination_field = $destination[0];
-        if (isset($destination[1])) {
+	      if ($destination_count == 2) {
           $subfield = $destination[1];
           // We're processing the subfield before the primary value, initialize it
           if (!property_exists($this->destinationValues, $destination_field)) {
@@ -1281,6 +1284,24 @@ abstract class Migration extends MigrationBase {
           }
           // Add the subfield value to the arguments array.
           $this->destinationValues->{$destination_field}['arguments'][$subfield] = $destination_values;
+        }
+        elseif ($destination_count == 3) {
+	        $subfield2 = $destination[2];
+	        // We're processing the subfield before the primary value, initialize it
+	        if (!property_exists($this->destinationValues, $destination_field)) {
+		        $this->destinationValues->$destination_field = array();
+	        }
+	        // We have a value, and need to convert to an array so we can add
+	        // arguments.
+	        elseif (!is_array($this->destinationValues->$destination_field)) {
+		        $this->destinationValues->$destination_field = array($this->destinationValues->$destination_field);
+	        }
+	        if (!is_array($this->destinationValues->{$destination_field}['arguments'][$destination[1]])) {
+		        // Convert first subfield level to an array so we can add to it.
+		        $this->destinationValues->{$destination_field}['arguments'][$destination[1]] = array( $this->destinationValues->{$destination_field}['arguments'][$destination[1]] );
+	        }
+	        // Add the subfield value to the arguments array.
+	        $this->destinationValues->{$destination_field}['arguments'][$destination[1]]['arguments'][$subfield2] = $destination_values;
         }
         // Just the primary value, the first time through for this field, simply
         // set it.

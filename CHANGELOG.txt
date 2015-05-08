@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2379289 - Better handle interaction of --update with highwater marks.
 - #2403643 - Support an additional level of subfields.
 - #2472045 - Add language subfields only if field is translatable.
 - #2474809 - Provide better message for bad dependencies.

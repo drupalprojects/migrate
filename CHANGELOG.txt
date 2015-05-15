@@ -1,3 +1,10 @@
+Next release
+============
+
+Bug fixes
+- #2488560 - MigrateSourceList/MigrateSourceMultiItems iterators prematurely
+             return.
+
 Migrate 2.8 beta 1
 ==================
 

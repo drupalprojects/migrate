@@ -1,14 +1,5 @@
-Next release
-============
-
-Bug fixes
-- #2447115 - Add xpath handling to the field mapping editor.
-- #2497015 - Term reference handler would ignore all terms if one was NULL.
-- #2488560 - MigrateSourceList/MigrateSourceMultiItems iterators prematurely
-             return.
-
-Migrate 2.8 beta 1
-==================
+Migrate 2.8
+===========
 
 Features and enhancements
 - #2379289 - Better handle interaction of --update with highwater marks.
@@ -22,6 +13,12 @@ Features and enhancements
 - #2141687 - Provide detailed message on file copy error.
 
 Bug fixes
+  Field sanitization added to prevent possibility of XSS - see security advisory
+  https://security.drupal.org/node/155268.
+- #2447115 - Add xpath handling to the field mapping editor.
+- #2497015 - Term reference handler would ignore all terms if one was NULL.
+- #2488560 - MigrateSourceList/MigrateSourceMultiItems iterators prematurely
+             return.
 - #2446105 - Keep coded DNM source field mappings from overriding UI mappings.
 - #2415977 - Use temporary:// instead of /tmp for drush logging.
 - #2475473 - Fix handling of --idlist when map not joined.

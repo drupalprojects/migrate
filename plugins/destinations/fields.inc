@@ -472,7 +472,7 @@ class MigrateTaxonomyTermReferenceFieldHandler extends MigrateFieldHandler {
     else {
       $arguments = array();
     }
-    if (empty($values[0])) {
+    if (count($values) == 1 && empty($values[0])) {
       $values = array();
     }
 

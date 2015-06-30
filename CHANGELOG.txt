@@ -2,6 +2,7 @@ Next release
 ============
 
 Bug fixes
+- #2447115 - Add xpath handling to the field mapping editor.
 - #2497015 - Term reference handler would ignore all terms if one was NULL.
 - #2488560 - MigrateSourceList/MigrateSourceMultiItems iterators prematurely
              return.

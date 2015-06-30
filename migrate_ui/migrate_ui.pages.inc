@@ -1014,6 +1014,9 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
       '#suffix' => '</div>',
     );
 
+    // So the theme function knows whether to include the xpath column.
+    $form['field_mappings']['#is_xml_migration'] = is_a($migration, 'XMLMigration');
+
     $form['source_fields'] = array(
       '#type' => 'fieldset',
       '#title' => t('Source fields'),
@@ -1171,6 +1174,16 @@ function migrate_ui_edit_mappings($form, $form_state, $group_name,
         '#options' => $source_migration_options,
         '#default_value' => $source_migration,
       );
+
+      if (is_a($mapping, 'MigrateXMLFieldMapping')) {
+        /** @var MigrateXMLFieldMapping $mapping */
+        $form['field_mappings'][$name]['xpath'] = array(
+          '#type' => 'textfield',
+          '#default_value' => $mapping->getXpath(),
+          '#size' => 20,
+        );
+      }
+
     }
   }
 
@@ -1275,15 +1288,20 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   $field_mappings = array();
   $default_values = array();
   $issue_group_values = array();
+  $xpaths = array();
 
   $migration = Migration::getInstance($machine_name);
   if (is_a($migration, 'Migration')) {
+    $xml = is_a($migration, 'XMLMigration') ? TRUE : FALSE;
     $existing_mappings = $migration->getFieldMappings();
     $coded_mappings = $migration->getCodedFieldMappings();
     foreach ($form_state['values']['field_mappings'] as $destination_field => $info) {
-      // Treat an empty string for the default value as NULL.
+      // Treat empty strings as NULL.
       if ($info['default_value'] === '') {
         $info['default_value'] = NULL;
+      }
+      if ($xml && $info['xpath'] === '') {
+        $info['xpath'] = NULL;
       }
 
       // If this mapping matches a coded mapping but not a stored mapping, remove
@@ -1296,6 +1314,10 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
           $coded_mappings[$destination_field]->getDefaultValue();
         $coded_source_migration =
           $coded_mappings[$destination_field]->getSourceMigration();
+        if ($xml) {
+          $coded_xpath =
+            $coded_mappings[$destination_field]->getXpath();
+        }
         if ($info['mapping'] == '-1') {
           $info['mapping'] = NULL;
         }
@@ -1312,6 +1334,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
         if ($info['mapping'] == $coded_source_field &&
             $info['default_value'] == $coded_default_value &&
             $info['source_migration'] == $coded_source_migration &&
+            (!$xml || ($xml && ($info['xpath'] == $coded_xpath))) &&
             $dnm_matches) {
           continue;
         }
@@ -1321,6 +1344,9 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       $default_values[$destination_field] = $info['default_value'];
       $source_migrations[$destination_field] = $info['source_migration'];
       $issue_group_values[$destination_field] = $info['issue_group'];
+      if ($xml) {
+        $xpaths[$destination_field] = $info['xpath'];
+      }
     }
 
     foreach ($field_mappings as $destination_field => $source_field) {
@@ -1342,10 +1368,12 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       $mapping = NULL;
       if (isset($existing_mappings[$destination_field]) &&
           $issue_group_values[$destination_field] != 0) {
+        /** @var MigrateFieldMapping $old_mapping */
         $old_mapping = $existing_mappings[$destination_field];
         if ($source_field == $old_mapping->getSourceField() &&
             $default_values[$destination_field] == $old_mapping->getDefaultValue() &&
-            $source_migrations[$destination_field] == $old_mapping->getSourceMigration()) {
+            $source_migrations[$destination_field] == $old_mapping->getSourceMigration() &&
+            (!$xml || ($xml && ($xpaths[$destination_field] == $old_mapping->getXpath())))) {
           // First, if this mapping matches a previously-stored mapping, we want to
           // preserve it as it was originally stored.
           if ($old_mapping->getMappingSource() ==
@@ -1362,8 +1390,11 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       // We're not skipping this mapping, or preserving an old one, so create the
       // new mapping.
       if (!$mapping) {
-        $mapping = new MigrateFieldMapping($destination_field, $source_field);
+        $mapping = _migrate_ui_get_mapping_object($migration, $destination_field, $source_field);
         $mapping->defaultValue($default);
+        if ($xml && $xpaths[$destination_field]) {
+          $mapping->xpath($xpaths[$destination_field]);
+        }
       }
 
       if ($issue_group_values[$destination_field]) {
@@ -1394,7 +1425,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
       // If it is marked DNM in the UI, but is not ignored in the code,
       // generate a DNM mapping.
       if ($value && !$code_ignored) {
-        $mapping = new MigrateFieldMapping(NULL, $source_field);
+        $mapping = _migrate_ui_get_mapping_object($migration, NULL, $source_field);
         $mapping->issueGroup(t('DNM'));
         $arguments['field_mappings'][] = $mapping;
       }
@@ -1410,7 +1441,7 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
           }
         }
         if (!$mapping_found) {
-          $mapping = new MigrateFieldMapping(NULL, $source_field);
+          $mapping = _migrate_ui_get_mapping_object($migration, NULL, $source_field);
           $arguments['field_mappings'][] = $mapping;
         }
       }
@@ -1434,6 +1465,22 @@ function migrate_ui_edit_mappings_submit(&$form, &$form_state) {
   drupal_set_message(t('Migration changes applied.'));
   $form_state['redirect'] =
     "admin/content/migrate/groups/$group_name/$machine_name";
+}
+
+/**
+ * Create a field mapping object of the appropriate class.
+ *
+ * @param $migration
+ *
+ * @return MigrateFieldMapping
+ */
+function _migrate_ui_get_mapping_object($migration, $destination, $source) {
+  if (is_a($migration, 'XMLMigration')) {
+    return new MigrateXMLFieldMapping($destination, $source);
+  }
+  else {
+    return new MigrateFieldMapping($destination, $source);
+  }
 }
 
 /**
@@ -1469,6 +1516,9 @@ function theme_migrate_ui_field_mapping_form($variables) {
   if (!empty($elements)) {
     $header = array(t('DNM'), t('Destination field'), t('Source field'),
                     t('Default value'), t('Source migration'));
+    if (!empty($form['#is_xml_migration'])) {
+      $header[] = t('Xpath');
+    }
     $rows = array();
     foreach ($elements as $mapping_key) {
       $row = array();
@@ -1479,6 +1529,9 @@ function theme_migrate_ui_field_mapping_form($variables) {
       $row[] = drupal_render($form[$mapping_key]['mapping']);
       $row[] = drupal_render($form[$mapping_key]['default_value']);
       $row[] = drupal_render($form[$mapping_key]['source_migration']);
+      if (!empty($form['#is_xml_migration'])) {
+        $row[] = drupal_render($form[$mapping_key]['xpath']);
+      }
       $rows[] = $row;
     }
     $output .= theme('table', array('header' => $header, 'rows' => $rows));

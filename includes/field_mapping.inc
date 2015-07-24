@@ -177,7 +177,17 @@ class MigrateFieldMapping {
   }
 
   public function callbacks($callbacks) {
-    $this->callbacks = func_get_args();
+    foreach (func_get_args() as $callback) {
+      $this->callback($callback);
+    }
+    return $this;
+  }
+
+  public function callback($callback) {
+    $this->callbacks[] = array(
+      'callback' => $callback,
+      'params' => array_slice(func_get_args(), 1),
+    );
     return $this;
   }
 

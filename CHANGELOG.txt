@@ -2,6 +2,8 @@ Next release
 ============
 
 Features and enhancements
+- #1406802 - Add callback() field mapping method, to pass additional arguments
+             to callbacks.
 - #2516828 - Add mdreg alias for migrate-deregister.
 - #2504517 - Add timezone handling to timestamp().
 

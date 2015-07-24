@@ -1264,9 +1264,11 @@ class WineWineMigration extends AdvancedExampleMigration {
     // you can have multiple callbacks, and they can either be straight
     // functions or class methods. In this case, our custom method prepends
     // 'review: ' to the body, and then we call a standard Drupal function to
-    // uppercase the whole body.
+    // uppercase the whole body. You can also use ->callback() to pass
+    // additional arguments.
     $this->addFieldMapping('body', 'body')
-         ->callbacks(array($this, 'addTitlePrefix'), 'drupal_strtoupper');
+         ->callbacks(array($this, 'addTitlePrefix'), 'drupal_strtoupper')
+         ->callback('html_entity_decode', ENT_QUOTES, 'ISO8859-1');
     $this->addFieldMapping('body:summary', 'excerpt');
 
     // We will get the image data from a related table in prepareRow()

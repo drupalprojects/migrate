@@ -1239,7 +1239,7 @@ abstract class Migration extends MigrationBase {
         $callbacks = $mapping->getCallbacks();
         foreach ($callbacks as $callback) {
           if (isset($destination_values)) {
-            $destination_values = call_user_func($callback, $destination_values);
+            $destination_values = call_user_func_array($callback['callback'], array_merge(array($destination_values), $callback['params']));
           }
         }
 

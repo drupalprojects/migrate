@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2532222 - Allow spreadsheet source data on a row different that 1.
 - #1406802 - Add callback() field mapping method, to pass additional arguments
              to callbacks.
 - #2516828 - Add mdreg alias for migrate-deregister.

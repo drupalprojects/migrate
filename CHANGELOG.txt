@@ -1,3 +1,9 @@
+Next release
+============
+
+Features and enhancements
+- #2504517 - Add timezone handling to timestamp().
+
 Migrate 2.8
 ===========
 

@@ -1333,8 +1333,14 @@ abstract class MigrationBase {
    * date/time string) to a UNIX timestamp.
    *
    * @param string $value
+   *   The time string to convert.
+   * @param string $timezone
+   *   Optional timezone for the time string. Defaults to UTC.
+   *
+   * @return string
+   *   The UNIX timestamp.
    */
-  static public function timestamp($value) {
+  static public function timestamp($value, $timezone = 'UTC') {
     // Does it look like it's already a timestamp? Just return it
     if (is_numeric($value)) {
       return $value;
@@ -1345,7 +1351,7 @@ abstract class MigrationBase {
       return time();
     }
 
-    $date = new DateTime($value);
+    $date = new DateTime($value, new DateTimeZone($timezone));
     $time = $date->format('U');
     if ($time == FALSE) {
       // Handles form YYYY-MM-DD HH:MM:SS.garbage

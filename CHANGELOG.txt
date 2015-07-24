@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2516828 - Add mdreg alias for migrate-deregister.
 - #2504517 - Add timezone handling to timestamp().
 
 Migrate 2.8

@@ -215,6 +215,7 @@ function migrate_drush_command() {
       'migrate-deregister --group=myblog' => 'Deregister the myblog group and all migrations within it',
     ),
     'drupal dependencies' => array('migrate'),
+    'aliases' => array('mdreg'),
   );
   $items['migrate-auto-register'] = array(
     'description' => 'Register any newly defined migration classes',

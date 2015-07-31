@@ -8,6 +8,9 @@ Features and enhancements
 - #2516828 - Add mdreg alias for migrate-deregister.
 - #2504517 - Add timezone handling to timestamp().
 
+Bug fixes
+- #2541996 - Prevent NULL file_mask being passed to file_scan_directory().
+
 Migrate 2.8
 ===========
 

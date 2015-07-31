@@ -81,9 +81,9 @@ class MigrateListFiles extends MigrateList {
    *   to be = '/var/html_source', so that the files will have IDs in the format
    *   '/en/news/news_2011_03_4.html'.
    * @param $file_mask
-   *   Passed on and used to filter for certain types of files. Use a regular
-   *   expression, for example '/(.*\.htm$|.*\.html$)/i' to match all .htm and
-   *   .html files, case insensitive.
+   *   (optional) Passed on and used to filter for certain types of files. Use a
+   *   regular expression, for example '/(.*\.htm$|.*\.html$)/i' to match all
+   *   .htm and .html files, case insensitive. Defaults to matching all files.
    * @param $options
    *   Options that will be passed on to file_scan_directory(). See docs of that
    *   core Drupal function for more information.
@@ -92,7 +92,7 @@ class MigrateListFiles extends MigrateList {
    * @param $get_contents
    *   Whether to load the contents of files.
    */
-  public function __construct($list_dirs, $base_dir, $file_mask = NULL, $options = array(), MigrateContentParser $parser = NULL, $get_contents = TRUE) {
+  public function __construct($list_dirs, $base_dir, $file_mask = '//', $options = array(), MigrateContentParser $parser = NULL, $get_contents = TRUE) {
     if (!$parser) {
       $parser = new MigrateSimpleContentParser();
     }

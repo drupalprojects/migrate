@@ -9,6 +9,7 @@ Features and enhancements
 - #2504517 - Add timezone handling to timestamp().
 
 Bug fixes
+- #2499861 - Properly save/disable/restore mail system.
 - #2541996 - Prevent NULL file_mask being passed to file_scan_directory().
 
 Migrate 2.8

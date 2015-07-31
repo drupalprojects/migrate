@@ -1624,7 +1624,7 @@ function migrate_ui_messages($group_name, $migration_name) {
   // Add a table header for each source key in the migration's map.
   foreach ($source_key as $key => $map_info) {
     $header[] = array(
-      'data' => filter_xss_admin($map_info['description']),
+      'data' => isset($map_info['description']) ? filter_xss_admin($map_info['description']) : t('Source ID'),
       'field' => $source_key_map[$key],
       'sort' => 'asc',
     );

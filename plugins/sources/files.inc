@@ -23,15 +23,63 @@ define('MIGRATE_CHUNK_SEPARATOR', '-?MIGRATECHUNK?-');
  * count, and then retrieve each chunk by it's ID.
  */
 abstract class MigrateContentParser {
+
+  /**
+   * The content of the current file to parse.
+   */
   protected $content;
 
-  public function setContent($content) {
+  /**
+   * The ID of the current file being parsed.
+   */
+  protected $item_id;
+
+  /**
+   * Set the content and file ID for the current file to parse.
+   *
+   * @param $content
+   *   The content of the current file to parse.
+   * @param $item_id = NULL
+   *   The ID of the file. The chunk IDs are appended to this to form the IDs
+   *   that are returned by the MigrateList implementation.
+   */
+  public function setContent($content, $item_id = NULL) {
     $this->content = $content;
+    $this->item_id = $item_id;
   }
 
+  /**
+   * Return the list of IDs for all the chunks found in the current file.
+   *
+   * This is only called if getChunkCount() returned a count greater than 1.
+   *
+   * @return
+   *   An array of IDs.
+   */
   abstract public function getChunkIDs();
+
+  /**
+   * Get a single chunk from the current file.
+   *
+   * @param $id
+   *   The ID for the chunk. This is one of the IDs returned by getChunkIDs().
+   *
+   * @return
+   *   The content of the chunk.
+   */
   abstract public function getChunk($id);
+
+  /**
+   * Return the count of chunks in the current file.
+   *
+   * If this returns 1, then getChunkIDs() is not called and the file is treated
+   * as a single chunk.
+   *
+   * @return int
+   *   The number of chunks in the current file.
+   */
   abstract public function getChunkCount();
+
 }
 
 /**
@@ -54,6 +102,9 @@ class MigrateSimpleContentParser extends MigrateContentParser {
 /**
  * Implementation of MigrateList, for retrieving a list of IDs to be migrated
  * from a directory listing. Each item is a file, it's ID is the path.
+ *
+ * If individual files contain more than one source, use a MigrateContentParser
+ * to parse the file and split it into chunks.
  */
 class MigrateListFiles extends MigrateList {
 
@@ -142,20 +193,21 @@ class MigrateListFiles extends MigrateList {
   protected function getIDsFromFiles(array $files) {
     $ids = array();
     foreach ($files as $file) {
+      $file_base_id = str_replace($this->baseDir, '', (string) $file->uri);
       if ($this->getContents) {
         $contents = file_get_contents($file->uri);
-        $this->parser->setContent($contents);
+        $this->parser->setContent($contents, $file_base_id);
         if ($this->parser->getChunkCount() > 1) {
           foreach ($this->parser->getChunkIDs() as $chunk_id) {
-            $ids[] = str_replace($this->baseDir, '', (string) $file->uri) . MIGRATE_CHUNK_SEPARATOR . $chunk_id;
+            $ids[] = $file_base_id . MIGRATE_CHUNK_SEPARATOR . $chunk_id;
           }
         }
         else {
-          $ids[] = str_replace($this->baseDir, '', (string) $file->uri);
+          $ids[] = $file_base_id;
         }
       }
       else {
-        $ids[] = str_replace($this->baseDir, '', (string) $file->uri);
+        $ids[] = $file_base_id;
       }
 
     }
@@ -222,7 +274,7 @@ class MigrateItemFile extends MigrateItem {
     // Get the file data at the specified URI
     $data = $this->loadFile($item_uri);
     if (is_string($data)) {
-      $this->parser->setContent($data);
+      $this->parser->setContent($data, $pieces[0]);
       $return = new stdClass;
       $return->filedata = $this->parser->getChunk($chunk);
       return $return;

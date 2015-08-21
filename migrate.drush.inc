@@ -1145,6 +1145,8 @@ function drush_migrate_pre_migrate_import($args = NULL) {
  *  A comma delimited list of machine names, or the special name 'all'
  */
 function drush_migrate_import($args = NULL) {
+  $status = NULL;
+
   try {
     if (drush_get_option('notify', FALSE)) {
       // Capture non-informational output for mailing
@@ -1310,6 +1312,8 @@ function drush_migrate_import($args = NULL) {
   if (drush_get_option('notify')) {
     _drush_migrate_notify();
   }
+
+  return $status;
 }
 
 /**

@@ -2,6 +2,7 @@ Next release
 ============
 
 Features and enhancements
+- #2552189 - Return migration status from drush migrate-import.
 - #2505683 - Pass item ID to MigrateContentParser implementations.
 - #2532222 - Allow spreadsheet source data on a row different that 1.
 - #1406802 - Add callback() field mapping method, to pass additional arguments

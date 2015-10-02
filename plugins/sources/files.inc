@@ -25,6 +25,12 @@ define('MIGRATE_CHUNK_SEPARATOR', '-?MIGRATECHUNK?-');
 abstract class MigrateContentParser {
 
   /**
+   * Tells the MigrateListFiles implementation to always use chunk IDs when
+   * constructing item IDs.
+   */
+  public $alwaysUseChunkIDs = FALSE;
+
+  /**
    * The content of the current file to parse.
    */
   protected $content;
@@ -51,7 +57,9 @@ abstract class MigrateContentParser {
   /**
    * Return the list of IDs for all the chunks found in the current file.
    *
-   * This is only called if getChunkCount() returned a count greater than 1.
+   * Unless $alwaysUseChunkIDs is set to TRUE, this is only called if
+   * getChunkCount() returned a count greater than 1.
+   *
    *
    * @return
    *   An array of IDs.
@@ -73,7 +81,7 @@ abstract class MigrateContentParser {
    * Return the count of chunks in the current file.
    *
    * If this returns 1, then getChunkIDs() is not called and the file is treated
-   * as a single chunk.
+   * as a single chunk. To override this, set $alwaysUseChunkIDs to TRUE.
    *
    * @return int
    *   The number of chunks in the current file.
@@ -197,7 +205,7 @@ class MigrateListFiles extends MigrateList {
       if ($this->getContents) {
         $contents = file_get_contents($file->uri);
         $this->parser->setContent($contents, $file_base_id);
-        if ($this->parser->getChunkCount() > 1) {
+        if ($this->parser->alwaysUseChunkIDs || $this->parser->getChunkCount() > 1) {
           foreach ($this->parser->getChunkIDs() as $chunk_id) {
             $ids[] = $file_base_id . MIGRATE_CHUNK_SEPARATOR . $chunk_id;
           }

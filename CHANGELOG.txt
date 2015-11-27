@@ -12,6 +12,7 @@ Features and enhancements
 - #2504517 - Add timezone handling to timestamp().
 
 Bug fixes
+- #2537206 - copy() return not checked.
 - #2536616 - Improve message when sourceMigration not found.
 - #2578391 - Improve message when class not found.
 - #2565043 - Handle empty idlist in MigrateSourceMultiItems.

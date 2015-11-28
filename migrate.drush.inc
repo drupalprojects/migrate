@@ -1168,14 +1168,18 @@ function drush_migrate_import($args = NULL) {
     if ($limit) {
       $parts = explode(' ', $limit);
       $options['limit']['value'] = $parts[0];
-      $options['limit']['unit'] = $parts[1];
-      if (!$options['limit']['unit']) {
-        $options['limit']['unit'] = 'items';
+      // Default unit.
+      if (!isset($parts[1])) {
+        $parts[1] = 'items';
       }
-      elseif ($options['limit']['unit'] != 'seconds' &&
-              $options['limit']['unit'] != 'second' &&
-              $options['limit']['unit'] != 'items' &&
-              $options['limit']['unit'] != 'item') {
+      $options['limit']['unit'] = $parts[1];
+      // Validation.
+      if (!in_array($options['limit']['unit'], array(
+        'seconds',
+        'second',
+        'items',
+        'item'
+      ))) {
         drush_set_error(NULL, dt("Invalid limit unit '!unit'",
           array('!unit' => $options['limit']['unit'])));
         return;

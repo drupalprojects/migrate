@@ -12,6 +12,7 @@ Features and enhancements
 - #2504517 - Add timezone handling to timestamp().
 
 Bug fixes
+- #2612110 - Notice when units omitted on --limit.
 - #2597606 - Escape MySQL database names.
 - #2577091 - Do strict type-check on XML ids.
 - #2537206 - copy() return not checked.

@@ -19,6 +19,28 @@ define('MIGRATE_ACCESS_BASIC', 'migration information');
 define('MIGRATE_ACCESS_ADVANCED', 'advanced migration information');
 
 /**
+ * Implements hook_help().
+ */
+function migrate_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#migrate':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Migrate module provides a flexible framework for migrating content into Drupal from other sources (e.g., when converting a web site from another CMS to Drupal). Out-of-the-box, support for creating Drupal nodes, taxonomy terms, comments, and users are included. Plugins permit migration of other types of content. For more information, see the online documentation for the <a href="@handbook">Migrate module</a>.', array('@handbook' => 'http://drupal.org/migrate')) . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Getting Started') . '</dt>';
+      $output .= '<dd>' . t('To get started, enable the migrate_example module and browse to admin/content/migrate to see its dashboard. The code for this migration is in migrate_example/beer.inc (advanced examples are in wine.inc). Mimic that file in order to specify your own migrations.') . '</dd>';
+      $output .= '<dt>' . t('Migrate Support') . '</dt>';
+      $output .= '<dd>' . t('The Migrate module itself has support for migration into core objects. Some built-in support for migration involving contrib modules is in the migrate_extras module.') . '</dd>';
+      $output .= '<dt>' . t('Migrate Extended Support') . '</dt>';
+      $output .= '<dd>' . t('The best place to implement migration support for a contributed module is in that module, not in the Migrate or Migrate Extras modules. That way, the migration support is always self-consistent with the current module implementation - it is not practical for the migrate modules to keep up with changes to all other contrib modules.') . '</dd>';
+      $output .= '</dl>';
+      return $output;
+  }
+}
+
+/**
  * Retrieve a list of all active migrations, ordered by dependencies. To be
  * recognized, a class must be non-abstract, and derived from MigrationBase.
  *

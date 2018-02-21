@@ -193,15 +193,11 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     }
     catch (FieldValidationException $e) {
       $migration = Migration::currentMigration();
-      foreach ($e->errors as $field_name => $field_errors) {
-        foreach ($field_errors as $langcode => $errors) {
-          foreach ($errors as $delta => $error_list) {
-            foreach ($error_list as $index => $error) {
-              $message = $error['message'];
-              $migration->saveMessage(t('Field validation error for !field_name: !message',
-                array('!field_name' => $field_name, '!message' => $message)));
-            }
-          }
+      foreach ($e->errors as $field_name => $error_list) {
+        foreach ($error_list as $index => $error) {
+          $message = $error['message'];
+          $migration->saveMessage(t('Field validation error for !field_name: !message',
+            array('!field_name' => $field_name, '!message' => $message)));
         }
       }
     }

@@ -393,6 +393,11 @@ class MigrateTextFieldHandler extends MigrateFieldHandler {
         $format = NULL;
       }
       $item['format'] = $item['value_format'] = $format;
+      // If the value is an array, which it might be if the destination entity
+      // was loaded via entity_load(), ensure we're handling a string.
+      if (is_array($value) && !empty($value[0]) && array_key_exists('value', $value[0])) {
+        $value = $value[0]['value'];
+      }
       // Make sure the value will fit
       if ($max_length) {
         $item['value'] = drupal_substr($value, 0, $max_length);

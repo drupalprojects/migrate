@@ -66,11 +66,11 @@ class MigrateListCSV extends MigrateList {
 
     // fgetcsv specific options
     foreach (array(
-      'length' => NULL,
-      'delimiter' => ',',
-      'enclosure' => '"',
-      'escape' => '\\',
-        ) as $key => $default) {
+               'length' => NULL,
+               'delimiter' => ',',
+               'enclosure' => '"',
+               'escape' => '\\',
+             ) as $key => $default) {
       $this->fgetcsv[$key] = isset($options[$key]) ? $options[$key] : $default;
     }
 
@@ -81,7 +81,7 @@ class MigrateListCSV extends MigrateList {
       $this->headerRows = 0;
     }
 
-    if(!is_numeric($id_column)) {
+    if (!is_numeric($id_column)) {
       //we need to store the headers.
       $this->csvHandle = fopen($this->file, 'r');
       $this->headers = $this->getNextLine();
@@ -164,15 +164,15 @@ class MigrateListCSV extends MigrateList {
     // escape parameter was added in PHP 5.3.
     if (version_compare(phpversion(), '5.3', '<')) {
       $row = fgetcsv($this->csvHandle, $this->fgetcsv['length'],
-      $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure']);
+        $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure']);
     }
     else {
       $row = fgetcsv($this->csvHandle, $this->fgetcsv['length'],
-      $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'],
-      $this->fgetcsv['escape']);
+        $this->fgetcsv['delimiter'], $this->fgetcsv['enclosure'],
+        $this->fgetcsv['escape']);
     }
     // Key the array with the headers
-    if(!empty($this->headers) && $row) {
+    if (!empty($this->headers) && $row) {
       $row = array_combine($this->headers, $row);
     }
     return $row;
@@ -187,6 +187,7 @@ class MigrateListCSV extends MigrateList {
  * UTF BOM (Byte Order Marker) so they are interpreted correctly.
  */
 class MigrateSourceCSV extends MigrateSource {
+
   /**
    * List of available source fields.
    *
@@ -248,7 +249,12 @@ class MigrateSourceCSV extends MigrateSource {
     $this->options = $options;
     $this->fields = $fields;
     // fgetcsv specific options
-    foreach (array('length' => NULL, 'delimiter' => ',', 'enclosure' => '"', 'escape' => '\\') as $key => $default) {
+    foreach (array(
+               'length' => NULL,
+               'delimiter' => ',',
+               'enclosure' => '"',
+               'escape' => '\\',
+             ) as $key => $default) {
       $this->fgetcsv[$key] = isset($options[$key]) ? $options[$key] : $default;
     }
     // One can either pass in an explicit list of column names to use, or if we have
@@ -371,7 +377,7 @@ class MigrateSourceCSV extends MigrateSource {
         unset($row[$int]);
       }
       $row['csvrownum'] = $this->rowNumber++;
-      return (object)$row;
+      return (object) $row;
     }
     else {
       fclose($this->csvHandle);

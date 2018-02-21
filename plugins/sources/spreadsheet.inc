@@ -17,6 +17,7 @@
  * Implements MigrateSource, to handle imports from XLS files.
  */
 class MigrateSourceSpreadsheet extends MigrateSource {
+
   /**
    * PHPExcel object for storing the workbook data.
    *
@@ -62,7 +63,8 @@ class MigrateSourceSpreadsheet extends MigrateSource {
   /**
    * The current row number in the XLS file.
    *
-   * @var integer+   */
+   * @var integer+
+   */
   protected $rowNumber;
 
   /**
@@ -106,7 +108,8 @@ class MigrateSourceSpreadsheet extends MigrateSource {
 
       // Map field names to their column index.
       for ($col = 0; $col < $this->cols; ++$col) {
-        $this->fields[$col] = trim($this->worksheet->getCellByColumnAndRow($col, $this->headerRows + 1)->getValue());
+        $this->fields[$col] = trim($this->worksheet->getCellByColumnAndRow($col, $this->headerRows + 1)
+          ->getValue());
       }
 
       $this->unload();
@@ -155,8 +158,7 @@ class MigrateSourceSpreadsheet extends MigrateSource {
       // Load the source file.
       $this->workbook = $reader->load($this->file);
       $this->worksheet = $this->workbook->getSheet();
-    }
-    catch (Exception $e) {
+    } catch (Exception $e) {
       Migration::displayMessage(t('Error loading file: %message', array('%message' => $e->getMessage())));
       return FALSE;
     }
@@ -233,8 +235,9 @@ class MigrateSourceSpreadsheet extends MigrateSource {
       $row_values = array();
       for ($col = 0; $col < $this->cols; ++$col) {
         if (in_array($this->fields[$col], $this->columns) || empty($this->columns)) {
-          $row_values[$this->fields[$col]] = trim($this->worksheet->getCellByColumnAndRow($col, $this->rowNumber)->getValue());
-         }
+          $row_values[$this->fields[$col]] = trim($this->worksheet->getCellByColumnAndRow($col, $this->rowNumber)
+            ->getValue());
+        }
       }
 
       return (object) $row_values;

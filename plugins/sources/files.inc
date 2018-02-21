@@ -96,12 +96,15 @@ abstract class MigrateContentParser {
  * primarily for when your HTML files map one-to-one to nodes.
  */
 class MigrateSimpleContentParser extends MigrateContentParser {
+
   public function getChunkIDs() {
     return array('1');
   }
+
   public function getChunk($id) {
     return $this->content;
   }
+
   public function getChunkCount() {
     return 1;
   }
@@ -117,10 +120,15 @@ class MigrateSimpleContentParser extends MigrateContentParser {
 class MigrateListFiles extends MigrateList {
 
   protected $listDirs;
+
   protected $baseDir;
+
   protected $fileMask;
+
   protected $directoryOptions;
+
   protected $parser;
+
   protected $getContents;
 
   /**
@@ -136,15 +144,18 @@ class MigrateListFiles extends MigrateList {
    *     );
    * @param $base_dir
    *   The base dir is the part of the path that will be excluded when making
-   *   an ID for each file. To continue the example from above, you want base_dir
-   *   to be = '/var/html_source', so that the files will have IDs in the format
+   *   an ID for each file. To continue the example from above, you want
+   *   base_dir to be = '/var/html_source', so that the files will have IDs in
+   *   the format
    *   '/en/news/news_2011_03_4.html'.
    * @param $file_mask
-   *   (optional) Passed on and used to filter for certain types of files. Use a
+   *   (optional) Passed on and used to filter for certain types of files. Use
+   *   a
    *   regular expression, for example '/(.*\.htm$|.*\.html$)/i' to match all
    *   .htm and .html files, case insensitive. Defaults to matching all files.
    * @param $options
-   *   Options that will be passed on to file_scan_directory(). See docs of that
+   *   Options that will be passed on to file_scan_directory(). See docs of
+   *   that
    *   core Drupal function for more information.
    * @param MigrateContentParser $parser
    *   Content parser class to use.
@@ -243,7 +254,9 @@ class MigrateListFiles extends MigrateList {
 class MigrateItemFile extends MigrateItem {
 
   protected $baseDir;
+
   protected $getContents;
+
   protected $parser;
 
   /**
@@ -275,7 +288,7 @@ class MigrateItemFile extends MigrateItem {
    *   The item object for migration.
    */
   public function getItem($id) {
-    $pieces = explode(MIGRATE_CHUNK_SEPARATOR ,$id);
+    $pieces = explode(MIGRATE_CHUNK_SEPARATOR, $id);
     $item_uri = $this->baseDir . $pieces[0];
     $chunk = !empty($pieces[1]) ? $pieces[1] : '';
 
@@ -287,16 +300,18 @@ class MigrateItemFile extends MigrateItem {
       $return->filedata = $this->parser->getChunk($chunk);
       return $return;
     }
-    else if ($data === TRUE) {
-      $return = new stdClass;
-      return $return;
-    }
     else {
-      $migration = Migration::currentMigration();
-      $message = t('Loading of !objecturi failed:', array('!objecturi' => $item_uri));
-      $migration->getMap()->saveMessage(
-              array($id), $message, MigrationBase::MESSAGE_ERROR);
-      return NULL;
+      if ($data === TRUE) {
+        $return = new stdClass;
+        return $return;
+      }
+      else {
+        $migration = Migration::currentMigration();
+        $message = t('Loading of !objecturi failed:', array('!objecturi' => $item_uri));
+        $migration->getMap()->saveMessage(
+          array($id), $message, MigrationBase::MESSAGE_ERROR);
+        return NULL;
+      }
     }
   }
 

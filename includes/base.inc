@@ -418,6 +418,7 @@ abstract class MigrationBase {
     else {
       if (!is_numeric($limit)) {
         $last = drupal_strtolower($limit[strlen($limit)-1]);
+        $limit = substr($limit, 0, -1);
         switch ($last) {
           case 'g':
             $limit *= 1024;
@@ -802,9 +803,8 @@ abstract class MigrationBase {
               $query->where('(CASE WHEN highwater=\'\' THEN 0 ELSE CAST(highwater AS INTEGER) END) < :highwater', array(':highwater' => intval($highwater)));
               break;
             default:
-              // CAST(highwater AS INTEGER) would be ideal, but won't
-              // work in MySQL. This hack is thought to be portable.
-              $query->where('(highwater+0) < :highwater', array(':highwater' => $highwater));
+              // MySQL casts as integers as SIGNED or UNSIGNED.
+              $query->where('(CASE WHEN highwater=\'\' THEN 0 ELSE CAST(highwater AS SIGNED) END) < :highwater', array(':highwater' => intval($highwater)));
           }
         }
         else {

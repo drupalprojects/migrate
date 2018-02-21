@@ -1225,7 +1225,25 @@ abstract class Migration extends MigrationBase {
         // will be populated as an array exploded from the source value
         $separator = $mapping->getSeparator();
         if ($separator && isset($destination_values)) {
-          $destination_values = explode($separator, $destination_values);
+          if (is_array($separator)) {
+            if (isset($separator['group separator'])) {
+              $destination_values = explode($separator['group separator'], $destination_values);
+            }
+            else {
+              $destination_values = array($destination_values);
+            }
+            foreach ($destination_values as $group => $value) {
+              if (isset($separator['key separator'])) {
+                $destination_values[$group] = explode($separator['key separator'], $value);
+              }
+              else {
+                $destination_values[$group] = array($value);
+              }
+            }
+          }
+          else {
+            $destination_values = explode($separator, $destination_values);
+          }
         }
 
         // If a source migration is supplied, use the current value for this field

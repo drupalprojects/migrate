@@ -155,6 +155,7 @@ class MigrateSQLMap extends MigrateMap {
         foreach ($this->sourceKey as $field_schema) {
           $mapkey = 'sourceid' . $count++;
           $source_key_schema[$mapkey] = $field_schema;
+          $source_key_schema[$mapkey]['not null'] = TRUE;
           $pks[] = $mapkey;
         }
 
@@ -166,6 +167,7 @@ class MigrateSQLMap extends MigrateMap {
         foreach ($this->destinationKey as $field_schema) {
           // Allow dest key fields to be NULL (for IGNORED/FAILED cases)
           $field_schema['not null'] = FALSE;
+          $field_schema['default'] = NULL;
           $mapkey = 'destid' . $count++;
           $fields[$mapkey] = $field_schema;
         }

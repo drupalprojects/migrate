@@ -211,7 +211,7 @@ class MigrateSourceList extends MigrateSource {
           // using the map source key - it will be used for mapping.
           $id = current($ids);
           next($ids);
-          $row->$key_name = $id;
+          $row->{$key_name} = $id;
         }
         break;
       }

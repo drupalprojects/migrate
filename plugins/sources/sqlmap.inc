@@ -423,14 +423,14 @@ class MigrateSQLMap extends MigrateMap {
     $keys = array();
     foreach ($this->sourceKeyMap as $field_name => $key_name) {
       // A NULL key value will fail.
-      if (is_null($source_row->$field_name)) {
+      if (is_null($source_row->{$field_name})) {
         Migration::displayMessage(t(
           'Could not save to map table due to NULL value for key field !field',
           array('!field' => $field_name)));
         migrate_instrument_stop('saveIDMapping');
         return;
       }
-      $keys[$key_name] = $source_row->$field_name;
+      $keys[$key_name] = $source_row->{$field_name};
     }
 
     $fields = array(
@@ -749,9 +749,9 @@ class MigrateSQLMap extends MigrateMap {
     }
     else {
       foreach ($this->sourceKeyMap as $map_field) {
-        $this->currentKey[$map_field] = $this->currentRow->$map_field;
+        $this->currentKey[$map_field] = $this->currentRow->{$map_field};
         // Leave only destination fields
-        unset($this->currentRow->$map_field);
+        unset($this->currentRow->{$map_field});
       }
     }
   }

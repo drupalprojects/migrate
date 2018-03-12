@@ -297,7 +297,7 @@ abstract class MigrateSource implements Iterator {
         if ($map_row) {
           foreach ($map_row as $field => $value) {
             $field = 'migrate_map_' . $field;
-            $row->$field = $value;
+            $row->{$field} = $value;
           }
         }
       }
@@ -432,7 +432,7 @@ abstract class MigrateSource implements Iterator {
         // second import (attempt) on a row.
         foreach ($unhashed_row as $field => $data) {
           if (strpos($field, 'migrate_map_') === 0) {
-            unset($unhashed_row->$field);
+            unset($unhashed_row->{$field});
           }
         }
         $row->migrate_map_original_hash = isset($row->migrate_map_hash) ?

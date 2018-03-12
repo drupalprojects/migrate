@@ -964,7 +964,7 @@ abstract class Migration extends MigrationBase {
   public function prepareKey($source_key, $row) {
     $key = array();
     foreach ($source_key as $field_name => $field_schema) {
-      $key[$field_name] = $row->$field_name;
+      $key[$field_name] = $row->{$field_name};
     }
     return $key;
   }
@@ -1246,7 +1246,7 @@ abstract class Migration extends MigrationBase {
         // If there's a source mapping, and a source value in the data row, copy
         // to the destination
         if ($source && isset($this->sourceValues->{$source})) {
-          $destination_values = $this->sourceValues->$source;
+          $destination_values = $this->sourceValues->{$source};
         }
         // Otherwise, apply the default value (if any)
         elseif (!is_null($default)) {
@@ -1335,12 +1335,12 @@ abstract class Migration extends MigrationBase {
           $subfield = $destination[1];
           // We're processing the subfield before the primary value, initialize it
           if (!property_exists($this->destinationValues, $destination_field)) {
-            $this->destinationValues->$destination_field = array();
+            $this->destinationValues->{$destination_field} = array();
           }
           // We have a value, and need to convert to an array so we can add
           // arguments.
-          elseif (!is_array($this->destinationValues->$destination_field)) {
-            $this->destinationValues->$destination_field = array($this->destinationValues->$destination_field);
+          elseif (!is_array($this->destinationValues->{$destination_field})) {
+            $this->destinationValues->{$destination_field} = array($this->destinationValues->{$destination_field});
           }
           // Add the subfield value to the arguments array.
           $this->destinationValues->{$destination_field}['arguments'][$subfield] = $destination_values;
@@ -1349,12 +1349,12 @@ abstract class Migration extends MigrationBase {
           $subfield2 = $destination[2];
           // We're processing the subfield before the primary value, initialize it
           if (!property_exists($this->destinationValues, $destination_field)) {
-            $this->destinationValues->$destination_field = array();
+            $this->destinationValues->{$destination_field} = array();
           }
           // We have a value, and need to convert to an array so we can add
           // arguments.
-          elseif (!is_array($this->destinationValues->$destination_field)) {
-            $this->destinationValues->$destination_field = array($this->destinationValues->$destination_field);
+          elseif (!is_array($this->destinationValues->{$destination_field})) {
+            $this->destinationValues->{$destination_field} = array($this->destinationValues->{$destination_field});
           }
           if (!is_array($this->destinationValues->{$destination_field}['arguments'][$destination[1]])) {
             // Convert first subfield level to an array so we can add to it.
@@ -1366,7 +1366,7 @@ abstract class Migration extends MigrationBase {
         // Just the primary value, the first time through for this field, simply
         // set it.
         elseif (!property_exists($this->destinationValues, $destination_field)) {
-          $this->destinationValues->$destination_field = $destination_values;
+          $this->destinationValues->{$destination_field} = $destination_values;
         }
         // We've seen a subfield, so add as an array value.
         else {
@@ -1576,7 +1576,7 @@ abstract class Migration extends MigrationBase {
         $data_row = new stdClass;
         $i = 0;
         foreach ($map_source_key as $key => $definition) {
-          $data_row->$key = $source_key[$i++];
+          $data_row->{$key} = $source_key[$i++];
         }
         $this->map->saveIDMapping($data_row, $destids,
           MigrateMap::STATUS_NEEDS_UPDATE, $this->defaultRollbackAction);

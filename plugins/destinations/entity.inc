@@ -130,7 +130,7 @@ abstract class MigrateDestinationEntity extends MigrateDestination {
     // Add source keys for debugging and identification of migrated data by hooks.
     /* TODO: Restore
     foreach ($migration->sourceKeyMap() as $field_name => $key_name) {
-      $keys[$key_name] = $source_row->$field_name;
+      $keys[$key_name] = $source_row->{$field_name};
     }
     */
     $migration = Migration::currentMigration();

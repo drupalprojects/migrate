@@ -506,9 +506,10 @@ function migrate_example_beer_gender() {
       'field_name' => 'field_migrate_example_gender',
       'type' => 'list_integer',
       'settings' => array(
-        'allowed_values' =>
-          "0|Male\n" .
-          "1|Female\n",
+        'allowed_values' => array(
+          0 => 'Male',
+          1 => 'Female'
+        ),
       ),
     );
     field_create_field($field);

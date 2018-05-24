@@ -232,7 +232,7 @@ function migrate_example_beer_schema_account() {
     'fields' => array(
       'aid' => array(
         'type' => 'serial',
-        //'not null' => TRUE,
+        'not null' => TRUE,
         'description' => 'Account ID',
       ),
       'status' => array(

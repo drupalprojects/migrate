@@ -19,6 +19,13 @@ class MigrateListCSV extends MigrateList {
   protected $file;
 
   /**
+   * File handle for the CSV file being iterated.
+   *
+   * @var resource
+   */
+  protected $csvHandle = NULL;
+
+  /**
    * The column which contains the ID.
    *
    * If numeric, this is the index of the column from 0; if non-numeric, this
@@ -84,6 +91,9 @@ class MigrateListCSV extends MigrateList {
     if (!is_numeric($id_column)) {
       //we need to store the headers.
       $this->csvHandle = fopen($this->file, 'r');
+      if (!$this->validResource()) {
+        return;
+      }
       $this->headers = $this->getNextLine();
       fclose($this->csvHandle);
       $this->csvHandle = NULL;
@@ -108,6 +118,9 @@ class MigrateListCSV extends MigrateList {
     $ids = array();
 
     $this->csvHandle = fopen($this->file, 'r');
+    if (!$this->validResource()) {
+      return $ids;
+    }
 
     // Skip the headers if any,
     for ($i = 0; $i < $this->headerRows; $i++) {
@@ -135,11 +148,14 @@ class MigrateListCSV extends MigrateList {
     // to scan with fgetcsv to get the true count.
     if (!empty($this->options['embedded_newlines'])) {
       $this->csvHandle = fopen($this->file, 'r');
+      $count = 0;
+      if (!$this->validResource()) {
+        return $count;
+      }
       // Skip all but the last header
       for ($i = 0; $i < $this->headerRows; $i++) {
         fgets($this->csvHandle);
       }
-      $count = 0;
       while ($this->getNextLine()) {
         $count++;
       }
@@ -176,6 +192,19 @@ class MigrateListCSV extends MigrateList {
       $row = array_combine($this->headers, $row);
     }
     return $row;
+  }
+
+  /**
+   * Check if resource loaded correctly.
+   *
+   * @return bool
+   */
+  public function validResource() {
+    if (!$this->csvHandle) {
+      Migration::displayMessage(t('Could not open CSV file !url',
+        array('!url' => $this->file)));
+    }
+    return (bool) $this->csvHandle;
   }
 
 }
@@ -224,6 +253,13 @@ class MigrateSourceCSV extends MigrateSource {
   protected $rowNumber;
 
   /**
+   * The path to the source file.
+   *
+   * @var string
+   */
+  protected $file;
+
+  /**
    * Simple initialization.
    *
    * @param string $path
@@ -262,6 +298,9 @@ class MigrateSourceCSV extends MigrateSource {
     if ($this->headerRows && empty($csvcolumns)) {
       $this->csvcolumns = array();
       $this->csvHandle = fopen($this->file, 'r');
+      if (!$this->validResource()) {
+        return;
+      }
       // Skip all but the last header
       for ($i = 0; $i < $this->headerRows - 1; $i++) {
         $this->getNextLine();
@@ -320,11 +359,14 @@ class MigrateSourceCSV extends MigrateSource {
     // to scan with fgetcsv to get the true count.
     if (!empty($this->options['embedded_newlines'])) {
       $this->csvHandle = fopen($this->file, 'r');
+      $count = 0;
+      if (!$this->validResource()) {
+        return $count;
+      }
       // Skip all but the last header
       for ($i = 0; $i < $this->headerRows; $i++) {
         fgets($this->csvHandle);
       }
-      $count = 0;
       while ($this->getNextLine()) {
         $count++;
       }
@@ -352,6 +394,9 @@ class MigrateSourceCSV extends MigrateSource {
     }
     // Load up the first row, skipping the header(s) if necessary
     $this->csvHandle = fopen($this->file, 'r');
+    if (!$this->validResource()) {
+      return;
+    }
     for ($i = 0; $i < $this->headerRows; $i++) {
       $this->getNextLine();
     }
@@ -399,4 +444,18 @@ class MigrateSourceCSV extends MigrateSource {
     }
     return $row;
   }
+
+  /**
+   * Check if resource loaded correctly.
+   *
+   * @return bool
+   */
+  public function validResource() {
+    if (!$this->csvHandle) {
+      Migration::displayMessage(t('Could not open CSV file !url',
+        array('!url' => $this->file)));
+    }
+    return (bool) $this->csvHandle;
+  }
+
 }

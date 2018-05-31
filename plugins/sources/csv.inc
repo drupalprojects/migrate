@@ -163,8 +163,11 @@ class MigrateListCSV extends MigrateList {
       $this->csvHandle = NULL;
     }
     else {
-      // TODO. If this takes too much time/memory, use exec('wc -l')
-      $count = count(file($this->file));
+
+      $file = new SplFileObject($this->file, 'r');
+      $file->seek(PHP_INT_MAX);
+      $count = $file->key() + 1;
+      $file->rewind();
       $count -= $this->headerRows;
     }
     return $count;

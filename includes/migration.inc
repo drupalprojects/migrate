@@ -757,7 +757,7 @@ abstract class Migration extends MigrationBase {
         else {
           $this->map->saveIDMapping($this->sourceValues, array(),
             MigrateMap::STATUS_FAILED, $this->rollbackAction,
-            $data_row->migrate_map_hash);
+            NULL);
           if ($this->map->messageCount() == 0) {
             $message = t('New object was not saved, no error provided');
             $this->saveMessage($message);
@@ -772,7 +772,7 @@ abstract class Migration extends MigrationBase {
       } catch (Exception $e) {
         $this->map->saveIDMapping($this->sourceValues, array(),
           MigrateMap::STATUS_FAILED, $this->rollbackAction,
-          $data_row->migrate_map_hash);
+          NULL);
         $this->handleException($e);
       }
       $this->total_processed++;

@@ -1540,12 +1540,12 @@ abstract class Migration extends MigrationBase {
     }
     $i = 1;
     $candidate = $original;
-    while ($candidate_found = db_select($dedupe['table'], 't')
+    while (db_select($dedupe['table'], 't')
       ->fields('t', array($dedupe['column']))
       ->range(0, 1)
       ->condition('t.' . $dedupe['column'], $candidate)
       ->execute()
-      ->fetchField()) {
+      ->rowCount() > 0) {
       // We already have the candidate value. Find a non-existing value.
       $i++;
       // @TODO: support custom replacement pattern instead of just append.

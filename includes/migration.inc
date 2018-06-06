@@ -725,8 +725,9 @@ abstract class Migration extends MigrationBase {
       $this->source->rewind();
     } catch (Exception $e) {
       self::displayMessage(
-        t('Migration failed with source plugin exception: %e, in %file:%line',
+        t('Migration for %class failed with source plugin exception: %e, in %file:%line',
           array(
+            '%class' => get_class($this),
             '%e' => $e->getMessage(),
             '%file' => $e->getFile(),
             '%line' => $e->getLine(),
@@ -804,8 +805,9 @@ abstract class Migration extends MigrationBase {
         $this->source->next();
       } catch (Exception $e) {
         self::displayMessage(
-          t('Migration failed with source plugin exception: %e, in %file:%line',
+          t('Migration for %class failed with source plugin exception: %e, in %file:%line',
             array(
+              '%class' => get_class($this),
               '%e' => $e->getMessage(),
               '%file' => $e->getFile(),
               '%line' => $e->getLine(),

@@ -1358,7 +1358,11 @@ abstract class Migration extends MigrationBase {
           elseif (!is_array($this->destinationValues->{$destination_field})) {
             $this->destinationValues->{$destination_field} = array($this->destinationValues->{$destination_field});
           }
-          if (!is_array($this->destinationValues->{$destination_field}['arguments'][$destination[1]])) {
+          // Additional check for case when first subfield doesn't exist.
+          if (!isset($this->destinationValues->{$destination_field}['arguments'][$destination[1]])) {
+            $this->destinationValues->{$destination_field}['arguments'][$destination[1]] = array();
+          }
+          elseif (!is_array($this->destinationValues->{$destination_field}['arguments'][$destination[1]])) {
             // Convert first subfield level to an array so we can add to it.
             $this->destinationValues->{$destination_field}['arguments'][$destination[1]] = array($this->destinationValues->{$destination_field}['arguments'][$destination[1]]);
           }
